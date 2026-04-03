@@ -12,6 +12,7 @@ import { Settings } from '../../models/settings';
 import { Component, Input, NO_ERRORS_SCHEMA } from '@angular/core';
 import { Lane } from '../../models/lane';
 import { com } from '../../proto/message';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 // TODO(aufderheide): Move MockDataService to a shared test file and 
 // allow users of it to customize it beyond the simple defaults.
@@ -182,7 +183,7 @@ describe('TrackEditorComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [TrackEditorComponent, TranslatePipe, MockBackButtonComponent, MockUndoRedoControlsComponent, MockEditorTitleComponent],
-      imports: [FormsModule],
+      imports: [FormsModule, DragDropModule],
       schemas: [NO_ERRORS_SCHEMA],
       providers: [
         { provide: DataService, useClass: MockDataService },
@@ -351,6 +352,42 @@ describe('TrackEditorComponent', () => {
     expect(updatedConfig.voltageConfigs?.[1]).toBe(600); // Old Lane 3 (2) value shifted to index 1
     expect(updatedConfig.voltageConfigs?.[0]).toBeUndefined(); // Old Lane 2 (1) removed
     expect(updatedConfig.voltageConfigs?.[2]).toBeUndefined(); // Shifted
+  });
+
+  it('should reorder lanes and NOT update Arduino configs on drop', () => {
+    // 1. Setup track with 2 lanes
+    component.lanes = [
+      new Lane('l1', '#ff0000', 'black', 100),
+      new Lane('l2', '#00ff00', 'black', 100)
+    ];
+
+    // 2. Add Arduino config with lane-specific behaviors
+    component.addArduinoConfig();
+    const config = component.arduinoConfigs[0];
+    config.digitalIds[2] = 1000; // Lap Lane 1 (index 0)
+    config.digitalIds[3] = 1001; // Lap Lane 2 (index 1)
+
+    // 3. Simulate drop: move Lane 1 (index 0) to index 1
+    const event = {
+      previousIndex: 0,
+      currentIndex: 1,
+      container: { data: component.lanes },
+      item: { data: component.lanes[0] }
+    } as any;
+
+    spyOn(component, 'captureState').and.callThrough();
+    component.onLaneDropped(event);
+
+    // 4. Verify results
+    expect(component.lanes.length).toBe(2);
+    expect(component.lanes[0].entity_id).toBe('l2');
+    expect(component.lanes[1].entity_id).toBe('l1');
+
+    // Pin assignments MUST NOT change
+    expect(component.arduinoConfigs[0].digitalIds[2]).toBe(1000); // Still Lane 1
+    expect(component.arduinoConfigs[0].digitalIds[3]).toBe(1001); // Still Lane 2
+
+    expect(component.captureState).toHaveBeenCalled();
   });
 
   describe('Auto-save and Duplicate', () => {

@@ -59,7 +59,7 @@ public class RaceLifecycleTest {
         "participant1"));
 
     // Initialize the race. Note: this will call createProtocols() internally.
-    race = new Race(realRaceModel, drivers, realTrack, true);
+    race = new Race.Builder().model(realRaceModel).drivers(drivers).track(realTrack).isDemoMode(true).build();
 
     // Swap the internal protocols with a mock so we can verify the close() call.
     mockProtocols = mock(ProtocolDelegate.class);

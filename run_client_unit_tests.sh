@@ -22,7 +22,7 @@ cd "$ISOLATED_DIR" || exit
 # Ensure dependencies are installed in isolated directory
 if [ ! -d "node_modules" ] || [ package.json -nt node_modules ]; then
     echo "Installing/Updating dependencies in $ISOLATED_DIR..."
-    npm install --no-package-lock --cache "$ISOLATED_DIR/npm-cache" || echo "Warning: npm install failed, trying to proceed anyway..."
+    npm install --no-package-lock --legacy-peer-deps --cache "$ISOLATED_DIR/npm-cache" || echo "Warning: npm install failed, trying to proceed anyway..."
 fi
 
 # Find the Chrome binary from Playwright browsers

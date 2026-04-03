@@ -16,6 +16,8 @@ export class Settings {
   serverIp: string = 'localhost';
   serverPort: number = 7070;
   language: string = '';
+  shareAnalytics: boolean = true;
+
   racedaySetupWalkthroughSeen: boolean = false;
   trackManagerHelpShown: boolean = false;
   trackEditorHelpShown: boolean = false;

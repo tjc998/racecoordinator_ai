@@ -16,6 +16,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import com.antigravity.models.AnalyticsToggleRequest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -345,6 +346,78 @@ public class ClientCommandTaskHandlerTest {
     handler.deleteSavedRace(ctx);
 
     assertFalse("File should be deleted", file.exists());
+  }
+
+  @Test
+  public void testToggleAnalytics_Localhost_IPv4_Success() throws Exception {
+    ClientCommandTaskHandler spyHandler = spy(handler);
+    Context mockCtx = mock(Context.class);
+    
+    doReturn("127.0.0.1").when(spyHandler).getRemoteAddr(any());
+    doReturn("localhost").when(spyHandler).getRemoteHost(any());
+    
+    AnalyticsToggleRequest requestData = new AnalyticsToggleRequest();
+    requestData.setEnabled(true);
+    byte[] bodyBytes = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsBytes(requestData);
+    
+    doReturn(bodyBytes).when(spyHandler).getBodyBytes(any());
+    doNothing().when(spyHandler).setStatus(any(), anyInt());
+    doNothing().when(spyHandler).setResult(any(), anyString());
+    
+    spyHandler.toggleAnalytics(mockCtx);
+    
+    verify(spyHandler).setStatus(any(), eq(200));
+    assertTrue(com.antigravity.service.AnalyticsService.getInstance().isUserEnabled());
+  }
+
+  @Test
+  public void testToggleAnalytics_Localhost_IPv6_Success() throws Exception {
+    ClientCommandTaskHandler spyHandler = spy(handler);
+    Context mockCtx = mock(Context.class);
+    
+    doReturn("::1").when(spyHandler).getRemoteAddr(any());
+    doReturn("localhost").when(spyHandler).getRemoteHost(any());
+    
+    AnalyticsToggleRequest requestData = new AnalyticsToggleRequest();
+    requestData.setEnabled(false);
+    byte[] bodyBytes = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsBytes(requestData);
+    
+    doReturn(bodyBytes).when(spyHandler).getBodyBytes(any());
+    doNothing().when(spyHandler).setStatus(any(), anyInt());
+    doNothing().when(spyHandler).setResult(any(), anyString());
+    
+    spyHandler.toggleAnalytics(mockCtx);
+    
+    verify(spyHandler).setStatus(any(), eq(200));
+    assertFalse(com.antigravity.service.AnalyticsService.getInstance().isUserEnabled());
+  }
+
+  @Test
+  public void testToggleAnalytics_RemoteIP_Forbidden() throws Exception {
+    ClientCommandTaskHandler spyHandler = spy(handler);
+    Context mockCtx = mock(Context.class);
+    
+    doReturn("192.168.1.50").when(spyHandler).getRemoteAddr(any());
+    doReturn("192.168.1.50").when(spyHandler).getRemoteHost(any());
+    
+    doNothing().when(spyHandler).setStatus(any(), anyInt());
+    doNothing().when(spyHandler).setResult(any(), anyString());
+    
+    spyHandler.toggleAnalytics(mockCtx);
+    
+    verify(spyHandler).setStatus(any(), eq(403));
+  }
+
+  @Test
+  public void testGetAnalyticsConfig_Success() throws Exception {
+    ClientCommandTaskHandler spyHandler = spy(handler);
+    Context mockCtx = mock(Context.class);
+    
+    doNothing().when(spyHandler).setJson(any(), any());
+    
+    spyHandler.getAnalyticsConfig(mockCtx);
+    
+    verify(spyHandler).setJson(eq(mockCtx), any(java.util.Map.class));
   }
 
   private void deleteDirectory(java.io.File directory) {

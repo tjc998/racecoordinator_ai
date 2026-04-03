@@ -119,7 +119,7 @@ describe('DefaultRacedayComponent', () => {
     mockRaceService.currentHeat$ = of({});
     mockRaceService.race$ = of({});
 
-    mockRaceService.getRace.and.returnValue({ name: 'Some Race Name', track: { name: 'Bright Plume Raceway', lanes: [] }, fuel_options: { enabled: false } });
+    mockRaceService.getRace.and.returnValue({ name: 'Some Race Name', track: { name: 'Bright Plume Raceway', lanes: [{ foreground_color: 'white', background_color: 'black' }, { foreground_color: 'white', background_color: 'black' }] }, fuel_options: { enabled: false } });
     mockRaceService.getHeats.and.returnValue([]);
 
     mockSettings = Object.assign(new Settings(), {

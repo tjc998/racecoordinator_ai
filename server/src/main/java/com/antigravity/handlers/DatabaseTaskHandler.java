@@ -722,13 +722,12 @@ public class DatabaseTaskHandler {
     }
 
     // Create a temporary Race object for heat building
-    com.antigravity.race.Race tempRace = new com.antigravity.race.Race(
-        race,
-        mockDrivers,
-        track,
-        true, // Use demo mode to avoid protocol initialization
-        race.getAutoAdvanceTime(),
-        race.getAutoStartTime());
+    com.antigravity.race.Race tempRace = new com.antigravity.race.Race.Builder()
+        .model(race)
+        .drivers(mockDrivers)
+        .track(track)
+        .isDemoMode(true) // Use demo mode to avoid protocol initialization
+        .build();
 
     // Get the generated heats
     List<com.antigravity.race.Heat> heats = tempRace.getHeats();
@@ -838,13 +837,12 @@ public class DatabaseTaskHandler {
     }
 
     // Create a temporary Race object for heat building
-    com.antigravity.race.Race tempRace = new com.antigravity.race.Race(
-        tempRaceConfig,
-        mockDrivers,
-        track,
-        true,
-        0.0,
-        0.0); // Use demo mode to avoid protocol initialization
+    com.antigravity.race.Race tempRace = new com.antigravity.race.Race.Builder()
+        .model(tempRaceConfig)
+        .drivers(mockDrivers)
+        .track(track)
+        .isDemoMode(true) // Use demo mode to avoid protocol initialization
+        .build();
 
     // Get the generated heats
     List<com.antigravity.race.Heat> heats = tempRace.getHeats();

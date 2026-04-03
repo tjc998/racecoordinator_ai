@@ -50,7 +50,7 @@ public class ReproduceExceptionTest {
   @Test
   public void reproduceFewerDriversThanLanes() {
     // This should not throw an exception
-    Race race = new Race(raceModel, drivers, track, true);
+    Race race = new Race.Builder().model(raceModel).drivers(drivers).track(track).isDemoMode(true).build();
     
     assertNotNull(race);
     assertEquals(4, race.getHeats().size()); // numLanes = 4, so 4 heats

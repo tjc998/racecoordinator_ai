@@ -76,7 +76,7 @@ public class TeamRacingTest {
     lanes.add(new Lane("blue", "black", 100));
     track = new Track("Test Track", lanes, java.util.Collections.singletonList(mock(ArduinoConfig.class)), "track1", new ObjectId());
 
-    race = new Race(raceModel, participants, track, true);
+    race = new Race.Builder().model(raceModel).drivers(participants).track(track).isDemoMode(true).build();
   }
 
   @Test

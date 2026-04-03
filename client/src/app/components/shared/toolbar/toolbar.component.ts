@@ -1,5 +1,7 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
 import { UndoManager } from '../undo-redo-controls/undo-manager';
+import { AnalyticsService } from 'src/app/analytics.service';
+import { TranslationService } from 'src/app/services/translation.service';
 
 @Component({
   selector: 'app-toolbar',
@@ -17,6 +19,16 @@ export class ToolbarComponent {
   @Input() showRedo = false;
   @Input() isSaving = false;
   @Input() undoManager?: UndoManager<any>;
+
+  showAnalyticsModal = false;
+  analyticsModalTitle = '';
+  analyticsModalMessage = '';
+
+  constructor(
+    private analyticsService: AnalyticsService,
+    private translationService: TranslationService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   @Output() add = new EventEmitter<void>();
   @Output() edit = new EventEmitter<void>();
@@ -42,6 +54,26 @@ export class ToolbarComponent {
 
   onCopy() {
     this.copy.emit();
+  }
+
+  isAnalyticsEnabled(): boolean {
+    return this.analyticsService.isEnabled();
+  }
+
+  onToggleAnalytics() {
+    this.analyticsService.toggleAnalytics().subscribe(result => {
+      if (!result.success && result.titleKey && result.messageKey) {
+        this.analyticsModalTitle = this.translationService.translate(result.titleKey);
+        this.analyticsModalMessage = this.translationService.translate(result.messageKey);
+        this.showAnalyticsModal = true;
+      }
+      this.cdr.detectChanges();
+    });
+  }
+
+  onAnalyticsModalAcknowledge() {
+    this.showAnalyticsModal = false;
+    this.cdr.detectChanges();
   }
 
   undo() {

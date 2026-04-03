@@ -7,9 +7,11 @@ export abstract class ToolbarHarnessBase {
     edit: '#edit-track-btn',
     help: '#help-track-btn',
     add: '#add-item-btn',
-    delete: '#delete-track-btn'
+    delete: '#delete-track-btn',
+    analytics: '.analytics'
   };
 
+  abstract isAnalyticsVisible(): Promise<boolean>;
   abstract isUndoVisible(): Promise<boolean>;
   abstract isRedoVisible(): Promise<boolean>;
   abstract isEditVisible(): Promise<boolean>;
@@ -23,6 +25,7 @@ export abstract class ToolbarHarnessBase {
   abstract isAddDisabled(): Promise<boolean>;
   abstract isDeleteDisabled(): Promise<boolean>;
 
+  abstract clickAnalytics(): Promise<void>;
   abstract clickUndo(): Promise<void>;
   abstract clickRedo(): Promise<void>;
   abstract clickEdit(): Promise<void>;

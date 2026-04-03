@@ -11,6 +11,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { TranslationService } from 'src/app/services/translation.service';
 import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
 import { Settings } from 'src/app/models/settings';
+import { AnalyticsService } from 'src/app/analytics.service';
 
 describe('RacedaySetupComponent', () => {
   let component: RacedaySetupComponent;
@@ -22,6 +23,7 @@ describe('RacedaySetupComponent', () => {
   let mockDynamicComponentService: jasmine.SpyObj<DynamicComponentService>;
   let mockTranslationService: jasmine.SpyObj<TranslationService>;
   let mockConnectionMonitor: jasmine.SpyObj<ConnectionMonitorService>;
+  let mockAnalyticsService: jasmine.SpyObj<AnalyticsService>;
   let connectionStateSubject: BehaviorSubject<ConnectionState>;
 
   beforeEach(() => {
@@ -38,6 +40,7 @@ describe('RacedaySetupComponent', () => {
     mockSettingsService = jasmine.createSpyObj('SettingsService', ['getSettings', 'saveSettings']);
     mockDynamicComponentService = jasmine.createSpyObj('DynamicComponentService', ['createDynamicComponent']);
     mockTranslationService = jasmine.createSpyObj('TranslationService', ['getTranslationsLoaded', 'translate']);
+    mockAnalyticsService = jasmine.createSpyObj('AnalyticsService', ['initTracking', 'updateOptOutStatus', 'trackClick']);
 
     connectionStateSubject = new BehaviorSubject<ConnectionState>(ConnectionState.CONNECTED);
     mockConnectionMonitor = jasmine.createSpyObj('ConnectionMonitorService', ['startMonitoring', 'stopMonitoring', 'waitForConnection', 'checkConnection']);
@@ -66,7 +69,8 @@ describe('RacedaySetupComponent', () => {
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: DynamicComponentService, useValue: mockDynamicComponentService },
         { provide: TranslationService, useValue: mockTranslationService },
-        { provide: ConnectionMonitorService, useValue: mockConnectionMonitor }
+        { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
+        { provide: AnalyticsService, useValue: mockAnalyticsService }
       ],
       imports: [SharedModule]
     }).compileComponents();

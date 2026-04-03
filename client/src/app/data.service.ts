@@ -756,4 +756,12 @@ export class DataService {
   deleteSavedRace(filename: string): Observable<string> {
     return this.http.delete(`${this.baseUrl}/api/saved-races/${filename}`, { responseType: 'text' });
   }
+
+  toggleServerAnalytics(enabled: boolean): Observable<string> {
+    return this.http.post(`${this.baseUrl}/api/analytics/toggle`, { enabled }, { responseType: 'text' });
+  }
+
+  getServerAnalyticsConfig(): Observable<{clientId: string, measurementId: string}> {
+    return this.http.get<{clientId: string, measurementId: string}>(`${this.baseUrl}/api/analytics/config`);
+  }
 }

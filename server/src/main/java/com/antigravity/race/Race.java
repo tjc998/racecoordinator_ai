@@ -16,6 +16,7 @@ import com.antigravity.race.states.IRaceState;
 import com.antigravity.race.states.NotStarted;
 import com.antigravity.models.Track;
 import com.antigravity.service.DatabaseService;
+import com.antigravity.service.AnalyticsService;
 import com.mongodb.client.MongoDatabase;
 
 public class Race implements ProtocolListener {
@@ -47,94 +48,91 @@ public class Race implements ProtocolListener {
   // Heat execution state
   private HeatExecutionManager executionManager;
 
-  public Race(com.antigravity.models.Race model,
-      List<com.antigravity.race.RaceParticipant> drivers,
-      com.antigravity.models.Track track,
-      boolean isDemoMode) {
-    this(model, drivers, track, isDemoMode, 0.0, 0.0);
-  }
-
-  public Race(com.antigravity.models.Race model,
-      List<com.antigravity.race.RaceParticipant> drivers,
-      com.antigravity.models.Track track,
-      boolean isDemoMode,
-      double autoAdvanceTime,
-      double autoStartTime) {
-    this.model = model;
-    this.drivers = drivers;
-    for (int i = 0; i < this.drivers.size(); i++) {
-      this.drivers.get(i).setSeed(i + 1);
+  private Race(Builder builder) {
+    this.model = builder.model;
+    this.track = builder.track;
+    this.drivers = builder.drivers;
+    
+    // If not a restored race, ensure drivers are populated correctly and heats are built
+    if (builder.heats == null) {
+        for (int i = 0; i < this.drivers.size(); i++) {
+          this.drivers.get(i).setSeed(i + 1);
+        }
+        int numLanes = this.track.getLanes().size();
+        while (this.drivers.size() < numLanes) {
+          this.drivers.add(new RaceParticipant(com.antigravity.models.Driver.EMPTY_DRIVER));
+        }
+        this.heats = HeatBuilder.buildHeats(this, this.drivers);
+        this.currentHeat = this.heats.get(0);
+    } else {
+        this.heats = builder.heats;
+        if (builder.currentHeatIndex >= 0 && builder.currentHeatIndex < this.heats.size()) {
+            this.currentHeat = this.heats.get(builder.currentHeatIndex);
+        } else if (!this.heats.isEmpty()) {
+            this.currentHeat = this.heats.get(0);
+        }
     }
 
-    this.track = track;
-
-    // Fill with empty drivers if we have fewer drivers than lanes
-    int numLanes = this.track.getLanes().size();
-    while (this.drivers.size() < numLanes) {
-      this.drivers.add(new RaceParticipant(com.antigravity.models.Driver.EMPTY_DRIVER));
-    }
-
-    this.heats = HeatBuilder.buildHeats(this, this.drivers);
-    this.currentHeat = this.heats.get(0);
-
-    this.overallStandings = new OverallStandings(model.getHeatScoring(), model.getOverallScoring());
-    // Default dropped heats to 0 or get from somewhere else if needed.
-    // Assuming 0 for now as per plan, user mentioned it's a config option on the
-    // class.
-
-    this.createProtocols(isDemoMode);
-
+    this.accumulatedRaceTime = builder.accumulatedRaceTime;
+    this.hasRacedInCurrentHeat = builder.hasRacedInCurrentHeat;
+    this.autoStartFired = builder.autoStartFired;
+    this.autoAdvanceFired = builder.autoAdvanceFired;
     this.autoAdvanceRemaining = 0;
     this.autoStartRemaining = 0;
 
+    this.overallStandings = new OverallStandings(model.getHeatScoring(), model.getOverallScoring());
+    this.createProtocols(builder.isDemoMode);
+
     this.executionManager = new HeatExecutionManager(this);
     initializeHeatExecutionState();
 
-    this.state = new NotStarted();
+    if (builder.stateClassName != null) {
+        try {
+          Class<?> clazz = Class.forName(builder.stateClassName);
+          this.state = (IRaceState) clazz.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+          System.err.println("Failed to restore race state: " + builder.stateClassName + ", falling back to NotStarted");
+          this.state = new NotStarted();
+        }
+    } else {
+        this.state = new NotStarted();
+    }
+    
     this.state.enter(this);
-
-    initializeFuelLevels();
+    
+    if (builder.heats == null) {
+        initializeFuelLevels();
+    }
   }
 
-  public Race(com.antigravity.models.Race model,
-      List<RaceParticipant> drivers,
-      Track track,
-      List<Heat> heats,
-      int currentHeatIndex,
-      float accumulatedRaceTime,
-      boolean hasRacedInCurrentHeat,
-      boolean autoStartFired,
-      boolean autoAdvanceFired,
-      String stateClassName,
-      boolean isDemoMode) {
-    this.model = model;
-    this.drivers = drivers;
-    this.track = track;
-    this.heats = heats;
-    if (heats != null && currentHeatIndex >= 0 && currentHeatIndex < heats.size()) {
-      this.currentHeat = heats.get(currentHeatIndex);
-    } else if (heats != null && !heats.isEmpty()) {
-      this.currentHeat = heats.get(0);
+  public static class Builder {
+    private com.antigravity.models.Race model;
+    private List<RaceParticipant> drivers;
+    private com.antigravity.models.Track track;
+    private boolean isDemoMode = false;
+    private List<Heat> heats;
+    private int currentHeatIndex = 0;
+    private float accumulatedRaceTime = 0f;
+    private boolean hasRacedInCurrentHeat = false;
+    private boolean autoStartFired = false;
+    private boolean autoAdvanceFired = false;
+    private String stateClassName = null;
+
+    public Builder model(com.antigravity.models.Race model) { this.model = model; return this; }
+    public Builder drivers(List<RaceParticipant> drivers) { this.drivers = drivers; return this; }
+    public Builder track(com.antigravity.models.Track track) { this.track = track; return this; }
+    public Builder isDemoMode(boolean isDemoMode) { this.isDemoMode = isDemoMode; return this; }
+    public Builder heats(List<Heat> heats) { this.heats = heats; return this; }
+    public Builder currentHeatIndex(int currentHeatIndex) { this.currentHeatIndex = currentHeatIndex; return this; }
+    public Builder accumulatedRaceTime(float accumulatedRaceTime) { this.accumulatedRaceTime = accumulatedRaceTime; return this; }
+    public Builder hasRacedInCurrentHeat(boolean hasRacedInCurrentHeat) { this.hasRacedInCurrentHeat = hasRacedInCurrentHeat; return this; }
+    public Builder autoStartFired(boolean autoStartFired) { this.autoStartFired = autoStartFired; return this; }
+    public Builder autoAdvanceFired(boolean autoAdvanceFired) { this.autoAdvanceFired = autoAdvanceFired; return this; }
+    public Builder stateClassName(String stateClassName) { this.stateClassName = stateClassName; return this; }
+
+    public Race build() {
+        return new Race(this);
     }
-    this.accumulatedRaceTime = accumulatedRaceTime;
-    this.hasRacedInCurrentHeat = hasRacedInCurrentHeat;
-    this.autoStartFired = autoStartFired;
-    this.autoAdvanceFired = autoAdvanceFired;
-
-    this.overallStandings = new OverallStandings(model.getHeatScoring(), model.getOverallScoring());
-    this.createProtocols(isDemoMode);
-
-    this.executionManager = new HeatExecutionManager(this);
-    initializeHeatExecutionState();
-
-    try {
-      Class<?> clazz = Class.forName(stateClassName);
-      this.state = (IRaceState) clazz.getDeclaredConstructor().newInstance();
-    } catch (Exception e) {
-      System.err.println("Failed to restore race state: " + stateClassName + ", falling back to NotStarted");
-      this.state = new NotStarted();
-    }
-    this.state.enter(this);
   }
 
   public void init() {

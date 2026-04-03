@@ -26,6 +26,7 @@ import { ChangeDetectorRef } from '@angular/core';
 import { DynamicComponentService } from 'src/app/services/dynamic-component.service';
 import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
 import { Subscription } from 'rxjs';
+import { AnalyticsService } from 'src/app/analytics.service';
 
 class CustomUiBaseComponent extends DefaultRacedaySetupComponent {
   constructor(

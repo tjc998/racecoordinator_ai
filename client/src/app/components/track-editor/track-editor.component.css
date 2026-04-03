@@ -42,7 +42,7 @@
 
 /* Editor Panel */
 .editor-panel {
-  margin-left: 90px;
+  margin-left: 100px;
   width: 300px;
   height: calc(100% - 50px);
   display: flex;
@@ -154,11 +154,67 @@
   background: rgba(15, 23, 42, 0.4);
   border: 1px solid rgba(148, 163, 184, 0.1);
   border-radius: 6px;
-  padding: 10px 30px 10px 10px;
+  padding: 10px 20px 10px 5px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
   margin-right: -30px;
+  transition: background-color 0.2s;
+}
+
+.lane-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  align-self: stretch;
+  padding: 4px 0;
+}
+
+.lane-drag-handle {
+  color: #64748b;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+
+.lane-drag-handle:hover {
+  color: #38bdf8;
+}
+
+.lane-drag-handle:active {
+  cursor: grabbing;
+}
+
+.cdk-drag-preview {
+  box-sizing: border-box;
+  border-radius: 6px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+  background: rgba(15, 23, 42, 0.9);
+  display: flex;
+  align-items: center;
+  padding: 10px 30px 10px 10px;
+  gap: 10px;
+  color: #e2e8f0;
+  border: 1px solid #38bdf8;
+  z-index: 1000;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.lanes-list.cdk-drop-list-dragging .lane-item:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
 
 .lane-number {
@@ -179,7 +235,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
 }
 
 .control-group label {
@@ -194,8 +250,8 @@
 .control-group input[type="color"] {
   background: none;
   border: none;
-  width: 40px;
-  height: 40px;
+  width: 35px;
+  height: 35px;
   cursor: pointer;
 }
 
@@ -293,8 +349,10 @@
 }
 
 .lane-item .danger.small {
-  flex-shrink: 0;
-  margin-left: auto;
+  margin: 0;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  min-width: 30px;
 }
 
 .action-btn:disabled {
@@ -308,9 +366,9 @@
   flex: 1;
   border: none;
   border-radius: 0;
-  margin-left: 160px;
+  margin-left: 180px;
   margin-top: 50px;
-  margin-right: 105px;
+  margin-right: 125px;
   margin-bottom: 40px;
   display: flex;
   flex-direction: column;
@@ -410,8 +468,8 @@
 
 /* Lane Preview Badge */
 .lane-preview-badge {
-  min-width: 60px;
-  height: 45px;
+  min-width: 50px;
+  height: 40px;
   border-radius: 6px;
   display: flex;
   flex-direction: column;
@@ -487,8 +545,8 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 22px;
-  margin-right: -15px;
+  padding-right: 15px;
+  margin-right: 5px;
 }
 
 /* Custom Scrollbar for Sections Wrapper */

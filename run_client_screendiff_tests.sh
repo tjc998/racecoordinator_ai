@@ -38,7 +38,8 @@ mkdir -p "$PLAYWRIGHT_BROWSERS_PATH"
 echo "Installing Playwright browsers..."
 npx -y playwright install chromium
 
-npx -y playwright test "$@"
+# Restore real home for macOS bootstrap services
+HOME="$REAL_HOME" npx -y playwright test "$@"
 
 # If updating snapshots, copy them back to the original source directory
 if [[ "$*" == *"--update-snapshots"* ]]; then

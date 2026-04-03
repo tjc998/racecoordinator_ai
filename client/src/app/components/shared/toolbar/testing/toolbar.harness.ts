@@ -10,6 +10,11 @@ export class ToolbarHarness extends ComponentHarness implements ToolbarHarnessBa
   protected getHelpButton = this.locatorForOptional(ToolbarHarnessBase.selectors.help);
   protected getAddButton = this.locatorForOptional(ToolbarHarnessBase.selectors.add);
   protected getDeleteButton = this.locatorForOptional(ToolbarHarnessBase.selectors.delete);
+  protected getAnalyticsButton = this.locatorForOptional(ToolbarHarnessBase.selectors.analytics);
+
+  async isAnalyticsVisible(): Promise<boolean> {
+    return (await this.getAnalyticsButton()) !== null;
+  }
 
   async isUndoVisible(): Promise<boolean> {
     return (await this.getUndoButton()) !== null;
@@ -49,6 +54,11 @@ export class ToolbarHarness extends ComponentHarness implements ToolbarHarnessBa
   async isDeleteDisabled(): Promise<boolean> {
     const btn = await this.getDeleteButton();
     return btn ? await btn.getProperty('disabled') === true : false;
+  }
+
+  async clickAnalytics(): Promise<void> {
+    const btn = await this.getAnalyticsButton();
+    if (btn) await btn.click();
   }
 
   async clickUndo(): Promise<void> {

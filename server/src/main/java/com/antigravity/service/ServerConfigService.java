@@ -47,7 +47,26 @@ public class ServerConfigService {
     saveConfig();
   }
 
+  public boolean isShareAnalyticsEnabled() {
+    return config.shareAnalytics;
+  }
+
+  public void setShareAnalyticsEnabled(boolean enabled) {
+    config.shareAnalytics = enabled;
+    saveConfig();
+  }
+
+  public String getAnalyticsClientId() {
+    if (config.analyticsClientId == null || config.analyticsClientId.isEmpty()) {
+      config.analyticsClientId = "rc-desktop-" + java.util.UUID.randomUUID().toString();
+      saveConfig();
+    }
+    return config.analyticsClientId;
+  }
+
   private static class Config {
     public String lastActiveDatabase;
+    public boolean shareAnalytics = true;
+    public String analyticsClientId;
   }
 }

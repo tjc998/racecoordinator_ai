@@ -35,8 +35,17 @@
           </div>
 
           <div class="section-content" *ngIf="sectionsExpanded.lanes">
-            <div class="lanes-list">
-              <div *ngFor="let lane of lanes; let i = index; trackBy: trackByLane" class="lane-item">
+            <div class="lanes-list" cdkDropList (cdkDropListDropped)="onLaneDropped($event)">
+              <div *ngFor="let lane of lanes; let i = index; trackBy: trackByLane" class="lane-item" cdkDrag>
+                <div class="lane-actions">
+                  <div [id]="'lane-drag-' + i" class="lane-drag-handle" cdkDragHandle>
+                    <svg width="24px" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M10 9h4V7h-4v2zm0 4h4v-2h-4v2zm0 4h4v-2h-4v2zm-4-8h4V7H6v2zm0 4h4v-2H6v2zm0 4h4v-2H6v2zm10-8h4V7h-4v2zm0 4h4v-2h-4v2zm0 4h4v-2h-4v2z"></path>
+                    </svg>
+                  </div>
+                  <button [id]="'lane-delete-' + i" class="action-btn danger small" (click)="removeLane(i)">X</button>
+                </div>
+
                 <div class="lane-preview-badge" [style.background-color]="lane.background_color"
                   [style.color]="lane.foreground_color">
                   <span class="preview-number">#{{ i + 1 }}</span>
@@ -60,8 +69,6 @@
                     <label>{{ 'TE_FOREGROUND_COLOR' | translate }}</label>
                   </div>
                 </div>
-
-                <button [id]="'lane-delete-' + i" class="action-btn danger small" (click)="removeLane(i)">X</button>
               </div>
             </div>
           </div>

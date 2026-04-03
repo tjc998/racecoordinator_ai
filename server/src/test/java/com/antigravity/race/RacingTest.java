@@ -65,7 +65,7 @@ public class RacingTest {
     track = new Track("Test Track", lanes, java.util.Collections.singletonList(mock(ArduinoConfig.class)), "track1",
         new ObjectId());
 
-    race = new Race(raceModel, participants, track, true, 0.0, 0.0);
+    race = new Race.Builder().model(raceModel).drivers(participants).track(track).isDemoMode(true).build();
   }
 
   @After
@@ -101,14 +101,18 @@ public class RacingTest {
         HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
         HeatScoring.AllowFinish.None);
 
-    race = new Race(new com.antigravity.models.Race.Builder()
-        .withName("Test Race")
-        .withTrackEntityId("track1")
-        .withHeatScoring(heatScoring)
-        .withOverallScoring(race.getRaceModel().getOverallScoring())
-        .withEntityId("race1")
-        .build(),
-        participants, track, true, 0.0, 0.0);
+    race = new Race.Builder()
+        .model(new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
+            .withTrackEntityId("track1")
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(race.getRaceModel().getOverallScoring())
+            .withEntityId("race1")
+            .build())
+        .drivers(participants)
+        .track(track)
+        .isDemoMode(true)
+        .build();
 
     Racing racing = new Racing();
     race.changeState(racing);

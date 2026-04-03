@@ -63,7 +63,12 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   pendingIsDemo: boolean = false;
   savedRaces: string[] = [];
   selectedSavedRace: string | null = null;
-  isRefreshingList: boolean = false;
+  public isRefreshingList: boolean = false;
+  public showWelcomeMessage: boolean = true;
+
+  // Modals
+  public isAboutModalVisible = false;
+
   isLocalizationDropdownOpen: boolean = false;
   isConfigDropdownOpen: boolean = false;
   isHelpDropdownOpen: boolean = false;
@@ -303,11 +308,11 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   }
 
   isDriver(participant: Participant | undefined): participant is Driver {
-    return !!participant && (participant instanceof Driver || ('nickname' in participant && !('driverIds' in participant)));
+    return !!participant && (participant instanceof Driver || 'nickname' in participant);
   }
 
   isTeam(participant: Participant | undefined): participant is Team {
-    return !!participant && (participant instanceof Team || ('driverIds' in participant));
+    return !!participant && (participant instanceof Team || 'driverIds' in participant);
   }
 
   getDriver(participant: Participant | undefined): Driver | undefined {
@@ -736,9 +741,15 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
         content: this.translationService.translate('RDS_HELP_WELCOME_CONTENT')
       },
       {
-        selector: '.help-icon',
+        selector: '.toolbar-btn.help',
         title: this.translationService.translate('RDS_HELP_WALKTHROUGH_TITLE'),
         content: this.translationService.translate('RDS_HELP_WALKTHROUGH_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: '.toolbar-btn.analytics',
+        title: this.translationService.translate('RDS_HELP_ANALYTICS_TITLE'),
+        content: this.translationService.translate('RDS_HELP_ANALYTICS_CONTENT'),
         position: 'bottom'
       },
       {

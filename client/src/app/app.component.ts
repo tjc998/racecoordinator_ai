@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { ChildrenOutletContexts, Router } from '@angular/router';
 import { slideInAnimation } from './utils/animations';
 import { DataService } from './data.service';
+import { AnalyticsService } from './analytics.service';
 
 @Component({
   selector: 'app-root',
@@ -21,10 +22,11 @@ import { DataService } from './data.service';
   standalone: false
 })
 export class AppComponent {
-  constructor(private contexts: ChildrenOutletContexts, private dataService: DataService, private router: Router) { }
+  constructor(private contexts: ChildrenOutletContexts, private dataService: DataService, private router: Router, private analyticsService: AnalyticsService) { }
 
   ngOnInit() {
     console.log('AppComponent: Initializing application...');
+    this.analyticsService.initTracking();
     this.dataService.connectToRaceDataSocket();
 
     this.dataService.getRaceUpdate().subscribe(update => {

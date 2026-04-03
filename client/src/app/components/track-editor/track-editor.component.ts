@@ -1,4 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef, HostListener, OnDestroy, ViewChildren, QueryList } from '@angular/core';
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { DataService } from '../../data.service';
 import { Track, ArduinoConfig, MAX_DIGITAL_PINS, MAX_ANALOG_PINS } from '../../models/track';
 import { Lane } from '../../models/lane';
@@ -421,21 +422,33 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
         position: 'bottom'
       },
       {
+        selector: '#lane-drag-0',
+        title: this.translationService.translate('TE_HELP_LANE_DRAG_TITLE'),
+        content: this.translationService.translate('TE_HELP_LANE_DRAG_CONTENT'),
+        position: 'right'
+      },
+      {
         selector: '#lane-delete-0',
         title: this.translationService.translate('TE_HELP_DELETE_LANE_TITLE'),
         content: this.translationService.translate('TE_HELP_DELETE_LANE_CONTENT'),
         position: 'right'
       },
       {
-        selector: '#copy-item-btn',
-        title: this.translationService.translate('TE_HELP_DUPLICATE_TITLE'),
-        content: this.translationService.translate('TE_HELP_DUPLICATE_CONTENT'),
+        selector: '#undo-btn',
+        title: this.translationService.translate('TE_HELP_UNDO_TITLE'),
+        content: this.translationService.translate('TE_HELP_UNDO_CONTENT'),
         position: 'bottom'
       },
       {
-        selector: '#help-track-btn',
-        title: this.translationService.translate('TM_HELP_HELP_TITLE'),
-        content: this.translationService.translate('TM_HELP_HELP_CONTENT'),
+        selector: '#redo-btn',
+        title: this.translationService.translate('TE_HELP_REDO_TITLE'),
+        content: this.translationService.translate('TE_HELP_REDO_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: '#copy-item-btn',
+        title: this.translationService.translate('TE_HELP_DUPLICATE_TITLE'),
+        content: this.translationService.translate('TE_HELP_DUPLICATE_CONTENT'),
         position: 'bottom'
       },
       {
@@ -476,8 +489,8 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     this.undoManager.onInputChange();
     this.cdr.detectChanges();
   }
-  onInputBlur() { 
-    this.undoManager.onInputBlur(); 
+  onInputBlur() {
+    this.undoManager.onInputBlur();
     this.cdr.detectChanges();
   }
   captureState() {
@@ -496,6 +509,14 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     this.lanes.splice(index, 1);
     this.updateArduinoConfigsOnLaneDeletion(index);
     this.captureState();
+  }
+
+  onLaneDropped(event: CdkDragDrop<Lane[]>) {
+    if (event.previousIndex !== event.currentIndex) {
+      moveItemInArray(this.lanes, event.previousIndex, event.currentIndex);
+      this.lanes = [...this.lanes]; // Trigger change detection
+      this.captureState();
+    }
   }
 
   private updateArduinoConfigsOnLaneDeletion(deletedLaneIndex: number) {
@@ -740,9 +761,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
           });
         }
 
-          if (this.editingTrack) {
-            this.undoManager.resetTracking(this.createSnapshot());
-          }
+        if (this.editingTrack) {
+          this.undoManager.resetTracking(this.createSnapshot());
+        }
 
         // Force sync with UI and children (especially back-button confirm input)
         if (!this.isDestroyed) {

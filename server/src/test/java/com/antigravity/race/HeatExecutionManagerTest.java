@@ -70,7 +70,7 @@ public class HeatExecutionManagerTest {
     track = new Track("Test Track", lanes, java.util.Collections.singletonList(mock(ArduinoConfig.class)), "track1",
         new ObjectId());
 
-    race = new Race(raceModel, participants, track, true, 0.0, 0.0);
+    race = new Race.Builder().model(raceModel).drivers(participants).track(track).isDemoMode(true).build();
     executionManager = race.getHeatExecutionManager();
     // Manager is already initialized by Race constructor, but we want a clean state
     executionManager.initialize(track.getLanes().size());
@@ -103,7 +103,7 @@ public class HeatExecutionManagerTest {
         .withOverallScoring(new OverallScoring())
         .withEntityId("race1")
         .build();
-    race = new Race(raceModel, participants, track, true);
+    race = new Race.Builder().model(raceModel).drivers(participants).track(track).isDemoMode(true).build();
     executionManager = race.getHeatExecutionManager();
     executionManager.initialize(track.getLanes().size());
 
@@ -134,7 +134,7 @@ public class HeatExecutionManagerTest {
         .withMinLapTime(minLapTime)
         .withEntityId("race1")
         .build();
-    race = new Race(raceModel, participants, track, true);
+    race = new Race.Builder().model(raceModel).drivers(participants).track(track).isDemoMode(true).build();
     executionManager = race.getHeatExecutionManager();
     executionManager.initialize(track.getLanes().size());
 
@@ -171,7 +171,7 @@ public class HeatExecutionManagerTest {
         .withEntityId("race1")
         .build();
 
-    race = new Race(raceModel, participants, track, true);
+    race = new Race.Builder().model(raceModel).drivers(participants).track(track).isDemoMode(true).build();
     executionManager = race.getHeatExecutionManager();
     executionManager.initialize(track.getLanes().size());
 
@@ -225,7 +225,7 @@ public class HeatExecutionManagerTest {
     participants.clear();
     participants.add(teamParticipant);
 
-    race = new Race(raceModel, participants, track, true);
+    race = new Race.Builder().model(raceModel).drivers(participants).track(track).isDemoMode(true).build();
     executionManager = race.getHeatExecutionManager();
     executionManager.initialize(track.getLanes().size());
 
@@ -258,7 +258,7 @@ public class HeatExecutionManagerTest {
         .withOverallScoring(new OverallScoring())
         .withEntityId("race1")
         .build();
-    race = new Race(raceModel, participants, track, true);
+    race = new Race.Builder().model(raceModel).drivers(participants).track(track).isDemoMode(true).build();
     executionManager = race.getHeatExecutionManager();
     executionManager.initialize(track.getLanes().size());
 
@@ -286,7 +286,7 @@ public class HeatExecutionManagerTest {
         .withEntityId("race1")
         .build();
 
-    race = new Race(raceModel, participants, track, true);
+    race = new Race.Builder().model(raceModel).drivers(participants).track(track).isDemoMode(true).build();
     executionManager = race.getHeatExecutionManager();
     executionManager.initialize(track.getLanes().size());
 

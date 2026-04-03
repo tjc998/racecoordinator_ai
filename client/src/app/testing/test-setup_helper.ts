@@ -160,6 +160,27 @@ export class TestSetupHelper {
       columnVisibility: {}
     });
 
+    // Mock Google Analytics to prevent external network requests that cause layout shifts
+    await page.route('**/gtag/js*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/javascript',
+        body: 'window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} window.gtag = gtag;'
+      });
+    });
+
+    // Mock Analytics Config API
+    await page.route('**/api/analytics/config', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          clientId: 'mock-client-id',
+          measurementId: 'G-MOCK-ID'
+        }),
+      });
+    });
+
     // Handle skip intro
     if (options.skipIntro) {
       await page.addInitScript(() => {
@@ -279,7 +300,7 @@ export class TestSetupHelper {
 
     // 3. Ensure fonts and layout have settled after text swap
     await page.evaluate(() => document.fonts.ready);
-    
+
     // 4. Final micro-wait for Angular's digest cycle to propagate the change to all pipes
     await page.waitForTimeout(500);
   }
@@ -792,7 +813,7 @@ export class TestSetupHelper {
   }
 
 
-  static async setupLocalStorage(page: Page, settings: { recentRaceIds?: string[], selectedDriverIds?: string[], racedaySetupWalkthroughSeen?: boolean, language?: string } = {}) {
+  static async setupLocalStorage(page: Page, settings: { recentRaceIds?: string[], selectedDriverIds?: string[], racedaySetupWalkthroughSeen?: boolean, shareAnalytics?: boolean, language?: string } = {}) {
     await page.addInitScript((s) => {
       const defaultSettings = {
         recentRaceIds: ['r1', 'r2'],
@@ -938,7 +959,7 @@ export class TestSetupHelper {
       } else {
         document.addEventListener('DOMContentLoaded', injectStyle);
       }
-      
+
       // Also inject periodically just in case Angular or something rewrites head
       const observer = new MutationObserver(() => {
         if (document.head && !document.getElementById('playwright-disable-animations')) {
@@ -949,7 +970,7 @@ export class TestSetupHelper {
     }, css);
 
     // Apply immediately to current execution context to be safe
-    await page.addStyleTag({ content: css }).catch(() => {});
+    await page.addStyleTag({ content: css }).catch(() => { });
   }
 
   static async setupManyTracksMock(page: Page) {

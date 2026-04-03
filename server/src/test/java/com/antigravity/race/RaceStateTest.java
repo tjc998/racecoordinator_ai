@@ -78,7 +78,7 @@ public class RaceStateTest {
     RaceParticipant participant = new RaceParticipant(realDriver, "participant1");
     drivers.add(participant);
 
-    race = new com.antigravity.race.Race((com.antigravity.models.Race) realRaceModel, (java.util.List<com.antigravity.race.RaceParticipant>) drivers, (com.antigravity.models.Track) realTrack, true, 0.0, 0.0); // true for DemoMode
+    race = new Race.Builder().model(realRaceModel).drivers(drivers).track(realTrack).isDemoMode(true).build();
     ClientSubscriptionManager.getInstance().setRace(race);
   }
 

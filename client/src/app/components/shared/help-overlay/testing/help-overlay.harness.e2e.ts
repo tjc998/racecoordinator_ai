@@ -63,30 +63,26 @@ export class HelpOverlayHarnessE2e implements HelpOverlayHarnessBase {
     let lastMaskBox = (await this.highlightMask.count()) > 0 ? await this.highlightMask.boundingBox() : null;
     let stableCount = 0;
 
+    const isStable = (b1: any, b2: any) => {
+      if (!b1 || !b2) return b1 === b2;
+      return Math.abs(b1.x - b2.x) < 0.01 &&
+             Math.abs(b1.y - b2.y) < 0.01 &&
+             Math.abs(b1.width - b2.width) < 0.01 &&
+             Math.abs(b1.height - b2.height) < 0.01;
+    };
+
     for (let i = 0; i < 40; i++) { // Max 2s
       await this.page.waitForTimeout(50);
       const currentPopoverBox = await this.popover.boundingBox();
       const currentMaskBox = (await this.highlightMask.count()) > 0 ? await this.highlightMask.boundingBox() : null;
 
-      const popoverStable = currentPopoverBox && lastPopoverBox &&
-        currentPopoverBox.x === lastPopoverBox.x &&
-        currentPopoverBox.y === lastPopoverBox.y &&
-        currentPopoverBox.width === lastPopoverBox.width &&
-        currentPopoverBox.height === lastPopoverBox.height;
-
-      const maskStable = (!currentMaskBox && !lastMaskBox) || (currentMaskBox && lastMaskBox &&
-        currentMaskBox.x === lastMaskBox.x &&
-        currentMaskBox.y === lastMaskBox.y &&
-        currentMaskBox.width === lastMaskBox.width &&
-        currentMaskBox.height === lastMaskBox.height);
-
-      if (popoverStable && maskStable) {
+      if (isStable(currentPopoverBox, lastPopoverBox) && isStable(currentMaskBox, lastMaskBox)) {
         stableCount++;
       } else {
         stableCount = 0;
       }
 
-      if (stableCount >= 5) break;
+      if (stableCount >= 8) break;
       lastPopoverBox = currentPopoverBox;
       lastMaskBox = currentMaskBox;
     }

@@ -53,7 +53,7 @@ public class RacePersistenceTest {
         .withOverallScoring(new com.antigravity.models.OverallScoring())
         .withEntityId("race1")
         .build();
-    Race race = new Race(raceModel, drivers, track, true);
+    Race race = new Race.Builder().model(raceModel).drivers(drivers).track(track).isDemoMode(true).build();
 
     // Execute
     List<Heat> heats = HeatBuilder.buildHeats(race, drivers);

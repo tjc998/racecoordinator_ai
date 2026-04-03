@@ -46,7 +46,8 @@ public class ClientCommandTaskHandler {
     app.post("/api/save-race", this::saveRace);
     app.get("/api/saved-races", this::getSavedRaces);
     app.post("/api/load-race", this::loadRace);
-    app.delete("/api/saved-races/{filename}", this::deleteSavedRace);
+    app.post("/api/analytics/toggle", this::toggleAnalytics);
+    app.get("/api/analytics/config", this::getAnalyticsConfig);
   }
 
   private void initializeRace(Context ctx) {
@@ -180,13 +181,12 @@ public class ClientCommandTaskHandler {
     com.antigravity.models.Track raceTrack = new com.antigravity.service.DatabaseService()
         .getTrack(databaseContext.getDatabase(), raceModel.getTrackEntityId());
 
-    com.antigravity.race.Race race = new com.antigravity.race.Race(
-        raceModel,
-        participants,
-        raceTrack,
-        request.getIsDemoMode(),
-        raceModel.getAutoAdvanceTime(),
-        raceModel.getAutoStartTime());
+    com.antigravity.race.Race race = new com.antigravity.race.Race.Builder()
+        .model(raceModel)
+        .drivers(participants)
+        .track(raceTrack)
+        .isDemoMode(request.getIsDemoMode())
+        .build();
 
     try {
       ClientSubscriptionManager.getInstance().setRace(race);
@@ -198,6 +198,7 @@ public class ClientCommandTaskHandler {
     }
 
     System.out.println("Initialized race: " + race.getRaceModel().getName());
+    com.antigravity.service.AnalyticsService.getInstance().trackRaceStart(race);
 
     // com.antigravity.models.Track track = race.getTrack();
 
@@ -514,16 +515,19 @@ public class ClientCommandTaskHandler {
       if (lane >= 0 && lane < drivers.size()) {
         com.antigravity.race.DriverHeatData dhd = drivers.get(lane);
         com.antigravity.service.DatabaseService dbService = new com.antigravity.service.DatabaseService();
-        java.util.List<com.antigravity.models.Driver> driversList = dbService.getDrivers(databaseContext.getDatabase(), java.util.Collections.singletonList(driverId));
+        java.util.List<com.antigravity.models.Driver> driversList = dbService.getDrivers(databaseContext.getDatabase(),
+            java.util.Collections.singletonList(driverId));
         com.antigravity.models.Driver driver = driversList.isEmpty() ? null : driversList.get(0);
-        
+
         if (driver != null) {
           com.antigravity.models.TeamOptions options = race.getRaceModel().getTeamOptions();
-          if (options != null && options.isRequirePitStopChangeDriver() && race.getState() instanceof com.antigravity.race.states.Racing) {
+          if (options != null && options.isRequirePitStopChangeDriver()
+              && race.getState() instanceof com.antigravity.race.states.Racing) {
             com.antigravity.protocols.CarLocation loc = dhd.getCurrentLocation();
             boolean inPit = loc == com.antigravity.protocols.CarLocation.PitRow
                 || (loc != null && loc.getValue() >= com.antigravity.protocols.CarLocation.PitBayBase.getValue()
-                    && loc.getValue() < com.antigravity.protocols.CarLocation.PitBayBase.getValue() + race.getTrack().getLanes().size());
+                    && loc.getValue() < com.antigravity.protocols.CarLocation.PitBayBase.getValue()
+                        + race.getTrack().getLanes().size());
             if (!inPit) {
               ctx.status(403).result("RD_ERR_DRIVER_CHANGE_NOT_IN_PIT");
               return;
@@ -592,10 +596,12 @@ public class ClientCommandTaskHandler {
       saveData.setAccumulatedRaceTime(race.getRaceTime());
       saveData.setHasRacedInCurrentHeat(race.hasRacedInCurrentHeat());
       saveData.setCurrentHeatIndex(race.getHeats().indexOf(race.getCurrentHeat()));
-      
+
       // We need to know if it's demo mode.
-      // Protocols list isn't exposed directly with its type, but createProtocols takes isDemoMode.
-      // We can check if protocols has Demo protocol or check the parameter passed on init.
+      // Protocols list isn't exposed directly with its type, but createProtocols
+      // takes isDemoMode.
+      // We can check if protocols has Demo protocol or check the parameter passed on
+      // init.
       // Currently, it's not saved on the Race object.
       // Let's assume for now, or check if any protocol is Demo.
       saveData.setDemoMode(race.isDemoMode());
@@ -607,8 +613,8 @@ public class ClientCommandTaskHandler {
       String saveDir = databaseContext.getDataRoot() + dbName + File.separator + "saved_races";
       File dir = new File(saveDir);
       if (!dir.exists() && !dir.mkdirs()) {
-          ctx.status(500).result("Failed to create save directory");
-          return;
+        ctx.status(500).result("Failed to create save directory");
+        return;
       }
 
       java.time.LocalDateTime now = java.time.LocalDateTime.now();
@@ -619,7 +625,7 @@ public class ClientCommandTaskHandler {
       String filename = timestamp + "_" + raceName + ".json";
       File file = new File(dir, filename);
       try (FileWriter writer = new FileWriter(file)) {
-          writer.write(json);
+        writer.write(json);
       }
 
       ctx.status(200).result("Race saved successfully: " + filename);
@@ -669,8 +675,8 @@ public class ClientCommandTaskHandler {
       java.util.Map<String, String> body = ctx.bodyAsClass(java.util.Map.class);
       String filename = body.get("filename");
       if (filename == null) {
-          ctx.status(400).result("Filename is required");
-          return;
+        ctx.status(400).result("Filename is required");
+        return;
       }
 
       String dbName = databaseContext.getCurrentDatabaseName();
@@ -687,7 +693,8 @@ public class ClientCommandTaskHandler {
 
       // Compare Track
       com.antigravity.models.Track savedTrack = saveData.getTrack();
-      com.antigravity.models.Track dbTrack = new DatabaseService().getTrack(databaseContext.getDatabase(), saveData.getModel().getTrackEntityId());
+      com.antigravity.models.Track dbTrack = new DatabaseService().getTrack(databaseContext.getDatabase(),
+          saveData.getModel().getTrackEntityId());
 
       com.antigravity.models.Track trackToUse = savedTrack;
       if (dbTrack != null && dbTrack.getLanes().size() == savedTrack.getLanes().size()) {
@@ -702,22 +709,23 @@ public class ClientCommandTaskHandler {
       }
 
       // Recreate Race
-      com.antigravity.race.Race race = new com.antigravity.race.Race(
-          saveData.getModel(),
-          saveData.getDrivers(),
-          trackToUse,
-          saveData.getHeats(),
-          saveData.getCurrentHeatIndex(),
-          saveData.getAccumulatedRaceTime(),
-          saveData.isHasRacedInCurrentHeat(),
-          saveData.isAutoStartFired(),
-          saveData.isAutoAdvanceFired(),
-          saveData.getStateClassName(),
-          saveData.isDemoMode()
-      );
+      com.antigravity.race.Race race = new com.antigravity.race.Race.Builder()
+          .model(saveData.getModel())
+          .drivers(saveData.getDrivers())
+          .track(trackToUse)
+          .heats(saveData.getHeats())
+          .currentHeatIndex(saveData.getCurrentHeatIndex())
+          .accumulatedRaceTime(saveData.getAccumulatedRaceTime())
+          .hasRacedInCurrentHeat(saveData.isHasRacedInCurrentHeat())
+          .autoStartFired(saveData.isAutoStartFired())
+          .autoAdvanceFired(saveData.isAutoAdvanceFired())
+          .stateClassName(saveData.getStateClassName())
+          .isDemoMode(saveData.isDemoMode())
+          .build();
 
       ClientSubscriptionManager.getInstance().setRace(race);
       race.init(); // Open protocols
+      com.antigravity.service.AnalyticsService.getInstance().trackRaceStart(race);
 
       ctx.status(200).result("Race loaded successfully");
     } catch (Exception e) {
@@ -727,32 +735,138 @@ public class ClientCommandTaskHandler {
     }
   }
 
+  /* package */ void getAnalyticsConfig(Context ctx) {
+    java.util.Map<String, String> config = new java.util.HashMap<>();
+    config.put("clientId", com.antigravity.service.AnalyticsService.getInstance().getClientId());
+    config.put("measurementId", com.antigravity.service.AnalyticsService.getInstance().getMeasurementId());
+    setJson(ctx, config);
+  }
+
+  /* package */ void toggleAnalytics(Context ctx) {
+    String remoteAddr = getRemoteAddr(ctx);
+    String remoteHost = getRemoteHost(ctx);
+
+    boolean isLocalhost = isLocalAddress(remoteAddr, remoteHost);
+
+    if (!isLocalhost) {
+      setStatus(ctx, 403);
+      setResult(ctx, "Analytics settings can only be changed from a local connection. Detected: " + remoteAddr);
+      return;
+    }
+
+    try {
+      com.fasterxml.jackson.databind.ObjectMapper mapper = getObjectMapper();
+      com.antigravity.models.AnalyticsToggleRequest request = mapper.readValue(getBodyBytes(ctx), com.antigravity.models.AnalyticsToggleRequest.class);
+      if (request == null) {
+        setStatus(ctx, 400);
+        setResult(ctx, "Invalid request body. Expected JSON with 'enabled' field.");
+        return;
+      }
+
+      boolean enabled = request.isEnabled();
+      com.antigravity.service.AnalyticsService.getInstance().setUserEnabled(enabled);
+      setStatus(ctx, 200);
+      setResult(ctx, "Analytics status updated to " + enabled);
+    } catch (Exception e) {
+      setStatus(ctx, 500);
+      setResult(ctx, "Internal Error: " + e.getMessage());
+    }
+  }
+
+  /* package */ String getRemoteAddr(Context ctx) {
+    return ctx.req.getRemoteAddr();
+  }
+
+  /* package */ String getRemoteHost(Context ctx) {
+    return ctx.req.getRemoteHost();
+  }
+
+  /* package */ void setStatus(Context ctx, int status) {
+    ctx.status(status);
+  }
+
+  /* package */ void setResult(Context ctx, String result) {
+    ctx.result(result);
+  }
+
+  /* package */ void setJson(Context ctx, Object obj) {
+    ctx.json(obj);
+  }
+
+  /* package */ byte[] getBodyBytes(Context ctx) {
+    return ctx.bodyAsBytes();
+  }
+
+  /* package */ boolean isLocalAddress(String remoteAddr, String remoteHost) {
+    try {
+      // Explicitly check for all common localhost IP and hostname variations
+      if ("127.0.0.1".equals(remoteAddr) ||
+          "0:0:0:0:0:0:0:1".equals(remoteAddr) ||
+          "::1".equals(remoteAddr) ||
+          "localhost".equals(remoteAddr) ||
+          "localhost".equals(remoteHost) ||
+          "127.0.0.1".equals(remoteHost) ||
+          "::1".equals(remoteHost) ||
+          "0:0:0:0:0:0:0:1".equals(remoteHost) ||
+          "::ffff:127.0.0.1".equals(remoteAddr) ||
+          "0.0.0.0".equals(remoteAddr)) {
+        return true;
+      }
+
+      java.net.InetAddress addr = java.net.InetAddress.getByName(remoteAddr);
+      if (addr.isLoopbackAddress()) {
+        return true;
+      }
+
+      // Verify if the remote address matches any address on the local network
+      // interfaces
+      java.util.Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface
+          .getNetworkInterfaces();
+      while (interfaces.hasMoreElements()) {
+        java.util.Enumeration<java.net.InetAddress> addresses = interfaces.nextElement().getInetAddresses();
+        while (addresses.hasMoreElements()) {
+          if (addresses.nextElement().getHostAddress().equals(remoteAddr)) {
+            return true;
+          }
+        }
+      }
+    } catch (Exception e) {
+      // If hostname resolution fails, fallback to simple string check
+    }
+
+    return "127.0.0.1".equals(remoteAddr) || "::1".equals(remoteAddr) || "localhost".equals(remoteAddr);
+  }
+
   com.fasterxml.jackson.databind.ObjectMapper getObjectMapper() {
     com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
     mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
     mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    
+
     com.fasterxml.jackson.databind.module.SimpleModule module = new com.fasterxml.jackson.databind.module.SimpleModule();
-    module.addSerializer(org.bson.types.ObjectId.class, new com.fasterxml.jackson.databind.JsonSerializer<org.bson.types.ObjectId>() {
-      @Override
-      public void serialize(org.bson.types.ObjectId value, com.fasterxml.jackson.core.JsonGenerator gen, com.fasterxml.jackson.databind.SerializerProvider serializers) throws java.io.IOException {
-        gen.writeString(value.toHexString());
-      }
-    });
-    module.addDeserializer(org.bson.types.ObjectId.class, new com.fasterxml.jackson.databind.JsonDeserializer<org.bson.types.ObjectId>() {
-      @Override
-      public org.bson.types.ObjectId deserialize(com.fasterxml.jackson.core.JsonParser p, com.fasterxml.jackson.databind.DeserializationContext ctxt) throws java.io.IOException {
-        String value = p.getValueAsString();
-        if (value == null || value.isEmpty()) {
-            return null;
-        }
-        try {
-            return new org.bson.types.ObjectId(value);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
-      }
-    });
+    module.addSerializer(org.bson.types.ObjectId.class,
+        new com.fasterxml.jackson.databind.JsonSerializer<org.bson.types.ObjectId>() {
+          @Override
+          public void serialize(org.bson.types.ObjectId value, com.fasterxml.jackson.core.JsonGenerator gen,
+              com.fasterxml.jackson.databind.SerializerProvider serializers) throws java.io.IOException {
+            gen.writeString(value.toHexString());
+          }
+        });
+    module.addDeserializer(org.bson.types.ObjectId.class,
+        new com.fasterxml.jackson.databind.JsonDeserializer<org.bson.types.ObjectId>() {
+          @Override
+          public org.bson.types.ObjectId deserialize(com.fasterxml.jackson.core.JsonParser p,
+              com.fasterxml.jackson.databind.DeserializationContext ctxt) throws java.io.IOException {
+            String value = p.getValueAsString();
+            if (value == null || value.isEmpty()) {
+              return null;
+            }
+            try {
+              return new org.bson.types.ObjectId(value);
+            } catch (IllegalArgumentException e) {
+              return null;
+            }
+          }
+        });
     mapper.registerModule(module);
     return mapper;
   }

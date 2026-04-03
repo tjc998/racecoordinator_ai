@@ -5,21 +5,30 @@ import { TranslationService } from '../../../services/translation.service';
 import { TranslatePipe } from '../../../pipes/translate.pipe';
 import { UndoManager } from '../undo-redo-controls/undo-manager';
 import { ToolbarHarness } from './testing/toolbar.harness';
+import { AnalyticsService } from 'src/app/analytics.service';
+import { AcknowledgementModalComponent } from '../acknowledgement-modal/acknowledgement-modal.component';
+import { of } from 'rxjs';
 
 describe('ToolbarComponent', () => {
   let component: ToolbarComponent;
   let fixture: ComponentFixture<ToolbarComponent>;
   let harness: ToolbarHarness;
   let translationServiceSpy: jasmine.SpyObj<TranslationService>;
+  let analyticsServiceSpy: jasmine.SpyObj<AnalyticsService>;
 
   beforeEach(async () => {
     translationServiceSpy = jasmine.createSpyObj('TranslationService', ['translate']);
     translationServiceSpy.translate.and.callFake((key: string) => key);
 
+    analyticsServiceSpy = jasmine.createSpyObj('AnalyticsService', ['isEnabled', 'toggleAnalytics', 'trackClick']);
+    analyticsServiceSpy.isEnabled.and.returnValue(true);
+    analyticsServiceSpy.toggleAnalytics.and.returnValue(of({ success: true }));
+
     await TestBed.configureTestingModule({
-      declarations: [ToolbarComponent, TranslatePipe],
+      declarations: [ToolbarComponent, TranslatePipe, AcknowledgementModalComponent],
       providers: [
-        { provide: TranslationService, useValue: translationServiceSpy }
+        { provide: TranslationService, useValue: translationServiceSpy },
+        { provide: AnalyticsService, useValue: analyticsServiceSpy }
       ]
     }).compileComponents();
 
@@ -131,5 +140,48 @@ describe('ToolbarComponent', () => {
 
     expect(await harness.isEditDisabled()).toBeTrue();
     expect(await harness.isDeleteDisabled()).toBeTrue();
+  });
+
+  describe('Analytics', () => {
+    it('should show analytics icon', async () => {
+      expect(await harness.isAnalyticsVisible()).toBeTrue();
+    });
+
+    it('should NOT show modal on successful toggle (localhost or remote)', async () => {
+      analyticsServiceSpy.toggleAnalytics.and.returnValue(of({ success: true }));
+      
+      await harness.clickAnalytics();
+      fixture.detectChanges();
+
+      expect(analyticsServiceSpy.toggleAnalytics).toHaveBeenCalled();
+      expect(component.showAnalyticsModal).toBeFalse();
+    });
+
+    it('should show error modal on synchronization failure (localhost)', async () => {
+      const errorResult = { 
+        success: false, 
+        titleKey: 'RDS_ANALYTICS_ENABLED_TITLE', 
+        messageKey: 'RDS_ANALYTICS_SYNC_ERROR' 
+      };
+      analyticsServiceSpy.toggleAnalytics.and.returnValue(of(errorResult));
+      
+      await harness.clickAnalytics();
+      fixture.detectChanges();
+
+      expect(analyticsServiceSpy.toggleAnalytics).toHaveBeenCalled();
+      expect(component.showAnalyticsModal).toBeTrue();
+      expect(component.analyticsModalTitle).toBe('RDS_ANALYTICS_ENABLED_TITLE');
+      expect(component.analyticsModalMessage).toBe('RDS_ANALYTICS_SYNC_ERROR');
+    });
+
+    it('should close analytics modal on acknowledge', async () => {
+      component.showAnalyticsModal = true;
+      fixture.detectChanges();
+      
+      component.onAnalyticsModalAcknowledge();
+      fixture.detectChanges();
+
+      expect(component.showAnalyticsModal).toBeFalse();
+    });
   });
 });

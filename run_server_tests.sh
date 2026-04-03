@@ -27,4 +27,5 @@ mvn test \
   -Dbuild.dist.dir="$SERVER_BUILD_DIR" \
   -DskipProtobuf=true \
   -DforkCount=0 \
-  -Djava.io.tmpdir="$SERVER_TMP"
+  -Djava.io.tmpdir="$SERVER_TMP" \
+  -Dmaven.repo.local="$SERVER_DIR/.m2/repository"

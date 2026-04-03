@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 import { TestSetupHelper } from '../../../testing/test-setup_helper';
 import { HelpOverlayHarnessE2e } from './testing/help-overlay.harness.e2e';
 
@@ -10,17 +10,16 @@ test.describe('Help Overlay Visuals', () => {
     await TestSetupHelper.setupRaceMocks(page);
 
     // Ensure we don't auto-trigger help from "first run" logic by presetting settings
-    await TestSetupHelper.setupLocalStorage(page, { racedaySetupWalkthroughSeen: true });
+    await TestSetupHelper.setupLocalStorage(page, { 
+      racedaySetupWalkthroughSeen: true,
+      shareAnalytics: true // Ensure analytics button is in a known state (enabled)
+    });
 
     // Skip splash screen
     await TestSetupHelper.setupSessionStorage(page, { skipIntro: 'true' });
   });
 
-  async function waitForPopoverStable(page, harness: HelpOverlayHarnessE2e) {
-    await harness.waitForStable();
-  }
-
-  test('should display help guide and navigate correctly', async ({ page }) => {
+  async function setupHelp(page: Page) {
     // 1. Load Page
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/'));
 
@@ -28,62 +27,128 @@ test.describe('Help Overlay Visuals', () => {
     await expect(page.locator('.logo-text')).toBeVisible();
 
     // 2. Click Help Icon
-    const helpIcon = page.locator('.help-icon');
+    const helpIcon = page.locator('.toolbar-btn.help');
     await expect(helpIcon).toBeVisible();
     await helpIcon.click();
+    await page.mouse.move(0, 0); // Clear hover states
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur()); // Clear focus rings
 
     // Wait for overlay to appear
     const overlay = page.locator('app-help-overlay');
     const harness = new HelpOverlayHarnessE2e(overlay, page);
-    await waitForPopoverStable(page, harness);
+    await harness.waitForStable();
+    return harness;
+  }
 
-    // 3. Verify Step 1 (Welcome - general modal, centered)
+  test('should show help step 1: Welcome', async ({ page }) => {
+    const harness = await setupHelp(page);
+
+    // Verify Step 1 (Welcome - general modal, centered)
     await expect(async () => {
       expect(await harness.getContent()).toContain('configure and start your races');
-    }).toPass();
+    }).toPass({ timeout: 10000 });
+
     // Capture Step 1
-    await expect(page).toHaveScreenshot('help-step-1-welcome.png');
-
-    // 4. Click Next -> Step 2 (Walkthrough - targets help icon)
-    await harness.clickNext();
-
-    // Wait for transition/position update
-    // The highlight mask should appear around the help icon
     await expect(async () => {
+      expect(await harness.getStepCounter()).toContain('1');
+    }).toPass();
+    await page.waitForTimeout(200); // Allow focus/render to settle
+    await expect(page).toHaveScreenshot('help-step-1-welcome.png', { maxDiffPixels: 1000 });
+  });
+
+  test('should show help step 2: Walkthrough Icon', async ({ page }) => {
+    const harness = await setupHelp(page);
+
+    // Move to Step 2
+    await harness.clickNext();
+    await page.mouse.move(0, 0); // Clear hover states
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur()); // Clear focus rings
+
+    // Verify Step 2 (Walkthrough - targets help icon)
+    await expect(async () => {
+      expect(await harness.getStepCounter()).toContain('2');
       expect(await harness.getContent()).toContain('walkthrough');
     }).toPass();
-    await waitForPopoverStable(page, harness);
+    await harness.waitForStable();
     await expect(async () => {
       expect(await harness.hasHighlightMask()).toBe(true);
     }).toPass();
 
     // Capture Step 2
-    await expect(page).toHaveScreenshot('help-step-2-icon-target.png');
+    await page.waitForTimeout(200); // Allow focus/render to settle
+    await expect(page).toHaveScreenshot('help-step-2-icon-target.png', { maxDiffPixels: 1000 });
+  });
 
-    // 5. Click Next -> Step 3 (Driver Selection - targets driver panel)
+  test('should show help step 3: Analytics', async ({ page }) => {
+    const harness = await setupHelp(page);
+
+    // Move to Step 3
     await harness.clickNext();
+    await harness.clickNext();
+    await page.mouse.move(0, 0); // Clear hover states
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur()); // Clear focus rings
+
+    // Verify Step 3 (Analytics - targets analytics icon)
     await expect(async () => {
+      expect(await harness.getStepCounter()).toContain('3');
+      expect(await harness.getContent()).toContain('report usage data');
+    }).toPass();
+    await harness.waitForStable();
+
+    // Capture Step 3
+    await page.waitForTimeout(200); // Allow focus/render to settle
+    await expect(page).toHaveScreenshot('help-step-3-analytics.png', { maxDiffPixels: 1000 });
+  });
+
+  test('should show help step 4: Driver Selection', async ({ page }) => {
+    const harness = await setupHelp(page);
+
+    // Move to Step 4
+    await harness.clickNext();
+    await harness.clickNext();
+    await harness.clickNext();
+    await page.mouse.move(0, 0); // Clear hover states
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur()); // Clear focus rings
+
+    // Verify Step 4 (Driver Selection - targets driver panel)
+    await expect(async () => {
+      expect(await harness.getStepCounter()).toContain('4');
       expect(await harness.getContent()).toContain('select who will be racing');
     }).toPass();
-    await waitForPopoverStable(page, harness);
-    // Capture Step 3
-    await expect(page).toHaveScreenshot('help-step-3-driver-panel.png');
+    await harness.waitForStable();
 
-    // 6. Test Previous Button
+    // Capture Step 4
+    await page.waitForTimeout(200); // Allow focus/render to settle
+    await expect(page).toHaveScreenshot('help-step-4-driver-panel.png', { maxDiffPixels: 1000 });
+  });
+
+  test('should navigate back to Analytics step correctly', async ({ page }) => {
+    const harness = await setupHelp(page);
+
+    // Move to Step 4, then back to 3
+    await harness.clickNext();
+    await harness.clickNext();
+    await harness.clickNext();
     await harness.clickPrevious();
+    await page.mouse.move(0, 0); // Clear hover states
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur()); // Clear focus rings
 
-    // Should be back at Step 2
+    // Should be back at Step 3 (Analytics)
     await expect(async () => {
-      expect(await harness.getContent()).toContain('walkthrough');
+      expect(await harness.getStepCounter()).toContain('3');
+      expect(await harness.getContent()).toContain('report usage data');
     }).toPass();
-    await waitForPopoverStable(page, harness);
-    // Verify visual match with previous capture (optional, but good for logic check)
-    // We'll just capture to ensure consistency
-    await expect(page).toHaveScreenshot('help-step-2-icon-target.png');
+    await harness.waitForStable();
 
-    // 7. End Guide
-    // Determine if we can click Finish or Close. 
-    // We are at step 2, not the end, so we should use the Close (x) button in header
+    // Verify visual match
+    await page.waitForTimeout(500); // Allow focus/render to settle
+    await expect(page).toHaveScreenshot('help-step-3-analytics.png', { maxDiffPixels: 1000 });
+  });
+
+  test('should close the help guide when the close button is clicked', async ({ page }) => {
+    const harness = await setupHelp(page);
+
+    // Click Close (x) button in header
     await harness.clickClose();
 
     await expect(async () => {

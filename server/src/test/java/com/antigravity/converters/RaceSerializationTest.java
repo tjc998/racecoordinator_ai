@@ -59,7 +59,7 @@ public class RaceSerializationTest {
   @Test
   public void testSerializeRaceWithEmptyLanes() {
     // This creates a race with 1 real driver and 1 empty driver (numLanes = 2)
-    Race race = new Race(raceModel, drivers, track, true);
+    Race race = new Race.Builder().model(raceModel).drivers(drivers).track(track).isDemoMode(true).build();
 
     Set<String> sentObjectIds = new HashSet<>();
     com.antigravity.proto.Race proto = RaceConverter.toProto(race, sentObjectIds);

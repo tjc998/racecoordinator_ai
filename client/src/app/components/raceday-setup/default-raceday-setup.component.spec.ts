@@ -11,7 +11,8 @@ import { TranslatePipe } from 'src/app/pipes/translate.pipe';
 import { FileSystemService } from 'src/app/services/file-system.service';
 import { HelpService } from 'src/app/services/help.service';
 import { HelpOverlayComponent } from '../shared/help-overlay/help-overlay.component';
-import { of, BehaviorSubject } from 'rxjs';
+import { of, BehaviorSubject, throwError } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { DefaultRacedaySetupHarness } from './testing/default-raceday-setup.harness';
 
 import { FormsModule } from '@angular/forms';
@@ -27,12 +28,12 @@ describe('DefaultRacedaySetupComponent', () => {
   let mockRaceService: jasmine.SpyObj<RaceService>;
   let mockTranslationService: jasmine.SpyObj<TranslationService>;
   let mockSettingsService: jasmine.SpyObj<SettingsService>;
-  let mockRouter: jasmine.SpyObj<Router>;
   let mockFileSystemService: jasmine.SpyObj<FileSystemService>;
   let mockHelpService: any;
+  let mockRouter: jasmine.SpyObj<Router>;
 
   beforeEach(() => {
-    mockDataService = jasmine.createSpyObj('DataService', ['getDrivers', 'getTeams', 'getRaces', 'initializeRace', 'getSavedRaces', 'loadRace', 'deleteSavedRace']);
+    mockDataService = jasmine.createSpyObj('DataService', ['getDrivers', 'getTeams', 'getRaces', 'initializeRace', 'getSavedRaces', 'loadRace', 'deleteSavedRace', 'toggleServerAnalytics']);
     mockRaceService = jasmine.createSpyObj('RaceService', ['startRace']);
     mockTranslationService = jasmine.createSpyObj('TranslationService', ['getTranslationsLoaded', 'translate', 'setLanguage', 'getSupportedLanguages', 'getBrowserLanguage']);
     mockSettingsService = jasmine.createSpyObj('SettingsService', ['getSettings', 'saveSettings']);
@@ -60,6 +61,7 @@ describe('DefaultRacedaySetupComponent', () => {
     mockDataService.getSavedRaces.and.returnValue(of(['race1.json', 'race2.json']));
     mockDataService.loadRace.and.returnValue(of('OK'));
     mockDataService.deleteSavedRace.and.returnValue(of('OK'));
+    mockDataService.toggleServerAnalytics.and.returnValue(of('OK'));
     mockTranslationService.getTranslationsLoaded.and.returnValue(of(true));
     mockTranslationService.translate.and.callFake((key) => key);
     mockTranslationService.getBrowserLanguage.and.returnValue('en');

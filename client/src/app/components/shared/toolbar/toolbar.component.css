@@ -82,12 +82,14 @@
 }
 
 /* Undo/Redo specific */
-.toolbar-btn.undo, .toolbar-btn.redo {
+.toolbar-btn.undo,
+.toolbar-btn.redo {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.toolbar-btn.undo:hover:not(:disabled), .toolbar-btn.redo:hover:not(:disabled) {
+.toolbar-btn.undo:hover:not(:disabled),
+.toolbar-btn.redo:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.4);
 }
@@ -96,4 +98,48 @@
   width: 20px;
   height: 20px;
   fill: currentColor;
+}
+
+.toolbar-utility-group {
+  display: flex;
+  align-items: center;
+}
+
+.toolbar-utility-group .toolbar-btn {
+  width: 26px;
+  min-width: 26px;
+}
+
+/* Analytics Toggle */
+.toolbar-btn.analytics {
+  position: relative;
+}
+
+.toolbar-btn.analytics:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.analytics-icon-wrapper {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.analytics-svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+.prohibited-svg {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+  filter: drop-shadow(0 0 2px rgba(255, 68, 68, 0.5));
 }

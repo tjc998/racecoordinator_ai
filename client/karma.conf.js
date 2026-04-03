@@ -18,7 +18,7 @@ module.exports = function (config) {
   if (!fs.existsSync(chromeCrashDumps)) fs.mkdirSync(chromeCrashDumps, { recursive: true });
 
   // Override environment variables
-  process.env.HOME = chromeHome;
+  // process.env.HOME = chromeHome; // Commenting out to avoid Mach port permission errors on macOS
   process.env.XDG_CONFIG_HOME = path.join(tmpDir, 'config');
   process.env.XDG_CACHE_HOME = path.join(tmpDir, 'cache');
   process.env.XDG_RUNTIME_DIR = path.join(tmpDir, 'run');
@@ -91,7 +91,10 @@ module.exports = function (config) {
           '--disable-sync',
           '--remote-debugging-port=9222',
           '--disable-software-rasterizer',
-          '--disk-cache-dir=' + path.join(tmpDir, 'cache')
+          '--disk-cache-dir=' + path.join(tmpDir, 'cache'),
+          '--disable-features=Dial',
+          '--remote-allow-origins=*',
+          '--disable-gpu-sandbox'
         ]
       }
     },

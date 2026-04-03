@@ -87,3 +87,6 @@ data_v3
 
 client/package-lock.json
 build_cache
+
+# Analytics
+server/src/main/resources/analytics.properties

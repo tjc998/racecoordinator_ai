@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { AnalyticsService } from '../analytics.service';
 
 export interface GuideStep {
   targetId?: string; // ID of the element to highlight. If null/undefined, it's a general modal.
@@ -28,12 +29,16 @@ export class HelpService {
   private _hasPrevious = new BehaviorSubject<boolean>(false);
   hasPrevious$ = this._hasPrevious.asObservable();
 
-  constructor() { }
+  constructor(private analyticsService: AnalyticsService) { }
 
   startGuide(steps: GuideStep[]) {
     if (!steps || steps.length === 0) return;
     this.steps = steps;
     this.currentStepIndex = 0;
+
+    const guideName = steps[0].title || 'Unknown Guide';
+    this.analyticsService.trackClick('help_started', { guide_name: guideName });
+
     this.updateState();
     this._isVisible.next(true);
   }
@@ -55,6 +60,16 @@ export class HelpService {
   }
 
   endGuide() {
+    if (this.steps.length > 0) {
+      const guideName = this.steps[0].title || 'Unknown Guide';
+      if (this.currentStepIndex === this.steps.length - 1) {
+        this.analyticsService.trackClick('help_completed', { guide_name: guideName });
+      } else {
+        const stepTitle = this.steps[this.currentStepIndex].title;
+        this.analyticsService.trackClick('help_ended_early', { guide_name: guideName, step_index: this.currentStepIndex, step_title: stepTitle });
+      }
+    }
+
     this._isVisible.next(false);
     this._currentStep.next(null);
     this.steps = [];
