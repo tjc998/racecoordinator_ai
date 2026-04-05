@@ -63,26 +63,18 @@
       <div class="menu-wrapper" *ngIf="track && track.lanes">
         <button class="menu-button-top" (click)="toggleLanesMenu()">{{ 'RD_MENU_LANES' | translate }}</button>
         <div *ngIf="isLanesMenuOpen" class="menu-dropdown top-dropdown">
-          <div *ngFor="let lane of track.lanes; let i = index" class="menu-item" (click)="onLaneMenuSelect(i)">
-            {{ 'RD_MENU_LANE' | translate }} {{ i + 1 }}
+          <div class="menu-item has-submenu" (click)="toggleDriversStationMenu(); $event.stopPropagation()">
+            {{ 'RD_MENU_DRIVERS_STATION' | translate }}
+            <span class="submenu-arrow">▶</span>
+              <div *ngIf="isDriversStationOpen" class="menu-dropdown submenu">
+                <div *ngFor="let lane of track.lanes; let i = index" class="menu-item" (click)="onLaneMenuSelect(i)">
+                  {{ 'RD_MENU_LANE' | translate:{lane: i + 1} }}
+                </div>
+              </div>
           </div>
         </div>
       </div>
-      <div class="menu-wrapper">
-        <button class="menu-button-top" (click)="toggleWindowsMenu()">{{ 'RD_MENU_WINDOWS' | translate }}</button>
-        <div *ngIf="isWindowsMenuOpen" class="menu-dropdown top-dropdown">
-          <div class="menu-item" (click)="onWindowsMenuSelect('DRIVER_LIST')">{{ 'RD_MENU_DRIVER_LIST' | translate }}
-          </div>
-          <div class="menu-item" (click)="onWindowsMenuSelect('RACE_SETUP')">{{ 'RD_MENU_RACE_SETUP' | translate }}
-          </div>
-          <div class="menu-item" (click)="onWindowsMenuSelect('TRACK_SETUP')">{{ 'RD_MENU_TRACK_SETUP' | translate }}
-          </div>
-          <div class="menu-item" (click)="onWindowsMenuSelect('SETTINGS')">{{ 'RD_MENU_SETTINGS' | translate }}</div>
-          <div class="menu-item" (click)="onWindowsMenuSelect('STANDINGS')">{{ 'RD_MENU_STANDINGS' | translate }}</div>
-          <div class="menu-item" (click)="onWindowsMenuSelect('STATISTICS')">{{ 'RD_MENU_STATISTICS' | translate }}
-          </div>
-        </div>
-      </div>
+
     </div>
 
     <ng-container *ngIf="heat && race">

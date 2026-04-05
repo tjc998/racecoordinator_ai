@@ -412,6 +412,7 @@
   "RD_MENU_EXIT": "Naar Startscherm",
   "RD_MENU_EXPORT_CSV": "Exporteren naar CSV",
   "RD_MENU_FILE": "Bestand",
+  "RD_MENU_LANE": "Baan {{lane}}",
   "RD_MENU_LANES": "Banen",
   "RD_MENU_MODIFY": "Heats Wijzigen",
   "RD_MENU_NEXT_HEAT": "Volgende Heat",

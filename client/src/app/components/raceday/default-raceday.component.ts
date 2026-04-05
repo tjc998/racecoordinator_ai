@@ -692,8 +692,8 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     if (!target.closest('.menu-wrapper') && !target.closest('.teammate-select')) {
       this.isMenuOpen = false;
       this.isFileMenuOpen = false;
-      this.isWindowsMenuOpen = false;
       this.isLanesMenuOpen = false;
+      this.isDriversStationOpen = false;
     }
   }
 
@@ -716,35 +716,32 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     console.log('Toggling Race Director menu. Current state:', this.isMenuOpen);
     this.isMenuOpen = !this.isMenuOpen;
     this.isFileMenuOpen = false; // Close other menus
-    this.isWindowsMenuOpen = false;
     this.isLanesMenuOpen = false;
+    this.isDriversStationOpen = false;
   }
 
   toggleFileMenu() {
     console.log('Toggling File menu. Current state:', this.isFileMenuOpen);
     this.isFileMenuOpen = !this.isFileMenuOpen;
     this.isMenuOpen = false; // Close other menus
-    this.isWindowsMenuOpen = false;
     this.isLanesMenuOpen = false;
+    this.isDriversStationOpen = false;
   }
 
-  isWindowsMenuOpen = false;
   isLanesMenuOpen = false;
-
-  toggleWindowsMenu() {
-    console.log('Toggling Windows menu. Current state:', this.isWindowsMenuOpen);
-    this.isWindowsMenuOpen = !this.isWindowsMenuOpen;
-    this.isFileMenuOpen = false;
-    this.isMenuOpen = false;
-    this.isLanesMenuOpen = false;
-  }
+  isDriversStationOpen = false;
 
   toggleLanesMenu() {
     console.log('Toggling Lanes menu. Current state:', this.isLanesMenuOpen);
     this.isLanesMenuOpen = !this.isLanesMenuOpen;
     this.isFileMenuOpen = false;
     this.isMenuOpen = false;
-    this.isWindowsMenuOpen = false;
+    this.isDriversStationOpen = false; // Reset sub-menu on main toggle
+  }
+
+  toggleDriversStationMenu() {
+    console.log('Toggling Drivers Station menu. Current state:', this.isDriversStationOpen);
+    this.isDriversStationOpen = !this.isDriversStationOpen;
   }
 
   onMenuSelect(action: string) {
@@ -914,32 +911,10 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     }
   }
 
-  onWindowsMenuSelect(action: string) {
-    this.isWindowsMenuOpen = false;
-    if (action === 'LEADER_BOARD') {
-      const url = this.router.serializeUrl(this.router.createUrlTree(['/leaderboard']));
-      this.leaderBoardWindow = window.open(url, '_blank', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
-    } else if (action === 'HEAT_RESULTS') {
-      const url = this.router.serializeUrl(this.router.createUrlTree(['/heat-results']));
-      this.heatResultsWindow = window.open(url, '_blank', 'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no');
-    } else if (action === 'DRIVER_LIST') {
-      this.router.navigate(['/driver-setup']);
-    } else if (action === 'RACE_SETUP') {
-      this.router.navigate(['/race-setup']);
-    } else if (action === 'TRACK_SETUP') {
-      this.router.navigate(['/track-setup']);
-    } else if (action === 'SETTINGS') {
-      this.router.navigate(['/settings']);
-    } else if (action === 'STANDINGS') {
-      this.router.navigate(['/standings']);
-    } else if (action === 'STATISTICS') {
-      this.router.navigate(['/statistics']);
-    }
-  }
-
   onLaneMenuSelect(laneIndex: number) {
     console.log('Lane selected for Driver Station:', laneIndex);
     this.isLanesMenuOpen = false; // Close menu
+    this.isDriversStationOpen = false;
 
     const url = this.router.serializeUrl(
       this.router.createUrlTree(['/driver-station', laneIndex])

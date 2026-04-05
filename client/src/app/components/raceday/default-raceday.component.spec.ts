@@ -1249,4 +1249,64 @@ describe('DefaultRacedayComponent', () => {
       expect(component.getCurrentFlagUrl()).toContain('red.png');
     });
   });
+
+  describe('Lanes Menu and Drivers Station', () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+      const mockRouter = TestBed.inject(Router) as any;
+      mockRouter.createUrlTree = jasmine.createSpy('createUrlTree').and.callFake((path: any[]) => {
+        return { lane: path[1] };
+      });
+      mockRouter.serializeUrl = jasmine.createSpy('serializeUrl').and.callFake((tree: any) => {
+        return `/driver-station/${tree.lane}`;
+      });
+      spyOn(window, 'open').and.returnValue(null as any);
+    });
+
+    it('should toggle lanes menu', () => {
+      expect(component.isLanesMenuOpen).toBeFalse();
+      component.toggleLanesMenu();
+      expect(component.isLanesMenuOpen).toBeTrue();
+    });
+
+    it('should toggle drivers station sub-menu', () => {
+      component.isLanesMenuOpen = true;
+      expect(component.isDriversStationOpen).toBeFalse();
+      component.toggleDriversStationMenu();
+      expect(component.isDriversStationOpen).toBeTrue();
+    });
+
+    it('should reset menu states when one is toggled', () => {
+      component.isLanesMenuOpen = true;
+      component.isDriversStationOpen = true;
+      component.toggleMenu();
+      expect(component.isLanesMenuOpen).toBeFalse();
+      expect(component.isDriversStationOpen).toBeFalse();
+    });
+
+    it('should call onLaneMenuSelect with correct index and open window', () => {
+      const mockRouter = TestBed.inject(Router) as any;
+      
+      component.onLaneMenuSelect(2);
+      
+      expect(component.isLanesMenuOpen).toBeFalse();
+      expect(component.isDriversStationOpen).toBeFalse();
+      expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/driver-station', 2]);
+      expect(window.open).toHaveBeenCalledWith('/driver-station/2', '_blank', jasmine.any(String));
+    });
+
+    it('should close all menus on document click outside', () => {
+      component.isLanesMenuOpen = true;
+      component.isDriversStationOpen = true;
+      
+      // Simulate click outside
+      const mockEvent = {
+        target: document.createElement('div')
+      } as any;
+      component.onDocumentClick(mockEvent);
+      
+      expect(component.isLanesMenuOpen).toBeFalse();
+      expect(component.isDriversStationOpen).toBeFalse();
+    });
+  });
 });

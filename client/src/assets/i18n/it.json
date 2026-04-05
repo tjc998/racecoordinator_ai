@@ -412,6 +412,7 @@
   "RD_MENU_EXIT": "Esci",
   "RD_MENU_EXPORT_CSV": "Esporta in CSV",
   "RD_MENU_FILE": "File",
+  "RD_MENU_LANE": "Corsia {{lane}}",
   "RD_MENU_LANES": "Corsie",
   "RD_MENU_MODIFY": "Modifica Manches",
   "RD_MENU_NEXT_HEAT": "Prossima Manche",

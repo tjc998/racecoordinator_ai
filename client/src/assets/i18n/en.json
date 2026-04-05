@@ -412,6 +412,7 @@
   "RD_MENU_EXIT": "Exit to Home",
   "RD_MENU_EXPORT_CSV": "Export to CSV",
   "RD_MENU_FILE": "File",
+  "RD_MENU_LANE": "Lane {{lane}}",
   "RD_MENU_LANES": "Lanes",
   "RD_MENU_MODIFY": "Modify Heats",
   "RD_MENU_NEXT_HEAT": "Next Heat",

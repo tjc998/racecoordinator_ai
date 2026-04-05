@@ -412,6 +412,7 @@
   "RD_MENU_EXIT": "Quitter",
   "RD_MENU_EXPORT_CSV": "Exporter en CSV",
   "RD_MENU_FILE": "Fichier",
+  "RD_MENU_LANE": "Voie {{lane}}",
   "RD_MENU_LANES": "Voies",
   "RD_MENU_MODIFY": "Modifier Manches",
   "RD_MENU_NEXT_HEAT": "Manche Suivante",

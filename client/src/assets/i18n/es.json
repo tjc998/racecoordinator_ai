@@ -412,6 +412,7 @@
   "RD_MENU_EXIT": "Salir",
   "RD_MENU_EXPORT_CSV": "Exportar a CSV",
   "RD_MENU_FILE": "Archivo",
+  "RD_MENU_LANE": "Carril {{lane}}",
   "RD_MENU_LANES": "Carriles",
   "RD_MENU_MODIFY": "Modificar Mangas",
   "RD_MENU_NEXT_HEAT": "Siguiente Manga",

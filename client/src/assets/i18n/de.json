@@ -412,6 +412,7 @@
   "RD_MENU_EXIT": "Beenden",
   "RD_MENU_EXPORT_CSV": "Exportieren nach CSV",
   "RD_MENU_FILE": "Datei",
+  "RD_MENU_LANE": "Spur {{lane}}",
   "RD_MENU_LANES": "Spuren",
   "RD_MENU_MODIFY": "Heats ändern",
   "RD_MENU_NEXT_HEAT": "Nächster Heat",
