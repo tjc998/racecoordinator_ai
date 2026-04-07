@@ -15,7 +15,7 @@ test.describe('Driver Station Visuals', () => {
 
   test('should display default single lane view', async ({ page }) => {
     // Navigate to lane 0
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-station/0'));
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-station/1'));
 
     const container = page.locator('app-driver-station');
     // harness variable defined but not strictly used for validation directly as per instructions
@@ -58,7 +58,7 @@ test.describe('Driver Station Visuals', () => {
   });
 
   test('should display fuel thermometer layout if fuel race', async ({ page }) => {
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-station/0'));
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-station/1'));
 
     const raceData = {
         race: {

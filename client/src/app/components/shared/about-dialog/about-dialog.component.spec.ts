@@ -39,14 +39,14 @@ describe('AboutDialogComponent', () => {
 
   it('should display versions when visible', async () => {
     component.visible = true;
-    component.clientVersion = '0.0.0.1';
-    component.serverVersion = '1.2.3';
+    component.clientVersion = 'TEST-CLIENT-VERSION';
+    component.serverVersion = 'TEST-SERVER-VERSION';
     fixture.detectChanges();
 
     expect(await harness.isVisible()).toBeTrue();
     const versionInfo = await harness.getVersionInfoText();
-    expect(versionInfo).toContain('0.0.0.1');
-    expect(versionInfo).toContain('1.2.3');
+    expect(versionInfo).toContain('TEST-CLIENT-VERSION');
+    expect(versionInfo).toContain('TEST-SERVER-VERSION');
   });
 
   it('should not be visible when visible is false', async () => {

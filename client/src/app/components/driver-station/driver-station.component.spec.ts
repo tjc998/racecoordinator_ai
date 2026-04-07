@@ -48,13 +48,16 @@ describe('DriverStationComponent', () => {
     ]);
     mockRaceService.currentHeat$ = of({});
     mockRaceService.race$ = of({});
+    mockRaceService.participants$ = of([]);
+    mockRaceService.getParticipants = jasmine.createSpy('getParticipants').and.returnValue([]);
     mockRaceService.getRace.and.returnValue({
       name: 'Mock Race',
-      track: { lanes: [{ objectId: 'l1', backgroundColor: '#550000', foregroundColor: '#ffffff' }] }
+      track: { lanes: [{ objectId: 'l1', backgroundColor: '#550000', foregroundColor: '#ffffff' }] },
+      fuel_options: { enabled: false }
     });
 
     const mockActivatedRoute = {
-      params: of({ lane: '0' })
+      params: of({ lane: '2' }) // Use a realistic lane number
     };
 
     const mockTranslationService = {
@@ -63,11 +66,12 @@ describe('DriverStationComponent', () => {
 
     mockRaceConnectionService = jasmine.createSpyObj('RaceConnectionService', ['connect', 'disconnect']);
     mockRaceConnectionService.laps$ = of(null);
-    mockRaceConnectionService.raceTime$ = of(0);
+    mockRaceConnectionService.raceTime$ = of({ time: 0 });
     mockRaceConnectionService.carData$ = of({});
     mockRaceConnectionService.standingsUpdate$ = of({});
     mockRaceConnectionService.interfaceEvents$ = of({});
     mockRaceConnectionService.interfaceAlert$ = of({});
+    mockRaceConnectionService.raceState$ = of(com.antigravity.RaceState.UNKNOWN_STATE);
 
 
     await TestBed.configureTestingModule({

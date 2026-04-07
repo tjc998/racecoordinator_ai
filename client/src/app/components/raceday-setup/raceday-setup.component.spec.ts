@@ -77,6 +77,7 @@ describe('RacedaySetupComponent', () => {
 
     fixture = TestBed.createComponent(RacedaySetupComponent);
     component = fixture.componentInstance;
+    component.clientVersion = 'TEST-CLIENT-VERSION';
     component.container = mockContainer;
   });
 

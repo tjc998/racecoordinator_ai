@@ -48,7 +48,7 @@ public class App {
   private static MongoClient mongoClient;
   private static final Logger logger = LoggerFactory.getLogger(App.class);
 
-  public static final String SERVER_VERSION = "0.0.0.12";
+  public static final String SERVER_VERSION = "0.0.0.13";
 
   public static void main(String[] args) {
     System.out.println("Race Coordinator AI Server " + SERVER_VERSION);

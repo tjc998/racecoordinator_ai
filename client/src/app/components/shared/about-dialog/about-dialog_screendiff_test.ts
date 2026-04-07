@@ -56,7 +56,7 @@ test.describe('About Dialog', () => {
     await expect(page).toHaveScreenshot('about-dialog.png', {
       mask: [
         page.locator('.quote-container'),
-        page.locator('.version-container'),
+        page.locator('.version-info'),
         page.locator('.spinner')
       ],
       maxDiffPixelRatio: 0.1,

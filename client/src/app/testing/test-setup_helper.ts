@@ -106,8 +106,13 @@ export class TestSetupHelper {
       await route.fulfill({
         status: 200,
         contentType: 'text/plain',
-        body: '0.0.0.1'
+        body: 'TEST-SERVER-VERSION'
       });
+    });
+ 
+    // Mock Client Version Override
+    await page.addInitScript(() => {
+      (window as any).CLIENT_VERSION_OVERRIDE = 'TEST-CLIENT-VERSION';
     });
 
     // Mock Server IP API

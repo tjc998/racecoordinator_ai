@@ -65,7 +65,7 @@ export class RacedaySetupComponent implements OnInit {
   tempServerPort = 7070;
   serverIp: string = '';
   serverVersion: string = '';
-  clientVersion: string = '0.0.0.12';
+  clientVersion: string = (window as any).CLIENT_VERSION_OVERRIDE || '0.0.0.13';
   showAboutDialog = false;
 
   scale: number = 1;

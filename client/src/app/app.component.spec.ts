@@ -18,7 +18,7 @@ describe('AppComponent', () => {
     mockDataService = jasmine.createSpyObj('DataService', ['getServerVersion']);
     mockAnalyticsService = jasmine.createSpyObj('AnalyticsService', ['initTracking', 'updateOptOutStatus', 'trackClick']);
 
-    mockDataService.getServerVersion.and.returnValue(of('0.0.0.1'));
+    mockDataService.getServerVersion.and.returnValue(of('TEST-SERVER-VERSION'));
 
     await TestBed.configureTestingModule({
       declarations: [AppComponent],

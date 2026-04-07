@@ -1287,7 +1287,7 @@ describe('DefaultRacedayComponent', () => {
     it('should call onLaneMenuSelect with correct index and open window', () => {
       const mockRouter = TestBed.inject(Router) as any;
       
-      component.onLaneMenuSelect(2);
+      component.onLaneMenuSelect(1);
       
       expect(component.isLanesMenuOpen).toBeFalse();
       expect(component.isDriversStationOpen).toBeFalse();

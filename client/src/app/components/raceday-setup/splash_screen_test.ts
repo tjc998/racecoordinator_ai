@@ -17,7 +17,7 @@ test.describe('Splash Screen Version', () => {
 
     const clientVersion = page.locator('.client-version');
     await expect(clientVersion).toBeVisible();
-    await expect(clientVersion).toContainText('v0.0.0.1');
+    await expect(clientVersion).toContainText('TEST-CLIENT-VERSION');
 
     const serverVersion = page.locator('.server-version');
     await expect(serverVersion).toBeVisible();
