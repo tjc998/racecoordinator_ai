@@ -3,15 +3,19 @@ package com.antigravity.race.states;
 import com.antigravity.race.Race;
 
 public class Paused implements IRaceState {
+  private long pauseStartTimeMillis;
 
   @Override
   public void enter(Race race) {
     System.out.println("Paused state entered. Race paused.");
     race.setMainPower(false);
+    this.pauseStartTimeMillis = System.currentTimeMillis();
   }
 
   @Override
   public void exit(Race race) {
+    long duration = System.currentTimeMillis() - pauseStartTimeMillis;
+    race.getStatistics().addPausedTime(duration);
     System.out.println("Paused state exited.");
   }
 

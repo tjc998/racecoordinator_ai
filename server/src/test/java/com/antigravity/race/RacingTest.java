@@ -138,10 +138,12 @@ public class RacingTest {
 
     when(mockRace.getRaceModel()).thenReturn(mockModel);
     when(mockModel.getHeatScoring()).thenReturn(allowFinishScoring);
+    when(mockRace.getStatistics()).thenReturn(new RaceStatistics());
 
     // Mock Heat and Drivers
     Heat mockHeat = mock(Heat.class);
     when(mockRace.getCurrentHeat()).thenReturn(mockHeat);
+    when(mockHeat.getStatistics()).thenReturn(new RaceHeatStatistics());
     HeatStandings mockStandings = mock(HeatStandings.class);
     when(mockHeat.getHeatStandings()).thenReturn(mockStandings);
     

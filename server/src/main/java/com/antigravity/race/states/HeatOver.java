@@ -9,6 +9,14 @@ public class HeatOver implements IRaceState {
     System.out.println("HeatOver state entered.");
     race.setMainPower(false);
 
+    if (race.getCurrentHeat() != null) {
+      race.getCurrentHeat().getStatistics().setEndTime(java.time.OffsetDateTime.now().toString());
+      long start = race.getCurrentHeat().getStatistics().getStartMillis();
+      if (start > 0) {
+        race.getCurrentHeat().getStatistics().setDurationMillis(System.currentTimeMillis() - start);
+      }
+    }
+
     double autoAdvanceTime = race.getRaceModel().getAutoAdvanceTime();
     if (autoAdvanceTime > 0 && !race.isAutoAdvanceFired()) {
       race.setAutoAdvanceRemaining(autoAdvanceTime);

@@ -754,6 +754,7 @@ public class ClientCommandTaskHandler {
       // Currently, it's not saved on the Race object.
       // Let's assume for now, or check if any protocol is Demo.
       saveData.setDemoMode(race.isDemoMode());
+      saveData.setStatistics(race.getStatistics());
 
       ObjectMapper mapper = getObjectMapper();
       String json = mapper.writeValueAsString(saveData);
@@ -871,6 +872,7 @@ public class ClientCommandTaskHandler {
           .autoAdvanceFired(saveData.isAutoAdvanceFired())
           .stateClassName(saveData.getStateClassName())
           .isDemoMode(saveData.isDemoMode())
+          .statistics(saveData.getStatistics())
           .build();
 
       ClientSubscriptionManager.getInstance().setRace(race);

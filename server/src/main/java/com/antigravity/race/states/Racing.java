@@ -15,6 +15,15 @@ public class Racing implements IRaceState {
     this.race = race;
     this.executionManager = race.getHeatExecutionManager();
 
+    if (race.getStatistics().getStartTime() == null) {
+      race.getStatistics().setStartTime(java.time.OffsetDateTime.now().toString());
+      race.getStatistics().setStartMillis(System.currentTimeMillis());
+    }
+    if (race.getCurrentHeat() != null && race.getCurrentHeat().getStatistics().getStartTime() == null) {
+      race.getCurrentHeat().getStatistics().setStartTime(java.time.OffsetDateTime.now().toString());
+      race.getCurrentHeat().getStatistics().setStartMillis(System.currentTimeMillis());
+    }
+
     if (race.isDemoMode()) {
       race.setMainPower(true);
     }
@@ -165,6 +174,7 @@ public class Racing implements IRaceState {
   @Override
   public void pause(com.antigravity.race.Race race) {
     System.out.println("Racing.pause() called. Pausing race.");
+    race.getStatistics().incrementYellowFlagCount();
     race.changeState(new com.antigravity.race.states.Paused());
   }
 

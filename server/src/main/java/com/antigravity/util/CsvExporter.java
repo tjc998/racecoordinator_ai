@@ -56,6 +56,22 @@ public class CsvExporter {
     }
     sb.append("\n");
 
+    // Section: Race Statistics
+    com.antigravity.race.RaceStatistics stats = race.getStatistics();
+    if (stats != null) {
+      sb.append("#Section, Race Statistics\n");
+      sb.append("#Property, Value\n");
+      sb.append("Start Time,").append(escape(stats.getStartTime())).append("\n");
+      String endTime = stats.getEndTime() != null ? stats.getEndTime() : "N/A";
+      sb.append("End Time,").append(escape(endTime)).append("\n");
+      String duration = stats.getEndTime() != null ? String.valueOf(stats.getDurationMillis()) : "N/A";
+      sb.append("Duration (ms),").append(duration).append("\n");
+      sb.append("Yellow Flags,").append(stats.getYellowFlagCount()).append("\n");
+      sb.append("Total Paused Time (ms),").append(stats.getTotalPausedTimeMillis()).append("\n");
+      sb.append("Restarts,").append(stats.getRestartCount()).append("\n");
+      sb.append("\n");
+    }
+
     // Section 3: Overall Standings
     sb.append("#Section,Overall Standings\n");
     sb.append(
@@ -94,14 +110,33 @@ public class CsvExporter {
     if (heats != null) {
       for (int hIdx = 0; hIdx < heats.size(); hIdx++) {
         Heat heat = heats.get(hIdx);
-        sb.append("#Heat,").append(hIdx + 1).append("\n");
+        sb.append("#Heat, Start Time, End Time, Duration\n");
+        
+        com.antigravity.race.RaceHeatStatistics hStats = heat.getStatistics();
+        String hStartTime = "N/A";
+        String hEndTime = "N/A";
+        String hDuration = "N/A";
+        
+        if (hStats != null) {
+          hStartTime = hStats.getStartTime() != null ? hStats.getStartTime() : "N/A";
+          hEndTime = hStats.getEndTime() != null ? hStats.getEndTime() : "N/A";
+          hDuration = hStats.getEndTime() != null ? String.valueOf(hStats.getDurationMillis()) : "N/A";
+        }
+        
+        sb.append(hIdx + 1).append(",")
+            .append(escape(hStartTime)).append(",")
+            .append(escape(hEndTime)).append(",")
+            .append(hDuration).append("\n\n");
         sb.append(
             "#Lane,Driver,Nickname,Reaction Time,Gap Leader,Gap Position,Best Lap,Avg Lap,Median Lap,Total Laps\n");
         for (int lIdx = 0; lIdx < heat.getDrivers().size(); lIdx++) {
           DriverHeatData dhd = heat.getDrivers().get(lIdx);
           String driverName = "N/A";
           String nickname = "";
-          if (dhd.getActualDriver() != null) {
+          if (dhd.getDriver() != null && dhd.getDriver().isTeamParticipant()) {
+            driverName = dhd.getDriver().getTeam().getName();
+            nickname = "N/A";
+          } else if (dhd.getActualDriver() != null) {
             driverName = dhd.getActualDriver().getName();
             nickname = dhd.getActualDriver().getNickname() != null ? dhd.getActualDriver().getNickname() : "";
           } else if (dhd.getDriver() != null && dhd.getDriver().getDriver() != null) {
@@ -134,20 +169,41 @@ public class CsvExporter {
           boolean hasLaps = dhd.getLaps() != null && !dhd.getLaps().isEmpty();
 
           if (hasLaps || dhd.getSegments().size() > 0) {
+            // Build driver lookup for this lane
+            java.util.Map<String, com.antigravity.models.Driver> driverLookup = new java.util.HashMap<>();
+            if (dhd.getDriver() != null) {
+              if (dhd.getDriver().getDriver() != null) {
+                driverLookup.put(dhd.getDriver().getDriver().getEntityId(), dhd.getDriver().getDriver());
+              }
+              if (dhd.getDriver().getTeamDrivers() != null) {
+                for (com.antigravity.models.Driver td : dhd.getDriver().getTeamDrivers()) {
+                  driverLookup.put(td.getEntityId(), td);
+                }
+              }
+            }
+
             if (hasSegments) {
-              sb.append("#Lap,Lap Time");
+              sb.append("#Lap,Driver,Nickname,Lap Time");
               for (int i = 0; i < maxSegments; i++) {
                 sb.append(",Segment ").append(i + 1);
               }
               sb.append("\n");
             } else {
-              sb.append("#Lap,Lap Time\n");
+              sb.append("#Lap,Driver,Nickname,Lap Time\n");
             }
 
             if (hasLaps) {
               for (int lapIdx = 0; lapIdx < dhd.getLaps().size(); lapIdx++) {
                 com.antigravity.race.DriverHeatData.LapData lap = dhd.getLaps().get(lapIdx);
-                sb.append(lapIdx + 1).append(",").append(lap.getLapTime());
+                com.antigravity.models.Driver lapDriver = driverLookup.get(lap.getDriverId());
+                String lapDriverName = lapDriver != null ? lapDriver.getName() : "Unknown";
+                String lapNickname = (lapDriver != null && lapDriver.getNickname() != null) ? lapDriver.getNickname() : "";
+
+                sb.append(lapIdx + 1).append(",")
+                  .append(escape(lapDriverName)).append(",")
+                  .append(escape(lapNickname)).append(",")
+                  .append(lap.getLapTime());
+
                 if (hasSegments) {
                   for (int i = 0; i < maxSegments; i++) {
                     if (lap.getSegments() != null && i < lap.getSegments().size()) {

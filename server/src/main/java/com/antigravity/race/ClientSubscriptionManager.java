@@ -174,6 +174,7 @@ public class ClientSubscriptionManager {
       saveData.setHasRacedInCurrentHeat(race.hasRacedInCurrentHeat());
       saveData.setCurrentHeatIndex(race.getHeats().indexOf(race.getCurrentHeat()));
       saveData.setDemoMode(race.isDemoMode());
+      saveData.setStatistics(race.getStatistics());
 
       ObjectMapper mapper = getObjectMapper();
       String json = mapper.writeValueAsString(saveData);

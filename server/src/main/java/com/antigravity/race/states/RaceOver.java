@@ -5,6 +5,20 @@ public class RaceOver implements IRaceState {
   public void enter(com.antigravity.race.Race race) {
     System.out.println("RaceOver state entered.");
     race.setMainPower(false);
+
+    race.getStatistics().setEndTime(java.time.OffsetDateTime.now().toString());
+    long raceStart = race.getStatistics().getStartMillis();
+    if (raceStart > 0) {
+      race.getStatistics().setDurationMillis(System.currentTimeMillis() - raceStart);
+    }
+
+    if (race.getCurrentHeat() != null && race.getCurrentHeat().getStatistics().getEndTime() == null) {
+      race.getCurrentHeat().getStatistics().setEndTime(java.time.OffsetDateTime.now().toString());
+      long heatStart = race.getCurrentHeat().getStatistics().getStartMillis();
+      if (heatStart > 0) {
+        race.getCurrentHeat().getStatistics().setDurationMillis(System.currentTimeMillis() - heatStart);
+      }
+    }
   }
 
   @Override

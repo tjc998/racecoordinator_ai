@@ -47,6 +47,7 @@ public class Race implements ProtocolListener {
 
   // Heat execution state
   private HeatExecutionManager executionManager;
+  private RaceStatistics statistics;
 
   private Race(Builder builder) {
     this.model = builder.model;
@@ -79,6 +80,7 @@ public class Race implements ProtocolListener {
     this.autoAdvanceFired = builder.autoAdvanceFired;
     this.autoAdvanceRemaining = 0;
     this.autoStartRemaining = 0;
+    this.statistics = builder.statistics != null ? builder.statistics : new RaceStatistics();
 
     this.overallStandings = new OverallStandings(model.getHeatScoring(), model.getOverallScoring());
     this.createProtocols(builder.isDemoMode);
@@ -117,6 +119,7 @@ public class Race implements ProtocolListener {
     private boolean autoStartFired = false;
     private boolean autoAdvanceFired = false;
     private String stateClassName = null;
+    private RaceStatistics statistics;
 
     public Builder model(com.antigravity.models.Race model) { this.model = model; return this; }
     public Builder drivers(List<RaceParticipant> drivers) { this.drivers = drivers; return this; }
@@ -129,6 +132,7 @@ public class Race implements ProtocolListener {
     public Builder autoStartFired(boolean autoStartFired) { this.autoStartFired = autoStartFired; return this; }
     public Builder autoAdvanceFired(boolean autoAdvanceFired) { this.autoAdvanceFired = autoAdvanceFired; return this; }
     public Builder stateClassName(String stateClassName) { this.stateClassName = stateClassName; return this; }
+    public Builder statistics(RaceStatistics statistics) { this.statistics = statistics; return this; }
 
     public Race build() {
         return new Race(this);
@@ -211,6 +215,10 @@ public class Race implements ProtocolListener {
 
   public IRaceState getState() {
     return state;
+  }
+
+  public RaceStatistics getStatistics() {
+    return statistics;
   }
 
   public float getRaceTime() {
@@ -446,6 +454,7 @@ public class Race implements ProtocolListener {
     System.out.println("Race.resetCurrentHeat() called.");
 
     if (currentHeat != null) {
+      statistics.incrementRestartCount();
       // Reset all drivers in the heat
       for (com.antigravity.race.DriverHeatData driverData : currentHeat.getDrivers()) {
         driverData.reset();

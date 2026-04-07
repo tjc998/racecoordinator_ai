@@ -66,9 +66,9 @@ public class CsvExporterTest {
         assertTrue("Csv output should contain Track Name", csv.contains("Name,Mock Track"));
         
         // Verify Lap data contains historical segments columns (max is 3 from current)
-        assertTrue("Csv output should contain Lap header with Segment titles", csv.contains("#Lap,Lap Time,Segment 1,Segment 2,Segment 3"));
+        assertTrue("Csv output should contain Lap header with Segment titles", csv.contains("#Lap,Driver,Nickname,Lap Time,Segment 1,Segment 2,Segment 3"));
         // Verify first lap row data includes its own historical segment values (size 2) and empty padding
-        assertTrue("Csv output should render completed lap values with historical segments", csv.contains("1,5.5,1.2,2.3,"));
+        assertTrue("Csv output should render completed lap values with historical segments", csv.contains("1,Driver 1,,5.5,1.2,2.3,"));
         
         // Verify Current Lap isolated sub-section
         assertTrue("Csv output should contains isolated Current Lap header", csv.contains("#Current Lap"));

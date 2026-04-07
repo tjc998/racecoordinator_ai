@@ -14,8 +14,17 @@ public class RaceSaveData {
   private boolean isDemoMode;
   private boolean autoStartFired;
   private boolean autoAdvanceFired;
+  private RaceStatistics statistics;
 
   public RaceSaveData() {
+  }
+
+  public RaceStatistics getStatistics() {
+    return statistics;
+  }
+
+  public void setStatistics(RaceStatistics statistics) {
+    this.statistics = statistics;
   }
 
   public com.antigravity.models.Race getModel() {

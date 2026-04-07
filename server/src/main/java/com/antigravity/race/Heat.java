@@ -5,6 +5,7 @@ import java.util.List;
 public class Heat extends ServerToClientObject {
   private int heatNumber;
   private List<DriverHeatData> drivers;
+  private RaceHeatStatistics statistics = new RaceHeatStatistics();
   private HeatStandings heatStandings;
 
   public Heat(int heatNumber, List<DriverHeatData> drivers, com.antigravity.models.HeatScoring scoring) {
@@ -42,6 +43,14 @@ public class Heat extends ServerToClientObject {
   @com.fasterxml.jackson.annotation.JsonIgnore
   public HeatStandings getHeatStandings() {
     return heatStandings;
+  }
+
+  public RaceHeatStatistics getStatistics() {
+    return statistics;
+  }
+
+  public void setStatistics(RaceHeatStatistics statistics) {
+    this.statistics = statistics;
   }
 
   public void setHeatNumber(int heatNumber) {
