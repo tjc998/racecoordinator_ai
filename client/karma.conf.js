@@ -77,7 +77,7 @@ module.exports = function (config) {
       ChromeHeadlessWithCustomConfig: {
         base: 'Chrome',
         flags: [
-          '--headless=old',
+          '--headless=new',
           '--no-sandbox',
           '--disable-gpu',
           '--disable-dev-shm-usage',
@@ -98,10 +98,10 @@ module.exports = function (config) {
         ]
       }
     },
-    captureTimeout: 210000,
+    captureTimeout: 60000,
     browserDisconnectTolerance: 3,
-    browserDisconnectTimeout: 210000,
-    browserNoActivityTimeout: 210000,
+    browserDisconnectTimeout: 60000,
+    browserNoActivityTimeout: 60000,
     singleRun: true,
     restartOnFileChange: true
   });

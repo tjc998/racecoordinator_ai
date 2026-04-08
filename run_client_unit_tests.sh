@@ -13,9 +13,14 @@ mkdir -p "$ISOLATED_DIR"
 
 # Sync current source and configuration to isolated directory
 echo "Syncing source to $ISOLATED_DIR..."
-# Remove existing directories to ensure clean sync and avoid attribute/permission issues when overwriting
-rm -rf "$ISOLATED_DIR/src"
-cp -Rf src karma.conf.js package.json angular.json tsconfig.json tsconfig.app.json tsconfig.spec.json package-lock.json "$ISOLATED_DIR/"
+# Use rsync for faster incremental syncs (only copies changed files)
+if command -v rsync &>/dev/null; then
+  rsync -a --delete src/ "$ISOLATED_DIR/src/"
+  rsync -a karma.conf.js package.json angular.json tsconfig.json tsconfig.app.json tsconfig.spec.json package-lock.json "$ISOLATED_DIR/"
+else
+  rm -rf "$ISOLATED_DIR/src"
+  cp -Rf src karma.conf.js package.json angular.json tsconfig.json tsconfig.app.json tsconfig.spec.json package-lock.json "$ISOLATED_DIR/"
+fi
 
 cd "$ISOLATED_DIR" || exit
 
@@ -50,4 +55,10 @@ echo "Using Chrome binary at: $CHROME_BIN"
 # Explicitly use the local ng binary to avoid npx resolution issues
 # Re-route Angular cache to avoid EPERM issues in the default .angular/cache directory
 # Override npm cache to avoid EPERM issues in ~/.npm
-TMPDIR="$TMPDIR" HOME="$HOME" CHROME_BIN="$CHROME_BIN" NG_PERSISTENT_BUILD_CACHE=0 ./node_modules/.bin/ng test --watch=false --browsers=ChromeHeadlessWithCustomConfig "$@"
+# Enable persistent build cache on ARM64 Mac for faster subsequent runs
+if [ "$(uname -m)" = "arm64" ] && [ "$(uname -s)" = "Darwin" ]; then
+  BUILD_CACHE=1
+else
+  BUILD_CACHE=0
+fi
+TMPDIR="$TMPDIR" HOME="$HOME" CHROME_BIN="$CHROME_BIN" NG_PERSISTENT_BUILD_CACHE=$BUILD_CACHE ./node_modules/.bin/ng test --watch=false --browsers=ChromeHeadlessWithCustomConfig "$@"

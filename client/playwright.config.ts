@@ -15,7 +15,7 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env['CI'] ? 2 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: 4,
+  workers: process.env['CI'] ? 1 : '50%',
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [['html'], ['json', { outputFile: '/tmp/pw-result.json' }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -37,7 +37,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         launchOptions: {
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
         }
       },
     },

@@ -24,9 +24,21 @@ mkdir -p "$SERVER_BUILD_DIR/test-classes"
 ./generate_protos.sh
 
 # 2. Run tests pointing entire build output to /tmp
-mvn test \
+# Detect Apple Silicon for parallel test optimization
+if [ "$(uname -m)" = "arm64" ] && [ "$(uname -s)" = "Darwin" ]; then
+  FORK_COUNT="4C"
+  REUSE_FORKS="true"
+  MVN_THREADS="-T 1C"
+else
+  FORK_COUNT="0"
+  REUSE_FORKS="true"
+  MVN_THREADS=""
+fi
+
+mvn test $MVN_THREADS \
   -Dbuild.dist.dir="$SERVER_BUILD_DIR" \
   -DskipProtobuf=true \
-  -DforkCount=0 \
+  -DforkCount="$FORK_COUNT" \
+  -DreuseForks="$REUSE_FORKS" \
   -Djava.io.tmpdir="$SERVER_TMP" \
   -Dmaven.repo.local="$SERVER_DIR/.m2/repository"

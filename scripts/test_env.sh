@@ -27,7 +27,6 @@ mkdir -p "$HOME/Library/Application Support/Google/Chrome for Testing"
 
 # Karma Profile Directory
 export KARMA_PROFILE_DIR="$BASE_TMP/karma-profile"
-rm -rf "$KARMA_PROFILE_DIR"
 mkdir -p "$KARMA_PROFILE_DIR"
 
 echo "Environment configured. Project Root: $PROJECT_ROOT"

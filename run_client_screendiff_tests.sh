@@ -20,9 +20,14 @@ mkdir -p "$ISOLATED_DIR"
 
 # Sync current source and configuration to isolated directory
 echo "Syncing source to $ISOLATED_DIR..."
-# Optimization: Use cp -u (if available) or just copy the necessary folders
-# Avoiding rm -rf src to keep node_modules and other persistent files fast
-cp -Rf src package.json angular.json tsconfig*.json playwright.config.ts "$ISOLATED_DIR/"
+# Use rsync for faster incremental syncs (only copies changed files)
+if command -v rsync &>/dev/null; then
+  rsync -a --delete src/ "$ISOLATED_DIR/src/"
+  rsync -a package.json angular.json playwright.config.ts "$ISOLATED_DIR/"
+  rsync -a tsconfig*.json "$ISOLATED_DIR/"
+else
+  cp -Rf src package.json angular.json tsconfig*.json playwright.config.ts "$ISOLATED_DIR/"
+fi
 
 cd "$ISOLATED_DIR" || exit
 
