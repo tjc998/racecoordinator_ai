@@ -4,7 +4,6 @@ import { RouterModule, Routes } from '@angular/router';
 import { RacedayComponent } from './components/raceday/raceday.component';
 import { DefaultRacedayComponent } from './components/raceday/default-raceday.component';
 import { RacedaySetupComponent } from './components/raceday-setup/raceday-setup.component';
-import { LeaderBoardComponent } from './components/leader_board/leader_board.component';
 import { AssetManagerComponent } from './components/asset-manager/asset-manager.component';
 import { DriverEditorComponent } from './components/driver-editor/driver-editor.component';
 import { DriverManagerComponent } from './components/driver-manager/driver-manager.component';
@@ -18,14 +17,14 @@ import { TeamEditorComponent } from './components/team-editor/team-editor.compon
 import { UIEditorComponent } from './components/ui-editor/ui-editor.component';
 import { DriverStationComponent } from './components/driver-station/driver-station.component';
 import { DirtyCheckGuard } from './guards/dirty-check.guard';
+import { RacedayGuard } from './guards/raceday.guard';
 import { HeatResultsComponent } from './components/heat-results/heat-results.component';
 
 
 const routes: Routes = [
     { path: '', redirectTo: 'raceday-setup', pathMatch: 'full' },
-    { path: 'raceday', component: RacedayComponent, data: { animation: 'RacedayPage' } },
-    { path: 'default-raceday', component: DefaultRacedayComponent, data: { animation: 'RacedayPage' } },
-    { path: 'leaderboard', component: LeaderBoardComponent, data: { animation: 'LeaderBoardPage' } },
+    { path: 'raceday', component: RacedayComponent, canDeactivate: [RacedayGuard], data: { animation: 'RacedayPage' } },
+    { path: 'default-raceday', component: DefaultRacedayComponent, canDeactivate: [RacedayGuard], data: { animation: 'RacedayPage' } },
     { path: 'raceday-setup', component: RacedaySetupComponent, data: { animation: 'RacedaySetupPage' } },
     { path: 'asset-manager', component: AssetManagerComponent, data: { animation: 'AssetManagerPage' } },
     { path: 'driver-editor', component: DriverEditorComponent, data: { animation: 'DriverEditorPage' } },

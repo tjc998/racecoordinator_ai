@@ -1,5 +1,5 @@
 import { Component, ElementRef, HostListener, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Subscription, Subject, of, Observable } from 'rxjs';
 import { Router } from '@angular/router';
 import { Heat } from '../../race/heat';
 import { DriverHeatData } from '../../race/driver_heat_data';
@@ -25,6 +25,7 @@ import InterfaceStatus = com.antigravity.InterfaceStatus;
 import { RaceConnectionService } from 'src/app/services/race-connection.service';
 
 import { ColumnDefinition } from './column_definition';
+import { CanComponentDeactivate } from '../../guards/raceday.guard';
 
 /**
  * The raceday component is the main component for the raceday screen.
@@ -35,7 +36,7 @@ import { ColumnDefinition } from './column_definition';
   styleUrls: ['./default-raceday.component.css'],
   standalone: false
 })
-export class DefaultRacedayComponent implements OnInit, OnDestroy {
+export class DefaultRacedayComponent implements OnInit, OnDestroy, CanComponentDeactivate {
   private isDestroyed = false;
   private subscriptions: Subscription[] = [];
   protected heat?: Heat;
@@ -54,6 +55,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   protected autoStartRemaining: number = 0;
   protected autoAdvanceRemaining: number = 0;
   protected sortedHeatDrivers: DriverHeatData[] = [];
+  protected driverVisualPositions = new Map<number, number>();
   protected allDrivers: any[] = [];
   protected participants: RaceParticipant[] = [];
 
@@ -67,14 +69,53 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   protected heatBestNickname: string = 'Placeholder';
   protected heatBestTime: number = 11.456;
 
-  protected get leaderboardEntries(): any[] {
-    return (this.participants || [])
-      .map(p => ({
-        name: p.team?.name || p.driver?.nickname || p.driver?.name || 'Unknown',
-        score: p.totalLaps || 0,
-        rank: p.rank || 0
-      }))
-      .sort((a, b) => (a.rank || 0) - (b.rank || 0));
+  // Stable-order list. DOM order never changes; visual position is from rank.
+  protected leaderboardEntries: any[] = [];
+
+  /**
+   * Update leaderboard entries while maintaining stable DOM order.
+   * Existing entries are updated in-place; new ones are appended.
+   */
+  private updateLeaderboardEntries(): void {
+    const incoming = (this.participants || []).map(p => ({
+      name: p.team?.name || p.driver?.nickname || p.driver?.name || 'Unknown',
+      score: p.totalLaps || 0,
+      rank: p.rank || 0,
+      entityId: p.driver?.entity_id || p.driver?.name || ''
+    }));
+
+    const existingIds = new Set(this.leaderboardEntries.map(e => e.entityId));
+
+    // Update existing entries in-place (preserving array/DOM order)
+    for (let i = 0; i < this.leaderboardEntries.length; i++) {
+      const id = this.leaderboardEntries[i].entityId;
+      const updated = incoming.find(e => e.entityId === id);
+      if (updated) {
+        this.leaderboardEntries[i] = updated;
+      }
+    }
+
+    // Append new entries
+    for (const entry of incoming) {
+      if (!existingIds.has(entry.entityId)) {
+        this.leaderboardEntries.push(entry);
+        existingIds.add(entry.entityId);
+      }
+    }
+
+    // Remove entries no longer present
+    const incomingIds = new Set(incoming.map(e => e.entityId));
+    this.leaderboardEntries = this.leaderboardEntries.filter(e => incomingIds.has(e.entityId));
+  }
+
+  protected getLeaderboardPosition(entry: any): number {
+    // If rank is set (> 0), use it directly: rank 1 = position 0, rank 2 = position 1, etc.
+    if (entry.rank > 0) {
+      return entry.rank - 1;
+    }
+    // Fallback: when ranks aren't assigned (all 0), use insertion order
+    const idx = this.leaderboardEntries.indexOf(entry);
+    return idx >= 0 ? idx : 0;
   }
 
   protected get autoStatusLabel(): string {
@@ -180,7 +221,14 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
   private previousTime: number = 0;
 
-  // Acknowledgement Modal State
+  // Exit Confirmation Modal State
+  showExitConfirmation = false;
+  exitModalTitle = 'RD_CONFIRM_EXIT_TITLE';
+  exitModalMessage = 'RD_CONFIRM_EXIT_MESSAGE';
+  exitConfirmText = 'RD_CONFIRM_EXIT_BTN_LEAVE';
+  exitCancelText = 'RD_CONFIRM_EXIT_BTN_STAY';
+
+  // Acknowledgement Modal State (kept for interface errors)
   showAckModal = false;
   ackModalTitle = '';
   ackModalMessage = '';
@@ -222,6 +270,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   private driversLoaded = false;
   private pendingUpdate: com.antigravity.IRace | null = null;
   private dropdownIconCache = new Map<string, string>();
+  private deactivateSubject = new Subject<boolean>();
 
   ngOnInit() {
     this.loadColumns();
@@ -243,6 +292,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
     this.subscriptions.push(this.raceService.participants$.subscribe(participants => {
       this.participants = participants || [];
+      this.updateLeaderboardEntries();
       if (!this.isDestroyed) {
         this.cdr.detectChanges();
       }
@@ -420,21 +470,55 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     this.showAckModal = false;
   }
 
+  onExitConfirm() {
+    this.showExitConfirmation = false;
+    this.deactivateSubject.next(true);
+  }
+
+  onExitCancel() {
+    this.showExitConfirmation = false;
+    this.deactivateSubject.next(false);
+  }
+
+  canDeactivate(): Observable<boolean> | Promise<boolean> | boolean {
+    this.exitModalTitle = 'RD_CONFIRM_EXIT_TITLE';
+    this.exitModalMessage = 'RD_CONFIRM_EXIT_MESSAGE';
+    this.exitConfirmText = 'RD_CONFIRM_EXIT_BTN_LEAVE';
+    this.exitCancelText = 'RD_CONFIRM_EXIT_BTN_STAY';
+    this.showExitConfirmation = true;
+    this.cdr.detectChanges();
+    return this.deactivateSubject.asObservable();
+  }
+
   private sortHeatDrivers() {
     if (!this.heat) return;
 
+    // IMPORTANT: Always keep the array in laneIndex order for DOM stability.
+    // If we reorder the array, Angular physically moves DOM nodes, which
+    // breaks CSS transitions (elements "pop" instead of sliding).
+    // Instead, we compute visual positions in a separate map.
+    this.sortedHeatDrivers = [...this.heat.heatDrivers].sort((a, b) => a.laneIndex - b.laneIndex);
+
     const settings = this.settingsService.getSettings();
     if (settings.sortByStandings) {
-      this.sortedHeatDrivers = [...this.heat.heatDrivers].sort((a, b) => {
+      // Sort a separate copy to determine visual positions
+      const ranked = [...this.heat.heatDrivers].sort((a, b) => {
         const rankA = this.driverRankings.get(a.objectId) ?? 999;
         const rankB = this.driverRankings.get(b.objectId) ?? 999;
         return rankA - rankB;
       });
+      this.driverVisualPositions.clear();
+      ranked.forEach((hd, i) => this.driverVisualPositions.set(hd.laneIndex, i));
     } else {
-      // Sort by lane index (static order)
-      this.sortedHeatDrivers = [...this.heat.heatDrivers].sort((a, b) => a.laneIndex - b.laneIndex);
+      // Visual position matches lane order
+      this.driverVisualPositions.clear();
+      this.sortedHeatDrivers.forEach((hd, i) => this.driverVisualPositions.set(hd.laneIndex, i));
     }
     this.cdr.detectChanges();
+  }
+
+  protected getDriverVisualPosition(hd: DriverHeatData): number {
+    return this.driverVisualPositions.get(hd.laneIndex) ?? 0;
   }
 
   private detectShortcutKey() {
@@ -827,12 +911,6 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   }
 
   activeMenu: string | null = null;
-  showExitConfirmation = false;
-
-  @HostListener('window:beforeunload', ['$event'])
-  unloadNotification($event: any) {
-    $event.returnValue = true;
-  }
 
   @HostListener('window:unload', ['$event'])
   onUnload($event: any) {
@@ -855,7 +933,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     this.activeMenu = null;
     this.isFileMenuOpen = false;
     if (action === 'EXIT') {
-      this.showExitConfirmation = true;
+      this.router.navigate(['/raceday-setup']);
     } else if (action === 'EXPORT_CSV') {
       this.exportToCsv();
     } else if (action === 'SAVE') {
@@ -923,15 +1001,6 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       this.router.createUrlTree(['/driver-station', laneIndex + 1])
     );
     window.open(url, '_blank', 'width=1200,height=800,menubar=no,toolbar=no,location=no,status=no');
-  }
-
-  onExitConfirm() {
-    this.dataService.updateRaceSubscription(false);
-    this.showExitConfirmation = false;
-    this.router.navigate(['/raceday-setup']);
-  }
-  onExitCancel() {
-    this.showExitConfirmation = false;
   }
 
   @HostListener('window:keyup', ['$event'])
@@ -1581,8 +1650,8 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     return labels[baseKey] ?? 'UNKNOWN';
   }
 
-  protected trackByDriverId(index: number, hd: DriverHeatData): string {
-    return hd.objectId;
+  protected trackByDriverId(index: number, hd: DriverHeatData): any {
+    return hd.laneIndex;
   }
 
   protected trackByColumn(index: number, col: any): string {
@@ -1650,7 +1719,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   }
 
   trackByLeaderboardEntry(index: number, entry: any) {
-    return entry.name;
+    return entry.entityId || entry.name;
   }
 
   isDriverSwapDisabled(hd: any): boolean {

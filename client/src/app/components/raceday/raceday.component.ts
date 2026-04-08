@@ -17,6 +17,8 @@ import { CommonModule, NgIf } from '@angular/common';
 import { SharedModule } from 'src/app/components/shared/shared.module';
 import { FileSystemService } from 'src/app/services/file-system.service';
 import { DefaultRacedayComponent } from './default-raceday.component';
+import { CanComponentDeactivate } from '../../guards/raceday.guard';
+import { Observable, of } from 'rxjs';
 
 import { DataService } from 'src/app/data.service';
 import { RaceService } from 'src/app/services/race.service';
@@ -51,8 +53,9 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
   styleUrls: ['./raceday.component.css'],
   standalone: false
 })
-export class RacedayComponent implements OnInit {
+export class RacedayComponent implements OnInit, CanComponentDeactivate {
   @ViewChild('container', { read: ViewContainerRef, static: true }) container!: ViewContainerRef;
+  private childComponent: any;
 
   isLoading = true;
   error: string | null = null;
@@ -100,7 +103,8 @@ export class RacedayComponent implements OnInit {
   }
 
   loadDefaultComponent() {
-    this.container.createComponent(DefaultRacedayComponent);
+    const componentRef = this.container.createComponent(DefaultRacedayComponent);
+    this.childComponent = componentRef.instance;
   }
 
   async loadCustomComponent() {
@@ -134,7 +138,8 @@ export class RacedayComponent implements OnInit {
         tsCode
       );
 
-      this.container.createComponent(componentType);
+      const componentRef = this.container.createComponent(componentType);
+      this.childComponent = componentRef.instance;
 
     } catch (e) {
       // If we can't find the specific raceday files, just throw so we fallback
@@ -142,5 +147,12 @@ export class RacedayComponent implements OnInit {
     }
   }
 
+
+  canDeactivate(): Observable<boolean> | Promise<boolean> | boolean {
+    if (this.childComponent && this.childComponent.canDeactivate) {
+      return this.childComponent.canDeactivate();
+    }
+    return true;
+  }
 
 }

@@ -12,7 +12,6 @@ import { RacedaySetupComponent } from './components/raceday-setup/raceday-setup.
 import { DefaultRacedaySetupComponent } from './components/raceday-setup/default-raceday-setup.component';
 import { RaceService } from './services/race.service';
 
-import { LeaderBoardComponent } from './components/leader_board/leader_board.component';
 import { AssetManagerComponent } from './components/asset-manager/asset-manager.component';
 import { ImageSetEditorComponent } from './components/asset-manager/image-set-editor/image-set-editor.component';
 import { DriverEditorComponent } from './components/driver-editor/driver-editor.component';
@@ -40,7 +39,6 @@ import { HeatResultsComponent } from './components/heat-results/heat-results.com
     DefaultRacedayComponent,
     RacedaySetupComponent,
     DefaultRacedaySetupComponent,
-    LeaderBoardComponent,
     AssetManagerComponent,
     ImageSetEditorComponent,
     DriverEditorComponent,

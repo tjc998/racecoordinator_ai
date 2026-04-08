@@ -4,9 +4,9 @@
     [buttonText]="ackModalButtonText" (acknowledge)="onAcknowledgeModal()">
   </app-acknowledgement-modal>
 
-  <app-confirmation-modal [visible]="showExitConfirmation" title="CD_CONFIRM_EXIT_TITLE"
-    message="CD_CONFIRM_EXIT_MESSAGE" confirmText="CD_YES" cancelText="CD_NO" (confirm)="onExitConfirm()"
-    (cancel)="onExitCancel()">
+  <app-confirmation-modal [visible]="showExitConfirmation" [title]="exitModalTitle"
+    [message]="exitModalMessage" [confirmText]="exitConfirmText" [cancelText]="exitCancelText" 
+    (confirm)="onExitConfirm()" (cancel)="onExitCancel()">
   </app-confirmation-modal>
 
   <div class="scalable-content" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
@@ -155,12 +155,12 @@
             <div class="leaderboard-scroll-content" [style.height.px]="leaderboardEntries.length * 24">
               <div *ngFor="let entry of leaderboardEntries; let i = index; trackBy: trackByLeaderboardEntry" 
                    class="leaderboard-item"
-                   [class.leaderboard-item-odd]="i % 2 === 1"
-                   [style.top.px]="i * 24">
-                <span [class.leader-gold]="i === 0" [class.leader-white]="i > 0">
-                  {{ i + 1 }} {{ entry.name }}
+                   [class.leaderboard-item-odd]="getLeaderboardPosition(entry) % 2 === 1"
+                   [style.transform]="'translateY(' + (getLeaderboardPosition(entry) * 24) + 'px)'">
+                <span [class.leader-gold]="getLeaderboardPosition(entry) === 0" [class.leader-white]="getLeaderboardPosition(entry) > 0">
+                  {{ getLeaderboardPosition(entry) + 1 }} {{ entry.name }}
                 </span>
-                <span [class.leader-gold]="i === 0" [class.leader-white]="i > 0">
+                <span [class.leader-gold]="getLeaderboardPosition(entry) === 0" [class.leader-white]="getLeaderboardPosition(entry) > 0">
                   {{ entry.score }}
                 </span>
               </div>
@@ -183,7 +183,8 @@
           <div *ngFor="let hd of sortedHeatDrivers; let i = index; trackBy: trackByDriverId" 
             class="table-row" [class.highlight]="highlightedDrivers.has(hd.objectId)"
             [style.grid-template-columns]="gridTemplateColumns" [style.height.px]="getRowHeight()"
-            [style.top.px]="i * (getRowHeight() + 2)">
+            [style.z-index]="100 - getDriverVisualPosition(hd)"
+            [style.transform]="'translateY(' + (getDriverVisualPosition(hd) * (getRowHeight() + 2)) + 'px) ' + (highlightedDrivers.has(hd.objectId) ? 'scale(1.015)' : 'scale(1)')">
 
             <div *ngFor="let col of columns; trackBy: trackByColumn" class="body-cell"
               [style.background]="track.lanes[hd.laneIndex]?.background_color"

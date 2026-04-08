@@ -420,8 +420,9 @@
   position: absolute;
   width: 100%;
   box-sizing: border-box;
-  will-change: top;
-  transition: top 800ms cubic-bezier(0.35, 0, 0.25, 1);
+  will-change: transform;
+  top: 0;
+  transition: transform 800ms cubic-bezier(0.35, 0, 0.25, 1);
 }
 
 .leaderboard-item-odd {
@@ -478,16 +479,13 @@
   gap: 2px;
   position: absolute; /* Use absolute for explicit positioning */
   left: 0;
-  will-change: top, transform, filter;
+  top: 0;
+  will-change: transform, filter;
   width: 100%;
-  transition: top 800ms cubic-bezier(0.35, 0, 0.25, 1), transform 150ms ease-out, filter 150ms ease-out;
-  transform: scale(1);
-  z-index: 1;
+  transition: transform 800ms cubic-bezier(0.35, 0, 0.25, 1), filter 150ms ease-out;
 }
 
 .table-row.highlight {
-  transform: scale(1.015);
-  z-index: 10;
   filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
 }
 

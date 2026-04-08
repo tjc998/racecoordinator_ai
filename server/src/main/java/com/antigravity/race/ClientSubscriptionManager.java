@@ -10,6 +10,10 @@ import com.antigravity.context.DatabaseContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class ClientSubscriptionManager {
   private static ClientSubscriptionManager instance;
@@ -20,6 +24,8 @@ public class ClientSubscriptionManager {
   private final Set<WsContext> sessions = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final Set<WsContext> raceDataSubscribers = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final Set<WsContext> interfaceSubscribers = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+  private ScheduledFuture<?> cleanupFuture;
 
   private ClientSubscriptionManager() {
   }
@@ -82,6 +88,7 @@ public class ClientSubscriptionManager {
   }
 
   public void addSession(WsContext ctx) {
+    cancelPendingCleanup();
     sessions.add(ctx);
     // Remove auto-subscription: clients must call subscribe() explicitly
     // raceDataSubscribers.add(ctx);
@@ -134,6 +141,7 @@ public class ClientSubscriptionManager {
 
   public void handleRaceSubscription(WsContext ctx, com.antigravity.proto.RaceSubscriptionRequest request) {
     if (request.getSubscribe()) {
+      cancelPendingCleanup();
       raceDataSubscribers.add(ctx);
       System.out.println("Client subscribed to race data. Subscribers: " + raceDataSubscribers.size());
       // Send current state immediately upon subscription if race exists
@@ -148,15 +156,32 @@ public class ClientSubscriptionManager {
     }
   }
 
-  private void checkAndStopRace() {
+  private synchronized void checkAndStopRace() {
     if (raceDataSubscribers.isEmpty() && currentRace != null) {
       if (!isShuttingDown) {
-        System.out.println("Last interested client disconnected/unsubscribed. Stopping and clearing current race.");
-        deleteAutoSave(currentRace.getRaceModel().getEntityId());
-        setRace(null);
+        if (cleanupFuture == null || cleanupFuture.isDone()) {
+          System.out.println("No subscribers left. Scheduling race cleanup in 10 seconds...");
+          cleanupFuture = scheduler.schedule(() -> {
+            synchronized (this) {
+              if (raceDataSubscribers.isEmpty() && currentRace != null) {
+                System.out.println("Last interested client disconnected/unsubscribed grace period expired. Stopping and clearing current race.");
+                deleteAutoSave(currentRace.getRaceModel().getEntityId());
+                setRace(null);
+              }
+            }
+          }, 10, TimeUnit.SECONDS);
+        }
       } else {
         System.out.println("Server is shutting down, preserving race state and auto-save.");
       }
+    }
+  }
+
+  private synchronized void cancelPendingCleanup() {
+    if (cleanupFuture != null && !cleanupFuture.isDone()) {
+      System.out.println("Subscriber re-connected. Cancelling pending race cleanup.");
+      cleanupFuture.cancel(false);
+      cleanupFuture = null;
     }
   }
 
