@@ -1,15 +1,31 @@
-import { ComponentHarness } from '@angular/cdk/testing';
+import { ComponentHarness } from "@angular/cdk/testing";
 
-import { AssetManagerHarnessBase } from './asset-manager.harness.base';
+import { AssetManagerHarnessBase } from "./asset-manager.harness.base";
 
-export class AssetManagerHarness extends ComponentHarness implements AssetManagerHarnessBase {
+export class AssetManagerHarness
+  extends ComponentHarness
+  implements AssetManagerHarnessBase
+{
   static hostSelector = AssetManagerHarnessBase.hostSelector;
 
-  protected getDbName = this.locatorFor(AssetManagerHarnessBase.selectors.dbName);
-  protected getTotalSizeText = this.locatorFor(AssetManagerHarnessBase.selectors.totalSizeText);
-  protected getAssetCards = this.locatorForAll(AssetManagerHarnessBase.selectors.assetCard);
-  protected getFilterTabs = this.locatorForAll(AssetManagerHarnessBase.selectors.filterTab);
-  protected getBackButton = this.locatorFor(AssetManagerHarnessBase.selectors.backBtn);
+  protected getDbName = this.locatorFor(
+    AssetManagerHarnessBase.selectors.dbName,
+  );
+  protected getTotalSizeText = this.locatorFor(
+    AssetManagerHarnessBase.selectors.totalSizeText,
+  );
+  protected getAssetCards = this.locatorForAll(
+    AssetManagerHarnessBase.selectors.assetCard,
+  );
+  protected getAssetCardNames = this.locatorForAll(
+    `${AssetManagerHarnessBase.selectors.assetCard} ${AssetManagerHarnessBase.selectors.assetName}`,
+  );
+  protected getFilterTabs = this.locatorForAll(
+    AssetManagerHarnessBase.selectors.filterTab,
+  );
+  protected getBackButton = this.locatorFor(
+    AssetManagerHarnessBase.selectors.backBtn,
+  );
 
   async getDatabaseName(): Promise<string> {
     const el = await this.getDbName();
@@ -26,15 +42,16 @@ export class AssetManagerHarness extends ComponentHarness implements AssetManage
   }
 
   async getAssetCardName(index: number): Promise<string> {
-    const cards = await this.getAssetCards();
-    if (index < cards.length) {
-      const nameEl = await cards[index].locatorFor(AssetManagerHarnessBase.selectors.assetName)();
-      return await nameEl.text();
+    const names = await this.getAssetCardNames();
+    if (index < names.length) {
+      return await names[index].text();
     }
-    return '';
+    return "";
   }
 
-  async setFilterType(type: 'all' | 'image' | 'image_set' | 'sound'): Promise<void> {
+  async setFilterType(
+    type: "all" | "image" | "image_set" | "sound",
+  ): Promise<void> {
     const tabs = await this.getFilterTabs();
     const indexMap = { all: 0, image: 1, image_set: 2, sound: 3 };
     const tab = tabs[indexMap[type]];
@@ -44,12 +61,18 @@ export class AssetManagerHarness extends ComponentHarness implements AssetManage
   async getActiveFilterType(): Promise<string> {
     const tabs = await this.getFilterTabs();
     for (let i = 0; i < tabs.length; i++) {
-        const tab = tabs[i];
-        if (await tab.hasClass('active')) {
-            return i === 0 ? 'all' : i === 1 ? 'image' : i === 2 ? 'image_set' : 'sound';
-        }
+      const tab = tabs[i];
+      if (await tab.hasClass("active")) {
+        return i === 0
+          ? "all"
+          : i === 1
+            ? "image"
+            : i === 2
+              ? "image_set"
+              : "sound";
+      }
     }
-    return '';
+    return "";
   }
 
   async clickBack(): Promise<void> {

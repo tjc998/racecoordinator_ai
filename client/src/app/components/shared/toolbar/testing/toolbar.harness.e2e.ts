@@ -1,17 +1,35 @@
-import { Locator } from '@playwright/test';
+import { Locator } from "@playwright/test";
 
-import { ToolbarHarnessBase } from './toolbar.harness.base';
+import { ToolbarHarnessBase } from "./toolbar.harness.base";
 
 export class ToolbarHarnessE2e implements ToolbarHarnessBase {
   constructor(private locator: Locator) {}
 
-  private get base() { return ToolbarHarnessBase; }
+  private get base() {
+    return ToolbarHarnessBase;
+  }
 
-  private get undoButton() { return this.locator.locator(this.base.selectors.undo); }
-  private get redoButton() { return this.locator.locator(this.base.selectors.redo); }
-  private get editButton() { return this.locator.locator(this.base.selectors.edit); }
-  private get helpButton() { return this.locator.locator(this.base.selectors.help); }
-  private get deleteButton() { return this.locator.locator(this.base.selectors.delete); }
+  private get undoButton() {
+    return this.locator.locator(this.base.selectors.undo);
+  }
+  private get redoButton() {
+    return this.locator.locator(this.base.selectors.redo);
+  }
+  private get editButton() {
+    return this.locator.locator(this.base.selectors.edit);
+  }
+  private get helpButton() {
+    return this.locator.locator(this.base.selectors.help);
+  }
+  private get deleteButton() {
+    return this.locator.locator(this.base.selectors.delete);
+  }
+  private get analyticsButton() {
+    return this.locator.locator(this.base.selectors.analytics);
+  }
+  private get addButton() {
+    return this.locator.locator(this.base.selectors.add);
+  }
 
   async isUndoVisible(): Promise<boolean> {
     return await this.undoButton.isVisible();
@@ -28,6 +46,12 @@ export class ToolbarHarnessE2e implements ToolbarHarnessBase {
   async isDeleteVisible(): Promise<boolean> {
     return await this.deleteButton.isVisible();
   }
+  async isAnalyticsVisible(): Promise<boolean> {
+    return await this.analyticsButton.isVisible();
+  }
+  async isAddVisible(): Promise<boolean> {
+    return await this.addButton.isVisible();
+  }
 
   async isUndoDisabled(): Promise<boolean> {
     return await this.undoButton.isDisabled();
@@ -40,6 +64,9 @@ export class ToolbarHarnessE2e implements ToolbarHarnessBase {
   }
   async isDeleteDisabled(): Promise<boolean> {
     return await this.deleteButton.isDisabled();
+  }
+  async isAddDisabled(): Promise<boolean> {
+    return await this.addButton.isDisabled();
   }
 
   async clickUndo(): Promise<void> {
@@ -55,7 +82,13 @@ export class ToolbarHarnessE2e implements ToolbarHarnessBase {
     await this.helpButton.click();
   }
   async clickDelete(): Promise<void> {
-    await this.deleteButton.click();
+    return await this.deleteButton.click();
+  }
+  async clickAnalytics(): Promise<void> {
+    await this.analyticsButton.click();
+  }
+  async clickAdd(): Promise<void> {
+    await this.addButton.click();
   }
 
   /**

@@ -1,14 +1,21 @@
-import { ComponentHarness } from '@angular/cdk/testing';
+import { ComponentHarness } from "@angular/cdk/testing";
 
-import { ReorderDialogHarness } from '..//reorder-dialog/testing/reorder-dialog.harness';
-import { UIEditorHarnessBase } from './ui-editor.harness.base';
+import { ReorderDialogHarness } from "..//reorder-dialog/testing/reorder-dialog.harness";
+import { UIEditorHarnessBase } from "./ui-editor.harness.base";
 
-export class UIEditorHarness extends ComponentHarness implements UIEditorHarnessBase {
+export class UIEditorHarness
+  extends ComponentHarness
+  implements UIEditorHarnessBase
+{
   static hostSelector = UIEditorHarnessBase.hostSelector;
 
-  protected getReorderBtn = this.locatorFor(UIEditorHarnessBase.selectors.reorderBtn);
+  protected getReorderBtn = this.locatorFor(
+    UIEditorHarnessBase.selectors.reorderBtn,
+  );
   protected getReorderDialog = this.locatorFor(ReorderDialogHarness);
-  protected getImageSelectors = this.locatorForAll(UIEditorHarnessBase.selectors.imageSelector);
+  protected getImageSelectorsPreviews = this.locatorForAll(
+    `${UIEditorHarnessBase.selectors.imageSelector} ${UIEditorHarnessBase.selectors.imagePreview}`,
+  );
 
   async clickReorderColumns(): Promise<void> {
     const btn = await this.getReorderBtn();
@@ -20,10 +27,9 @@ export class UIEditorHarness extends ComponentHarness implements UIEditorHarness
   }
 
   async clickImageSelector(index: number): Promise<void> {
-    const selectors = await this.getImageSelectors();
-    if (index < selectors.length) {
-        const preview = await selectors[index].locatorFor(UIEditorHarnessBase.selectors.imagePreview)();
-        await preview.click();
+    const previews = await this.getImageSelectorsPreviews();
+    if (index < previews.length) {
+      await previews[index].click();
     }
   }
 }

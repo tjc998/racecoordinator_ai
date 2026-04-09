@@ -1,16 +1,37 @@
-import { ComponentHarness } from '@angular/cdk/testing';
+import { ComponentHarness } from "@angular/cdk/testing";
 
-import { ReorderDialogHarnessBase } from './reorder-dialog.harness.base';
+import { ReorderDialogHarnessBase } from "./reorder-dialog.harness.base";
 
-export class ReorderDialogHarness extends ComponentHarness implements ReorderDialogHarnessBase {
+export class ReorderDialogHarness
+  extends ComponentHarness
+  implements ReorderDialogHarnessBase
+{
   static hostSelector = ReorderDialogHarnessBase.hostSelector;
 
-  protected getBackdrop = this.locatorForOptional(ReorderDialogHarnessBase.selectors.backdrop);
-  protected getTitleText = this.locatorFor(ReorderDialogHarnessBase.selectors.title);
-  protected getValueChips = this.locatorForAll(ReorderDialogHarnessBase.selectors.valueChip);
-  protected getSlotItems = this.locatorForAll(ReorderDialogHarnessBase.selectors.slotItem);
-  protected getSaveBtn = this.locatorFor(ReorderDialogHarnessBase.selectors.saveBtn);
-  protected getCancelBtn = this.locatorFor(ReorderDialogHarnessBase.selectors.cancelBtn);
+  protected getBackdrop = this.locatorForOptional(
+    ReorderDialogHarnessBase.selectors.backdrop,
+  );
+  protected getTitleText = this.locatorFor(
+    ReorderDialogHarnessBase.selectors.title,
+  );
+  protected getValueChips = this.locatorForAll(
+    ReorderDialogHarnessBase.selectors.valueChip,
+  );
+  protected getSlotItems = this.locatorForAll(
+    ReorderDialogHarnessBase.selectors.slotItem,
+  );
+  protected getSlotTitles = this.locatorForAll(
+    `${ReorderDialogHarnessBase.selectors.slotItem} ${ReorderDialogHarnessBase.selectors.slotTitle}`,
+  );
+  protected getSlotRemoveBtns = this.locatorForAll(
+    `${ReorderDialogHarnessBase.selectors.slotItem} ${ReorderDialogHarnessBase.selectors.removeBtn}`,
+  );
+  protected getSaveBtn = this.locatorFor(
+    ReorderDialogHarnessBase.selectors.saveBtn,
+  );
+  protected getCancelBtn = this.locatorFor(
+    ReorderDialogHarnessBase.selectors.cancelBtn,
+  );
 
   async isVisible(): Promise<boolean> {
     const backdrop = await this.getBackdrop();
@@ -26,7 +47,7 @@ export class ReorderDialogHarness extends ComponentHarness implements ReorderDia
     const chips = await this.getValueChips();
     const values: string[] = [];
     for (const chip of chips) {
-        values.push(await chip.text());
+      values.push(await chip.text());
     }
     return values;
   }
@@ -36,24 +57,24 @@ export class ReorderDialogHarness extends ComponentHarness implements ReorderDia
   }
 
   async getSlotTitle(index: number): Promise<string> {
-    const items = await this.getSlotItems();
-    if (index < items.length) {
-        const title = await items[index].locatorFor(ReorderDialogHarnessBase.selectors.slotTitle)();
-        return await title.text();
+    const titles = await this.getSlotTitles();
+    if (index < titles.length) {
+      return await titles[index].text();
     }
-    return '';
+    return "";
   }
 
   async clickRemoveSlot(index: number): Promise<void> {
-    const items = await this.getSlotItems();
-    if (index < items.length) {
-        const btn = await items[index].locatorFor(ReorderDialogHarnessBase.selectors.removeBtn)();
-        await btn.click();
+    const btns = await this.getSlotRemoveBtns();
+    if (index < btns.length) {
+      await btns[index].click();
     }
   }
 
   async clickResetDefaults(): Promise<void> {
-    const btn = await this.locatorFor(ReorderDialogHarnessBase.selectors.resetDefaultsBtn)();
+    const btn = await this.locatorFor(
+      ReorderDialogHarnessBase.selectors.resetDefaultsBtn,
+    )();
     await btn.click();
   }
 

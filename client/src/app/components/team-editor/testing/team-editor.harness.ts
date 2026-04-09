@@ -1,19 +1,35 @@
-import { ComponentHarness } from '@angular/cdk/testing';
+import { ComponentHarness } from "@angular/cdk/testing";
 
-import { TeamEditorHarnessBase } from './team-editor.harness.base';
+import { TeamEditorHarnessBase } from "./team-editor.harness.base";
 
-export class TeamEditorHarness extends ComponentHarness implements TeamEditorHarnessBase {
+export class TeamEditorHarness
+  extends ComponentHarness
+  implements TeamEditorHarnessBase
+{
   static hostSelector = TeamEditorHarnessBase.hostSelector;
 
-  protected getNameInput = this.locatorFor(TeamEditorHarnessBase.selectors.nameInput);
-  protected getSaveBtn = this.locatorFor(TeamEditorHarnessBase.selectors.saveBtn);
-  protected getSaveAsNewBtn = this.locatorFor(TeamEditorHarnessBase.selectors.saveAsNewBtn);
-  protected getDriverItems = this.locatorForAll(TeamEditorHarnessBase.selectors.driverItem);
-  protected getAvatarSelector = this.locatorFor(TeamEditorHarnessBase.selectors.avatarSelector);
+  protected getNameInput = this.locatorFor(
+    TeamEditorHarnessBase.selectors.nameInput,
+  );
+  protected getSaveBtn = this.locatorFor(
+    TeamEditorHarnessBase.selectors.saveBtn,
+  );
+  protected getSaveAsNewBtn = this.locatorFor(
+    TeamEditorHarnessBase.selectors.saveAsNewBtn,
+  );
+  protected getDriverItems = this.locatorForAll(
+    TeamEditorHarnessBase.selectors.driverItem,
+  );
+  protected getDriverNames = this.locatorForAll(
+    `${TeamEditorHarnessBase.selectors.driverItem} .driver-name`,
+  );
+  protected getAvatarSelector = this.locatorFor(
+    TeamEditorHarnessBase.selectors.avatarSelector,
+  );
 
   async getName(): Promise<string> {
     const input = await this.getNameInput();
-    return await input.getProperty('value');
+    return await input.getProperty("value");
   }
 
   async setName(name: string): Promise<void> {
@@ -37,18 +53,17 @@ export class TeamEditorHarness extends ComponentHarness implements TeamEditorHar
   }
 
   async getDriverName(index: number): Promise<string> {
-    const items = await this.getDriverItems();
-    if (index < items.length) {
-      const nameEl = await items[index].locatorFor('.driver-name')();
-      return await nameEl.text();
+    const names = await this.getDriverNames();
+    if (index < names.length) {
+      return await names[index].text();
     }
-    return '';
+    return "";
   }
 
   async isDriverSelected(index: number): Promise<boolean> {
     const items = await this.getDriverItems();
     if (index < items.length) {
-        return await items[index].hasClass('selected');
+      return await items[index].hasClass("selected");
     }
     return false;
   }
@@ -56,7 +71,7 @@ export class TeamEditorHarness extends ComponentHarness implements TeamEditorHar
   async toggleDriver(index: number): Promise<void> {
     const items = await this.getDriverItems();
     if (index < items.length) {
-        await items[index].click();
+      await items[index].click();
     }
   }
 
@@ -67,6 +82,6 @@ export class TeamEditorHarness extends ComponentHarness implements TeamEditorHar
 
   async isSaveEnabled(): Promise<boolean> {
     const btn = await this.getSaveBtn();
-    return !(await btn.getProperty('disabled'));
+    return !(await btn.getProperty("disabled"));
   }
 }

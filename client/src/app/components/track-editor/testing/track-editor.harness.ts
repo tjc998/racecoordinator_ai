@@ -1,21 +1,40 @@
-import { ComponentHarness } from '@angular/cdk/testing';
+import { ComponentHarness } from "@angular/cdk/testing";
 
-import { ArduinoEditorHarness } from '..//arduino-editor/testing/arduino-editor.harness';
-import { TrackEditorHarnessBase } from './track-editor.harness.base';
+import { ArduinoEditorHarness } from "..//arduino-editor/testing/arduino-editor.harness";
+import { TrackEditorHarnessBase } from "./track-editor.harness.base";
 
-export class TrackEditorHarness extends ComponentHarness implements TrackEditorHarnessBase {
+export class TrackEditorHarness
+  extends ComponentHarness
+  implements TrackEditorHarnessBase
+{
   static hostSelector = TrackEditorHarnessBase.hostSelector;
 
-  protected getNameInput = this.locatorFor(TrackEditorHarnessBase.selectors.nameInput);
-  protected getLaneItems = this.locatorForAll(TrackEditorHarnessBase.selectors.laneItem);
-  protected getAddLaneButton = this.locatorFor(TrackEditorHarnessBase.selectors.addLaneButton);
-  protected getAddInterfaceButton = this.locatorFor(TrackEditorHarnessBase.selectors.addInterfaceButton);
+  protected getNameInput = this.locatorFor(
+    TrackEditorHarnessBase.selectors.nameInput,
+  );
+  protected getLaneItems = this.locatorForAll(
+    TrackEditorHarnessBase.selectors.laneItem,
+  );
+  protected getRemoveLaneButtons = this.locatorForAll(
+    `${TrackEditorHarnessBase.selectors.laneItem} ${TrackEditorHarnessBase.selectors.removeLaneButton}`,
+  );
+  protected getLaneLengthInputs = this.locatorForAll(
+    `${TrackEditorHarnessBase.selectors.laneItem} ${TrackEditorHarnessBase.selectors.laneLengthInput}`,
+  );
+  protected getAddLaneButton = this.locatorFor(
+    TrackEditorHarnessBase.selectors.addLaneButton,
+  );
+  protected getAddInterfaceButton = this.locatorFor(
+    TrackEditorHarnessBase.selectors.addInterfaceButton,
+  );
   protected getArduinoEditors = this.locatorForAll(ArduinoEditorHarness);
-  protected getDuplicateButton = this.locatorFor(TrackEditorHarnessBase.selectors.duplicateButton);
+  protected getDuplicateButton = this.locatorFor(
+    TrackEditorHarnessBase.selectors.duplicateButton,
+  );
 
   async getTrackName(): Promise<string> {
     const input = await this.getNameInput();
-    return await input.getProperty('value');
+    return await input.getProperty("value");
   }
 
   async setTrackName(name: string): Promise<void> {
@@ -35,28 +54,25 @@ export class TrackEditorHarness extends ComponentHarness implements TrackEditorH
   }
 
   async removeLane(index: number): Promise<void> {
-    const items = await this.getLaneItems();
-    if (index < items.length) {
-      const btn = await items[index].locatorFor(TrackEditorHarnessBase.selectors.removeLaneButton)();
-      await btn.click();
+    const btns = await this.getRemoveLaneButtons();
+    if (index < btns.length) {
+      await btns[index].click();
     }
   }
 
   async getLaneLength(index: number): Promise<number> {
-    const items = await this.getLaneItems();
-    if (index < items.length) {
-      const input = await items[index].locatorFor(TrackEditorHarnessBase.selectors.laneLengthInput)();
-      return parseFloat(await input.getProperty('value'));
+    const inputs = await this.getLaneLengthInputs();
+    if (index < inputs.length) {
+      return parseFloat(await inputs[index].getProperty("value"));
     }
     return 0;
   }
 
   async setLaneLength(index: number, length: number): Promise<void> {
-    const items = await this.getLaneItems();
-    if (index < items.length) {
-      const input = await items[index].locatorFor(TrackEditorHarnessBase.selectors.laneLengthInput)();
-      await input.clear();
-      await input.sendKeys(length.toString());
+    const inputs = await this.getLaneLengthInputs();
+    if (index < inputs.length) {
+      await inputs[index].clear();
+      await inputs[index].sendKeys(length.toString());
     }
   }
 
@@ -75,7 +91,9 @@ export class TrackEditorHarness extends ComponentHarness implements TrackEditorH
   }
 
   async isNameInvalid(): Promise<boolean> {
-    const section = await this.locatorFor(TrackEditorHarnessBase.selectors.nameSection)();
-    return await section.hasClass('invalid');
+    const section = await this.locatorFor(
+      TrackEditorHarnessBase.selectors.nameSection,
+    )();
+    return await section.hasClass("invalid");
   }
 }

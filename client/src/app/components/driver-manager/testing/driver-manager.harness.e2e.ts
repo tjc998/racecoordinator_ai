@@ -1,18 +1,25 @@
-import { Locator } from '@playwright/test';
+import { Locator } from "@playwright/test";
 
-import { ManagerHeaderHarnessBase } from '../../shared/manager-header/testing/manager-header.harness.base';
-import { ManagerHeaderHarnessE2e } from '../../shared/manager-header/testing/manager-header.harness.e2e';
-import { DriverManagerHarnessBase } from './driver-manager.harness.base';
+import { ManagerHeaderHarnessBase } from "../../shared/manager-header/testing/manager-header.harness.base";
+import { ManagerHeaderHarnessE2e } from "../../shared/manager-header/testing/manager-header.harness.e2e";
+import { DriverManagerHarnessBase } from "./driver-manager.harness.base";
 
 export class DriverManagerHarnessE2e implements DriverManagerHarnessBase {
   constructor(private locator: Locator) {}
 
-  private get base() { return DriverManagerHarnessBase; }
+  private get base() {
+    return DriverManagerHarnessBase;
+  }
 
-  private get searchInput() { return this.locator.locator(this.base.selectors.searchInput); }
-  private get driverRows() { return this.locator.locator(this.base.selectors.driverRow); }
-  private get configNameInput() { return this.locator.locator(this.base.selectors.configNameInput).first(); }
-
+  private get searchInput() {
+    return this.locator.locator(this.base.selectors.searchInput);
+  }
+  private get driverRows() {
+    return this.locator.locator(this.base.selectors.driverRow);
+  }
+  private get configNameInput() {
+    return this.locator.locator(this.base.selectors.configNameInput).first();
+  }
 
   async getDriverCount(): Promise<number> {
     return await this.driverRows.count();
@@ -41,13 +48,16 @@ export class DriverManagerHarnessE2e implements DriverManagerHarnessBase {
   }
 
   async clickEdit(): Promise<void> {
-    const header = new ManagerHeaderHarnessE2e(this.locator.locator(ManagerHeaderHarnessBase.hostSelector));
-    await header.getToolbar().clickEdit();
+    const header = new ManagerHeaderHarnessE2e(
+      this.locator.locator(ManagerHeaderHarnessBase.hostSelector),
+    );
+    await (await header.getToolbar()).clickEdit();
   }
 
   async clickDelete(): Promise<void> {
-    const header = new ManagerHeaderHarnessE2e(this.locator.locator(ManagerHeaderHarnessBase.hostSelector));
-    await header.getToolbar().clickDelete();
+    const header = new ManagerHeaderHarnessE2e(
+      this.locator.locator(ManagerHeaderHarnessBase.hostSelector),
+    );
+    await (await header.getToolbar()).clickDelete();
   }
-
 }

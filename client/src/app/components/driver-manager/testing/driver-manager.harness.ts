@@ -1,36 +1,48 @@
-import { ComponentHarness } from '@angular/cdk/testing';
+import { ComponentHarness } from "@angular/cdk/testing";
 
-import { ManagerHeaderHarness } from '../../shared/manager-header/testing/manager-header.harness';
-import { DriverManagerHarnessBase } from './driver-manager.harness.base';
+import { ManagerHeaderHarness } from "../../shared/manager-header/testing/manager-header.harness";
+import { DriverManagerHarnessBase } from "./driver-manager.harness.base";
 
-export class DriverManagerHarness extends ComponentHarness implements DriverManagerHarnessBase {
+export class DriverManagerHarness
+  extends ComponentHarness
+  implements DriverManagerHarnessBase
+{
   static hostSelector = DriverManagerHarnessBase.hostSelector;
 
-  protected getSearchInput = this.locatorFor(DriverManagerHarnessBase.selectors.searchInput);
-  protected getDriverRows = this.locatorForAll(DriverManagerHarnessBase.selectors.driverRow);
-  protected getConfigNameInput = this.locatorFor(DriverManagerHarnessBase.selectors.configNameInput);
-
+  protected getSearchInput = this.locatorFor(
+    DriverManagerHarnessBase.selectors.searchInput,
+  );
+  protected getDriverRows = this.locatorForAll(
+    DriverManagerHarnessBase.selectors.driverRow,
+  );
+  protected getDriverNameCells = this.locatorForAll(
+    `${DriverManagerHarnessBase.selectors.driverRow} ${DriverManagerHarnessBase.selectors.nameCell}`,
+  );
+  protected getDriverNicknameCells = this.locatorForAll(
+    `${DriverManagerHarnessBase.selectors.driverRow} ${DriverManagerHarnessBase.selectors.nicknameCell}`,
+  );
+  protected getConfigNameInput = this.locatorFor(
+    DriverManagerHarnessBase.selectors.configNameInput,
+  );
 
   async getDriverCount(): Promise<number> {
     return (await this.getDriverRows()).length;
   }
 
   async getDriverName(index: number): Promise<string> {
-    const rows = await this.getDriverRows();
-    if (index < rows.length) {
-      const nameCell = await rows[index].locatorFor(DriverManagerHarnessBase.selectors.nameCell)();
-      return await nameCell.text();
+    const cells = await this.getDriverNameCells();
+    if (index < cells.length) {
+      return await cells[index].text();
     }
-    return '';
+    return "";
   }
 
   async getDriverNickname(index: number): Promise<string> {
-    const rows = await this.getDriverRows();
-    if (index < rows.length) {
-      const nicknameCell = await rows[index].locatorFor(DriverManagerHarnessBase.selectors.nicknameCell)();
-      return await nicknameCell.text();
+    const cells = await this.getDriverNicknameCells();
+    if (index < cells.length) {
+      return await cells[index].text();
     }
-    return '';
+    return "";
   }
 
   async selectDriver(index: number): Promise<void> {
@@ -48,7 +60,7 @@ export class DriverManagerHarness extends ComponentHarness implements DriverMana
 
   async getSelectedDriverName(): Promise<string> {
     const input = await this.getConfigNameInput();
-    return await input.getProperty('value');
+    return await input.getProperty("value");
   }
 
   async clickEdit(): Promise<void> {
@@ -62,5 +74,4 @@ export class DriverManagerHarness extends ComponentHarness implements DriverMana
     const toolbar = await header.getToolbar();
     await toolbar.clickDelete();
   }
-
 }
