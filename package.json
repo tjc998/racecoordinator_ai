@@ -13,7 +13,11 @@
     "prepare": "husky",
     "lint": "npm run lint:client && npm run lint:server",
     "lint:client": "cd client && npx eslint --fix \"src/**/*.{ts,html}\"",
-    "lint:server": "cd server && mvn spotless:check"
+    "lint:server": "cd server && mvn spotless:check",
+    "test": "npm run test:client && npm run test:visual && npm run test:server",
+    "test:client": "cd client && npm run test",
+    "test:visual": "cd client && npm run test:visual",
+    "test:server": "cd server && mvn test"
   },
   "lint-staged": {
     "client/**/*.{ts,tsx,js,jsx,html}": [
