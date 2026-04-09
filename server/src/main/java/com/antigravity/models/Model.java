@@ -1,31 +1,33 @@
 package com.antigravity.models;
 
-import org.bson.types.ObjectId;
-import org.bson.codecs.pojo.annotations.BsonProperty;
+import com.antigravity.race.ServerToClientObject;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonId;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.bson.codecs.pojo.annotations.BsonProperty;
+import org.bson.types.ObjectId;
 
-public class Model extends com.antigravity.race.ServerToClientObject {
-	private final ObjectId id;
+public class Model extends ServerToClientObject {
 
-	@BsonProperty("entity_id")
-	@JsonProperty("entity_id")
-	private final String entityId;
+  private final ObjectId id;
 
-	@BsonCreator
-	public Model(@BsonId @BsonProperty("_id") @JsonProperty("_id") ObjectId id,
-			@BsonProperty("entity_id") @JsonProperty("entity_id") String entityId) {
-		super(entityId);
-		this.id = id;
-		this.entityId = entityId;
-	}
+  @BsonProperty("entity_id")
+  @JsonProperty("entity_id")
+  private final String entityId;
 
-	public ObjectId getId() {
-		return id;
-	}
+  @BsonCreator
+  public Model(@BsonId @BsonProperty("_id") @JsonProperty("_id") ObjectId id,
+      @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId) {
+    super(entityId);
+    this.id = id;
+    this.entityId = entityId;
+  }
 
-	public String getEntityId() {
-		return entityId;
-	}
+  public ObjectId getId() {
+    return id;
+  }
+
+  public String getEntityId() {
+    return entityId;
+  }
 }

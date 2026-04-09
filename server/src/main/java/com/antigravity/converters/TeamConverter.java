@@ -1,11 +1,13 @@
 package com.antigravity.converters;
 
 import com.antigravity.models.Team;
-import com.antigravity.proto.TeamModel;
 import com.antigravity.proto.Model;
+import com.antigravity.proto.TeamModel;
+import java.util.Set;
 
 public class TeamConverter {
-  public static TeamModel toProto(Team team, java.util.Set<String> sentObjectIds) {
+
+  public static TeamModel toProto(Team team, Set<String> sentObjectIds) {
     if (team == null) {
       return null;
     }

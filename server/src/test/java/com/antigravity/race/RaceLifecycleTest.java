@@ -5,27 +5,32 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.antigravity.models.Driver;
+import com.antigravity.models.HeatRotationType;
+import com.antigravity.models.HeatScoring;
+import com.antigravity.models.Lane;
+import com.antigravity.models.OverallScoring;
+import com.antigravity.models.Race;
+import com.antigravity.models.Track;
+import com.antigravity.proto.RaceData;
+import com.antigravity.protocols.ProtocolDelegate;
+import com.antigravity.protocols.arduino.ArduinoConfig;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-
 import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.antigravity.models.HeatRotationType;
-import com.antigravity.models.Lane;
-import com.antigravity.models.Track;
-import com.antigravity.protocols.ProtocolDelegate;
-import com.antigravity.protocols.arduino.ArduinoConfig;
-
 public class RaceLifecycleTest {
 
-  private Race race;
+  private com.antigravity.race.Race race;
   private ProtocolDelegate mockProtocols;
 
   @Before
   public void setUp() throws Exception {
-    List<ArduinoConfig> mockConfig = java.util.Collections.singletonList(mock(ArduinoConfig.class));
+    List<ArduinoConfig> mockConfig = Collections.singletonList(mock(ArduinoConfig.class));
 
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "black", 100));
@@ -33,20 +38,20 @@ public class RaceLifecycleTest {
 
     Track realTrack = new Track("Test Track", lanes, mockConfig, "track1", new ObjectId());
 
-    com.antigravity.models.HeatScoring mockHeatScoring = mock(com.antigravity.models.HeatScoring.class);
-    when(mockHeatScoring.getHeatRanking()).thenReturn(com.antigravity.models.HeatScoring.HeatRanking.LAP_COUNT);
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.LAP_COUNT);
     when(mockHeatScoring.getHeatRankingTiebreaker())
-        .thenReturn(com.antigravity.models.HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
-    when(mockHeatScoring.getFinishMethod()).thenReturn(com.antigravity.models.HeatScoring.FinishMethod.Timed);
+        .thenReturn(HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    when(mockHeatScoring.getFinishMethod()).thenReturn(HeatScoring.FinishMethod.Timed);
     when(mockHeatScoring.getFinishValue()).thenReturn(100L);
 
-    com.antigravity.models.OverallScoring mockOverallScoring = mock(com.antigravity.models.OverallScoring.class);
+    OverallScoring mockOverallScoring = mock(OverallScoring.class);
     when(mockOverallScoring.getRankingMethod())
-        .thenReturn(com.antigravity.models.OverallScoring.OverallRanking.LAP_COUNT);
+        .thenReturn(OverallScoring.OverallRanking.LAP_COUNT);
     when(mockOverallScoring.getTiebreaker())
-        .thenReturn(com.antigravity.models.OverallScoring.OverallRankingTiebreaker.FASTEST_LAP_TIME);
+        .thenReturn(OverallScoring.OverallRankingTiebreaker.FASTEST_LAP_TIME);
 
-    com.antigravity.models.Race realRaceModel = new com.antigravity.models.Race.Builder()
+    Race realRaceModel = new Race.Builder()
         .withName("Test Race")
         .withTrackEntityId("track1")
         .withHeatRotationType(HeatRotationType.RoundRobin)
@@ -57,19 +62,24 @@ public class RaceLifecycleTest {
         .build();
 
     List<RaceParticipant> drivers = new ArrayList<>();
-    drivers.add(new RaceParticipant(new com.antigravity.models.Driver("Test Driver", "D1", "driver1", new ObjectId()),
+    drivers.add(new RaceParticipant(new Driver("Test Driver", "D1", "driver1", new ObjectId()),
         "participant1"));
 
     // Initialize the race. Note: this will call createProtocols() internally.
-    race = new Race.Builder().model(realRaceModel).drivers(drivers).track(realTrack).isDemoMode(true).build();
+    race = new com.antigravity.race.Race.Builder()
+        .model(realRaceModel)
+        .drivers(drivers)
+        .track(realTrack)
+        .isDemoMode(true)
+        .build();
 
     // Swap the internal protocols with a mock so we can verify the close() call.
     mockProtocols = mock(ProtocolDelegate.class);
     injectProtocols(race, mockProtocols);
   }
 
-  private void injectProtocols(Race race, ProtocolDelegate protocols) throws Exception {
-    java.lang.reflect.Field protocolsField = Race.class.getDeclaredField("protocols");
+  private void injectProtocols(com.antigravity.race.Race race, ProtocolDelegate protocols) throws Exception {
+    Field protocolsField = com.antigravity.race.Race.class.getDeclaredField("protocols");
     protocolsField.setAccessible(true);
     protocolsField.set(race, protocols);
   }
@@ -105,7 +115,7 @@ public class RaceLifecycleTest {
     // lane.
     // createSnapshot() should filter it out.
 
-    com.antigravity.proto.RaceData snapshot = race.createSnapshot();
+    RaceData snapshot = race.createSnapshot();
 
     // Verify only the real driver is in the overall drivers list
     assertEquals(1, snapshot.getRace().getDriversCount());

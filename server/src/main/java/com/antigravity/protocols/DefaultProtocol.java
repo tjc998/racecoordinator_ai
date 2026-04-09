@@ -4,7 +4,8 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class DefaultProtocol implements IProtocol {
-  private int numLanes;
+
+  private final int numLanes;
   protected ProtocolListener listener;
 
   public DefaultProtocol(int numLanes) {

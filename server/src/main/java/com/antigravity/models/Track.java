@@ -1,28 +1,31 @@
 package com.antigravity.models;
 
+import com.antigravity.proto.PinBehavior;
+import com.antigravity.protocols.arduino.ArduinoConfig;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Collections;
 import java.util.List;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
-import com.antigravity.protocols.arduino.ArduinoConfig;
 import org.bson.types.ObjectId;
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Track extends Model {
+
   private final String name;
   private final List<Lane> lanes;
   private final List<ArduinoConfig> arduinoConfigs;
 
   @BsonCreator
-  @com.fasterxml.jackson.annotation.JsonCreator
-  public Track(@BsonProperty("name") @com.fasterxml.jackson.annotation.JsonProperty("name") String name,
-      @BsonProperty("lanes") @com.fasterxml.jackson.annotation.JsonProperty("lanes") List<Lane> lanes,
-      @BsonProperty("arduino_configs") @com.fasterxml.jackson.annotation.JsonProperty("arduino_configs") List<ArduinoConfig> arduinoConfigs,
-      @BsonProperty("entity_id") @com.fasterxml.jackson.annotation.JsonProperty("entity_id") String entityId,
-      @BsonId @com.fasterxml.jackson.annotation.JsonProperty("_id") ObjectId id) {
+  @JsonCreator
+  public Track(@BsonProperty("name") @JsonProperty("name") String name,
+      @BsonProperty("lanes") @JsonProperty("lanes") List<Lane> lanes,
+      @BsonProperty("arduino_configs") @JsonProperty("arduino_configs") List<ArduinoConfig> arduinoConfigs,
+      @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
+      @BsonId @JsonProperty("_id") ObjectId id) {
     super(id, entityId);
     this.name = name;
     this.lanes = lanes != null ? Collections.unmodifiableList(lanes) : Collections.emptyList();
@@ -43,9 +46,9 @@ public class Track extends Model {
     return name;
   }
 
-  @com.fasterxml.jackson.annotation.JsonProperty("has_digital_fuel")
+  @JsonProperty("has_digital_fuel")
   public boolean hasDigitalFuel() {
-    int base = com.antigravity.proto.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE.getNumber();
+    int base = PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE.getNumber();
     int max = base + Math.max(1, this.lanes.size());
 
     for (ArduinoConfig config : this.arduinoConfigs) {
@@ -64,8 +67,8 @@ public class Track extends Model {
     return lanes;
   }
 
-  @com.fasterxml.jackson.annotation.JsonProperty("arduino_configs")
-  @org.bson.codecs.pojo.annotations.BsonProperty("arduino_configs")
+  @JsonProperty("arduino_configs")
+  @BsonProperty("arduino_configs")
   public List<ArduinoConfig> getArduinoConfigs() {
     return arduinoConfigs;
   }

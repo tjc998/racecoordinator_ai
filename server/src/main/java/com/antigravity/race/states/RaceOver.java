@@ -1,19 +1,24 @@
 package com.antigravity.race.states;
 
+import com.antigravity.protocols.CarData;
+import com.antigravity.race.Race;
+import java.time.OffsetDateTime;
+
 public class RaceOver implements IRaceState {
+
   @Override
-  public void enter(com.antigravity.race.Race race) {
+  public void enter(Race race) {
     System.out.println("RaceOver state entered.");
     race.setMainPower(false);
 
-    race.getStatistics().setEndTime(java.time.OffsetDateTime.now().toString());
+    race.getStatistics().setEndTime(OffsetDateTime.now().toString());
     long raceStart = race.getStatistics().getStartMillis();
     if (raceStart > 0) {
       race.getStatistics().setDurationMillis(System.currentTimeMillis() - raceStart);
     }
 
     if (race.getCurrentHeat() != null && race.getCurrentHeat().getStatistics().getEndTime() == null) {
-      race.getCurrentHeat().getStatistics().setEndTime(java.time.OffsetDateTime.now().toString());
+      race.getCurrentHeat().getStatistics().setEndTime(OffsetDateTime.now().toString());
       long heatStart = race.getCurrentHeat().getStatistics().getStartMillis();
       if (heatStart > 0) {
         race.getCurrentHeat().getStatistics().setDurationMillis(System.currentTimeMillis() - heatStart);
@@ -22,37 +27,37 @@ public class RaceOver implements IRaceState {
   }
 
   @Override
-  public void exit(com.antigravity.race.Race race) {
+  public void exit(Race race) {
     System.out.println("RaceOver state exited.");
   }
 
   @Override
-  public void nextHeat(com.antigravity.race.Race race) {
+  public void nextHeat(Race race) {
     throw new IllegalStateException("Cannot move to next heat from state: " + this.getClass().getSimpleName());
   }
 
   @Override
-  public void start(com.antigravity.race.Race race) {
+  public void start(Race race) {
     throw new IllegalStateException("Cannot start race: Race is not in NotStarted or Paused state.");
   }
 
   @Override
-  public void pause(com.antigravity.race.Race race) {
+  public void pause(Race race) {
     throw new IllegalStateException("Cannot pause race: Race is not in Starting or Racing state.");
   }
 
   @Override
-  public void restartHeat(com.antigravity.race.Race race) {
+  public void restartHeat(Race race) {
     throw new IllegalStateException("Cannot restart heat from state: " + this.getClass().getSimpleName());
   }
 
   @Override
-  public void skipHeat(com.antigravity.race.Race race) {
+  public void skipHeat(Race race) {
     throw new IllegalStateException("Cannot skip heat from state: " + this.getClass().getSimpleName());
   }
 
   @Override
-  public void deferHeat(com.antigravity.race.Race race) {
+  public void deferHeat(Race race) {
     throw new IllegalStateException("Cannot defer heat from state: " + this.getClass().getSimpleName());
   }
 
@@ -65,11 +70,11 @@ public class RaceOver implements IRaceState {
   }
 
   @Override
-  public void onCarData(com.antigravity.protocols.CarData carData) {
+  public void onCarData(CarData carData) {
   }
 
   @Override
-  public void onCallbutton(com.antigravity.race.Race race, int lane) {
+  public void onCallbutton(Race race, int lane) {
     System.out.println("RaceOver: Ignored onCallbutton - Race is over");
   }
 }

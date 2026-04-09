@@ -1,16 +1,25 @@
 package com.antigravity.race.states;
 
+import com.antigravity.protocols.CarData;
+import com.antigravity.race.Race;
+import java.time.OffsetDateTime;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
 public class HeatOver implements IRaceState {
-  private java.util.concurrent.ScheduledExecutorService scheduler;
-  private java.util.concurrent.ScheduledFuture<?> timerHandle;
+
+  private ScheduledExecutorService scheduler;
+  private ScheduledFuture<?> timerHandle;
 
   @Override
-  public void enter(com.antigravity.race.Race race) {
+  public void enter(Race race) {
     System.out.println("HeatOver state entered.");
     race.setMainPower(false);
 
     if (race.getCurrentHeat() != null) {
-      race.getCurrentHeat().getStatistics().setEndTime(java.time.OffsetDateTime.now().toString());
+      race.getCurrentHeat().getStatistics().setEndTime(OffsetDateTime.now().toString());
       long start = race.getCurrentHeat().getStatistics().getStartMillis();
       if (start > 0) {
         race.getCurrentHeat().getStatistics().setDurationMillis(System.currentTimeMillis() - start);
@@ -28,29 +37,29 @@ public class HeatOver implements IRaceState {
   }
 
   @Override
-  public void exit(com.antigravity.race.Race race) {
+  public void exit(Race race) {
     System.out.println("HeatOver state exited.");
     stopTimer();
   }
 
   @Override
-  public void nextHeat(com.antigravity.race.Race race) {
+  public void nextHeat(Race race) {
     stopTimer();
     Common.advanceToNextHeat(race);
   }
 
   @Override
-  public void skipHeat(com.antigravity.race.Race race) {
+  public void skipHeat(Race race) {
     throw new IllegalStateException("Cannot skip heat: Race is not in NotStarted or Paused state.");
   }
 
   @Override
-  public void start(com.antigravity.race.Race race) {
+  public void start(Race race) {
     throw new IllegalStateException("Cannot start race: Race is not in NotStarted or Paused state.");
   }
 
   @Override
-  public void pause(com.antigravity.race.Race race) {
+  public void pause(Race race) {
     System.out.println("HeatOver.pause() called. Terminating auto-advance.");
     stopTimer();
     race.setAutoAdvanceFired(true);
@@ -58,14 +67,14 @@ public class HeatOver implements IRaceState {
   }
 
   @Override
-  public void restartHeat(com.antigravity.race.Race race) {
+  public void restartHeat(Race race) {
     System.out.println("HeatOver.restartHeat() called. Resetting current heat.");
     race.resetCurrentHeat();
-    race.changeState(new com.antigravity.race.states.NotStarted());
+    race.changeState(new NotStarted());
   }
 
   @Override
-  public void deferHeat(com.antigravity.race.Race race) {
+  public void deferHeat(Race race) {
     throw new IllegalStateException("Cannot defer heat: Race is not in NotStarted or Paused state.");
   }
 
@@ -78,14 +87,15 @@ public class HeatOver implements IRaceState {
   }
 
   @Override
-  public void onCarData(com.antigravity.protocols.CarData carData) {
+  public void onCarData(CarData carData) {
   }
 
-  private void startAutoAdvanceTimer(final com.antigravity.race.Race race) {
-    scheduler = java.util.concurrent.Executors.newScheduledThreadPool(1);
+  private void startAutoAdvanceTimer(final Race race) {
+    scheduler = Executors.newScheduledThreadPool(1);
     final Runnable ticker = new Runnable() {
       long lastTime = 0;
 
+      @Override
       public void run() {
         try {
           long now = System.nanoTime();
@@ -107,7 +117,7 @@ public class HeatOver implements IRaceState {
             race.moveToNextHeat();
           } else {
             race.setAutoAdvanceRemaining(remaining);
-            
+
             // Handle warmup time power logic
             double warmupTime = race.getRaceModel().getAutoAdvanceWarmupTime();
             if (warmupTime > 0) {
@@ -129,7 +139,7 @@ public class HeatOver implements IRaceState {
         }
       }
     };
-    timerHandle = scheduler.scheduleAtFixedRate(ticker, 0, 100, java.util.concurrent.TimeUnit.MILLISECONDS);
+    timerHandle = scheduler.scheduleAtFixedRate(ticker, 0, 100, TimeUnit.MILLISECONDS);
   }
 
   private void stopTimer() {
@@ -141,12 +151,12 @@ public class HeatOver implements IRaceState {
     }
   }
 
-  private void broadcastTime(com.antigravity.race.Race race) {
+  private void broadcastTime(Race race) {
     race.broadcastTime();
   }
 
   @Override
-  public void onCallbutton(com.antigravity.race.Race race, int lane) {
+  public void onCallbutton(Race race, int lane) {
     System.out.println("HeatOver.onCallbutton() called. Moving to next heat.");
     nextHeat(race);
   }

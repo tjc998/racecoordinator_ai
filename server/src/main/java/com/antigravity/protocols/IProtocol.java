@@ -3,6 +3,7 @@ package com.antigravity.protocols;
 import java.util.List;
 
 public interface IProtocol {
+
   boolean open();
 
   void setListener(ProtocolListener listener);

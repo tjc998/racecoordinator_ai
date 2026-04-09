@@ -1,5 +1,11 @@
 package com.antigravity.protocols.demo;
 
+import com.antigravity.proto.DemoPinId;
+import com.antigravity.proto.InterfaceStatus;
+import com.antigravity.protocols.CarData;
+import com.antigravity.protocols.CarLocation;
+import com.antigravity.protocols.DefaultProtocol;
+import com.antigravity.protocols.PartialTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -8,19 +14,17 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import com.antigravity.protocols.DefaultProtocol;
-import com.antigravity.protocols.PartialTime;
-import com.antigravity.proto.DemoPinId;
-
 public class Demo extends DefaultProtocol {
+
   private ScheduledExecutorService scheduler;
   private ScheduledExecutorService statusScheduler;
   private ScheduledFuture<?> statusFuture;
   private ScheduledFuture<?> timerHandle;
-  private Random random;
-  private boolean isFuelRace;
+  private final Random random;
+  private final boolean isFuelRace;
 
   private class LaneState {
+
     long currentLapElapsedTime = 0;
     long targetLapDuration;
     long currentLapStartTime = 0;
@@ -31,8 +35,8 @@ public class Demo extends DefaultProtocol {
     long pitExitOffset = 0;
     boolean pitEntrySent = false;
     boolean pitExitSent = false;
-    long[] segmentOffsets = new long[4];
-    boolean[] segmentSent = new boolean[4];
+    final long[] segmentOffsets = new long[4];
+    final boolean[] segmentSent = new boolean[4];
 
     LaneState() {
       setNextTarget();
@@ -76,7 +80,7 @@ public class Demo extends DefaultProtocol {
         }
 
         // Calculate 4 irregular segment offsets (15%, 40%, 60%, 85%)
-        double[] percentages = { 0.15, 0.40, 0.60, 0.85 };
+        double[] percentages = {0.15, 0.40, 0.60, 0.85};
         for (int i = 0; i < segmentOffsets.length; i++) {
           segmentOffsets[i] = (long) (targetLapDuration * percentages[i]);
         }
@@ -84,13 +88,13 @@ public class Demo extends DefaultProtocol {
     }
   }
 
-  private LaneState[] laneStates;
+  private final LaneState[] laneStates;
 
   public Demo(int numLanes, boolean isFuelRace) {
-    this(numLanes, new java.util.Random(), isFuelRace);
+    this(numLanes, new Random(), isFuelRace);
   }
 
-  protected Demo(int numLanes, java.util.Random random, boolean isFuelRace) {
+  protected Demo(int numLanes, Random random, boolean isFuelRace) {
     super(numLanes);
     this.random = random;
     this.isFuelRace = isFuelRace;
@@ -128,7 +132,7 @@ public class Demo extends DefaultProtocol {
     statusFuture = statusScheduler.scheduleAtFixedRate(() -> {
       try {
         if (listener != null) {
-          listener.onInterfaceStatus(com.antigravity.proto.InterfaceStatus.CONNECTED);
+          listener.onInterfaceStatus(InterfaceStatus.CONNECTED);
         }
       } catch (Exception e) {
         System.err.println("Demo: Error reporting status: " + e.getMessage());
@@ -150,6 +154,7 @@ public class Demo extends DefaultProtocol {
     }
 
     Runnable lapGenerator = new Runnable() {
+      @Override
       public void run() {
         try {
           long nowMs = now();
@@ -161,20 +166,20 @@ public class Demo extends DefaultProtocol {
               if (totalElapsed >= state.pitEntryOffset && !state.pitEntrySent) {
                 state.pitEntrySent = true;
                 if (listener != null) {
-                  com.antigravity.protocols.CarData carData = new com.antigravity.protocols.CarData(
+                  CarData carData = new CarData(
                       i, totalElapsed / 1000.0, 0.0, 0.0, true,
-                      com.antigravity.protocols.CarLocation.PitRow,
-                      com.antigravity.protocols.CarLocation.Main, 0);
+                      CarLocation.PitRow,
+                      CarLocation.Main, 0);
                   listener.onCarData(carData);
                 }
               }
               if (totalElapsed >= state.pitExitOffset && !state.pitExitSent) {
                 state.pitExitSent = true;
                 if (listener != null) {
-                  com.antigravity.protocols.CarData carData = new com.antigravity.protocols.CarData(
+                  CarData carData = new CarData(
                       i, totalElapsed / 1000.0, 0.5, 0.5, false,
-                      com.antigravity.protocols.CarLocation.Main,
-                      com.antigravity.protocols.CarLocation.PitRow, 0);
+                      CarLocation.Main,
+                      CarLocation.PitRow, 0);
                   listener.onCarData(carData);
                 }
               }
@@ -219,7 +224,7 @@ public class Demo extends DefaultProtocol {
       }
     };
 
-    timerHandle = scheduler.scheduleAtFixedRate(lapGenerator, 0, 50, java.util.concurrent.TimeUnit.MILLISECONDS);
+    timerHandle = scheduler.scheduleAtFixedRate(lapGenerator, 0, 50, TimeUnit.MILLISECONDS);
   }
 
   @Override

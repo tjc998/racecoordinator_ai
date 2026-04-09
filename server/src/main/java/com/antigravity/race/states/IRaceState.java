@@ -4,28 +4,29 @@ import com.antigravity.protocols.CarData;
 import com.antigravity.race.Race;
 
 public interface IRaceState {
-	void enter(Race race);
 
-	void exit(Race race);
+  void enter(Race race);
 
-	void start(Race race);
+  void exit(Race race);
 
-	void pause(Race race);
+  void start(Race race);
 
-	void nextHeat(Race race);
+  void pause(Race race);
 
-	void restartHeat(Race race);
+  void nextHeat(Race race);
 
-	void skipHeat(Race race);
+  void restartHeat(Race race);
 
-	void deferHeat(Race race);
+  void skipHeat(Race race);
 
-	// From the protocol listener
-	void onLap(int lane, double lapTime, int interfaceId);
+  void deferHeat(Race race);
 
-	void onSegment(int lane, double segmentTime, int interfaceId);
+  // From the protocol listener
+  void onLap(int lane, double lapTime, int interfaceId);
 
-	void onCarData(CarData carData);
+  void onSegment(int lane, double segmentTime, int interfaceId);
 
-	void onCallbutton(Race race, int lane);
+  void onCarData(CarData carData);
+
+  void onCallbutton(Race race, int lane);
 }

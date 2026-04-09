@@ -1,23 +1,34 @@
 package com.antigravity.service;
 
+import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Driver;
 import com.antigravity.models.HeatRotationType;
-import com.antigravity.models.Lane;
-import com.antigravity.models.Race;
-import com.antigravity.models.Track;
 import com.antigravity.models.HeatScoring;
+import com.antigravity.models.HeatScoring.FinishMethod;
+import com.antigravity.models.HeatScoring.HeatRanking;
+import com.antigravity.models.HeatScoring.HeatRankingTiebreaker;
+import com.antigravity.models.Lane;
 import com.antigravity.models.OverallScoring;
-
+import com.antigravity.models.Race;
+import com.antigravity.models.Team;
+import com.antigravity.models.Track;
+import com.antigravity.proto.AssetMessage;
+import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.antigravity.context.DatabaseContext;
-import org.bson.Document;
-
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.Updates;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.bson.Document;
+import org.bson.conversions.Bson;
 
 public class DatabaseService {
+
   public void resetToFactory(DatabaseContext context, MongoDatabase database) {
     System.out.println("Resetting database to factory settings...");
 
@@ -40,17 +51,17 @@ public class DatabaseService {
     // Fetch assets
     AssetService assetService = new AssetService(database,
         context.getDataRoot() + database.getName() + "/assets");
-    List<com.antigravity.proto.AssetMessage> allAssets = assetService.getAllAssets();
+    List<AssetMessage> allAssets = assetService.getAllAssets();
 
-    List<com.antigravity.proto.AssetMessage> helmetAssets = allAssets.stream()
+    List<AssetMessage> helmetAssets = allAssets.stream()
         .filter(a -> a.getName().toLowerCase().contains("helmet"))
         .collect(Collectors.toList());
 
-    com.antigravity.proto.AssetMessage beepSound = allAssets.stream()
+    AssetMessage beepSound = allAssets.stream()
         .filter(a -> a.getName().toLowerCase().contains("beep"))
         .findFirst().orElse(null);
 
-    com.antigravity.proto.AssetMessage drivebySound = allAssets.stream()
+    AssetMessage drivebySound = allAssets.stream()
         .filter(a -> a.getName().equals("Lap Driveby"))
         .findFirst().orElse(null);
 
@@ -81,7 +92,7 @@ public class DatabaseService {
     System.out.println("Drivers reset.");
   }
 
-  private Driver createDriver(String name, String nickname, List<com.antigravity.proto.AssetMessage> helmetAssets, int index,
+  private Driver createDriver(String name, String nickname, List<AssetMessage> helmetAssets, int index,
       Driver.AudioConfig lapAudio, Driver.AudioConfig bestLapAudio, String sequenceId) {
     String avatarUrl = null;
     if (!helmetAssets.isEmpty()) {
@@ -115,8 +126,8 @@ public class DatabaseService {
     Lane l4 = new Lane("#fbbf24", "black", 0, getNextSequence(database, "lanes"), null);
     lanes.add(l4);
 
-    com.antigravity.protocols.arduino.ArduinoConfig config = new com.antigravity.protocols.arduino.ArduinoConfig();
-    List<com.antigravity.protocols.arduino.ArduinoConfig> configs = new ArrayList<>();
+    ArduinoConfig config = new ArduinoConfig();
+    List<ArduinoConfig> configs = new ArrayList<>();
     configs.add(config);
     Track track = new Track("The Heights", lanes, configs, getNextSequence(database, "tracks"),
         null);
@@ -133,14 +144,12 @@ public class DatabaseService {
     // Reset sequence
     resetSequence(database, "races");
 
-    // TODO(aufderheide): Create a proper set of default races.
-
     // Basic Round Robin race
     HeatScoring heatScoring = new HeatScoring(
-        HeatScoring.FinishMethod.Timed,
+        FinishMethod.Timed,
         60,
-        HeatScoring.HeatRanking.LAP_COUNT,
-        HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
+        HeatRanking.LAP_COUNT,
+        HeatRankingTiebreaker.FASTEST_LAP_TIME);
     OverallScoring overallScoring = new OverallScoring();
 
     Race race = new Race.Builder()
@@ -160,11 +169,11 @@ public class DatabaseService {
     raceCollection.insertOne(race);
 
     // Race 2
-    heatScoring = new com.antigravity.models.HeatScoring(
-        com.antigravity.models.HeatScoring.FinishMethod.Lap,
+    heatScoring = new HeatScoring(
+        FinishMethod.Lap,
         15,
-        com.antigravity.models.HeatScoring.HeatRanking.LAP_COUNT,
-        com.antigravity.models.HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
+        HeatRanking.LAP_COUNT,
+        HeatRankingTiebreaker.FASTEST_LAP_TIME);
 
     race = new Race.Builder()
         .withName("Lap Based")
@@ -186,19 +195,19 @@ public class DatabaseService {
   }
 
   private void resetTeams(DatabaseContext context, MongoDatabase database) {
-    MongoCollection<com.antigravity.models.Team> teamCollection = database.getCollection("teams",
-        com.antigravity.models.Team.class);
+    MongoCollection<Team> teamCollection = database.getCollection("teams",
+        Team.class);
     teamCollection.drop();
     resetSequence(database, "teams");
 
     MongoCollection<Driver> driverCollection = database.getCollection("drivers", Driver.class);
 
-    List<String> boysNames = java.util.Arrays.asList("Austin", "Dave", "Gene");
-    List<String> girlsNames = java.util.Arrays.asList("Abby", "Andrea", "Christine");
+    List<String> boysNames = Arrays.asList("Austin", "Dave", "Gene");
+    List<String> girlsNames = Arrays.asList("Abby", "Andrea", "Christine");
 
     List<String> boysIds = new ArrayList<>();
     for (String name : boysNames) {
-      Driver d = driverCollection.find(com.mongodb.client.model.Filters.eq("name", name)).first();
+      Driver d = driverCollection.find(Filters.eq("name", name)).first();
       if (d != null) {
         boysIds.add(d.getEntityId());
       }
@@ -206,7 +215,7 @@ public class DatabaseService {
 
     List<String> girlsIds = new ArrayList<>();
     for (String name : girlsNames) {
-      Driver d = driverCollection.find(com.mongodb.client.model.Filters.eq("name", name)).first();
+      Driver d = driverCollection.find(Filters.eq("name", name)).first();
       if (d != null) {
         girlsIds.add(d.getEntityId());
       }
@@ -215,8 +224,8 @@ public class DatabaseService {
     // Fetch assets
     AssetService assetService = new AssetService(database,
         context.getDataRoot() + database.getName() + "/assets");
-    List<com.antigravity.proto.AssetMessage> allAssets = assetService.getAllAssets();
-    List<com.antigravity.proto.AssetMessage> helmetAssets = allAssets.stream()
+    List<AssetMessage> allAssets = assetService.getAllAssets();
+    List<AssetMessage> helmetAssets = allAssets.stream()
         .filter(a -> a.getName().toLowerCase().contains("helmet"))
         .collect(Collectors.toList());
 
@@ -231,10 +240,10 @@ public class DatabaseService {
       }
     }
 
-    List<com.antigravity.models.Team> teams = new ArrayList<>();
-    teams.add(new com.antigravity.models.Team("The Boys", boysAvatar, boysIds,
+    List<Team> teams = new ArrayList<>();
+    teams.add(new Team("The Boys", boysAvatar, boysIds,
         getNextSequence(database, "teams"), null));
-    teams.add(new com.antigravity.models.Team("The Girls", girlsAvatar, girlsIds,
+    teams.add(new Team("The Girls", girlsAvatar, girlsIds,
         getNextSequence(database, "teams"), null));
 
     teamCollection.insertMany(teams);
@@ -244,31 +253,31 @@ public class DatabaseService {
   private String getNextSequence(MongoDatabase database, String collectionName) {
     MongoCollection<Document> counters = database.getCollection("counters");
     Document counter = counters.findOneAndUpdate(
-        com.mongodb.client.model.Filters.eq("_id", collectionName),
-        com.mongodb.client.model.Updates.inc("seq", 1),
-        new com.mongodb.client.model.FindOneAndUpdateOptions().upsert(true)
-            .returnDocument(com.mongodb.client.model.ReturnDocument.AFTER));
+        Filters.eq("_id", collectionName),
+        Updates.inc("seq", 1),
+        new FindOneAndUpdateOptions().upsert(true)
+            .returnDocument(ReturnDocument.AFTER));
     return String.valueOf(counter.getInteger("seq"));
   }
 
   private void resetSequence(MongoDatabase database, String collectionName) {
     MongoCollection<Document> counters = database.getCollection("counters");
-    counters.deleteOne(com.mongodb.client.model.Filters.eq("_id", collectionName));
+    counters.deleteOne(Filters.eq("_id", collectionName));
   }
 
   public Race getRace(MongoDatabase database, String entityId) {
     MongoCollection<Race> raceCollection = database.getCollection("races", Race.class);
-    return raceCollection.find(com.mongodb.client.model.Filters.eq("entity_id", entityId)).first();
+    return raceCollection.find(Filters.eq("entity_id", entityId)).first();
   }
 
   public Track getTrack(MongoDatabase database, String entityId) {
     MongoCollection<Track> trackCollection = database.getCollection("tracks", Track.class);
-    return trackCollection.find(com.mongodb.client.model.Filters.eq("entity_id", entityId)).first();
+    return trackCollection.find(Filters.eq("entity_id", entityId)).first();
   }
 
   public Driver getDriver(MongoDatabase database, String entityId) {
     MongoCollection<Driver> driverCollection = database.getCollection("drivers", Driver.class);
-    return driverCollection.find(com.mongodb.client.model.Filters.eq("entity_id", entityId)).first();
+    return driverCollection.find(Filters.eq("entity_id", entityId)).first();
   }
 
   public List<Driver> getDrivers(MongoDatabase database, List<String> entityIds) {
@@ -276,24 +285,24 @@ public class DatabaseService {
     List<Driver> drivers = new ArrayList<>();
     // Using $in filter would be more efficient, but looping is fine for small
     // numbers
-    driverCollection.find(com.mongodb.client.model.Filters.in("entity_id", entityIds))
+    driverCollection.find(Filters.in("entity_id", entityIds))
         .into(drivers);
     return drivers;
   }
 
-  public List<com.antigravity.models.Team> getTeams(MongoDatabase database, List<String> entityIds) {
-    MongoCollection<com.antigravity.models.Team> teamCollection = database.getCollection("teams",
-        com.antigravity.models.Team.class);
-    List<com.antigravity.models.Team> teams = new ArrayList<>();
-    teamCollection.find(com.mongodb.client.model.Filters.in("entity_id", entityIds))
+  public List<Team> getTeams(MongoDatabase database, List<String> entityIds) {
+    MongoCollection<Team> teamCollection = database.getCollection("teams",
+        Team.class);
+    List<Team> teams = new ArrayList<>();
+    teamCollection.find(Filters.in("entity_id", entityIds))
         .into(teams);
     return teams;
   }
 
-  public List<com.antigravity.models.Team> getAllTeams(MongoDatabase database) {
-    MongoCollection<com.antigravity.models.Team> teamCollection = database.getCollection("teams",
-        com.antigravity.models.Team.class);
-    List<com.antigravity.models.Team> teams = new java.util.ArrayList<>();
+  public List<Team> getAllTeams(MongoDatabase database) {
+    MongoCollection<Team> teamCollection = database.getCollection("teams",
+        Team.class);
+    List<Team> teams = new ArrayList<>();
     teamCollection.find().into(teams);
     return teams;
   }
@@ -305,8 +314,8 @@ public class DatabaseService {
     lanes.add(new Lane("#3b82f6", "black", 0));
     lanes.add(new Lane("#fbbf24", "black", 0));
 
-    com.antigravity.protocols.arduino.ArduinoConfig config = new com.antigravity.protocols.arduino.ArduinoConfig();
-    List<com.antigravity.protocols.arduino.ArduinoConfig> configs = new ArrayList<>();
+    ArduinoConfig config = new ArduinoConfig();
+    List<ArduinoConfig> configs = new ArrayList<>();
     configs.add(config);
     return new Track("New Track", lanes, configs, null, null);
   }

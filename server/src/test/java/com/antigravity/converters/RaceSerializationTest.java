@@ -12,8 +12,9 @@ import com.antigravity.models.HeatScoring;
 import com.antigravity.models.Lane;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Track;
+import com.antigravity.proto.Heat;
+import com.antigravity.proto.RaceParticipant;
 import com.antigravity.race.Race;
-import com.antigravity.race.RaceParticipant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -26,7 +27,7 @@ public class RaceSerializationTest {
 
   private com.antigravity.models.Race raceModel;
   private Track track;
-  private List<RaceParticipant> drivers;
+  private List<com.antigravity.race.RaceParticipant> drivers;
 
   @Before
   public void setUp() {
@@ -35,7 +36,7 @@ public class RaceSerializationTest {
     drivers = new ArrayList<>();
 
     // 1 real driver
-    drivers.add(new RaceParticipant(new Driver("Real Driver", "Real Nick", "real1", new ObjectId())));
+    drivers.add(new com.antigravity.race.RaceParticipant(new Driver("Real Driver", "Real Nick", "real1", new ObjectId())));
 
     // 2 lanes
     List<Lane> lanes = new ArrayList<>();
@@ -59,7 +60,12 @@ public class RaceSerializationTest {
   @Test
   public void testSerializeRaceWithEmptyLanes() {
     // This creates a race with 1 real driver and 1 empty driver (numLanes = 2)
-    Race race = new Race.Builder().model(raceModel).drivers(drivers).track(track).isDemoMode(true).build();
+    Race race = new Race.Builder()
+        .model(raceModel)
+        .drivers(drivers)
+        .track(track)
+        .isDemoMode(true)
+        .build();
 
     Set<String> sentObjectIds = new HashSet<>();
     com.antigravity.proto.Race proto = RaceConverter.toProto(race, sentObjectIds);
@@ -68,10 +74,10 @@ public class RaceSerializationTest {
     assertEquals(2, proto.getDriversCount());
 
     // Check drivers in proto
-    com.antigravity.proto.RaceParticipant emptyParticipant = null;
-    com.antigravity.proto.RaceParticipant realParticipant = null;
+    RaceParticipant emptyParticipant = null;
+    RaceParticipant realParticipant = null;
 
-    for (com.antigravity.proto.RaceParticipant p : proto.getDriversList()) {
+    for (RaceParticipant p : proto.getDriversList()) {
       if ("Real Driver".equals(p.getDriver().getName())) {
         realParticipant = p;
       } else if ("Empty".equals(p.getDriver().getName())) {
@@ -89,7 +95,7 @@ public class RaceSerializationTest {
 
     // Verify heats also have the correct drivers
     assertTrue(proto.getHeatsCount() > 0);
-    com.antigravity.proto.Heat heat0 = proto.getHeats(0);
+    Heat heat0 = proto.getHeats(0);
     assertEquals(2, heat0.getHeatDriversCount());
   }
 }

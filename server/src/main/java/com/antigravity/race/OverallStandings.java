@@ -3,6 +3,7 @@ package com.antigravity.race;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.OverallScoring;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -66,7 +67,7 @@ public class OverallStandings {
         }
         driver.setAverageLapTime(sum / allScoringLaps.size());
 
-        java.util.Collections.sort(allScoringLaps);
+        Collections.sort(allScoringLaps);
         int middle = allScoringLaps.size() / 2;
         if (allScoringLaps.size() % 2 == 1) {
           driver.setMedianLapTime(allScoringLaps.get(middle));
@@ -166,6 +167,8 @@ public class OverallStandings {
             comparator = comparator
                 .thenComparingDouble(d -> d.getAverageLapTime() == 0 ? Double.MAX_VALUE : d.getAverageLapTime());
             break;
+          default:
+            break;
         }
       }
     } else {
@@ -231,7 +234,7 @@ public class OverallStandings {
       case AVERAGE_LAP_TIME:
         return Comparator.comparingDouble(p -> p.getAverageLapTime() == 0 ? Double.MAX_VALUE : p.getAverageLapTime());
       case TOTAL_TIME:
-        return Comparator.comparingDouble(p -> p.getTotalTime());
+        return Comparator.comparingDouble(RaceParticipant::getTotalTime);
       default:
         return (a, b) -> 0;
     }

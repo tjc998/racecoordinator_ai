@@ -4,16 +4,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-
-import org.junit.Before;
-import org.junit.Test;
-
 import com.antigravity.mocks.MockProtocolListener;
 import com.antigravity.mocks.MockRandom;
 import com.antigravity.mocks.MockScheduler;
+import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.PartialTime;
+import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+import org.junit.Before;
+import org.junit.Test;
 
 public class DemoProtocolTest {
 
@@ -22,6 +21,7 @@ public class DemoProtocolTest {
   private MockProtocolListener listener;
 
   private static class TestableDemo extends Demo {
+
     long mockedTime = 10000; // Start at arbitrary non-zero time
     MockScheduler mockScheduler;
 
@@ -189,14 +189,14 @@ public class DemoProtocolTest {
     fuelDemo.advanceTime(700);
     scheduler.tick();
     assertEquals("Should have sent pit entry CarData", 1, fuelListener.carData.size());
-    assertEquals(com.antigravity.protocols.CarLocation.PitRow, fuelListener.carData.get(0).getLocation());
+    assertEquals(CarLocation.PitRow, fuelListener.carData.get(0).getLocation());
     assertTrue(fuelListener.carData.get(0).getCanRefuel());
 
     // Advance past pitExitOffset
     fuelDemo.advanceTime(6000); // Total 6700ms since lap start
     scheduler.tick();
     assertEquals("Should have sent pit exit CarData", 2, fuelListener.carData.size());
-    assertEquals(com.antigravity.protocols.CarLocation.Main, fuelListener.carData.get(1).getLocation());
+    assertEquals(CarLocation.Main, fuelListener.carData.get(1).getLocation());
     assertFalse(fuelListener.carData.get(1).getCanRefuel());
 
     // Advance past targetLapDuration (10000)

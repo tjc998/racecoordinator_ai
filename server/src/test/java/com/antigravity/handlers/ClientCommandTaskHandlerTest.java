@@ -1,31 +1,62 @@
 package com.antigravity.handlers;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.handlers.ClientCommandTaskHandler.TaskResult;
+import com.antigravity.models.AnalyticsToggleRequest;
 import com.antigravity.models.Driver;
+import com.antigravity.models.HeatRotationType;
+import com.antigravity.models.HeatScoring;
+import com.antigravity.models.Lane;
+import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.Team;
+import com.antigravity.models.Track;
+import com.antigravity.proto.InitializeRaceRequest;
+import com.antigravity.proto.InitializeRaceResponse;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.RaceParticipant;
+import com.antigravity.race.RaceSaveData;
+import com.antigravity.race.states.NotStarted;
+import com.antigravity.service.AnalyticsService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
-import com.antigravity.models.AnalyticsToggleRequest;
+import java.io.File;
+import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.bson.conversions.Bson;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.stubbing.Answer;
 
 public class ClientCommandTaskHandlerTest {
 
@@ -34,14 +65,15 @@ public class ClientCommandTaskHandlerTest {
   private MongoCollection<Race> raceCollection;
   private MongoCollection<Team> teamCollection;
   private MongoCollection<Driver> driverCollection;
-  private MongoCollection<com.antigravity.models.Track> trackCollection;
+  private MongoCollection<Track> trackCollection;
   private Javalin app;
   private ClientCommandTaskHandler handler;
   private Context ctx;
-  private java.nio.file.Path tempDir;
-  private javax.servlet.http.HttpServletResponse res;
+  private Path tempDir;
+  private HttpServletResponse res;
 
   @Before
+  @SuppressWarnings("unchecked")
   public void setUp() throws Exception {
     databaseContext = mock(DatabaseContext.class);
     mongoDatabase = mock(MongoDatabase.class);
@@ -55,19 +87,19 @@ public class ClientCommandTaskHandlerTest {
     when(mongoDatabase.getCollection(eq("races"), eq(Race.class))).thenReturn(raceCollection);
     when(mongoDatabase.getCollection(eq("teams"), eq(Team.class))).thenReturn(teamCollection);
     when(mongoDatabase.getCollection(eq("drivers"), eq(Driver.class))).thenReturn(driverCollection);
-    when(mongoDatabase.getCollection(eq("tracks"), eq(com.antigravity.models.Track.class))).thenReturn(trackCollection);
+    when(mongoDatabase.getCollection(eq("tracks"), eq(Track.class))).thenReturn(trackCollection);
 
     String tmpDir = System.getProperty("java.io.tmpdir");
-    java.io.File tempFile = new java.io.File(tmpDir, "saved_races_test");
+    File tempFile = new File(tmpDir, "saved_races_test");
     deleteDirectory(tempFile);
     tempFile.mkdirs();
     tempDir = tempFile.toPath();
-    when(databaseContext.getDataRoot()).thenReturn(tempDir.toString() + java.io.File.separator);
+    when(databaseContext.getDataRoot()).thenReturn(tempDir.toString() + File.separator);
     when(databaseContext.getCurrentDatabaseName()).thenReturn("testdb");
 
-    javax.servlet.http.HttpServletRequest req = mock(javax.servlet.http.HttpServletRequest.class);
-    res = mock(javax.servlet.http.HttpServletResponse.class);
-    ctx = new io.javalin.http.Context(req, res, new java.util.HashMap<>());
+    HttpServletRequest req = mock(HttpServletRequest.class);
+    res = mock(HttpServletResponse.class);
+    ctx = new Context(req, res, new HashMap<>());
 
     // Clear subscription manager
     ClientSubscriptionManager.getInstance().setRace(null);
@@ -81,22 +113,23 @@ public class ClientCommandTaskHandlerTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void testInitializeRace_ExplicitDriver_ShouldNotHaveTeam() throws Exception {
     // 1. Setup Data
     String raceId = "race-1";
     String driverId = "driver-1";
     String teamId = "team-1";
 
-    com.antigravity.models.HeatScoring heatScoring = new com.antigravity.models.HeatScoring(
-        com.antigravity.models.HeatScoring.FinishMethod.Timed, 120,
-        com.antigravity.models.HeatScoring.HeatRanking.LAP_COUNT,
-        com.antigravity.models.HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
-    com.antigravity.models.OverallScoring overallScoring = new com.antigravity.models.OverallScoring();
+    HeatScoring heatScoring = new HeatScoring(
+        HeatScoring.FinishMethod.Timed, 120,
+        HeatScoring.HeatRanking.LAP_COUNT,
+        HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallScoring overallScoring = new OverallScoring();
 
     Race race = new Race.Builder()
         .withName("Test Race")
         .withTrackEntityId("track-1")
-        .withHeatRotationType(com.antigravity.models.HeatRotationType.RoundRobin)
+        .withHeatRotationType(HeatRotationType.RoundRobin)
         .withHeatScoring(heatScoring)
         .withOverallScoring(overallScoring)
         .withEntityId(raceId)
@@ -138,23 +171,23 @@ public class ClientCommandTaskHandlerTest {
     }).when(specificTeamIterable).into(any(List.class));
 
     // Create Track with lanes
-    com.antigravity.models.Lane lane = new com.antigravity.models.Lane("red", "black", 100);
-    com.antigravity.models.Track track = new com.antigravity.models.Track("Test Track", Arrays.asList(lane), "track-1",
+    Lane lane = new Lane("red", "black", 100);
+    Track track = new Track("Test Track", Arrays.asList(lane), "track-1",
         null);
 
-    FindIterable<com.antigravity.models.Track> trackIterable = mock(FindIterable.class);
+    FindIterable<Track> trackIterable = mock(FindIterable.class);
     when(trackCollection.find(any(Bson.class))).thenReturn(trackIterable);
     when(trackIterable.first()).thenReturn(track);
 
     // 3. Mock Request
-    com.antigravity.proto.InitializeRaceRequest request = com.antigravity.proto.InitializeRaceRequest.newBuilder()
+    InitializeRaceRequest request = InitializeRaceRequest.newBuilder()
         .setRaceId(raceId)
         .addDriverIds("d_" + driverId) // Explicit driver selection!
         .setIsDemoMode(true) // Use demo mode to avoid Arduino config
         .build();
 
     // 4. Execute
-    ClientCommandTaskHandler.TaskResult result = handler.handleInitializeRace(request);
+    TaskResult result = handler.handleInitializeRace(request);
 
     // 5. Verify
     assertEquals(200, result.status);
@@ -171,22 +204,23 @@ public class ClientCommandTaskHandlerTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void testInitializeRace_ExplicitTeam_ShouldHaveTeam() throws Exception {
     // 1. Setup Data
     String raceId = "race-1";
     String driverId = "driver-1";
     String teamId = "team-1";
 
-    com.antigravity.models.HeatScoring heatScoring = new com.antigravity.models.HeatScoring(
-        com.antigravity.models.HeatScoring.FinishMethod.Timed, 120,
-        com.antigravity.models.HeatScoring.HeatRanking.LAP_COUNT,
-        com.antigravity.models.HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
-    com.antigravity.models.OverallScoring overallScoring = new com.antigravity.models.OverallScoring();
+    HeatScoring heatScoring = new HeatScoring(
+        HeatScoring.FinishMethod.Timed, 120,
+        HeatScoring.HeatRanking.LAP_COUNT,
+        HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallScoring overallScoring = new OverallScoring();
 
     Race race = new Race.Builder()
         .withName("Test Race")
         .withTrackEntityId("track-1")
-        .withHeatRotationType(com.antigravity.models.HeatRotationType.RoundRobin)
+        .withHeatRotationType(HeatRotationType.RoundRobin)
         .withHeatScoring(heatScoring)
         .withOverallScoring(overallScoring)
         .withEntityId(raceId)
@@ -226,23 +260,23 @@ public class ClientCommandTaskHandlerTest {
     }).when(specificTeamIterable).into(any(List.class));
 
     // Create Track
-    com.antigravity.models.Lane lane = new com.antigravity.models.Lane("red", "black", 100);
-    com.antigravity.models.Track track = new com.antigravity.models.Track("Test Track", Arrays.asList(lane), "track-1",
+    Lane lane = new Lane("red", "black", 100);
+    Track track = new Track("Test Track", Arrays.asList(lane), "track-1",
         null);
 
-    FindIterable<com.antigravity.models.Track> trackIterable = mock(FindIterable.class);
+    FindIterable<Track> trackIterable = mock(FindIterable.class);
     when(trackCollection.find(any(Bson.class))).thenReturn(trackIterable);
     when(trackIterable.first()).thenReturn(track);
 
     // 3. Mock Request
-    com.antigravity.proto.InitializeRaceRequest request = com.antigravity.proto.InitializeRaceRequest.newBuilder()
+    InitializeRaceRequest request = InitializeRaceRequest.newBuilder()
         .setRaceId(raceId)
         .addDriverIds("t_" + teamId) // Explicit TEAM selection!
         .setIsDemoMode(true)
         .build();
 
     // 4. Execute
-    ClientCommandTaskHandler.TaskResult result = handler.handleInitializeRace(request);
+    TaskResult result = handler.handleInitializeRace(request);
 
     // 5. Verify
     assertEquals(200, result.status);
@@ -266,39 +300,39 @@ public class ClientCommandTaskHandlerTest {
   @Test
   public void testSaveRace_Success() throws Exception {
     com.antigravity.race.Race race = mock(com.antigravity.race.Race.class);
-    when(race.getState()).thenReturn(new com.antigravity.race.states.NotStarted());
-    com.antigravity.models.HeatScoring heatScoring = new com.antigravity.models.HeatScoring();
-    com.antigravity.models.OverallScoring overallScoring = new com.antigravity.models.OverallScoring();
-    com.antigravity.models.Race raceModel = new com.antigravity.models.Race.Builder()
+    when(race.getState()).thenReturn(new NotStarted());
+    HeatScoring heatScoring = new HeatScoring();
+    OverallScoring overallScoring = new OverallScoring();
+    Race raceModel = new Race.Builder()
         .withName("MyTestRace")
         .withTrackEntityId("track-1")
-        .withHeatRotationType(com.antigravity.models.HeatRotationType.RoundRobin)
+        .withHeatRotationType(HeatRotationType.RoundRobin)
         .withHeatScoring(heatScoring)
         .withOverallScoring(overallScoring)
         .withEntityId("race-1")
         .build();
     when(race.getRaceModel()).thenReturn(raceModel);
-    when(race.getTrack()).thenReturn(new com.antigravity.models.Track("Track1", new java.util.ArrayList<>(), "track1", null));
-    when(race.getDrivers()).thenReturn(new java.util.ArrayList<>());
-    when(race.getHeats()).thenReturn(new java.util.ArrayList<>());
+    when(race.getTrack()).thenReturn(new Track("Track1", new ArrayList<>(), "track1", null));
+    when(race.getDrivers()).thenReturn(new ArrayList<>());
+    when(race.getHeats()).thenReturn(new ArrayList<>());
     when(race.isDemoMode()).thenReturn(true);
-    
+
     ClientSubscriptionManager.getInstance().setRace(race);
 
     handler.saveRace(ctx);
 
     verify(res).setStatus(200);
-    
-    java.io.File dir = new java.io.File(tempDir.toFile(), "testdb/saved_races");
+
+    File dir = new File(tempDir.toFile(), "testdb/saved_races");
     assertTrue("Save directory should exist", dir.exists());
-    java.io.File[] files = dir.listFiles();
+    File[] files = dir.listFiles();
     assertNotNull("File list should not be null", files);
     assertEquals(1, files.length);
     assertTrue(files[0].getName().endsWith("_MyTestRace.json"));
 
     // Read back and verify roundtrip parity
-    com.fasterxml.jackson.databind.ObjectMapper mapper = handler.getObjectMapper();
-    com.antigravity.race.RaceSaveData loaded = mapper.readValue(files[0], com.antigravity.race.RaceSaveData.class);
+    ObjectMapper mapper = handler.getObjectMapper();
+    RaceSaveData loaded = mapper.readValue(files[0], RaceSaveData.class);
     assertNotNull("Loaded saved data should not be null", loaded);
     assertEquals("MyTestRace", loaded.getModel().getName());
     assertTrue("Demo mode should be preserved during save/load roundtrip", loaded.isDemoMode());
@@ -306,15 +340,15 @@ public class ClientCommandTaskHandlerTest {
 
   @Test
   public void testGetSavedRaces_Success() throws Exception {
-    java.io.File dir = new java.io.File(tempDir.toFile(), "testdb/saved_races");
+    File dir = new File(tempDir.toFile(), "testdb/saved_races");
     dir.mkdirs();
-    java.io.File file = new java.io.File(dir, "20260101-120000_MyTestRace.json");
+    File file = new File(dir, "20260101-120000_MyTestRace.json");
     file.createNewFile();
 
-    java.util.Map<String, String> pathParams = new java.util.HashMap<>();
+    Map<String, String> pathParams = new HashMap<>();
     pathParams.put("filename", "20260101-120000_MyTestRace.json");
     try {
-      java.lang.reflect.Method setParams = ctx.getClass().getMethod("setPathParamMap$javalin", java.util.Map.class);
+      Method setParams = ctx.getClass().getMethod("setPathParamMap$javalin", Map.class);
       setParams.invoke(ctx, pathParams);
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -328,16 +362,16 @@ public class ClientCommandTaskHandlerTest {
 
   @Test
   public void testDeleteSavedRace_Success() throws Exception {
-    java.io.File dir = new java.io.File(tempDir.toFile(), "testdb/saved_races");
+    File dir = new File(tempDir.toFile(), "testdb/saved_races");
     dir.mkdirs();
-    java.io.File file = new java.io.File(dir, "20260101-120001_MyTestRace.json");
+    File file = new File(dir, "20260101-120001_MyTestRace.json");
     file.createNewFile();
     assertTrue(file.exists());
 
-    java.util.Map<String, String> pathParams = new java.util.HashMap<>();
+    Map<String, String> pathParams = new HashMap<>();
     pathParams.put("filename", "20260101-120001_MyTestRace.json");
     try {
-      java.lang.reflect.Method setParams = ctx.getClass().getMethod("setPathParamMap$javalin", java.util.Map.class);
+      Method setParams = ctx.getClass().getMethod("setPathParamMap$javalin", Map.class);
       setParams.invoke(ctx, pathParams);
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -352,59 +386,59 @@ public class ClientCommandTaskHandlerTest {
   public void testToggleAnalytics_Localhost_IPv4_Success() throws Exception {
     ClientCommandTaskHandler spyHandler = spy(handler);
     Context mockCtx = mock(Context.class);
-    
+
     doReturn("127.0.0.1").when(spyHandler).getRemoteAddr(any());
     doReturn("localhost").when(spyHandler).getRemoteHost(any());
-    
+
     AnalyticsToggleRequest requestData = new AnalyticsToggleRequest();
     requestData.setEnabled(true);
-    byte[] bodyBytes = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsBytes(requestData);
-    
+    byte[] bodyBytes = new ObjectMapper().writeValueAsBytes(requestData);
+
     doReturn(bodyBytes).when(spyHandler).getBodyBytes(any());
     doNothing().when(spyHandler).setStatus(any(), anyInt());
     doNothing().when(spyHandler).setResult(any(), anyString());
-    
+
     spyHandler.toggleAnalytics(mockCtx);
-    
+
     verify(spyHandler).setStatus(any(), eq(200));
-    assertTrue(com.antigravity.service.AnalyticsService.getInstance().isUserEnabled());
+    assertTrue(AnalyticsService.getInstance().isUserEnabled());
   }
 
   @Test
   public void testToggleAnalytics_Localhost_IPv6_Success() throws Exception {
     ClientCommandTaskHandler spyHandler = spy(handler);
     Context mockCtx = mock(Context.class);
-    
+
     doReturn("::1").when(spyHandler).getRemoteAddr(any());
     doReturn("localhost").when(spyHandler).getRemoteHost(any());
-    
+
     AnalyticsToggleRequest requestData = new AnalyticsToggleRequest();
     requestData.setEnabled(false);
-    byte[] bodyBytes = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsBytes(requestData);
-    
+    byte[] bodyBytes = new ObjectMapper().writeValueAsBytes(requestData);
+
     doReturn(bodyBytes).when(spyHandler).getBodyBytes(any());
     doNothing().when(spyHandler).setStatus(any(), anyInt());
     doNothing().when(spyHandler).setResult(any(), anyString());
-    
+
     spyHandler.toggleAnalytics(mockCtx);
-    
+
     verify(spyHandler).setStatus(any(), eq(200));
-    assertFalse(com.antigravity.service.AnalyticsService.getInstance().isUserEnabled());
+    assertFalse(AnalyticsService.getInstance().isUserEnabled());
   }
 
   @Test
   public void testToggleAnalytics_RemoteIP_Forbidden() throws Exception {
     ClientCommandTaskHandler spyHandler = spy(handler);
     Context mockCtx = mock(Context.class);
-    
+
     doReturn("8.8.8.8").when(spyHandler).getRemoteAddr(any());
     doReturn("8.8.8.8").when(spyHandler).getRemoteHost(any());
-    
+
     doNothing().when(spyHandler).setStatus(any(), anyInt());
     doNothing().when(spyHandler).setResult(any(), anyString());
-    
+
     spyHandler.toggleAnalytics(mockCtx);
-    
+
     verify(spyHandler).setStatus(any(), eq(403));
   }
 
@@ -434,21 +468,21 @@ public class ClientCommandTaskHandlerTest {
   public void testToggleAnalytics_LAN_IPv4_10x_PrivateNetwork_Success() throws Exception {
     ClientCommandTaskHandler spyHandler = spy(handler);
     Context mockCtx = mock(Context.class);
-    
+
     // Test 10.x.x.x (enterprise network range)
     doReturn("10.0.0.50").when(spyHandler).getRemoteAddr(any());
     doReturn("10.0.0.50").when(spyHandler).getRemoteHost(any());
-    
+
     AnalyticsToggleRequest requestData = new AnalyticsToggleRequest();
     requestData.setEnabled(false);
     byte[] bodyBytes = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsBytes(requestData);
-    
+
     doReturn(bodyBytes).when(spyHandler).getBodyBytes(any());
     doNothing().when(spyHandler).setStatus(any(), anyInt());
     doNothing().when(spyHandler).setResult(any(), anyString());
-    
+
     spyHandler.toggleAnalytics(mockCtx);
-    
+
     verify(spyHandler).setStatus(any(), eq(200));
   }
 
@@ -456,37 +490,40 @@ public class ClientCommandTaskHandlerTest {
   public void testToggleAnalytics_LAN_IPv4_172x_PrivateNetwork_Success() throws Exception {
     ClientCommandTaskHandler spyHandler = spy(handler);
     Context mockCtx = mock(Context.class);
-    
+
     // Test 172.16-31.x.x (another private range)
     doReturn("172.20.5.100").when(spyHandler).getRemoteAddr(any());
     doReturn("172.20.5.100").when(spyHandler).getRemoteHost(any());
-    
+
     AnalyticsToggleRequest requestData = new AnalyticsToggleRequest();
     requestData.setEnabled(true);
     byte[] bodyBytes = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsBytes(requestData);
-    
+
     doReturn(bodyBytes).when(spyHandler).getBodyBytes(any());
     doNothing().when(spyHandler).setStatus(any(), anyInt());
     doNothing().when(spyHandler).setResult(any(), anyString());
-    
+
     spyHandler.toggleAnalytics(mockCtx);
-    
+
     verify(spyHandler).setStatus(any(), eq(200));
   }
 
   @Test
+  @SuppressWarnings("unchecked")
+
   public void testGetAnalyticsConfig_Success() throws Exception {
     ClientCommandTaskHandler spyHandler = spy(handler);
     Context mockCtx = mock(Context.class);
-    
+
     doNothing().when(spyHandler).setJson(any(), any());
-    
+
     spyHandler.getAnalyticsConfig(mockCtx);
-    
-    verify(spyHandler).setJson(eq(mockCtx), any(java.util.Map.class));
+
+    verify(spyHandler).setJson(eq(mockCtx), any(Map.class));
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void testInitializeRace_DuplicateDriver_IndividualAndTeam_ShouldFail() throws Exception {
     // 1. Setup Data
     String raceId = "race-1";
@@ -506,7 +543,8 @@ public class ClientCommandTaskHandlerTest {
     when(raceCollection.find(any(Bson.class))).thenReturn(raceIterable);
     when(raceIterable.first()).thenReturn(race);
 
-    // Drivers fetch (requested both as individual and then implicitly by validation)
+    // Drivers fetch (requested both as individual and then implicitly by
+    // validation)
     FindIterable<Driver> driverIterable = mock(FindIterable.class);
     when(driverCollection.find(any(Bson.class))).thenReturn(driverIterable);
     doAnswer(invocation -> {
@@ -526,17 +564,17 @@ public class ClientCommandTaskHandlerTest {
     }).when(teamIterable).into(any(List.class));
 
     // 3. Mock Request
-    com.antigravity.proto.InitializeRaceRequest request = com.antigravity.proto.InitializeRaceRequest.newBuilder()
+    InitializeRaceRequest request = InitializeRaceRequest.newBuilder()
         .setRaceId(raceId)
         .addDriverIds("d_" + driverId) // Individual
-        .addDriverIds("t_" + teamId)   // Team containing same individual
+        .addDriverIds("t_" + teamId) // Team containing same individual
         .build();
 
     // 4. Execute
-    ClientCommandTaskHandler.TaskResult result = handler.handleInitializeRace(request);
+    TaskResult result = handler.handleInitializeRace(request);
 
     // 5. Verify
-    com.antigravity.proto.InitializeRaceResponse response = com.antigravity.proto.InitializeRaceResponse.parseFrom((byte[]) result.result);
+    InitializeRaceResponse response = InitializeRaceResponse.parseFrom((byte[]) result.result);
     assertFalse("Validation should fail", response.getSuccess());
     assertEquals("DUPE_INDIVIDUAL_TEAM", response.getErrorCode());
     assertEquals("Dave", response.getDriverName());
@@ -545,6 +583,7 @@ public class ClientCommandTaskHandlerTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void testInitializeRace_DuplicateDriver_MultipleTeams_ShouldFail() throws Exception {
     // 1. Setup Data
     String raceId = "race-1";
@@ -583,17 +622,17 @@ public class ClientCommandTaskHandlerTest {
     when(driverIterable.first()).thenReturn(driver);
 
     // 3. Mock Request
-    com.antigravity.proto.InitializeRaceRequest request = com.antigravity.proto.InitializeRaceRequest.newBuilder()
+    InitializeRaceRequest request = InitializeRaceRequest.newBuilder()
         .setRaceId(raceId)
         .addDriverIds("t_" + teamAId)
         .addDriverIds("t_" + teamBId)
         .build();
 
     // 4. Execute
-    ClientCommandTaskHandler.TaskResult result = handler.handleInitializeRace(request);
+    TaskResult result = handler.handleInitializeRace(request);
 
     // 5. Verify
-    com.antigravity.proto.InitializeRaceResponse response = com.antigravity.proto.InitializeRaceResponse.parseFrom((byte[]) result.result);
+    InitializeRaceResponse response = InitializeRaceResponse.parseFrom((byte[]) result.result);
     assertFalse("Validation should fail", response.getSuccess());
     assertEquals("DUPE_MULTIPLE_TEAMS", response.getErrorCode());
     assertEquals("Dave", response.getDriverName());
@@ -602,10 +641,10 @@ public class ClientCommandTaskHandlerTest {
     assertTrue(response.getTeamNamesList().contains("Team B"));
   }
 
-  private void deleteDirectory(java.io.File directory) {
-    java.io.File[] allContents = directory.listFiles();
+  private void deleteDirectory(File directory) {
+    File[] allContents = directory.listFiles();
     if (allContents != null) {
-      for (java.io.File file : allContents) {
+      for (File file : allContents) {
         deleteDirectory(file);
       }
     }

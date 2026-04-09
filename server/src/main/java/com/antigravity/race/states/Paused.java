@@ -1,8 +1,10 @@
 package com.antigravity.race.states;
 
+import com.antigravity.protocols.CarData;
 import com.antigravity.race.Race;
 
 public class Paused implements IRaceState {
+
   private long pauseStartTimeMillis;
 
   @Override
@@ -27,7 +29,7 @@ public class Paused implements IRaceState {
   @Override
   public void start(Race race) {
     System.out.println("Paused.start() called. Resuming from Paused state.");
-    race.changeState(new com.antigravity.race.states.Starting());
+    race.changeState(new Starting());
   }
 
   @Override
@@ -39,13 +41,13 @@ public class Paused implements IRaceState {
   public void restartHeat(Race race) {
     System.out.println("Paused.restartHeat() called. Resetting current heat.");
     race.resetCurrentHeat();
-    race.changeState(new com.antigravity.race.states.NotStarted());
+    race.changeState(new NotStarted());
   }
 
   @Override
   public void skipHeat(Race race) {
     System.out.println("Paused.skipHeat() called. Advancing to HeatOver.");
-    race.changeState(new com.antigravity.race.states.HeatOver());
+    race.changeState(new HeatOver());
   }
 
   @Override
@@ -64,7 +66,7 @@ public class Paused implements IRaceState {
   }
 
   @Override
-  public void onCarData(com.antigravity.protocols.CarData carData) {
+  public void onCarData(CarData carData) {
   }
 
   @Override

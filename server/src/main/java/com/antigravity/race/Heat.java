@@ -1,19 +1,22 @@
 package com.antigravity.race;
 
+import com.antigravity.models.HeatScoring;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Heat extends ServerToClientObject {
+
   private int heatNumber;
   private List<DriverHeatData> drivers;
   private RaceHeatStatistics statistics = new RaceHeatStatistics();
   private HeatStandings heatStandings;
 
-  public Heat(int heatNumber, List<DriverHeatData> drivers, com.antigravity.models.HeatScoring scoring) {
+  public Heat(int heatNumber, List<DriverHeatData> drivers, HeatScoring scoring) {
     super();
     this.heatNumber = heatNumber;
     this.drivers = drivers;
-    com.antigravity.models.HeatScoring safeScoring = scoring != null ? scoring
-        : new com.antigravity.models.HeatScoring();
+    HeatScoring safeScoring = scoring != null ? scoring : new HeatScoring();
     this.heatStandings = new HeatStandings(drivers, safeScoring);
   }
 
@@ -21,9 +24,8 @@ public class Heat extends ServerToClientObject {
     super();
   }
 
-  public void initializeStandings(com.antigravity.models.HeatScoring scoring) {
-    com.antigravity.models.HeatScoring safeScoring = scoring != null ? scoring
-        : new com.antigravity.models.HeatScoring();
+  public void initializeStandings(HeatScoring scoring) {
+    HeatScoring safeScoring = scoring != null ? scoring : new HeatScoring();
     this.heatStandings = new HeatStandings(this.drivers, safeScoring);
   }
 
@@ -35,12 +37,12 @@ public class Heat extends ServerToClientObject {
     return drivers;
   }
 
-  @com.fasterxml.jackson.annotation.JsonIgnore
+  @JsonIgnore
   public List<String> getStandings() {
-    return heatStandings != null ? heatStandings.getStandings() : new java.util.ArrayList<>();
+    return heatStandings != null ? heatStandings.getStandings() : new ArrayList<>();
   }
 
-  @com.fasterxml.jackson.annotation.JsonIgnore
+  @JsonIgnore
   public HeatStandings getHeatStandings() {
     return heatStandings;
   }

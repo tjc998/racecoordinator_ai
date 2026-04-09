@@ -1,15 +1,16 @@
 package com.antigravity.race.states;
 
-import com.antigravity.race.Race;
-import com.antigravity.race.Heat;
-import com.antigravity.race.RaceParticipant;
 import com.antigravity.converters.HeatConverter;
 import com.antigravity.proto.RaceData;
+import com.antigravity.race.Heat;
+import com.antigravity.race.Race;
+import com.antigravity.race.RaceParticipant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class Common {
+
   public static void advanceToNextHeat(Race race) {
     List<Heat> heats = race.getHeats();
     Heat currentHeat = race.getCurrentHeat();

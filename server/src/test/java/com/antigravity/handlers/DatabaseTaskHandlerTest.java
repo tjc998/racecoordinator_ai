@@ -5,11 +5,16 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Race;
 import com.antigravity.models.Team;
+import com.antigravity.models.TeamOptions;
+import com.antigravity.models.Track;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -32,6 +37,7 @@ public class DatabaseTaskHandlerTest {
   private DatabaseTaskHandler handler;
 
   @Before
+  @SuppressWarnings("unchecked")
   public void setUp() {
     databaseContext = mock(DatabaseContext.class);
     mongoDatabase = mock(MongoDatabase.class);
@@ -43,7 +49,7 @@ public class DatabaseTaskHandlerTest {
     when(databaseContext.getDatabase()).thenReturn(mongoDatabase);
     when(mongoDatabase.getCollection(eq("races"), eq(Race.class))).thenReturn(raceCollection);
     when(mongoDatabase.getCollection(eq("teams"), eq(Team.class))).thenReturn(teamCollection);
-    when(mongoDatabase.getCollection(eq("tracks"), eq(com.antigravity.models.Track.class)))
+    when(mongoDatabase.getCollection(eq("tracks"), eq(Track.class)))
         .thenReturn(mock(MongoCollection.class));
     when(mongoDatabase.getCollection(eq("counters"))).thenReturn(countersCollection);
 
@@ -51,8 +57,9 @@ public class DatabaseTaskHandlerTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void testCreateRace_Success() {
-    com.antigravity.models.TeamOptions teamOptions = new com.antigravity.models.TeamOptions(10, 60.0, 100, 600.0, true);
+    TeamOptions teamOptions = new TeamOptions(10, 60.0, 100, 600.0, true);
     Race raceRequest = new Race.Builder()
         .withName("New Race")
         .withTrackEntityId("track-1")
@@ -82,6 +89,7 @@ public class DatabaseTaskHandlerTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void testCreateRace_DuplicateName() {
     Race raceRequest = new Race.Builder()
         .withName("Duplicate Race")
@@ -106,9 +114,10 @@ public class DatabaseTaskHandlerTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void testUpdateRace_Success() {
     String raceId = "race-123";
-    com.antigravity.models.TeamOptions teamOptions = new com.antigravity.models.TeamOptions(20, 120.0, 200, 1200.0, false);
+    TeamOptions teamOptions = new TeamOptions(20, 120.0, 200, 1200.0, false);
     Race raceUpdate = new Race.Builder()
         .withName("Updated Name")
         .withTrackEntityId("track-1")
@@ -138,6 +147,7 @@ public class DatabaseTaskHandlerTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void testUpdateRace_NotFound() {
     String raceId = "non-existent-id";
     Race raceUpdate = new Race.Builder()
@@ -187,6 +197,7 @@ public class DatabaseTaskHandlerTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void testCreateTeam_Success() {
     Team teamRequest = new Team("New Team", "url", null, "new", null);
 
@@ -207,6 +218,7 @@ public class DatabaseTaskHandlerTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void testCreateTeam_Duplicate() {
     Team teamRequest = new Team("Duplicate Team", "url", null, "new", null);
 
@@ -223,6 +235,7 @@ public class DatabaseTaskHandlerTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void testUpdateTeam_Success() {
     String teamId = "team-123";
     Team teamUpdate = new Team("Updated Team", "url", null, teamId, null);

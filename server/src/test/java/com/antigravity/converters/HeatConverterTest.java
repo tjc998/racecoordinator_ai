@@ -4,19 +4,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.antigravity.models.Driver;
+import com.antigravity.models.HeatScoring;
+import com.antigravity.models.Team;
+import com.antigravity.proto.DriverHeatData;
+import com.antigravity.proto.Heat;
+import com.antigravity.race.RaceParticipant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import org.junit.Test;
-
-import com.antigravity.models.Driver;
-import com.antigravity.models.HeatScoring;
-import com.antigravity.models.Team;
-import com.antigravity.race.DriverHeatData;
-import com.antigravity.race.Heat;
-import com.antigravity.race.RaceParticipant;
 
 public class HeatConverterTest {
 
@@ -29,10 +27,10 @@ public class HeatConverterTest {
     Team team = new Team("Team One", null, new ArrayList<>(), "t1", null);
 
     RaceParticipant participant = new RaceParticipant(team);
-    DriverHeatData heatData = new DriverHeatData(participant);
+    com.antigravity.race.DriverHeatData heatData = new com.antigravity.race.DriverHeatData(participant);
     heatData.setActualDriver(driver);
 
-    List<DriverHeatData> heatDrivers = new ArrayList<>();
+    List<com.antigravity.race.DriverHeatData> heatDrivers = new ArrayList<>();
     heatDrivers.add(heatData);
 
     HeatScoring scoring = new HeatScoring();
@@ -40,12 +38,12 @@ public class HeatConverterTest {
     Set<String> sentObjectIds = new HashSet<>();
 
     // Execute
-    com.antigravity.proto.Heat proto = HeatConverter.toProto(heat, sentObjectIds);
+    Heat proto = HeatConverter.toProto(heat, sentObjectIds);
 
     // Verify
     assertNotNull(proto);
     assertEquals(1, proto.getHeatDriversCount());
-    com.antigravity.proto.DriverHeatData driverProto = proto.getHeatDrivers(0);
+    DriverHeatData driverProto = proto.getHeatDrivers(0);
 
     assertEquals("d1", driverProto.getDriverId());
     assertTrue(driverProto.hasActualDriver());

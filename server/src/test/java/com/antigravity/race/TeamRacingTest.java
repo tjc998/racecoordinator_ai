@@ -1,28 +1,29 @@
 package com.antigravity.race;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.bson.types.ObjectId;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.antigravity.models.Driver;
-import com.antigravity.models.Team;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.Lane;
 import com.antigravity.models.OverallScoring;
+import com.antigravity.models.Race;
+import com.antigravity.models.Team;
 import com.antigravity.models.Track;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.race.states.Racing;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import org.bson.types.ObjectId;
+import org.junit.Before;
+import org.junit.Test;
 
 public class TeamRacingTest {
 
-  private Race race;
+  private com.antigravity.race.Race race;
   private HeatScoring heatScoring;
   private List<RaceParticipant> participants;
   private Track track;
@@ -41,7 +42,7 @@ public class TeamRacingTest {
         OverallScoring.OverallRanking.LAP_COUNT,
         OverallScoring.OverallRankingTiebreaker.FASTEST_LAP_TIME);
 
-    com.antigravity.models.Race raceModel = new com.antigravity.models.Race.Builder()
+    Race raceModel = new Race.Builder()
         .withName("Team Test Race")
         .withTrackEntityId("track1")
         .withHeatRotationType(HeatRotationType.RoundRobin)
@@ -74,9 +75,15 @@ public class TeamRacingTest {
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "black", 100));
     lanes.add(new Lane("blue", "black", 100));
-    track = new Track("Test Track", lanes, java.util.Collections.singletonList(mock(ArduinoConfig.class)), "track1", new ObjectId());
+    track = new Track("Test Track", lanes, Collections.singletonList(mock(ArduinoConfig.class)), "track1",
+        new ObjectId());
 
-    race = new Race.Builder().model(raceModel).drivers(participants).track(track).isDemoMode(true).build();
+    race = new com.antigravity.race.Race.Builder()
+        .model(raceModel)
+        .drivers(participants)
+        .track(track)
+        .isDemoMode(true)
+        .build();
   }
 
   @Test
@@ -100,7 +107,7 @@ public class TeamRacingTest {
 
   @Test
   public void testTeamDriverRotation_CreditsCorrectDriver() {
-    com.antigravity.race.states.Racing racing = new com.antigravity.race.states.Racing();
+    Racing racing = new Racing();
     race.changeState(racing);
 
     DriverHeatData teamHeatData = race.getCurrentHeat().getDrivers().get(0);
@@ -113,7 +120,7 @@ public class TeamRacingTest {
     teamHeatData.setActualDriver(driver1);
 
     // Simulate lap 1
-    racing.onLap(0, 5.0, 1); 
+    racing.onLap(0, 5.0, 1);
 
     // 2. Set Actual Driver to Driver 2
     Driver driver2 = new Driver("Driver 2", "D2", "d2", new ObjectId());
@@ -124,8 +131,8 @@ public class TeamRacingTest {
 
     // 3. Verify
     List<DriverHeatData.LapData> laps = teamHeatData.getLaps();
-    org.junit.Assert.assertEquals("Should record 2 laps total", 2, laps.size());
-    org.junit.Assert.assertEquals("Lap 1 should credit driver 1", "d1", laps.get(0).getDriverId());
-    org.junit.Assert.assertEquals("Lap 2 should credit driver 2", "d2", laps.get(1).getDriverId());
+    assertEquals("Should record 2 laps total", 2, laps.size());
+    assertEquals("Lap 1 should credit driver 1", "d1", laps.get(0).getDriverId());
+    assertEquals("Lap 2 should credit driver 2", "d2", laps.get(1).getDriverId());
   }
 }

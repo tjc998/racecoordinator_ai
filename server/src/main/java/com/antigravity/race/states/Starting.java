@@ -1,11 +1,21 @@
 package com.antigravity.race.states;
 
+import com.antigravity.proto.RaceData;
+import com.antigravity.proto.RaceTime;
+import com.antigravity.protocols.CarData;
+import com.antigravity.race.Race;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
 public class Starting implements IRaceState {
-  private java.util.concurrent.ScheduledExecutorService scheduler;
-  private java.util.concurrent.ScheduledFuture<?> timerHandle;
+
+  private ScheduledExecutorService scheduler;
+  private ScheduledFuture<?> timerHandle;
 
   @Override
-  public void enter(com.antigravity.race.Race race) {
+  public void enter(Race race) {
     System.out.println("Starting state entered. Countdown initiating.");
     race.setMainPower(false);
 
@@ -14,19 +24,20 @@ public class Starting implements IRaceState {
     }
     race.setAutoStartFired(true);
 
-    scheduler = java.util.concurrent.Executors.newScheduledThreadPool(1);
+    scheduler = Executors.newScheduledThreadPool(1);
     final Runnable ticker = new Runnable() {
       int countdown = 50; // 5 seconds * 10 (100ms interval)
 
+      @Override
       public void run() {
         try {
           float displayTime = countdown / 10.0f;
 
-          com.antigravity.proto.RaceTime raceTimeMsg = com.antigravity.proto.RaceTime.newBuilder()
+          RaceTime raceTimeMsg = RaceTime.newBuilder()
               .setTime(displayTime)
               .build();
 
-          com.antigravity.proto.RaceData raceDataMsg = com.antigravity.proto.RaceData.newBuilder()
+          RaceData raceDataMsg = RaceData.newBuilder()
               .setRaceTime(raceTimeMsg)
               .build();
 
@@ -43,11 +54,11 @@ public class Starting implements IRaceState {
         }
       }
     };
-    timerHandle = scheduler.scheduleAtFixedRate(ticker, 0, 100, java.util.concurrent.TimeUnit.MILLISECONDS);
+    timerHandle = scheduler.scheduleAtFixedRate(ticker, 0, 100, TimeUnit.MILLISECONDS);
   }
 
   @Override
-  public void exit(com.antigravity.race.Race race) {
+  public void exit(Race race) {
     if (timerHandle != null) {
       timerHandle.cancel(false);
     }
@@ -58,17 +69,17 @@ public class Starting implements IRaceState {
   }
 
   @Override
-  public void nextHeat(com.antigravity.race.Race race) {
+  public void nextHeat(Race race) {
     throw new IllegalStateException("Cannot move to next heat from state: " + this.getClass().getSimpleName());
   }
 
   @Override
-  public void start(com.antigravity.race.Race race) {
+  public void start(Race race) {
     throw new IllegalStateException("Cannot start race: Race is already in Starting state.");
   }
 
   @Override
-  public void pause(com.antigravity.race.Race race) {
+  public void pause(Race race) {
     System.out.println("Starting.pause() called. Cancelling start.");
     if (race.hasRacedInCurrentHeat()) {
       race.changeState(new Paused());
@@ -79,17 +90,17 @@ public class Starting implements IRaceState {
   }
 
   @Override
-  public void restartHeat(com.antigravity.race.Race race) {
+  public void restartHeat(Race race) {
     throw new IllegalStateException("Cannot restart heat from state: " + this.getClass().getSimpleName());
   }
 
   @Override
-  public void skipHeat(com.antigravity.race.Race race) {
+  public void skipHeat(Race race) {
     throw new IllegalStateException("Cannot skip heat from state: " + this.getClass().getSimpleName());
   }
 
   @Override
-  public void deferHeat(com.antigravity.race.Race race) {
+  public void deferHeat(Race race) {
     throw new IllegalStateException("Cannot defer heat from state: " + this.getClass().getSimpleName());
   }
 
@@ -104,12 +115,12 @@ public class Starting implements IRaceState {
   }
 
   @Override
-  public void onCarData(com.antigravity.protocols.CarData carData) {
+  public void onCarData(CarData carData) {
     // TODO(aufderheide): Handle false start
   }
 
   @Override
-  public void onCallbutton(com.antigravity.race.Race race, int lane) {
+  public void onCallbutton(Race race, int lane) {
     System.out.println("Starting.onCallbutton() called. Pausing race start.");
     pause(race);
   }

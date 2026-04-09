@@ -1,151 +1,154 @@
 package com.antigravity.service;
 
-import com.antigravity.race.Race;
-import com.antigravity.models.Track;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.antigravity.models.Track;
+import com.antigravity.race.Race;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import org.bson.types.ObjectId;
+import org.junit.Before;
+import org.junit.Test;
+
 public class AnalyticsServiceTest {
 
-    private AnalyticsService service;
+  private AnalyticsService service;
 
-    @Before
-    public void setup() {
-        service = AnalyticsService.getInstance();
-    }
+  @Before
+  public void setup() {
+    service = AnalyticsService.getInstance();
+  }
 
-    @Test
-    public void testGetInstance_ReturnsSingleton() {
-        AnalyticsService instance1 = AnalyticsService.getInstance();
-        AnalyticsService instance2 = AnalyticsService.getInstance();
-        assertSame("AnalyticsService should be a singleton", instance1, instance2);
-    }
+  @Test
+  public void testGetInstance_ReturnsSingleton() {
+    AnalyticsService instance1 = AnalyticsService.getInstance();
+    AnalyticsService instance2 = AnalyticsService.getInstance();
+    assertSame("AnalyticsService should be a singleton", instance1, instance2);
+  }
 
-    @Test
-    public void testTrackRaceStart_WithNullRace_DoesNotThrow() {
-        // If the service doesn't throw a NullPointerException, the test silently passes
-        service.trackRaceStart(null);
-    }
+  @Test
+  public void testTrackRaceStart_WithNullRace_DoesNotThrow() {
+    // If the service doesn't throw a NullPointerException, the test silently passes
+    service.trackRaceStart(null);
+  }
 
-    @Test
-    public void testTrackRaceStart_WhenDisabled_DoesNotThrow() throws Exception {
-        Field enabledField = AnalyticsService.class.getDeclaredField("enabled");
-        enabledField.setAccessible(true);
-        boolean originalEnabled = (boolean) enabledField.get(service);
-        enabledField.set(service, false);
+  @Test
+  public void testTrackRaceStart_WhenDisabled_DoesNotThrow() throws Exception {
+    Field enabledField = AnalyticsService.class.getDeclaredField("enabled");
+    enabledField.setAccessible(true);
+    boolean originalEnabled = (boolean) enabledField.get(service);
+    enabledField.set(service, false);
 
-        Race mockRace = mock(Race.class);
+    Race mockRace = mock(Race.class);
 
-        // Should return early gracefully
-        service.trackRaceStart(mockRace);
+    // Should return early gracefully
+    service.trackRaceStart(mockRace);
 
-        enabledField.set(service, originalEnabled);
-    }
+    enabledField.set(service, originalEnabled);
+  }
 
-    @Test
-    public void testTrackRaceStart_WhenEnabled_DoesNotThrow() throws Exception {
-        Field enabledField = AnalyticsService.class.getDeclaredField("enabled");
-        enabledField.setAccessible(true);
-        boolean originalEnabled = (boolean) enabledField.get(service);
+  @Test
+  public void testTrackRaceStart_WhenEnabled_DoesNotThrow() throws Exception {
+    Field enabledField = AnalyticsService.class.getDeclaredField("enabled");
+    enabledField.setAccessible(true);
+    boolean originalEnabled = (boolean) enabledField.get(service);
 
-        Field measurementIdField = AnalyticsService.class.getDeclaredField("measurementId");
-        measurementIdField.setAccessible(true);
-        String originalMeasurement = (String) measurementIdField.get(service);
+    Field measurementIdField = AnalyticsService.class.getDeclaredField("measurementId");
+    measurementIdField.setAccessible(true);
+    String originalMeasurement = (String) measurementIdField.get(service);
 
-        Field apiSecretField = AnalyticsService.class.getDeclaredField("apiSecret");
-        apiSecretField.setAccessible(true);
-        String originalSecret = (String) apiSecretField.get(service);
+    Field apiSecretField = AnalyticsService.class.getDeclaredField("apiSecret");
+    apiSecretField.setAccessible(true);
+    String originalSecret = (String) apiSecretField.get(service);
 
-        enabledField.set(service, true);
-        measurementIdField.set(service, "G-FAKE1234");
-        apiSecretField.set(service, "fake_secret");
+    enabledField.set(service, true);
+    measurementIdField.set(service, "G-FAKE1234");
+    apiSecretField.set(service, "fake_secret");
 
-        Race mockRace = mock(Race.class);
-        Track mockTrack = mock(Track.class);
+    Race mockRace = mock(Race.class);
+    Track mockTrack = mock(Track.class);
 
-        when(mockRace.getTrack()).thenReturn(mockTrack);
-        when(mockTrack.getId()).thenReturn(new org.bson.types.ObjectId());
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockTrack.getId()).thenReturn(new ObjectId());
 
-        // Return empty lists to avoid NPE during size() checks
-        when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
-        when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
-        when(mockRace.isDemoMode()).thenReturn(true);
+    // Return empty lists to avoid NPE during size() checks
+    when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
+    when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
+    when(mockRace.isDemoMode()).thenReturn(true);
 
-        // This simulates a full payload build and an HTTP post dispatch internally over
-        // a CompletableFuture thread
-        // The mock server destination will fail to connect, sending a WARN to SLF4J
-        // log, but should not crash test
-        service.trackRaceStart(mockRace);
+    // This simulates a full payload build and an HTTP post dispatch internally over
+    // a CompletableFuture thread
+    // The mock server destination will fail to connect, sending a WARN to SLF4J
+    // log, but should not crash test
+    service.trackRaceStart(mockRace);
 
-        // Briefly wait to let the async thread execute the build code before teardown
-        Thread.sleep(100);
+    // Briefly wait to let the async thread execute the build code before teardown
+    Thread.sleep(100);
 
-        // Reset state so it doesn't affect other tests interacting with singleton
-        enabledField.set(service, originalEnabled);
-        measurementIdField.set(service, originalMeasurement);
-        apiSecretField.set(service, originalSecret);
-    }
+    // Reset state so it doesn't affect other tests interacting with singleton
+    enabledField.set(service, originalEnabled);
+    measurementIdField.set(service, originalMeasurement);
+    apiSecretField.set(service, originalSecret);
+  }
 
-    @Test
-    public void testGetClientId_GeneratesPersistentId() {
-        String clientId1 = service.getClientId();
-        String clientId2 = service.getClientId();
+  @Test
+  public void testGetClientId_GeneratesPersistentId() {
+    String clientId1 = service.getClientId();
+    String clientId2 = service.getClientId();
 
-        org.junit.Assert.assertNotNull(clientId1);
-        org.junit.Assert.assertTrue(clientId1.startsWith("rc-desktop-"));
-        org.junit.Assert.assertEquals("Client ID should be persistent across calls", clientId1, clientId2);
-    }
+    assertNotNull(clientId1);
+    assertTrue(clientId1.startsWith("rc-desktop-"));
+    assertEquals("Client ID should be persistent across calls", clientId1, clientId2);
+  }
 
-    @Test
-    public void testTrackAnalyticsToggle_WhenDisabled_DoesNotThrow() throws Exception {
-        Field enabledField = AnalyticsService.class.getDeclaredField("enabled");
-        enabledField.setAccessible(true);
-        boolean originalEnabled = (boolean) enabledField.get(service);
-        enabledField.set(service, false);
+  @Test
+  public void testTrackAnalyticsToggle_WhenDisabled_DoesNotThrow() throws Exception {
+    Field enabledField = AnalyticsService.class.getDeclaredField("enabled");
+    enabledField.setAccessible(true);
+    boolean originalEnabled = (boolean) enabledField.get(service);
+    enabledField.set(service, false);
 
-        // Should return early gracefully
-        service.trackAnalyticsToggle(true);
-        service.trackAnalyticsToggle(false);
+    // Should return early gracefully
+    service.trackAnalyticsToggle(true);
+    service.trackAnalyticsToggle(false);
 
-        enabledField.set(service, originalEnabled);
-    }
+    enabledField.set(service, originalEnabled);
+  }
 
-    @Test
-    public void testTrackAnalyticsToggle_WhenEnabled_DoesNotThrow() throws Exception {
-        Field enabledField = AnalyticsService.class.getDeclaredField("enabled");
-        enabledField.setAccessible(true);
-        boolean originalEnabled = (boolean) enabledField.get(service);
+  @Test
+  public void testTrackAnalyticsToggle_WhenEnabled_DoesNotThrow() throws Exception {
+    Field enabledField = AnalyticsService.class.getDeclaredField("enabled");
+    enabledField.setAccessible(true);
+    boolean originalEnabled = (boolean) enabledField.get(service);
 
-        Field measurementIdField = AnalyticsService.class.getDeclaredField("measurementId");
-        measurementIdField.setAccessible(true);
-        String originalMeasurement = (String) measurementIdField.get(service);
+    Field measurementIdField = AnalyticsService.class.getDeclaredField("measurementId");
+    measurementIdField.setAccessible(true);
+    String originalMeasurement = (String) measurementIdField.get(service);
 
-        Field apiSecretField = AnalyticsService.class.getDeclaredField("apiSecret");
-        apiSecretField.setAccessible(true);
-        String originalSecret = (String) apiSecretField.get(service);
+    Field apiSecretField = AnalyticsService.class.getDeclaredField("apiSecret");
+    apiSecretField.setAccessible(true);
+    String originalSecret = (String) apiSecretField.get(service);
 
-        enabledField.set(service, true);
-        measurementIdField.set(service, "G-FAKE1234");
-        apiSecretField.set(service, "fake_secret");
+    enabledField.set(service, true);
+    measurementIdField.set(service, "G-FAKE1234");
+    apiSecretField.set(service, "fake_secret");
 
-        // This simulates a full payload build and an HTTP post dispatch internally over
-        // a CompletableFuture thread
-        service.trackAnalyticsToggle(true);
-        service.trackAnalyticsToggle(false);
+    // This simulates a full payload build and an HTTP post dispatch internally over
+    // a CompletableFuture thread
+    service.trackAnalyticsToggle(true);
+    service.trackAnalyticsToggle(false);
 
-        // Briefly wait to let the async thread execute the build code before teardown
-        Thread.sleep(100);
+    // Briefly wait to let the async thread execute the build code before teardown
+    Thread.sleep(100);
 
-        // Reset state so it doesn't affect other tests interacting with singleton
-        enabledField.set(service, originalEnabled);
-        measurementIdField.set(service, originalMeasurement);
-        apiSecretField.set(service, originalSecret);
-    }
+    // Reset state so it doesn't affect other tests interacting with singleton
+    enabledField.set(service, originalEnabled);
+    measurementIdField.set(service, originalMeasurement);
+    apiSecretField.set(service, originalSecret);
+  }
 }

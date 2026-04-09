@@ -1,21 +1,21 @@
 package com.antigravity.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.antigravity.race.Race;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
-import java.util.Collections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AnalyticsService {
+
   private static final Logger logger = LoggerFactory.getLogger(AnalyticsService.class);
   private static AnalyticsService instance;
 
@@ -112,7 +112,7 @@ public class AnalyticsService {
     eventParams.put("is_demo", race.isDemoMode());
     eventParams.put("engagement_time_msec", "1"); // Required for GA4 Realtime reports
     eventParams.put("session_id", String.valueOf(System.currentTimeMillis())); // Forces GA4 to create a session for
-                                                                               // Realtime processing
+    // Realtime processing
 
     Map<String, Object> event = new HashMap<>();
     event.put("name", "backend_race_started");

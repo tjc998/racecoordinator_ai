@@ -1,9 +1,10 @@
 package com.antigravity.protocols;
 
 public class PartialTime {
-  private int laneIndex;
-  private double lapTime;
-  private double segmentTime;
+
+  private final int laneIndex;
+  private final double lapTime;
+  private final double segmentTime;
 
   public PartialTime(int laneIndex, double lapTime, double segmentTime) {
     this.laneIndex = laneIndex;

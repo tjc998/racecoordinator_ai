@@ -4,12 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.UUID;
 
 public class ServerConfigService {
+
   private static final String CONFIG_FILE = "server_config.json";
   private final File configFile;
   private final ObjectMapper mapper;
-  private Config config;
+  private final Config config;
 
   public ServerConfigService() {
     String appDataDir = System.getProperty("app.data.dir",
@@ -58,13 +60,14 @@ public class ServerConfigService {
 
   public String getAnalyticsClientId() {
     if (config.analyticsClientId == null || config.analyticsClientId.isEmpty()) {
-      config.analyticsClientId = "rc-desktop-" + java.util.UUID.randomUUID().toString();
+      config.analyticsClientId = "rc-desktop-" + UUID.randomUUID().toString();
       saveConfig();
     }
     return config.analyticsClientId;
   }
 
   private static class Config {
+
     public String lastActiveDatabase;
     public boolean shareAnalytics = true;
     public String analyticsClientId;

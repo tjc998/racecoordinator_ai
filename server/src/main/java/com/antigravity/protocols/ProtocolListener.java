@@ -1,15 +1,19 @@
 package com.antigravity.protocols;
 
+import com.antigravity.proto.InterfaceEvent;
+import com.antigravity.proto.InterfaceStatus;
+
 public interface ProtocolListener {
+
   void onLap(int lane, double lapTime, int interfaceId);
 
   void onSegment(int lane, double segmentTime, int interfaceId);
 
   void onCallbutton(int lane);
 
-  void onInterfaceStatus(com.antigravity.proto.InterfaceStatus status);
+  void onInterfaceStatus(InterfaceStatus status);
 
   void onCarData(CarData carData);
 
-  void onInterfaceEvent(com.antigravity.proto.InterfaceEvent event);
+  void onInterfaceEvent(InterfaceEvent event);
 }

@@ -8,10 +8,11 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
 /**
- * A robust boolean codec that can handle legacy INT32, INT64, and DOUBLE values
- * as well as the standard BOOLEAN BSON type.
+ * A robust boolean codec that can handle legacy INT32, INT64, and DOUBLE values as well as the
+ * standard BOOLEAN BSON type.
  */
 public class RobustBooleanCodec implements Codec<Boolean> {
+
   @Override
   public Boolean decode(BsonReader reader, DecoderContext decoderContext) {
     BsonType type = reader.getCurrentBsonType();

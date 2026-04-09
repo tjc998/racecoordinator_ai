@@ -1,15 +1,16 @@
 package com.antigravity.converters;
 
+import static org.junit.Assert.assertEquals;
+
+import com.antigravity.models.AnalogFuelOptions;
+import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.Track;
 import com.antigravity.proto.RaceModel;
-import org.junit.Test;
-
-import java.util.HashSet;
 import java.util.ArrayList;
-
-import static org.junit.Assert.assertEquals;
+import java.util.HashSet;
+import org.junit.Test;
 
 public class RaceConverterTest {
 
@@ -81,13 +82,13 @@ public class RaceConverterTest {
         HeatScoring.HeatRanking.LAP_COUNT,
         HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
         HeatScoring.AllowFinish.None);
-    com.antigravity.models.AnalogFuelOptions fuelOptions = new com.antigravity.models.AnalogFuelOptions(
-        true, false, true, 120.0, com.antigravity.models.AnalogFuelOptions.FuelUsageType.LINEAR, 5.0, 100.0, 8.0, 3.0,
+    AnalogFuelOptions fuelOptions = new AnalogFuelOptions(
+        true, false, true, 120.0, AnalogFuelOptions.FuelUsageType.LINEAR, 5.0, 100.0, 8.0, 3.0,
         5.0);
     Race race = new Race.Builder()
         .withName("Test Race")
         .withTrackEntityId("track-id")
-        .withHeatRotationType(com.antigravity.models.HeatRotationType.RoundRobin)
+        .withHeatRotationType(HeatRotationType.RoundRobin)
         .withHeatScoring(heatScoring)
         .withMinLapTime(0.0)
         .withFuelOptions(fuelOptions)

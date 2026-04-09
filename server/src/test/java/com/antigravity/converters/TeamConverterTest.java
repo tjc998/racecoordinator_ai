@@ -5,14 +5,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import com.antigravity.models.Team;
+import com.antigravity.proto.TeamModel;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-
 import org.bson.types.ObjectId;
 import org.junit.Test;
-
-import com.antigravity.models.Team;
 
 public class TeamConverterTest {
 
@@ -26,7 +25,7 @@ public class TeamConverterTest {
     Team team = new Team("Team Alpha", "avatar_url", Arrays.asList("d1", "d2"), "t1", new ObjectId());
     Set<String> sentObjectIds = new HashSet<>();
 
-    com.antigravity.proto.TeamModel proto = TeamConverter.toProto(team, sentObjectIds);
+    TeamModel proto = TeamConverter.toProto(team, sentObjectIds);
 
     assertNotNull(proto);
     assertEquals("Team Alpha", proto.getName());
@@ -45,7 +44,7 @@ public class TeamConverterTest {
     Set<String> sentObjectIds = new HashSet<>();
     sentObjectIds.add("Team_" + team.getObjectId());
 
-    com.antigravity.proto.TeamModel proto = TeamConverter.toProto(team, sentObjectIds);
+    TeamModel proto = TeamConverter.toProto(team, sentObjectIds);
 
     assertNotNull(proto);
     assertEquals("", proto.getName()); // Should be empty in subsequent sends

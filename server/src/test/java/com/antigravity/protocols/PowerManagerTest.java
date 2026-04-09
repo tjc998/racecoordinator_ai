@@ -1,16 +1,23 @@
 package com.antigravity.protocols;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.List;
-
 import org.junit.Before;
 import org.junit.Test;
 
 public class PowerManagerTest {
 
-  private ProtocolDelegate delegate;
   private PowerManager powerManager;
   private IProtocol mainOnlyProtocol;
   private IProtocol laneOnlyProtocol;
@@ -44,7 +51,7 @@ public class PowerManagerTest {
   public void testSetMainPower() {
     // Setup delegate with all types
     List<IProtocol> protocols = Arrays.asList(mainOnlyProtocol, laneOnlyProtocol, bothProtocol, neitherProtocol);
-    delegate = new ProtocolDelegate(protocols);
+    ProtocolDelegate delegate = new ProtocolDelegate(protocols);
     powerManager = new PowerManager(delegate);
 
     // Turn Main Power ON
@@ -80,7 +87,7 @@ public class PowerManagerTest {
   @Test
   public void testSetLanePower() {
     List<IProtocol> protocols = Arrays.asList(mainOnlyProtocol, laneOnlyProtocol, bothProtocol);
-    delegate = new ProtocolDelegate(protocols);
+    ProtocolDelegate delegate = new ProtocolDelegate(protocols);
     powerManager = new PowerManager(delegate);
 
     // Required: Main Power must be ON for lane power to take effect on
@@ -140,7 +147,7 @@ public class PowerManagerTest {
   @Test
   public void testSetMainPowerRedundant() {
     List<IProtocol> protocols = Arrays.asList(mainOnlyProtocol);
-    delegate = new ProtocolDelegate(protocols);
+    ProtocolDelegate delegate = new ProtocolDelegate(protocols);
     powerManager = new PowerManager(delegate);
 
     // First call - should trigger interaction
@@ -162,7 +169,7 @@ public class PowerManagerTest {
   @Test
   public void testSetLanePowerRedundant() {
     List<IProtocol> protocols = Arrays.asList(laneOnlyProtocol);
-    delegate = new ProtocolDelegate(protocols);
+    ProtocolDelegate delegate = new ProtocolDelegate(protocols);
     powerManager = new PowerManager(delegate);
 
     // Set main power ON so lane power is effective

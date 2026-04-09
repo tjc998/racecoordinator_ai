@@ -1,10 +1,25 @@
 package com.antigravity.context;
 
+import com.antigravity.service.AssetService;
+import com.antigravity.service.DatabaseService;
+import com.antigravity.service.ServerConfigService;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -12,17 +27,18 @@ import java.util.zip.ZipOutputStream;
 import org.bson.Document;
 
 public class DatabaseContext {
+
   private final MongoClient mongoClient;
   private volatile MongoDatabase currentDatabase;
   private volatile String currentDatabaseName;
-  private final com.antigravity.service.ServerConfigService configService;
+  private final ServerConfigService configService;
   private final String dataRoot;
 
   public DatabaseContext(MongoClient mongoClient, String initialDatabaseName,
-      com.antigravity.service.ServerConfigService configService, String dataRoot) {
+      ServerConfigService configService, String dataRoot) {
     this.mongoClient = mongoClient;
     this.configService = configService;
-    this.dataRoot = dataRoot.endsWith(java.io.File.separator) ? dataRoot : dataRoot + java.io.File.separator;
+    this.dataRoot = dataRoot.endsWith(File.separator) ? dataRoot : dataRoot + File.separator;
     this.switchDatabase(initialDatabaseName);
   }
 
@@ -60,7 +76,7 @@ public class DatabaseContext {
     } catch (Exception e) {
       // Might already exist, ignore
     }
-    java.io.File assetDir = new java.io.File(dataRoot + databaseName + "/assets");
+    File assetDir = new File(dataRoot + databaseName + "/assets");
     if (!assetDir.exists() && !assetDir.mkdirs()) {
       throw new RuntimeException("Failed to create assets directory: " + assetDir.getAbsolutePath());
     }
@@ -70,7 +86,7 @@ public class DatabaseContext {
   public List<String> listDatabases() {
     List<String> dbs = new ArrayList<>();
     mongoClient.listDatabaseNames().forEach(dbs::add);
-    java.util.Collections.sort(dbs);
+    Collections.sort(dbs);
     return dbs;
   }
 
@@ -81,8 +97,9 @@ public class DatabaseContext {
     target.drop();
 
     for (String collectionName : source.listCollectionNames()) {
-      if (collectionName.startsWith("system."))
+      if (collectionName.startsWith("system.")) {
         continue;
+      }
 
       MongoIterable<Document> documents = source.getCollection(collectionName).find();
       List<Document> batch = new ArrayList<>();
@@ -97,8 +114,8 @@ public class DatabaseContext {
 
     // Copy Assets
     try {
-      java.io.File sourceDir = new java.io.File(dataRoot + sourceDbName + "/assets");
-      java.io.File targetDir = new java.io.File(dataRoot + targetDbName + "/assets");
+      File sourceDir = new File(dataRoot + sourceDbName + "/assets");
+      File targetDir = new File(dataRoot + targetDbName + "/assets");
 
       if (sourceDir.exists()) {
         copyDirectory(sourceDir, targetDir);
@@ -114,13 +131,13 @@ public class DatabaseContext {
 
     // Delete Assets
     try {
-      java.io.File assetDir = new java.io.File(dataRoot + dbName + "/assets");
+      File assetDir = new File(dataRoot + dbName + "/assets");
       if (assetDir.exists()) {
         deleteDirectory(assetDir);
       }
       // Try to delete the parent 'data/dbName' directory if it exists and is
       // empty/only contains assets
-      java.io.File dbDir = new java.io.File(dataRoot + dbName);
+      File dbDir = new File(dataRoot + dbName);
       if (dbDir.exists()) {
         deleteDirectory(dbDir);
       }
@@ -130,29 +147,29 @@ public class DatabaseContext {
     System.out.println("Deleted database: " + dbName);
   }
 
-  private void copyDirectory(java.io.File source, java.io.File target) throws java.io.IOException {
+  private void copyDirectory(File source, File target) throws IOException {
     if (!target.exists()) {
       if (!target.mkdirs()) {
-        throw new java.io.IOException("Failed to create directory: " + target.getAbsolutePath());
+        throw new IOException("Failed to create directory: " + target.getAbsolutePath());
       }
     }
     for (String f : source.list()) {
-      java.io.File sourceFile = new java.io.File(source, f);
-      java.io.File targetFile = new java.io.File(target, f);
+      File sourceFile = new File(source, f);
+      File targetFile = new File(target, f);
       if (sourceFile.isDirectory()) {
         copyDirectory(sourceFile, targetFile);
       } else {
-        java.nio.file.Files.copy(sourceFile.toPath(), targetFile.toPath(),
-            java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(sourceFile.toPath(), targetFile.toPath(),
+            StandardCopyOption.REPLACE_EXISTING);
       }
     }
   }
 
-  private void deleteDirectory(java.io.File dir) {
+  private void deleteDirectory(File dir) {
     if (dir.exists()) {
-      java.io.File[] files = dir.listFiles();
+      File[] files = dir.listFiles();
       if (files != null) {
-        for (java.io.File file : files) {
+        for (File file : files) {
           if (file.isDirectory()) {
             deleteDirectory(file);
           } else {
@@ -166,8 +183,8 @@ public class DatabaseContext {
 
   public void resetDatabaseToFactory(String dbName) {
     MongoDatabase db = mongoClient.getDatabase(dbName);
-    new com.antigravity.service.AssetService(db, dataRoot + dbName + "/assets").resetAssets();
-    new com.antigravity.service.DatabaseService().resetToFactory(this, db);
+    new AssetService(db, dataRoot + dbName + "/assets").resetAssets();
+    new DatabaseService().resetToFactory(this, db);
   }
 
   public DatabaseStats getDatabaseStats(String dbName) {
@@ -190,7 +207,7 @@ public class DatabaseContext {
     for (Document doc : db.getCollection("assets").find()) {
       String filename = doc.getString("filename");
       if (filename != null) {
-        java.io.File file = new java.io.File(dataRoot + dbName + "/assets", filename);
+        File file = new File(dataRoot + dbName + "/assets", filename);
         if (file.exists()) {
           assetSizeBytes += file.length();
         }
@@ -206,8 +223,9 @@ public class DatabaseContext {
     try (ZipOutputStream zos = new ZipOutputStream(out)) {
       // 1. Export Collections
       for (String collectionName : db.listCollectionNames()) {
-        if (collectionName.startsWith("system."))
+        if (collectionName.startsWith("system.")) {
           continue;
+        }
 
         ZipEntry entry = new ZipEntry("data/" + collectionName + ".json");
         zos.putNextEntry(entry);
@@ -230,8 +248,9 @@ public class DatabaseContext {
 
   private void addDirectoryToZip(ZipOutputStream zos, File dir, String baseName) throws IOException {
     File[] files = dir.listFiles();
-    if (files == null)
+    if (files == null) {
       return;
+    }
     for (File file : files) {
       if (file.isDirectory()) {
         addDirectoryToZip(zos, file, baseName + file.getName() + "/");
@@ -302,6 +321,7 @@ public class DatabaseContext {
   }
 
   public static class DatabaseStats {
+
     public String name;
     public long driverCount;
     public long teamCount;

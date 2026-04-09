@@ -2,21 +2,22 @@ package com.antigravity.protocols;
 
 import java.util.Arrays;
 import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class PowerManager {
+
   private static final Logger logger = LoggerFactory.getLogger(PowerManager.class);
 
   private static final class ProtocolState {
+
     boolean currentMainPower = false;
     boolean firstMainPower = true;
 
     // Per lane
-    boolean[] currentLanePower;
-    boolean[] firstLanePower;
-    boolean[] desiredLanePower;
+    final boolean[] currentLanePower;
+    final boolean[] firstLanePower;
+    final boolean[] desiredLanePower;
 
     public ProtocolState(int numLanes) {
       this.currentLanePower = new boolean[numLanes];
@@ -32,7 +33,7 @@ public class PowerManager {
   private final int numLanes;
 
   // State of each protocols main and per lane relays.
-  private ProtocolState[] protocolStates;
+  private final ProtocolState[] protocolStates;
 
   public PowerManager(ProtocolDelegate delegate) {
     this.delegate = delegate;
@@ -62,7 +63,8 @@ public class PowerManager {
             protocol.setLanePower(effectivePower, lane);
             state.firstLanePower[lane] = false;
             state.currentLanePower[lane] = effectivePower;
-            logger.info("Main Power (per-lane) set to {} for protocol {} lane {}", effectivePower ? "ON" : "OFF", i, lane + 1);
+            logger.info("Main Power (per-lane) set to {} for protocol {} lane {}", effectivePower ? "ON" : "OFF", i,
+                lane + 1);
           }
         }
       }

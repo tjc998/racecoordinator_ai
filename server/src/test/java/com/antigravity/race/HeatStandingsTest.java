@@ -1,18 +1,20 @@
 package com.antigravity.race;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
-import java.util.ArrayList;
-import java.util.List;
+import static org.junit.Assert.assertEquals;
+
+import com.antigravity.models.Driver;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.HeatScoring.FinishMethod;
 import com.antigravity.models.HeatScoring.HeatRanking;
 import com.antigravity.models.HeatScoring.HeatRankingTiebreaker;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.Test;
 
 public class HeatStandingsTest {
 
   private RaceParticipant createDriver(String id) {
-    com.antigravity.models.Driver d = new com.antigravity.models.Driver(id, id, id, null);
+    Driver d = new Driver(id, id, id, null);
     return new RaceParticipant(d, id);
   }
 

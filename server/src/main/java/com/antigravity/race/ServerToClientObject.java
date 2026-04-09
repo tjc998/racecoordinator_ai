@@ -1,12 +1,12 @@
 package com.antigravity.race;
 
-import java.util.UUID;
-
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import java.util.UUID;
 
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
 public abstract class ServerToClientObject {
+
   private String objectId;
 
   public ServerToClientObject() {

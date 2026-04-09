@@ -10,6 +10,7 @@ import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.Lane;
 import com.antigravity.models.OverallScoring;
+import com.antigravity.models.Race;
 import com.antigravity.models.Track;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,13 +20,13 @@ import org.junit.Test;
 
 public class ReproduceExceptionTest {
 
-  private com.antigravity.models.Race raceModel;
+  private Race raceModel;
   private Track track;
   private List<RaceParticipant> drivers;
 
   @Before
   public void setUp() {
-    raceModel = mock(com.antigravity.models.Race.class);
+    raceModel = mock(Race.class);
     track = mock(Track.class);
     drivers = new ArrayList<>();
 
@@ -50,30 +51,35 @@ public class ReproduceExceptionTest {
   @Test
   public void reproduceFewerDriversThanLanes() {
     // This should not throw an exception
-    Race race = new Race.Builder().model(raceModel).drivers(drivers).track(track).isDemoMode(true).build();
-    
+    com.antigravity.race.Race race = new com.antigravity.race.Race.Builder()
+        .model(raceModel)
+        .drivers(drivers)
+        .track(track)
+        .isDemoMode(true)
+        .build();
+
     assertNotNull(race);
     assertEquals(4, race.getHeats().size()); // numLanes = 4, so 4 heats
-    
+
     // Check if heats have "Empty" drivers
     for (Heat heat : race.getHeats()) {
-        assertEquals(4, heat.getDrivers().size());
-        int emptyCount = 0;
-        int activeCount = 0;
-        for (DriverHeatData dhd : heat.getDrivers()) {
-            if (dhd.getDriver().getDriver() == Driver.EMPTY_DRIVER) {
-                emptyCount++;
-            } else {
-                activeCount++;
-            }
+      assertEquals(4, heat.getDrivers().size());
+      int emptyCount = 0;
+      int activeCount = 0;
+      for (DriverHeatData dhd : heat.getDrivers()) {
+        if (dhd.getDriver().getDriver() == Driver.EMPTY_DRIVER) {
+          emptyCount++;
+        } else {
+          activeCount++;
         }
-        // With 2 drivers and 4 lanes, each heat should have 2 active and 2 empty (normally)
-        // Wait, let's verify if my math was right.
-        // D1 rotations: H1-L1, H2-L2, H3-L3, H4-L4
-        // D2 rotations: H1-L2, H2-L3, H3-L4, H4-L1
-        // So yes, 2 active, 2 empty.
-        assertEquals(2, activeCount);
-        assertEquals(2, emptyCount);
+      }
+      // With 2 drivers and 4 lanes, each heat should have 2 active and 2 empty (normally)
+      // Wait, let's verify if my math was right.
+      // D1 rotations: H1-L1, H2-L2, H3-L3, H4-L4
+      // D2 rotations: H1-L2, H2-L3, H3-L4, H4-L1
+      // So yes, 2 active, 2 empty.
+      assertEquals(2, activeCount);
+      assertEquals(2, emptyCount);
     }
   }
 }

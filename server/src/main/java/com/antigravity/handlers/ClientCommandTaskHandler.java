@@ -2,43 +2,88 @@ package com.antigravity.handlers;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.converters.ArduinoConfigConverter;
+import com.antigravity.models.AnalyticsToggleRequest;
+import com.antigravity.models.Driver;
+import com.antigravity.models.Race;
+import com.antigravity.models.Team;
+import com.antigravity.models.TeamOptions;
+import com.antigravity.models.Track;
+import com.antigravity.proto.ArduinoConfig;
+import com.antigravity.proto.DeferHeatResponse;
 import com.antigravity.proto.InitializeInterfaceRequest;
 import com.antigravity.proto.InitializeInterfaceResponse;
 import com.antigravity.proto.InitializeRaceRequest;
+import com.antigravity.proto.InitializeRaceResponse;
+import com.antigravity.proto.NextHeatResponse;
+import com.antigravity.proto.PauseRaceResponse;
+import com.antigravity.proto.RaceData;
+import com.antigravity.proto.RestartHeatResponse;
+import com.antigravity.proto.SetInterfacePinStateRequest;
+import com.antigravity.proto.SetInterfacePinStateResponse;
+import com.antigravity.proto.SetInterfaceRgbLedStateRequest;
+import com.antigravity.proto.SetInterfaceRgbLedStateResponse;
+import com.antigravity.proto.SkipHeatResponse;
+import com.antigravity.proto.StartRaceResponse;
+import com.antigravity.proto.UpdateInterfaceConfigRequest;
+import com.antigravity.proto.UpdateInterfaceConfigResponse;
+import com.antigravity.protocols.CarLocation;
+import com.antigravity.protocols.IProtocol;
+import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.TestInterfaceListener;
 import com.antigravity.protocols.arduino.ArduinoProtocol;
 import com.antigravity.service.DatabaseService;
-import com.antigravity.util.NetworkUtils;
 import io.javalin.http.Context;
-import com.antigravity.protocols.IProtocol;
-import com.antigravity.protocols.ProtocolDelegate;
-
+import com.antigravity.protocols.interfaces.SerialConnection;
 import com.antigravity.race.ClientSubscriptionManager;
+import com.antigravity.race.DriverHeatData;
+import com.antigravity.race.Heat;
+import com.antigravity.race.OverallStandings;
 import com.antigravity.race.RaceParticipant;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import com.antigravity.race.RaceSaveData;
+import com.antigravity.race.states.Racing;
+import com.antigravity.service.AnalyticsService;
+import com.antigravity.util.CsvExporter;
+import com.antigravity.util.NetworkUtils;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.google.protobuf.InvalidProtocolBufferException;
+import io.javalin.Javalin;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.io.File;
-import java.io.FileWriter;
-import java.net.NetworkInterface;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.antigravity.race.RaceSaveData;
-import com.antigravity.race.Heat;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.bson.types.ObjectId;
 
 public class ClientCommandTaskHandler {
 
   private final DatabaseContext databaseContext;
 
-  public ClientCommandTaskHandler(DatabaseContext databaseContext, io.javalin.Javalin app) {
+  public ClientCommandTaskHandler(DatabaseContext databaseContext, Javalin app) {
     this.databaseContext = databaseContext;
     app.post("/api/initialize-race", this::initializeRace);
     app.post("/api/start-race", this::startRace);
@@ -57,6 +102,7 @@ public class ClientCommandTaskHandler {
     app.get("/api/races/current/export-csv", this::exportRaceCsv);
     app.post("/api/save-race", this::saveRace);
     app.get("/api/saved-races", this::getSavedRaces);
+    app.post("/api/delete-saved-race/{filename}", this::deleteSavedRace);
     app.post("/api/load-race", this::loadRace);
     app.post("/api/analytics/toggle", this::toggleAnalytics);
     app.get("/api/analytics/config", this::getAnalyticsConfig);
@@ -82,7 +128,7 @@ public class ClientCommandTaskHandler {
         ctx.result((String) result.result);
       }
 
-    } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+    } catch (InvalidProtocolBufferException e) {
       System.err.println("Error parsing InitializeRaceRequest: " + e.getMessage());
       ctx.status(400).result("Invalid Protobuf message: " + e.getMessage());
     } catch (Exception e) {
@@ -93,6 +139,7 @@ public class ClientCommandTaskHandler {
   }
 
   static class TaskResult {
+
     int status = 200;
     String contentType;
     Object result;
@@ -115,7 +162,7 @@ public class ClientCommandTaskHandler {
   // Visible for testing
   TaskResult handleInitializeRace(InitializeRaceRequest request) throws Exception {
     DatabaseService dbService = new DatabaseService();
-    com.antigravity.models.Race raceModel = dbService.getRace(databaseContext.getDatabase(),
+    Race raceModel = dbService.getRace(databaseContext.getDatabase(),
         request.getRaceId());
 
     if (raceModel == null) {
@@ -134,14 +181,14 @@ public class ClientCommandTaskHandler {
         .map(id -> id.startsWith("d_") || id.startsWith("t_") ? id.substring(2) : id)
         .collect(Collectors.toList());
 
-    List<com.antigravity.models.Driver> drivers = dbService.getDrivers(databaseContext.getDatabase(),
+    List<Driver> drivers = dbService.getDrivers(databaseContext.getDatabase(),
         rawIds);
-    List<com.antigravity.models.Team> teams = dbService.getTeams(databaseContext.getDatabase(),
+    List<Team> teams = dbService.getTeams(databaseContext.getDatabase(),
         rawIds);
 
     // Map IDs back to objects maintaining order
     List<RaceParticipant> participants = new ArrayList<>();
-    List<com.antigravity.models.Team> allTeams = dbService.getAllTeams(databaseContext.getDatabase());
+    List<Team> allTeams = dbService.getAllTeams(databaseContext.getDatabase());
 
     // --- Validation Logic ---
     Map<String, List<String>> driverToTeamNames = new HashMap<>();
@@ -152,7 +199,7 @@ public class ClientCommandTaskHandler {
       if (pid.startsWith("d_")) {
         individualDriverIds.add(rawId);
       } else if (pid.startsWith("t_")) {
-        com.antigravity.models.Team team = teams.stream()
+        Team team = teams.stream()
             .filter(t -> t.getEntityId().equals(rawId)).findFirst().orElse(null);
         if (team != null) {
           for (String dId : team.getDriverIds()) {
@@ -165,10 +212,10 @@ public class ClientCommandTaskHandler {
     // Rule 1: Individual vs Team
     for (String dId : individualDriverIds) {
       if (driverToTeamNames.containsKey(dId)) {
-        com.antigravity.models.Driver d = drivers.stream()
+        Driver d = drivers.stream()
             .filter(drv -> drv.getEntityId().equals(dId)).findFirst().orElse(null);
         String dName = d != null ? d.getName() : dId;
-        com.antigravity.proto.InitializeRaceResponse response = com.antigravity.proto.InitializeRaceResponse
+        InitializeRaceResponse response = InitializeRaceResponse
             .newBuilder()
             .setSuccess(false)
             .setErrorCode("DUPE_INDIVIDUAL_TEAM")
@@ -184,13 +231,13 @@ public class ClientCommandTaskHandler {
       if (entry.getValue().size() > 1) {
         String dId = entry.getKey();
         // Driver might not be in the explicit 'drivers' list if they were only in teams
-        com.antigravity.models.Driver d = drivers.stream()
+        Driver d = drivers.stream()
             .filter(drv -> drv.getEntityId().equals(dId)).findFirst().orElse(null);
         if (d == null) {
           d = dbService.getDriver(databaseContext.getDatabase(), dId);
         }
         String dName = d != null ? d.getName() : dId;
-        com.antigravity.proto.InitializeRaceResponse response = com.antigravity.proto.InitializeRaceResponse
+        InitializeRaceResponse response = InitializeRaceResponse
             .newBuilder()
             .setSuccess(false)
             .setErrorCode("DUPE_MULTIPLE_TEAMS")
@@ -209,12 +256,12 @@ public class ClientCommandTaskHandler {
 
       // Try finding in drivers
       if (!isExplicitTeam) {
-        com.antigravity.models.Driver driver = drivers.stream().filter(d -> d.getEntityId().equals(rawId))
+        Driver driver = drivers.stream().filter(d -> d.getEntityId().equals(rawId))
             .findFirst().orElse(null);
         if (driver != null) {
           // Find if driver belongs to a team (always check, even if explicitly asked for
           // driver)
-          com.antigravity.models.Team driverTeam = null;
+          Team driverTeam = null;
           if (!isExplicitDriver) {
             driverTeam = allTeams.stream()
                 .filter(t -> t.getDriverIds().contains(rawId))
@@ -232,13 +279,13 @@ public class ClientCommandTaskHandler {
 
       // Try finding in teams
       if (!isExplicitDriver) {
-        com.antigravity.models.Team team = teams.stream().filter(t -> t.getEntityId().equals(rawId))
+        Team team = teams.stream().filter(t -> t.getEntityId().equals(rawId))
             .findFirst()
             .orElse(null);
         if (team != null) {
           RaceParticipant rp = new RaceParticipant(team);
           // Populate team drivers
-          List<com.antigravity.models.Driver> teamDrivers = dbService
+          List<Driver> teamDrivers = dbService
               .getDrivers(databaseContext.getDatabase(), team.getDriverIds());
 
           logToFile("Hydrating team " + team.getName() + " with IDs: " + team.getDriverIds());
@@ -249,10 +296,10 @@ public class ClientCommandTaskHandler {
         }
       }
     }
-    com.antigravity.models.Track raceTrack = new com.antigravity.service.DatabaseService()
+    Track raceTrack = new DatabaseService()
         .getTrack(databaseContext.getDatabase(), raceModel.getTrackEntityId());
 
-    com.antigravity.race.Race race = new com.antigravity.race.Race.Builder()
+    com.antigravity.race.Race runtimeRace = new com.antigravity.race.Race.Builder()
         .model(raceModel)
         .drivers(participants)
         .track(raceTrack)
@@ -260,23 +307,23 @@ public class ClientCommandTaskHandler {
         .build();
 
     try {
-      ClientSubscriptionManager.getInstance().setRace(race);
-      race.init();
+      ClientSubscriptionManager.getInstance().setRace(runtimeRace);
+      runtimeRace.init();
     } catch (Exception e) {
       System.err.println("Failed to set or initialize race: " + e.getMessage());
-      race.stop(); // Ensure protocols are closed
+      runtimeRace.stop(); // Ensure protocols are closed
       return TaskResult.error(409, e.getMessage());
     }
 
-    System.out.println("Initialized race: " + race.getRaceModel().getName());
-    com.antigravity.service.AnalyticsService.getInstance().trackRaceStart(race);
+    System.out.println("Initialized race: " + runtimeRace.getRaceModel().getName());
+    AnalyticsService.getInstance().trackRaceStart(runtimeRace);
 
     // com.antigravity.models.Track track = race.getTrack();
 
-    com.antigravity.proto.RaceData raceData = race.createSnapshot();
-    race.broadcast(raceData);
+    RaceData raceDataSnapshot = runtimeRace.createSnapshot();
+    runtimeRace.broadcast(raceDataSnapshot);
 
-    com.antigravity.proto.InitializeRaceResponse response = com.antigravity.proto.InitializeRaceResponse
+    InitializeRaceResponse response = InitializeRaceResponse
         .newBuilder()
         .setSuccess(true)
         .build();
@@ -294,11 +341,11 @@ public class ClientCommandTaskHandler {
       try {
         race.startRace();
 
-        com.antigravity.proto.StartRaceResponse response = com.antigravity.proto.StartRaceResponse.newBuilder()
+        StartRaceResponse response = StartRaceResponse.newBuilder()
             .setSuccess(true).setMessage("Race started successfully").build();
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       } catch (IllegalStateException e) {
-        com.antigravity.proto.StartRaceResponse response = com.antigravity.proto.StartRaceResponse.newBuilder()
+        StartRaceResponse response = StartRaceResponse.newBuilder()
             .setSuccess(false).setMessage(e.getMessage()).build();
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       }
@@ -321,11 +368,11 @@ public class ClientCommandTaskHandler {
       try {
         race.pauseRace();
 
-        com.antigravity.proto.PauseRaceResponse response = com.antigravity.proto.PauseRaceResponse.newBuilder()
+        PauseRaceResponse response = PauseRaceResponse.newBuilder()
             .setSuccess(true).setMessage("Race paused successfully").build();
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       } catch (IllegalStateException e) {
-        com.antigravity.proto.PauseRaceResponse response = com.antigravity.proto.PauseRaceResponse.newBuilder()
+        PauseRaceResponse response = PauseRaceResponse.newBuilder()
             .setSuccess(false).setMessage(e.getMessage()).build();
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       }
@@ -348,11 +395,11 @@ public class ClientCommandTaskHandler {
         race.moveToNextHeat();
         ClientSubscriptionManager.getInstance().autoSave(race);
 
-        com.antigravity.proto.NextHeatResponse response = com.antigravity.proto.NextHeatResponse.newBuilder()
+        NextHeatResponse response = NextHeatResponse.newBuilder()
             .setSuccess(true).setMessage("Moved to next heat successfully").build();
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       } catch (Exception e) {
-        com.antigravity.proto.NextHeatResponse response = com.antigravity.proto.NextHeatResponse.newBuilder()
+        NextHeatResponse response = NextHeatResponse.newBuilder()
             .setSuccess(false).setMessage(e.getMessage()).build();
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       }
@@ -375,11 +422,11 @@ public class ClientCommandTaskHandler {
         race.restartHeat();
         ClientSubscriptionManager.getInstance().autoSave(race);
 
-        com.antigravity.proto.RestartHeatResponse response = com.antigravity.proto.RestartHeatResponse
+        RestartHeatResponse response = RestartHeatResponse
             .newBuilder().setSuccess(true).setMessage("Heat restarted successfully").build();
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       } catch (IllegalStateException e) {
-        com.antigravity.proto.RestartHeatResponse response = com.antigravity.proto.RestartHeatResponse
+        RestartHeatResponse response = RestartHeatResponse
             .newBuilder().setSuccess(false).setMessage(e.getMessage()).build();
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       }
@@ -402,11 +449,11 @@ public class ClientCommandTaskHandler {
         race.skipHeat();
         ClientSubscriptionManager.getInstance().autoSave(race);
 
-        com.antigravity.proto.SkipHeatResponse response = com.antigravity.proto.SkipHeatResponse.newBuilder()
+        SkipHeatResponse response = SkipHeatResponse.newBuilder()
             .setSuccess(true).setMessage("Heat skipped successfully").build();
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       } catch (IllegalStateException e) {
-        com.antigravity.proto.SkipHeatResponse response = com.antigravity.proto.SkipHeatResponse.newBuilder()
+        SkipHeatResponse response = SkipHeatResponse.newBuilder()
             .setSuccess(false).setMessage(e.getMessage()).build();
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       }
@@ -429,11 +476,11 @@ public class ClientCommandTaskHandler {
         race.deferHeat();
         ClientSubscriptionManager.getInstance().autoSave(race);
 
-        com.antigravity.proto.DeferHeatResponse response = com.antigravity.proto.DeferHeatResponse.newBuilder()
+        DeferHeatResponse response = DeferHeatResponse.newBuilder()
             .setSuccess(true).build();
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       } catch (IllegalStateException e) {
-        com.antigravity.proto.DeferHeatResponse response = com.antigravity.proto.DeferHeatResponse.newBuilder()
+        DeferHeatResponse response = DeferHeatResponse.newBuilder()
             .setSuccess(false).build();
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       }
@@ -446,7 +493,7 @@ public class ClientCommandTaskHandler {
 
   private void updateInterfaceConfig(Context ctx) {
     try {
-      com.antigravity.proto.UpdateInterfaceConfigRequest request = com.antigravity.proto.UpdateInterfaceConfigRequest
+      UpdateInterfaceConfigRequest request = UpdateInterfaceConfigRequest
           .parseFrom(ctx.bodyAsBytes());
       com.antigravity.protocols.arduino.ArduinoConfig config = ArduinoConfigConverter
           .fromProto(request.getConfig());
@@ -468,14 +515,14 @@ public class ClientCommandTaskHandler {
       if (target != null) {
         target.updateConfig(config);
 
-        com.antigravity.proto.UpdateInterfaceConfigResponse response = com.antigravity.proto.UpdateInterfaceConfigResponse
+        UpdateInterfaceConfigResponse response = UpdateInterfaceConfigResponse
             .newBuilder()
             .setSuccess(true)
             .setMessage("Configuration updated")
             .build();
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       } else {
-        com.antigravity.proto.UpdateInterfaceConfigResponse response = com.antigravity.proto.UpdateInterfaceConfigResponse
+        UpdateInterfaceConfigResponse response = UpdateInterfaceConfigResponse
             .newBuilder()
             .setSuccess(false)
             .setMessage("Target interface index " + interfaceIndex + " is invalid or not an ArduinoProtocol")
@@ -494,7 +541,7 @@ public class ClientCommandTaskHandler {
       InitializeInterfaceRequest request = InitializeInterfaceRequest.parseFrom(ctx.bodyAsBytes());
 
       List<IProtocol> protocols = new ArrayList<>();
-      for (com.antigravity.proto.ArduinoConfig protoConfig : request.getConfigsList()) {
+      for (ArduinoConfig protoConfig : request.getConfigsList()) {
         com.antigravity.protocols.arduino.ArduinoConfig config = ArduinoConfigConverter.fromProto(protoConfig);
         ArduinoProtocol arduino = new ArduinoProtocol(config, request.getLaneCount());
         arduino.setListener(new TestInterfaceListener());
@@ -509,7 +556,7 @@ public class ClientCommandTaskHandler {
       }
 
       // ClientSubscriptionManager handles mutual exclusion in setProtocol
-      com.antigravity.race.ClientSubscriptionManager.getInstance().setProtocol(finalProtocol);
+      ClientSubscriptionManager.getInstance().setProtocol(finalProtocol);
 
       boolean success = finalProtocol.open();
       InitializeInterfaceResponse response = InitializeInterfaceResponse.newBuilder()
@@ -519,7 +566,7 @@ public class ClientCommandTaskHandler {
       ctx.contentType("application/octet-stream").result(response.toByteArray());
     } catch (IllegalStateException e) {
       ctx.status(409).result(e.getMessage());
-    } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+    } catch (InvalidProtocolBufferException e) {
       ctx.status(400).result("Invalid message: " + e.getMessage());
     } catch (Exception e) {
       System.err.println("Error initializing interface: " + e.getMessage());
@@ -530,7 +577,7 @@ public class ClientCommandTaskHandler {
 
   private void getSerialPorts(Context ctx) {
     try {
-      List<String> ports = com.antigravity.protocols.interfaces.SerialConnection
+      List<String> ports = SerialConnection
           .getAvailableSerialPorts();
       ctx.json(ports);
     } catch (Exception e) {
@@ -542,7 +589,7 @@ public class ClientCommandTaskHandler {
 
   private void setInterfacePinState(Context ctx) {
     try {
-      com.antigravity.proto.SetInterfacePinStateRequest request = com.antigravity.proto.SetInterfacePinStateRequest
+      SetInterfacePinStateRequest request = SetInterfacePinStateRequest
           .parseFrom(ctx.bodyAsBytes());
       int interfaceIndex = request.getInterfaceIndex();
 
@@ -562,14 +609,14 @@ public class ClientCommandTaskHandler {
       if (target != null) {
         target.setPinState(request.getIsDigital(), request.getPin(), request.getIsHigh());
 
-        com.antigravity.proto.SetInterfacePinStateResponse response = com.antigravity.proto.SetInterfacePinStateResponse
+        SetInterfacePinStateResponse response = SetInterfacePinStateResponse
             .newBuilder()
             .setSuccess(true)
             .setMessage("Pin state command sent")
             .build();
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       } else {
-        com.antigravity.proto.SetInterfacePinStateResponse response = com.antigravity.proto.SetInterfacePinStateResponse
+        SetInterfacePinStateResponse response = SetInterfacePinStateResponse
             .newBuilder()
             .setSuccess(false)
             .setMessage("Target interface index " + interfaceIndex + " is invalid or not an ArduinoProtocol")
@@ -585,7 +632,7 @@ public class ClientCommandTaskHandler {
 
   private void setInterfaceRgbLedState(Context ctx) {
     try {
-      com.antigravity.proto.SetInterfaceRgbLedStateRequest request = com.antigravity.proto.SetInterfaceRgbLedStateRequest
+      SetInterfaceRgbLedStateRequest request = SetInterfaceRgbLedStateRequest
           .parseFrom(ctx.bodyAsBytes());
       int interfaceIndex = request.getInterfaceIndex();
 
@@ -605,14 +652,14 @@ public class ClientCommandTaskHandler {
       if (target != null) {
         target.setStringRgbLedValues(request.getStringIndex(), request.getLedsList());
 
-        com.antigravity.proto.SetInterfaceRgbLedStateResponse response = com.antigravity.proto.SetInterfaceRgbLedStateResponse
+        SetInterfaceRgbLedStateResponse response = SetInterfaceRgbLedStateResponse
             .newBuilder()
             .setSuccess(true)
             .setMessage("RGB LED state command sent")
             .build();
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       } else {
-        com.antigravity.proto.SetInterfaceRgbLedStateResponse response = com.antigravity.proto.SetInterfaceRgbLedStateResponse
+        SetInterfaceRgbLedStateResponse response = SetInterfaceRgbLedStateResponse
             .newBuilder()
             .setSuccess(false)
             .setMessage("Target interface index " + interfaceIndex + " is invalid or not an ArduinoProtocol")
@@ -629,15 +676,15 @@ public class ClientCommandTaskHandler {
   private void logToFile(String message) {
     try {
       String tmpDir = System.getProperty("java.io.tmpdir");
-      java.nio.file.Path logPath = java.nio.file.Paths.get(tmpDir, "race_debug.log");
-      java.nio.file.Files.write(logPath, (message + "\n").getBytes(),
-          java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
+      Path logPath = Paths.get(tmpDir, "race_debug.log");
+      Files.write(logPath, (message + "\n").getBytes(),
+          StandardOpenOption.CREATE, StandardOpenOption.APPEND);
     } catch (Exception e) {
       // Ignore
     }
   }
 
-  private void closeInterface(io.javalin.http.Context ctx) {
+  private void closeInterface(Context ctx) {
     try {
       System.out.println("Explicit close-interface requested");
       ClientSubscriptionManager.getInstance().setProtocol(null);
@@ -649,7 +696,7 @@ public class ClientCommandTaskHandler {
   }
 
   @SuppressWarnings("unchecked")
-  private void changeActualDriver(io.javalin.http.Context ctx) {
+  private void changeActualDriver(Context ctx) {
     try {
       int lane = Integer.parseInt(ctx.pathParam("lane"));
       Map<String, String> body = ctx.bodyAsClass(HashMap.class);
@@ -661,22 +708,22 @@ public class ClientCommandTaskHandler {
         return;
       }
 
-      List<com.antigravity.race.DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
+      List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
       if (lane >= 0 && lane < drivers.size()) {
-        com.antigravity.race.DriverHeatData dhd = drivers.get(lane);
-        com.antigravity.service.DatabaseService dbService = new com.antigravity.service.DatabaseService();
-        List<com.antigravity.models.Driver> driversList = dbService.getDrivers(databaseContext.getDatabase(),
+        DriverHeatData dhd = drivers.get(lane);
+        DatabaseService dbService = new DatabaseService();
+        List<Driver> driversList = dbService.getDrivers(databaseContext.getDatabase(),
             Collections.singletonList(driverId));
-        com.antigravity.models.Driver driver = driversList.isEmpty() ? null : driversList.get(0);
+        Driver driver = driversList.isEmpty() ? null : driversList.get(0);
 
         if (driver != null) {
-          com.antigravity.models.TeamOptions options = race.getRaceModel().getTeamOptions();
+          TeamOptions options = race.getRaceModel().getTeamOptions();
           if (options != null && options.isRequirePitStopChangeDriver()
-              && race.getState() instanceof com.antigravity.race.states.Racing) {
-            com.antigravity.protocols.CarLocation loc = dhd.getCurrentLocation();
-            boolean inPit = loc == com.antigravity.protocols.CarLocation.PitRow
-                || (loc != null && loc.getValue() >= com.antigravity.protocols.CarLocation.PitBayBase.getValue()
-                    && loc.getValue() < com.antigravity.protocols.CarLocation.PitBayBase.getValue()
+              && race.getState() instanceof Racing) {
+            CarLocation loc = dhd.getCurrentLocation();
+            boolean inPit = loc == CarLocation.PitRow
+                || (loc != null && loc.getValue() >= CarLocation.PitBayBase.getValue()
+                    && loc.getValue() < CarLocation.PitBayBase.getValue()
                         + race.getTrack().getLanes().size());
             if (!inPit) {
               ctx.status(403).result("RD_ERR_DRIVER_CHANGE_NOT_IN_PIT");
@@ -697,9 +744,9 @@ public class ClientCommandTaskHandler {
     }
   }
 
-  private void exportRaceCsv(io.javalin.http.Context ctx) {
+  private void exportRaceCsv(Context ctx) {
     try {
-      com.antigravity.race.Race race = com.antigravity.race.ClientSubscriptionManager.getInstance().getRace();
+      com.antigravity.race.Race race = ClientSubscriptionManager.getInstance().getRace();
       if (race == null) {
         ctx.status(404).result("No active race found");
         return;
@@ -707,11 +754,11 @@ public class ClientCommandTaskHandler {
 
       String csv;
       synchronized (race) {
-        com.antigravity.race.OverallStandings standings = new com.antigravity.race.OverallStandings(
+        OverallStandings standings = new OverallStandings(
             race.getRaceModel().getHeatScoring(),
             race.getRaceModel().getOverallScoring());
         standings.recalculate(race.getDrivers(), race.getHeats());
-        csv = com.antigravity.util.CsvExporter.export(race);
+        csv = CsvExporter.export(race);
       }
 
       ctx.contentType("text/csv")
@@ -732,7 +779,7 @@ public class ClientCommandTaskHandler {
         return;
       }
 
-      if (race.getState() instanceof com.antigravity.race.states.Racing) {
+      if (race.getState() instanceof Racing) {
         ctx.status(400).result("Cannot save race while in racing state");
         return;
       }
@@ -768,8 +815,8 @@ public class ClientCommandTaskHandler {
         return;
       }
 
-      java.time.LocalDateTime now = java.time.LocalDateTime.now();
-      java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
+      LocalDateTime now = LocalDateTime.now();
+      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
       String timestamp = now.format(formatter);
       String raceName = race.getRaceModel() != null ? race.getRaceModel().getName() : "Race";
       raceName = raceName.replaceAll("[^a-zA-Z0-9_-]", "_");
@@ -844,11 +891,11 @@ public class ClientCommandTaskHandler {
       RaceSaveData saveData = mapper.readValue(saveFile, RaceSaveData.class);
 
       // Compare Track
-      com.antigravity.models.Track savedTrack = saveData.getTrack();
-      com.antigravity.models.Track dbTrack = new DatabaseService().getTrack(databaseContext.getDatabase(),
+      Track savedTrack = saveData.getTrack();
+      Track dbTrack = new DatabaseService().getTrack(databaseContext.getDatabase(),
           saveData.getModel().getTrackEntityId());
 
-      com.antigravity.models.Track trackToUse = savedTrack;
+      Track trackToUse = savedTrack;
       if (dbTrack != null && dbTrack.getLanes().size() == savedTrack.getLanes().size()) {
         trackToUse = dbTrack;
       }
@@ -878,7 +925,7 @@ public class ClientCommandTaskHandler {
 
       ClientSubscriptionManager.getInstance().setRace(race);
       race.init(); // Open protocols
-      com.antigravity.service.AnalyticsService.getInstance().trackRaceStart(race);
+      AnalyticsService.getInstance().trackRaceStart(race);
 
       ctx.status(200).result("Race loaded successfully");
     } catch (Exception e) {
@@ -888,14 +935,14 @@ public class ClientCommandTaskHandler {
     }
   }
 
-  /* package */ void getAnalyticsConfig(Context ctx) {
+  void getAnalyticsConfig(Context ctx) {
     Map<String, String> config = new HashMap<>();
-    config.put("clientId", com.antigravity.service.AnalyticsService.getInstance().getClientId());
-    config.put("measurementId", com.antigravity.service.AnalyticsService.getInstance().getMeasurementId());
+    config.put("clientId", AnalyticsService.getInstance().getClientId());
+    config.put("measurementId", AnalyticsService.getInstance().getMeasurementId());
     setJson(ctx, config);
   }
 
-  /* package */ void toggleAnalytics(Context ctx) {
+  void toggleAnalytics(Context ctx) {
     String remoteAddr = getRemoteAddr(ctx);
     String remoteHost = getRemoteHost(ctx);
 
@@ -908,9 +955,9 @@ public class ClientCommandTaskHandler {
     }
 
     try {
-      com.fasterxml.jackson.databind.ObjectMapper mapper = getObjectMapper();
-      com.antigravity.models.AnalyticsToggleRequest request = mapper.readValue(getBodyBytes(ctx),
-          com.antigravity.models.AnalyticsToggleRequest.class);
+      ObjectMapper mapper = getObjectMapper();
+      AnalyticsToggleRequest request = mapper.readValue(getBodyBytes(ctx),
+          AnalyticsToggleRequest.class);
       if (request == null) {
         setStatus(ctx, 400);
         setResult(ctx, "Invalid request body. Expected JSON with 'enabled' field.");
@@ -918,7 +965,7 @@ public class ClientCommandTaskHandler {
       }
 
       boolean enabled = request.isEnabled();
-      com.antigravity.service.AnalyticsService.getInstance().setUserEnabled(enabled);
+      AnalyticsService.getInstance().setUserEnabled(enabled);
       setStatus(ctx, 200);
       setResult(ctx, "Analytics status updated to " + enabled);
     } catch (Exception e) {
@@ -927,27 +974,27 @@ public class ClientCommandTaskHandler {
     }
   }
 
-  /* package */ String getRemoteAddr(Context ctx) {
+  String getRemoteAddr(Context ctx) {
     return ctx.req.getRemoteAddr();
   }
 
-  /* package */ String getRemoteHost(Context ctx) {
+  String getRemoteHost(Context ctx) {
     return ctx.req.getRemoteHost();
   }
 
-  /* package */ void setStatus(Context ctx, int status) {
+  void setStatus(Context ctx, int status) {
     ctx.status(status);
   }
 
-  /* package */ void setResult(Context ctx, String result) {
+  void setResult(Context ctx, String result) {
     ctx.result(result);
   }
 
-  /* package */ void setJson(Context ctx, Object obj) {
+  void setJson(Context ctx, Object obj) {
     ctx.json(obj);
   }
 
-  /* package */ byte[] getBodyBytes(Context ctx) {
+  byte[] getBodyBytes(Context ctx) {
     return ctx.bodyAsBytes();
   }
 
@@ -955,39 +1002,31 @@ public class ClientCommandTaskHandler {
     return NetworkUtils.isLocalAddress(remoteAddr, remoteHost);
   }
 
-  /* package */ boolean isLocalhost(String remoteAddr, String remoteHost) {
-    return NetworkUtils.isLocalhost(remoteAddr, remoteHost);
-  }
+  ObjectMapper getObjectMapper() {
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.enable(SerializationFeature.INDENT_OUTPUT);
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-  /* package */ boolean isLocalNetwork(String remoteAddr) {
-    return NetworkUtils.isLocalNetwork(remoteAddr);
-  }
-
-  com.fasterxml.jackson.databind.ObjectMapper getObjectMapper() {
-    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-    mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
-    mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-    com.fasterxml.jackson.databind.module.SimpleModule module = new com.fasterxml.jackson.databind.module.SimpleModule();
-    module.addSerializer(org.bson.types.ObjectId.class,
-        new com.fasterxml.jackson.databind.JsonSerializer<org.bson.types.ObjectId>() {
+    SimpleModule module = new SimpleModule();
+    module.addSerializer(ObjectId.class,
+        new JsonSerializer<ObjectId>() {
           @Override
-          public void serialize(org.bson.types.ObjectId value, com.fasterxml.jackson.core.JsonGenerator gen,
-              com.fasterxml.jackson.databind.SerializerProvider serializers) throws java.io.IOException {
+          public void serialize(ObjectId value, JsonGenerator gen,
+              SerializerProvider serializers) throws IOException {
             gen.writeString(value.toHexString());
           }
         });
-    module.addDeserializer(org.bson.types.ObjectId.class,
-        new com.fasterxml.jackson.databind.JsonDeserializer<org.bson.types.ObjectId>() {
+    module.addDeserializer(ObjectId.class,
+        new JsonDeserializer<ObjectId>() {
           @Override
-          public org.bson.types.ObjectId deserialize(com.fasterxml.jackson.core.JsonParser p,
-              com.fasterxml.jackson.databind.DeserializationContext ctxt) throws java.io.IOException {
+          public ObjectId deserialize(JsonParser p,
+              DeserializationContext ctxt) throws IOException {
             String value = p.getValueAsString();
             if (value == null || value.isEmpty()) {
               return null;
             }
             try {
-              return new org.bson.types.ObjectId(value);
+              return new ObjectId(value);
             } catch (IllegalArgumentException e) {
               return null;
             }

@@ -1,6 +1,15 @@
 package com.antigravity.context;
 
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.antigravity.service.ServerConfigService;
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import de.flapdoodle.embed.mongo.config.Net;
@@ -8,15 +17,10 @@ import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.mongo.transitions.Mongod;
 import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess;
 import de.flapdoodle.embed.mongo.types.DatabaseDir;
+import de.flapdoodle.embed.process.io.directories.PersistentDir;
+import de.flapdoodle.reverse.Transition;
 import de.flapdoodle.reverse.TransitionWalker;
 import de.flapdoodle.reverse.transitions.Start;
-import org.bson.Document;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -25,14 +29,14 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-import com.mongodb.MongoClientSettings;
-import com.mongodb.ConnectionString;
+import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
-import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-
-import static org.junit.Assert.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class DatabaseContextTest {
 
@@ -56,9 +60,9 @@ public class DatabaseContextTest {
     System.setProperty("app.data.dir", tempFolder.getRoot().getAbsolutePath());
     configService = new ServerConfigService();
 
-    mongodProcess = Mongod.instance()
-        .withDatabaseDir(Start.to(DatabaseDir.class).initializedWith(DatabaseDir.of(mongoDataDir.toPath())))
-        .withNet(Start.to(Net.class).initializedWith(Net.of(bindIp, port, false)))
+    File mongoArtifactDir = tempFolder.newFolder(".embedmongo");
+
+    mongodProcess = new CustomMongod(mongoArtifactDir, mongoDataDir, bindIp, port)
         .start(Version.Main.V6_0);
 
     CodecRegistry pojoCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
@@ -95,12 +99,14 @@ public class DatabaseContextTest {
       try {
         mongoClient.close();
       } catch (Exception e) {
+        // Ignore
       }
     }
     if (mongodProcess != null) {
       try {
         mongodProcess.close();
       } catch (Exception e) {
+        // Ignore
       }
     }
   }
@@ -284,10 +290,12 @@ public class DatabaseContextTest {
       boolean foundJson = false;
       boolean foundAsset = false;
       while ((entry = zipIn.getNextEntry()) != null) {
-        if (entry.getName().equals("data/test_collection.json"))
+        if (entry.getName().equals("data/test_collection.json")) {
           foundJson = true;
-        if (entry.getName().equals("assets/export_test.txt"))
+        }
+        if (entry.getName().equals("assets/export_test.txt")) {
           foundAsset = true;
+        }
       }
       assertTrue("Should contain collection JSON", foundJson);
       assertTrue("Should contain asset file", foundAsset);
@@ -330,5 +338,37 @@ public class DatabaseContextTest {
     File targetAssetFile = new File(tempFolder.getRoot(), "data/" + targetDb + "/assets/imp_test.txt");
     assertTrue("Imported asset should exist", targetAssetFile.exists());
     assertEquals("import test", new String(Files.readAllBytes(targetAssetFile.toPath())));
+  }
+
+  private static class CustomMongod extends Mongod {
+    private final File artifactDir;
+    private final File databaseDir;
+    private final String bindIp;
+    private final int port;
+
+    public CustomMongod(File artifactDir, File databaseDir, String bindIp, int port) {
+      this.artifactDir = artifactDir;
+      this.databaseDir = databaseDir;
+      this.bindIp = bindIp;
+      this.port = port;
+    }
+
+    @Override
+    public Transition<PersistentDir> persistentBaseDir() {
+      return Start.to(PersistentDir.class)
+          .initializedWith(PersistentDir.of(artifactDir.toPath()));
+    }
+
+    @Override
+    public Transition<DatabaseDir> databaseDir() {
+      return Start.to(DatabaseDir.class)
+          .initializedWith(DatabaseDir.of(databaseDir.toPath()));
+    }
+
+    @Override
+    public Transition<Net> net() {
+      return Start.to(Net.class)
+          .initializedWith(Net.of(bindIp, port, false));
+    }
   }
 }

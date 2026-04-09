@@ -16,4 +16,4 @@ public enum CarLocation {
   public int getValue() {
     return value;
   }
-};
+}

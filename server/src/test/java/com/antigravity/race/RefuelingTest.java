@@ -2,15 +2,10 @@ package com.antigravity.race;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.*;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.bson.types.ObjectId;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.ArgumentCaptor;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 import com.antigravity.models.AnalogFuelOptions;
 import com.antigravity.models.Driver;
@@ -18,15 +13,25 @@ import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.Lane;
 import com.antigravity.models.OverallScoring;
+import com.antigravity.models.Race;
 import com.antigravity.models.Track;
+import com.antigravity.proto.RaceData;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.race.states.Racing;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import org.bson.types.ObjectId;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 public class RefuelingTest {
 
-  private Race race;
+  private com.antigravity.race.Race race;
   private Racing racing;
   private AnalogFuelOptions fuelOptions;
   private List<RaceParticipant> participants;
@@ -54,13 +59,17 @@ public class RefuelingTest {
         HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
         HeatScoring.AllowFinish.None);
 
-    com.antigravity.models.Race raceModel = new com.antigravity.models.Race.Builder()
+    OverallScoring overallScoring = new OverallScoring(
+        0,
+        OverallScoring.OverallRanking.LAP_COUNT,
+        OverallScoring.OverallRankingTiebreaker.FASTEST_LAP_TIME);
+
+    Race raceModel = new Race.Builder()
         .withName("Test Race")
         .withTrackEntityId("track1")
         .withHeatRotationType(HeatRotationType.RoundRobin)
         .withHeatScoring(heatScoring)
-        .withOverallScoring(new OverallScoring())
-        .withMinLapTime(0.0)
+        .withOverallScoring(overallScoring)
         .withFuelOptions(fuelOptions)
         .withEntityId("race1")
         .withId(new ObjectId())
@@ -71,15 +80,28 @@ public class RefuelingTest {
 
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "black", 100));
-    track = new Track("Test Track", lanes, java.util.Collections.singletonList(mock(ArduinoConfig.class)), "track1", new ObjectId());
+    track = new Track("Test Track", lanes, Collections.singletonList(mock(ArduinoConfig.class)), "track1",
+        new ObjectId());
 
-    race = spy(new Race.Builder().model(raceModel).drivers(participants).track(track).isDemoMode(true).build());
+    race = spy(new com.antigravity.race.Race.Builder()
+        .model(raceModel)
+        .drivers(participants)
+        .track(track)
+        .isDemoMode(true)
+        .build());
     race.getHeatExecutionManager().setRace(race);
     racing = new Racing();
     race.changeState(racing);
 
     // Ensure starting fuel is less than capacity for refueling tests
     race.getCurrentHeat().getDrivers().get(0).getDriver().setFuelLevel(50.0);
+  }
+  
+  @After
+  public void tearDown() {
+    if (racing != null) {
+      racing.exit(race);
+    }
   }
 
   @Test
@@ -92,30 +114,22 @@ public class RefuelingTest {
     double initialFuel = race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel();
     assertEquals(50.0, initialFuel, 0.001);
 
-    // Manually trigger ticker updates since we can't easily wait for the real
-    // scheduler in a unit test
-    // and we want to control time.
-    // We'll use reflection or just wait a bit if the ticker is actually running,
-    // but it's better to test the internal logic if possible.
-    // Given Racing.java starts a REAL timer, let's wait a bit and check.
-
+    // Manually trigger ticker updates to control time deterministically
     // Wait 0.5s - still in delay
-    Thread.sleep(600);
+    race.getHeatExecutionManager().processTicker(0.5f);
     assertEquals(50.0, race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
 
-    // Wait another 0.6s - total 1.2s, refueling should have started (delay was
-    // 1.0s)
-    // At 20 units/sec, in 0.2s it should have added ~4 units.
-    Thread.sleep(600);
+    // Wait another 0.6s - total 1.1s, refueling should have started (delay was 1.0s)
+    // At 20 units/sec, in 0.1s it should have added ~2 units.
+    race.getHeatExecutionManager().processTicker(0.6f);
     double fuelAfterRefuelStart = race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel();
     assertTrue("Fuel should have increased", fuelAfterRefuelStart > 50.0);
 
     // Verify broadcast occurred
-    ArgumentCaptor<com.antigravity.proto.RaceData> captor = ArgumentCaptor
-        .forClass(com.antigravity.proto.RaceData.class);
+    ArgumentCaptor<RaceData> captor = ArgumentCaptor.forClass(RaceData.class);
     verify(race, atLeastOnce()).broadcast(captor.capture());
     boolean foundFuelUpdate = false;
-    for (com.antigravity.proto.RaceData data : captor.getAllValues()) {
+    for (RaceData data : captor.getAllValues()) {
       if (data.hasCarData() && data.getCarData().getFuelLevel() > 50.0) {
         foundFuelUpdate = true;
         break;
@@ -128,13 +142,13 @@ public class RefuelingTest {
     racing.onCarData(exitPit);
     double fuelAtExit = race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel();
 
-    Thread.sleep(300);
+    race.getHeatExecutionManager().processTicker(0.5f);
     assertEquals("Fuel should stop increasing after leaving pit", fuelAtExit,
-        race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.5);
+        race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
 
     // 3. Stop refueling by canRefuel = false
     racing.onCarData(pitEntry); // Re-enter
-    Thread.sleep(1200); // Wait for delay
+    race.getHeatExecutionManager().processTicker(1.2f); // Wait for delay
     double fuelReEntry = race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel();
     assertTrue(fuelReEntry > fuelAtExit);
 
@@ -142,9 +156,9 @@ public class RefuelingTest {
     racing.onCarData(cannotRefuel);
     double fuelAtDisable = race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel();
 
-    Thread.sleep(300);
+    race.getHeatExecutionManager().processTicker(0.5f);
     assertEquals("Fuel should stop increasing when canRefuel is false", fuelAtDisable,
-        race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.5);
+        race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
   }
 
   @Test
@@ -153,8 +167,8 @@ public class RefuelingTest {
     CarData pitEntry = new CarData(0, 0.0, 0.0, 0.0, true, CarLocation.PitRow, CarLocation.Main, 0);
     racing.onCarData(pitEntry);
 
-    Thread.sleep(1200); // 1.0s delay
-    Thread.sleep(500); // 0.5s refueling @ 20/s = 10 units. Total should be capped at 100.
+    // 1.0s delay + 0.5s refueling @ 20/s = 10 units. Total should be capped at 100.
+    race.getHeatExecutionManager().processTicker(1.5f);
 
     assertEquals(100.0, race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
   }

@@ -2,24 +2,26 @@ package com.antigravity.service;
 
 import com.antigravity.proto.AssetMessage;
 import com.antigravity.proto.ImageSetEntry;
+import com.antigravity.proto.Model;
 import com.antigravity.proto.SaveImageSetEntry;
-
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
-import org.bson.Document;
-import org.bson.conversions.Bson;
-
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.CharacterIterator;
+import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.bson.Document;
+import org.bson.conversions.Bson;
 
 public class AssetService {
 
@@ -27,6 +29,7 @@ public class AssetService {
   private final MongoCollection<Document> collection;
 
   private static class DefaultAsset {
+
     final String filename;
     final String displayName;
 
@@ -37,6 +40,7 @@ public class AssetService {
   }
 
   private static class FuelDefaultAsset extends DefaultAsset {
+
     final int percentage;
 
     FuelDefaultAsset(String filename, String displayName, int percentage) {
@@ -46,6 +50,7 @@ public class AssetService {
   }
 
   private static final List<DefaultAsset> DEFAULT_IMAGE_ASSETS = new ArrayList<>();
+
   static {
     DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("default_avatar_helmet_4.png", "Helmet Futuristic 1"));
     DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("default_avatar_helmet_5.png", "Helmet Futuristic 2"));
@@ -75,6 +80,7 @@ public class AssetService {
   }
 
   private static final List<FuelDefaultAsset> DEFAULT_FUEL_IMAGE_ASSETS = new ArrayList<>();
+
   static {
     // TODO(aufderheide): For now the order here controls how it animates
     // in the asset editor. The order shouldn't matter.
@@ -92,6 +98,7 @@ public class AssetService {
   }
 
   private static final List<DefaultAsset> DEFAULT_AUDIO_ASSETS = new ArrayList<>();
+
   static {
     DEFAULT_AUDIO_ASSETS.add(new DefaultAsset("beep.wav", "Lap Beep"));
     DEFAULT_AUDIO_ASSETS.add(new DefaultAsset("chimes.wav", "Lap Chimes"));
@@ -154,8 +161,9 @@ public class AssetService {
 
   public boolean deleteAsset(String id) {
     Document doc = collection.find(Filters.eq("_id", id)).first();
-    if (doc == null)
+    if (doc == null) {
       return false;
+    }
 
     // Delete single file if present
     String filename = doc.getString("filename");
@@ -164,6 +172,7 @@ public class AssetService {
     }
 
     // Delete images in set if present
+    @SuppressWarnings("unchecked")
     List<Document> imagesList = (List<Document>) doc.get("images");
     if (imagesList != null) {
       for (Document imageDoc : imagesList) {
@@ -261,12 +270,13 @@ public class AssetService {
 
   private AssetMessage documentToAsset(Document doc) {
     AssetMessage.Builder builder = AssetMessage.newBuilder()
-        .setModel(com.antigravity.proto.Model.newBuilder().setEntityId(doc.getString("_id")).build())
+        .setModel(Model.newBuilder().setEntityId(doc.getString("_id")).build())
         .setName(doc.getString("name"))
         .setType(doc.getString("type"))
         .setSize(doc.getString("size"))
         .setUrl(doc.getString("url") != null ? doc.getString("url") : "");
 
+    @SuppressWarnings("unchecked")
     List<Document> imagesList = (List<Document>) doc.get("images");
     if (imagesList != null) {
       for (Document imageDoc : imagesList) {
@@ -287,7 +297,7 @@ public class AssetService {
       if (is == null) {
         throw new IOException("Resource not found: " + path);
       }
-      java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       int nRead;
       byte[] data = new byte[1024];
       while ((nRead = is.read(data, 0, data.length)) != -1) {
@@ -304,7 +314,7 @@ public class AssetService {
       return bytes + " B";
     }
     long value = absB;
-    java.text.CharacterIterator ci = new java.text.StringCharacterIterator("KMGTPE");
+    CharacterIterator ci = new StringCharacterIterator("KMGTPE");
     for (int i = 40; i >= 0 && absB > 0xfffccccccccccccL >> i; i -= 10) {
       value >>= 10;
       ci.next();

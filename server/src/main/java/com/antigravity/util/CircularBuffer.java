@@ -1,5 +1,7 @@
 package com.antigravity.util;
 
+import java.nio.BufferOverflowException;
+
 /**
  * A thread-safe circular buffer for bytes.
  */
@@ -24,7 +26,7 @@ public class CircularBuffer {
 
   /**
    * Adds a byte to the buffer.
-   * 
+   *
    * @param b the byte to add
    * @return true if added, false if buffer is full
    */
@@ -40,7 +42,7 @@ public class CircularBuffer {
 
   /**
    * Retrieves and removes the next byte from the buffer.
-   * 
+   *
    * @return the next byte
    * @throws IllegalStateException if buffer is empty
    */
@@ -92,15 +94,14 @@ public class CircularBuffer {
   }
 
   /**
-   * Writes an array of bytes to the buffer.
-   * Throws an exception if the buffer becomes full.
-   * 
+   * Writes an array of bytes to the buffer. Throws an exception if the buffer becomes full.
+   *
    * @param data the data to write
    * @return the number of bytes actually written
    */
   public synchronized int write(byte[] data) {
     if (capacity - count < data.length) {
-      throw new java.nio.BufferOverflowException();
+      throw new BufferOverflowException();
     }
     int written = 0;
     for (byte b : data) {
@@ -114,7 +115,7 @@ public class CircularBuffer {
 
   /**
    * Reads up to 'length' bytes from the buffer.
-   * 
+   *
    * @param length maximum number of bytes to read
    * @return array containing the bytes read
    */

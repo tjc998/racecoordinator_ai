@@ -1,25 +1,28 @@
 package com.antigravity.models;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.types.ObjectId;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Lane extends Model {
+
   private final String background_color;
   private final String foreground_color;
   private final int length;
 
   @BsonCreator
-  @com.fasterxml.jackson.annotation.JsonCreator
+  @JsonCreator
   public Lane(
-      @BsonProperty("background_color") @com.fasterxml.jackson.annotation.JsonProperty("background_color") String background_color,
-      @BsonProperty("foreground_color") @com.fasterxml.jackson.annotation.JsonProperty("foreground_color") String foreground_color,
-      @BsonProperty("length") @com.fasterxml.jackson.annotation.JsonProperty("length") int length,
-      @BsonProperty("entity_id") @com.fasterxml.jackson.annotation.JsonProperty("entity_id") String entityId,
-      @BsonId @com.fasterxml.jackson.annotation.JsonProperty("_id") ObjectId id) {
+      @BsonProperty("background_color") @JsonProperty("background_color") String background_color,
+      @BsonProperty("foreground_color") @JsonProperty("foreground_color") String foreground_color,
+      @BsonProperty("length") @JsonProperty("length") int length,
+      @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
+      @BsonId @JsonProperty("_id") ObjectId id) {
     super(id, entityId);
     this.background_color = background_color;
     this.foreground_color = foreground_color;

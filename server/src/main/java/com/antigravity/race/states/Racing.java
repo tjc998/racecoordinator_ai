@@ -1,26 +1,40 @@
 package com.antigravity.race.states;
 
-import java.util.Set;
+import com.antigravity.models.HeatScoring;
+import com.antigravity.models.HeatScoring.AllowFinish;
+import com.antigravity.models.HeatScoring.FinishMethod;
+import com.antigravity.proto.CarData;
+import com.antigravity.proto.RaceData;
+import com.antigravity.proto.RaceTime;
+import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.HeatExecutionManager;
+import com.antigravity.race.Race;
+import java.time.OffsetDateTime;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class Racing implements IRaceState {
-  private java.util.concurrent.ScheduledExecutorService scheduler;
-  private java.util.concurrent.ScheduledFuture<?> timerHandle;
 
-  private com.antigravity.race.Race race;
+  private ScheduledExecutorService scheduler;
+  private ScheduledFuture<?> timerHandle;
+
+  private Race race;
   private HeatExecutionManager executionManager;
 
   @Override
-  public void enter(com.antigravity.race.Race race) {
+  public void enter(Race race) {
     this.race = race;
     this.executionManager = race.getHeatExecutionManager();
 
     if (race.getStatistics().getStartTime() == null) {
-      race.getStatistics().setStartTime(java.time.OffsetDateTime.now().toString());
+      race.getStatistics().setStartTime(OffsetDateTime.now().toString());
       race.getStatistics().setStartMillis(System.currentTimeMillis());
     }
     if (race.getCurrentHeat() != null && race.getCurrentHeat().getStatistics().getStartTime() == null) {
-      race.getCurrentHeat().getStatistics().setStartTime(java.time.OffsetDateTime.now().toString());
+      race.getCurrentHeat().getStatistics().setStartTime(OffsetDateTime.now().toString());
       race.getCurrentHeat().getStatistics().setStartMillis(System.currentTimeMillis());
     }
 
@@ -28,8 +42,8 @@ public class Racing implements IRaceState {
       race.setMainPower(true);
     }
 
-    com.antigravity.models.HeatScoring scoring = race.getRaceModel().getHeatScoring();
-    if (scoring != null && scoring.getFinishMethod() == com.antigravity.models.HeatScoring.FinishMethod.Timed) {
+    HeatScoring scoring = race.getRaceModel().getHeatScoring();
+    if (scoring != null && scoring.getFinishMethod() == FinishMethod.Timed) {
       if (race.getRaceTime() == 0) {
         race.addRaceTime((float) scoring.getFinishValue());
       }
@@ -49,10 +63,11 @@ public class Racing implements IRaceState {
     System.out.println("Racing: Analog fuel enabled: " + executionManager.isAnalogFuelEnabled());
 
     race.startProtocols();
-    scheduler = java.util.concurrent.Executors.newScheduledThreadPool(1);
+    scheduler = Executors.newScheduledThreadPool(1);
     final Runnable ticker = new Runnable() {
       long lastTime = 0;
 
+      @Override
       public void run() {
         try {
           long now = System.nanoTime();
@@ -64,9 +79,9 @@ public class Racing implements IRaceState {
           float delta = (now - lastTime) / 1_000_000_000.0f;
           lastTime = now;
 
-          com.antigravity.models.HeatScoring scoring = race.getRaceModel().getHeatScoring();
+          HeatScoring scoring = race.getRaceModel().getHeatScoring();
           boolean isTimed = scoring != null
-              && scoring.getFinishMethod() == com.antigravity.models.HeatScoring.FinishMethod.Timed;
+              && scoring.getFinishMethod() == FinishMethod.Timed;
 
           if (isTimed) {
             race.addRaceTime(-delta);
@@ -79,16 +94,16 @@ public class Racing implements IRaceState {
 
           // Check finish conditions
           boolean allFinished = false;
-          com.antigravity.models.HeatScoring.AllowFinish allowFinish = scoring != null
+          AllowFinish allowFinish = scoring != null
               ? scoring.getAllowFinish()
-              : com.antigravity.models.HeatScoring.AllowFinish.None;
+              : AllowFinish.None;
 
           if (scoring != null) {
             Set<Integer> finishedLanes = executionManager.getFinishedLanes();
             if (isTimed) {
               if (race.getRaceTime() <= 0) {
                 race.resetRaceTime();
-                if (allowFinish == com.antigravity.models.HeatScoring.AllowFinish.None) {
+                if (allowFinish == AllowFinish.None) {
                   allFinished = true;
                 } else {
                   // Timed race with Allow Finish: Heat ends when everyone has crossed the line
@@ -101,8 +116,8 @@ public class Racing implements IRaceState {
             } else {
               // Lap based
               long limit = scoring.getFinishValue();
-              if (allowFinish == com.antigravity.models.HeatScoring.AllowFinish.None) {
-                for (com.antigravity.race.DriverHeatData driver : race.getCurrentHeat().getDrivers()) {
+              if (allowFinish == AllowFinish.None) {
+                for (DriverHeatData driver : race.getCurrentHeat().getDrivers()) {
                   if (driver.getLapCount() >= limit) {
                     allFinished = true;
                     break;
@@ -122,11 +137,11 @@ public class Racing implements IRaceState {
           // Ensure we don't send negative time for display if finished
           float displayTime = Math.max(0, race.getRaceTime());
 
-          com.antigravity.proto.RaceTime raceTimeMsg = com.antigravity.proto.RaceTime.newBuilder()
+          RaceTime raceTimeMsg = RaceTime.newBuilder()
               .setTime(displayTime)
               .build();
 
-          com.antigravity.proto.RaceData raceDataMsg = com.antigravity.proto.RaceData.newBuilder()
+          RaceData raceDataMsg = RaceData.newBuilder()
               .setRaceTime(raceTimeMsg)
               .build();
 
@@ -146,11 +161,11 @@ public class Racing implements IRaceState {
         }
       }
     };
-    timerHandle = scheduler.scheduleAtFixedRate(ticker, 0, 100, java.util.concurrent.TimeUnit.MILLISECONDS);
+    timerHandle = scheduler.scheduleAtFixedRate(ticker, 0, 100, TimeUnit.MILLISECONDS);
   }
 
   @Override
-  public void exit(com.antigravity.race.Race race) {
+  public void exit(Race race) {
     if (timerHandle != null) {
       timerHandle.cancel(true);
     }
@@ -162,36 +177,36 @@ public class Racing implements IRaceState {
   }
 
   @Override
-  public void nextHeat(com.antigravity.race.Race race) {
+  public void nextHeat(Race race) {
     throw new IllegalStateException("Cannot move to next heat from state: " + this.getClass().getSimpleName());
   }
 
   @Override
-  public void start(com.antigravity.race.Race race) {
+  public void start(Race race) {
     throw new IllegalStateException("Cannot start race: Race is already in Racing state.");
   }
 
   @Override
-  public void pause(com.antigravity.race.Race race) {
+  public void pause(Race race) {
     System.out.println("Racing.pause() called. Pausing race.");
     race.getStatistics().incrementYellowFlagCount();
-    race.changeState(new com.antigravity.race.states.Paused());
+    race.changeState(new Paused());
   }
 
   @Override
-  public void restartHeat(com.antigravity.race.Race race) {
+  public void restartHeat(Race race) {
     System.out.println("Racing.restartHeat() called. Resetting current heat.");
     race.resetCurrentHeat();
-    race.changeState(new com.antigravity.race.states.NotStarted());
+    race.changeState(new NotStarted());
   }
 
   @Override
-  public void skipHeat(com.antigravity.race.Race race) {
+  public void skipHeat(Race race) {
     throw new IllegalStateException("Cannot skip heat from state: " + this.getClass().getSimpleName());
   }
 
   @Override
-  public void deferHeat(com.antigravity.race.Race race) {
+  public void deferHeat(Race race) {
     throw new IllegalStateException("Cannot defer heat from state: " + this.getClass().getSimpleName());
   }
 
@@ -214,7 +229,7 @@ public class Racing implements IRaceState {
 
     int lane = carData.getLane();
     // Broadcast the CarData to clients
-    com.antigravity.proto.CarData.Builder dataBuilder = com.antigravity.proto.CarData.newBuilder()
+    CarData.Builder dataBuilder = CarData.newBuilder()
         .setLane(carData.getLane())
         .setControllerThrottlePct(carData.getControllerThrottlePCT())
         .setCarThrottlePct(carData.getCarThrottlePCT())
@@ -224,7 +239,7 @@ public class Racing implements IRaceState {
 
     if (race.getCurrentHeat() != null && race.getCurrentHeat().getDrivers() != null) {
       if (lane >= 0 && lane < race.getCurrentHeat().getDrivers().size()) {
-        com.antigravity.race.DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(lane);
+        DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(lane);
         if (driverData != null) {
           driverData.setCurrentLocation(carData.getLocation());
           if (driverData.getDriver() != null) {
@@ -234,8 +249,8 @@ public class Racing implements IRaceState {
       }
     }
 
-    com.antigravity.proto.CarData protoCarData = dataBuilder.build();
-    com.antigravity.proto.RaceData raceDataMsg = com.antigravity.proto.RaceData.newBuilder()
+    CarData protoCarData = dataBuilder.build();
+    RaceData raceDataMsg = RaceData.newBuilder()
         .setCarData(protoCarData)
         .build();
 
@@ -243,7 +258,7 @@ public class Racing implements IRaceState {
   }
 
   @Override
-  public void onCallbutton(com.antigravity.race.Race race, int lane) {
+  public void onCallbutton(Race race, int lane) {
     System.out.println("Racing.onCallbutton() called. Pausing race.");
     pause(race);
   }

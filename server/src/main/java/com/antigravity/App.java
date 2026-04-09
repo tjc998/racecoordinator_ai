@@ -1,25 +1,33 @@
 package com.antigravity;
 
-import io.javalin.Javalin;
-import io.javalin.http.staticfiles.Location;
-import io.javalin.plugin.json.JavalinJackson;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+
+import com.antigravity.context.DatabaseContext;
+import com.antigravity.handlers.AssetTaskHandler;
+import com.antigravity.handlers.ClientCommandTaskHandler;
+import com.antigravity.handlers.DatabaseTaskHandler;
+import com.antigravity.proto.RaceSubscriptionRequest;
+import com.antigravity.race.ClientSubscriptionManager;
+import com.antigravity.service.AssetService;
+import com.antigravity.service.DatabaseService;
+import com.antigravity.service.ServerConfigService;
+import com.antigravity.util.RobustBooleanCodec;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import org.bson.types.ObjectId;
-
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
+import de.flapdoodle.embed.mongo.commands.MongodArguments;
 import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.mongo.distribution.Version;
-import de.flapdoodle.embed.mongo.transitions.Mongod;
 import de.flapdoodle.embed.mongo.transitions.ImmutableMongod;
-import de.flapdoodle.embed.mongo.commands.MongodArguments;
+import de.flapdoodle.embed.mongo.transitions.Mongod;
 import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess;
 import de.flapdoodle.embed.mongo.types.DatabaseDir;
 import de.flapdoodle.embed.process.io.ProcessOutput;
@@ -27,21 +35,36 @@ import de.flapdoodle.embed.process.io.Processors;
 import de.flapdoodle.embed.process.io.Slf4jLevel;
 import de.flapdoodle.reverse.TransitionWalker;
 import de.flapdoodle.reverse.transitions.Start;
+import io.javalin.Javalin;
+import io.javalin.http.staticfiles.Location;
+import io.javalin.plugin.json.JavalinJackson;
+import java.awt.Desktop;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
-
 public class App {
+
   private static TransitionWalker.ReachedState<RunningMongodProcess> mongodProcess;
   private static final int MONGO_PORT = 27017; // Default MongoDB port
   private static Javalin app;
@@ -52,7 +75,7 @@ public class App {
 
   public static void main(String[] args) {
     System.out.println("Race Coordinator AI Server " + SERVER_VERSION);
-    System.out.println("Build Time: " + new java.util.Date());
+    System.out.println("Build Time: " + new Date());
     String projectDir = System.getProperty("user.dir");
     String appDataDir = System.getProperty("app.data.dir",
         Paths.get(projectDir, "app_data").toString());
@@ -62,7 +85,7 @@ public class App {
     System.setProperty("de.flapdoodle.embed.io.tmpdir", tmpDir);
     System.out.println("Set de.flapdoodle.embed.io.tmpdir to: " + tmpDir);
     try {
-      java.nio.file.Path tmpPath = Paths.get(tmpDir);
+      Path tmpPath = Paths.get(tmpDir);
       if (!Files.exists(tmpPath)) {
         Files.createDirectories(tmpPath);
       }
@@ -92,7 +115,7 @@ public class App {
     // Add a shutdown hook to stop the embedded MongoDB server
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       logger.info("Shutting down server...");
-      com.antigravity.race.ClientSubscriptionManager.getInstance().setShuttingDown(true);
+      ClientSubscriptionManager.getInstance().setShuttingDown(true);
       if (app != null) {
         try {
           app.stop();
@@ -116,7 +139,7 @@ public class App {
         logger.info("Stopping manual MongoDB process...");
         manualMongoProcess.destroy();
         try {
-          if (!manualMongoProcess.waitFor(5, java.util.concurrent.TimeUnit.SECONDS)) {
+          if (!manualMongoProcess.waitFor(5, TimeUnit.SECONDS)) {
             logger.warn("MongoDB did not shut down gracefully. Forcing termination...");
             manualMongoProcess.destroyForcibly();
           }
@@ -140,8 +163,7 @@ public class App {
     }));
 
     // MongoDB Setup
-    org.bson.codecs.configuration.CodecRegistry robustBooleanRegistry = org.bson.codecs.configuration.CodecRegistries
-        .fromCodecs(new com.antigravity.util.RobustBooleanCodec());
+    CodecRegistry robustBooleanRegistry = CodecRegistries.fromCodecs(new RobustBooleanCodec());
 
     CodecRegistry pojoCodecRegistry = fromRegistries(robustBooleanRegistry,
         MongoClientSettings.getDefaultCodecRegistry(),
@@ -150,7 +172,7 @@ public class App {
     MongoClientSettings settings = MongoClientSettings.builder()
         .applyConnectionString(new ConnectionString("mongodb://localhost:" + MONGO_PORT))
         .codecRegistry(pojoCodecRegistry)
-        .applyToClusterSettings(b -> b.serverSelectionTimeout(30000, java.util.concurrent.TimeUnit.MILLISECONDS))
+        .applyToClusterSettings(b -> b.serverSelectionTimeout(30000, TimeUnit.MILLISECONDS))
         .build();
 
     mongoClient = MongoClients.create(settings);
@@ -172,6 +194,7 @@ public class App {
         try {
           Thread.sleep(1000);
         } catch (InterruptedException ie) {
+          // Ignore
         }
       }
     }
@@ -183,8 +206,8 @@ public class App {
     // Initialize Database
 
     // Migration: Move legacy assets if they exist
-    java.io.File legacyAssets = new java.io.File("data/assets");
-    java.io.File newDefaultAssets = new java.io.File("data/Race Coordinator AI DB/assets");
+    File legacyAssets = new File("data/assets");
+    File newDefaultAssets = new File("data/Race Coordinator AI DB/assets");
     if (legacyAssets.exists() && legacyAssets.isDirectory() && !newDefaultAssets.exists()) {
       System.out.println("Migrating legacy assets to default database...");
       if (newDefaultAssets.mkdirs()) {
@@ -208,17 +231,17 @@ public class App {
         // 'data' is our own app configuration dir.
 
         try {
-          java.nio.file.Path legacyPath = legacyAssets.toPath();
-          java.nio.file.Path newPath = newDefaultAssets.toPath();
-          java.nio.file.Files.createDirectories(newPath.getParent()); // Ensure parent exists
-          java.nio.file.Files.move(legacyPath, newPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+          Path legacyPath = legacyAssets.toPath();
+          Path newPath = newDefaultAssets.toPath();
+          Files.createDirectories(newPath.getParent()); // Ensure parent exists
+          Files.move(legacyPath, newPath, StandardCopyOption.REPLACE_EXISTING);
           System.out.println("Assets migrated successfully.");
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
           System.err.println("Asset migration failed: " + e.getMessage());
         }
       }
     }
-    com.antigravity.service.ServerConfigService configService = new com.antigravity.service.ServerConfigService();
+    ServerConfigService configService = new ServerConfigService();
     String lastActiveDb = configService.getLastActiveDatabase();
 
     List<String> databaseNames = new ArrayList<>();
@@ -253,22 +276,22 @@ public class App {
       }
     }
 
-    com.antigravity.context.DatabaseContext databaseContext = new com.antigravity.context.DatabaseContext(
+    DatabaseContext databaseContext = new DatabaseContext(
         mongoClient, initialDbName, configService, appDataDir);
 
-    com.antigravity.race.ClientSubscriptionManager.getInstance().setDatabaseContext(databaseContext);
+    ClientSubscriptionManager.getInstance().setDatabaseContext(databaseContext);
 
     if (needsFactoryReset) {
       MongoDatabase db = databaseContext.getDatabase();
       String dataRoot = databaseContext.getDataRoot();
-      new com.antigravity.service.AssetService(db, dataRoot + initialDbName + "/assets").resetAssets();
-      new com.antigravity.service.DatabaseService().resetToFactory(databaseContext, db);
+      new AssetService(db, dataRoot + initialDbName + "/assets").resetAssets();
+      new DatabaseService().resetToFactory(databaseContext, db);
     }
 
     System.out.println("Connected to MongoDB successfully.");
 
     // Determine client path once
-    String[] possiblePaths = { "web", "server/web", "client/dist/client", "../client/dist/client" };
+    String[] possiblePaths = {"web", "server/web", "client/dist/client", "../client/dist/client"};
     String resolvedClientPath = null;
     for (String path : possiblePaths) {
       if (Files.exists(Paths.get(path))) {
@@ -308,7 +331,7 @@ public class App {
     app.error(404, ctx -> {
       String accept = ctx.header("Accept");
       if (accept != null && accept.contains("text/html")) {
-        java.nio.file.Path indexPath = Paths.get(staticFilePath, "index.html");
+        Path indexPath = Paths.get(staticFilePath, "index.html");
         if (Files.exists(indexPath)) {
           ctx.contentType("text/html");
           ctx.result(new String(Files.readAllBytes(indexPath)));
@@ -320,16 +343,16 @@ public class App {
 
     app.ws("/api/race-data", ws -> {
       ws.onConnect(ctx -> {
-        com.antigravity.race.ClientSubscriptionManager.getInstance().addSession(ctx);
+        ClientSubscriptionManager.getInstance().addSession(ctx);
       });
       ws.onClose(ctx -> {
-        com.antigravity.race.ClientSubscriptionManager.getInstance().removeSession(ctx);
+        ClientSubscriptionManager.getInstance().removeSession(ctx);
       });
       ws.onBinaryMessage(ctx -> {
         try {
-          com.antigravity.proto.RaceSubscriptionRequest request = com.antigravity.proto.RaceSubscriptionRequest
+          RaceSubscriptionRequest request = RaceSubscriptionRequest
               .parseFrom(ctx.data());
-          com.antigravity.race.ClientSubscriptionManager.getInstance().handleRaceSubscription(ctx, request);
+          ClientSubscriptionManager.getInstance().handleRaceSubscription(ctx, request);
         } catch (Exception e) {
           // Ignore non-subscription messages or invalid protos
         }
@@ -338,16 +361,16 @@ public class App {
 
     app.ws("/api/interface-data", ws -> {
       ws.onConnect(ctx -> {
-        com.antigravity.race.ClientSubscriptionManager.getInstance().addInterfaceSession(ctx);
+        ClientSubscriptionManager.getInstance().addInterfaceSession(ctx);
       });
       ws.onClose(ctx -> {
-        com.antigravity.race.ClientSubscriptionManager.getInstance().removeInterfaceSession(ctx);
+        ClientSubscriptionManager.getInstance().removeInterfaceSession(ctx);
       });
     });
 
-    new com.antigravity.handlers.ClientCommandTaskHandler(databaseContext, app);
-    new com.antigravity.handlers.DatabaseTaskHandler(databaseContext, app);
-    new com.antigravity.handlers.AssetTaskHandler(databaseContext, app);
+    new ClientCommandTaskHandler(databaseContext, app);
+    new DatabaseTaskHandler(databaseContext, app);
+    new AssetTaskHandler(databaseContext, app);
 
     app.get("/api/version", ctx -> ctx.result(SERVER_VERSION));
     app.get("/api/server-ip", ctx -> ctx.result(getLocalIpAddress()));
@@ -363,9 +386,9 @@ public class App {
 
   private static void openBrowser(String url) {
     try {
-      if (java.awt.Desktop.isDesktopSupported()
-          && java.awt.Desktop.getDesktop().isSupported(java.awt.Desktop.Action.BROWSE)) {
-        java.awt.Desktop.getDesktop().browse(new java.net.URI(url));
+      if (Desktop.isDesktopSupported()
+          && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+        Desktop.getDesktop().browse(new URI(url));
       } else {
         // Fallback for systems where Desktop is not supported (print link)
         System.out.println("Server started. Open " + url + " in your browser.");
@@ -392,7 +415,7 @@ public class App {
 
       // Cleanup stale lock file if it exists (prevents boot failure after crash on
       // legacy Windows)
-      java.io.File lockFile = new java.io.File(dataDir, "mongod.lock");
+      File lockFile = new File(dataDir, "mongod.lock");
       if (lockFile.exists()) {
         System.out.println("Stale MongoDB lock file detected. Cleaning up...");
         lockFile.delete();
@@ -405,10 +428,10 @@ public class App {
       String mongoBinName = lowerOs.contains("win") ? "mongod.exe" : "mongod";
 
       // Look for bundled mongo in ./mongodb/bin/
-      java.io.File bundledMongo = new java.io.File(appDir, "mongodb/bin/" + mongoBinName);
+      File bundledMongo = new File(appDir, "mongodb/bin/" + mongoBinName);
       if (bundledMongo.exists()) {
         System.out.println("Found bundled MongoDB: " + bundledMongo.getAbsolutePath());
-        List<String> command = new java.util.ArrayList<>();
+        List<String> command = new ArrayList<>();
         command.add(bundledMongo.getAbsolutePath());
         command.add("--dbpath");
         command.add(dataDir);
@@ -422,7 +445,7 @@ public class App {
           String lowerArch = (osArch != null) ? osArch.toLowerCase() : "";
           boolean isLegacyWindows = lowerOsName.contains("windows")
               && (lowerOsName.contains("xp") || lowerOsName.contains("2003") || lowerOsName.contains("vista")
-                  || lowerOsName.contains("windows 7") || lowerOsName.contains("windows 8"));
+              || lowerOsName.contains("windows 7") || lowerOsName.contains("windows 8"));
           boolean is32Bit = !(lowerArch.contains("64") || lowerArch.contains("amd64") || lowerArch.contains("aarch64"));
 
           if (isLegacyWindows || is32Bit) {
@@ -441,8 +464,8 @@ public class App {
         // Print output in a separate thread so it doesn't block the server but stays
         // visible
         new Thread(() -> {
-          try (java.io.BufferedReader reader = new java.io.BufferedReader(
-              new java.io.InputStreamReader(manualMongoProcess.getInputStream()))) {
+          try (BufferedReader reader = new BufferedReader(
+              new InputStreamReader(manualMongoProcess.getInputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
               System.out.println("[MongoDB] " + line);
@@ -460,8 +483,9 @@ public class App {
 
       String mongoTempDir = Paths.get(appDataDir, "mongo_temp").toString();
       try {
-        java.nio.file.Files.createDirectories(Paths.get(mongoTempDir));
+        Files.createDirectories(Paths.get(mongoTempDir));
       } catch (Exception e) {
+        // Ignore
       }
 
       de.flapdoodle.embed.mongo.distribution.IFeatureAwareVersion mongoVersion = Version.Main.V6_0;
@@ -475,7 +499,7 @@ public class App {
 
         boolean isLegacyWindows = lowerOs.contains("windows")
             && (lowerOs.contains("xp") || lowerOs.contains("2003") || lowerOs.contains("vista")
-                || lowerOs.contains("windows 7") || lowerOs.contains("windows 8"));
+            || lowerOs.contains("windows 7") || lowerOs.contains("windows 8"));
         boolean is64Bit = lowerArch.contains("64") || lowerArch.contains("amd64")
             || lowerArch.contains("aarch64");
         boolean is32Bit = !is64Bit;
@@ -511,18 +535,20 @@ public class App {
 
   /* package */ static String getLocalIpAddress() {
     try {
-      java.util.Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces();
+      Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
       while (interfaces.hasMoreElements()) {
-        java.net.NetworkInterface iface = interfaces.nextElement();
-        if (iface.isLoopback() || !iface.isUp())
+        NetworkInterface iface = interfaces.nextElement();
+        if (iface.isLoopback() || !iface.isUp()) {
           continue;
+        }
 
-        java.util.Enumeration<java.net.InetAddress> addresses = iface.getInetAddresses();
+        Enumeration<InetAddress> addresses = iface.getInetAddresses();
         while (addresses.hasMoreElements()) {
-          java.net.InetAddress addr = addresses.nextElement();
-          if (addr.isLoopbackAddress())
+          InetAddress addr = addresses.nextElement();
+          if (addr.isLoopbackAddress()) {
             continue;
-          if (addr instanceof java.net.Inet4Address) {
+          }
+          if (addr instanceof Inet4Address) {
             return addr.getHostAddress();
           }
         }
@@ -531,7 +557,7 @@ public class App {
       // Fallback
     }
     try {
-      return java.net.InetAddress.getLocalHost().getHostAddress();
+      return InetAddress.getLocalHost().getHostAddress();
     } catch (Exception e) {
       return "Unknown";
     }

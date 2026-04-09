@@ -3,6 +3,7 @@ package com.antigravity.race;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class RaceStatistics {
+
   private String startTime;
   private String endTime;
   private long startMillis;
@@ -11,7 +12,8 @@ public class RaceStatistics {
   private int yellowFlagCount;
   private int restartCount;
 
-  public RaceStatistics() {}
+  public RaceStatistics() {
+  }
 
   @JsonProperty("startTime")
   public String getStartTime() {

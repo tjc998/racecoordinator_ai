@@ -1,11 +1,14 @@
 package com.antigravity.protocols.demo;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.ProtocolListener;
-import org.junit.Test;
 import java.util.concurrent.atomic.AtomicInteger;
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class TestDemoProtocol {
 
@@ -40,7 +43,7 @@ public class TestDemoProtocol {
       }
 
       @Override
-      public void onInterfaceEvent(com.antigravity.proto.InterfaceEvent event) {
+      public void onInterfaceEvent(InterfaceEvent event) {
       }
     };
 

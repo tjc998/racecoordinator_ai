@@ -4,14 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProtocolDelegate implements IProtocol {
-  private List<IProtocol> protocols;
-  private PowerManager powerManager;
+
+  private final List<IProtocol> protocols;
+  private final PowerManager powerManager;
 
   public ProtocolDelegate(List<IProtocol> protocols) {
     this.protocols = protocols;
     this.powerManager = new PowerManager(this);
   }
 
+  @Override
   public void setListener(ProtocolListener listener) {
     for (IProtocol protocol : protocols) {
       protocol.setListener(listener);

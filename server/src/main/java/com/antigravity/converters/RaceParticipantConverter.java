@@ -1,13 +1,14 @@
 package com.antigravity.converters;
 
+import com.antigravity.proto.DriverModel;
+import com.antigravity.proto.RaceParticipant;
+import com.antigravity.proto.TeamModel;
 import java.util.Set;
 
-import com.antigravity.proto.RaceParticipant;
-import com.antigravity.proto.DriverModel;
-import com.antigravity.proto.TeamModel;
-
 public class RaceParticipantConverter {
-  public static RaceParticipant toProto(com.antigravity.race.RaceParticipant participant, Set<String> sentObjectIds) {
+
+  public static RaceParticipant toProto(com.antigravity.race.RaceParticipant participant,
+      Set<String> sentObjectIds) {
     if (participant == null) {
       return null;
     }

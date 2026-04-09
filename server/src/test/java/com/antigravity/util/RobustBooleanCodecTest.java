@@ -11,6 +11,7 @@ import org.bson.codecs.DecoderContext;
 import org.junit.Test;
 
 public class RobustBooleanCodecTest {
+
   @Test
   public void testDecode() {
     RobustBooleanCodec codec = new RobustBooleanCodec();

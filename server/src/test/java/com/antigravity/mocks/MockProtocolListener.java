@@ -1,20 +1,25 @@
 package com.antigravity.mocks;
 
+import com.antigravity.proto.InterfaceEvent;
+import com.antigravity.proto.InterfaceStatus;
+import com.antigravity.protocols.CarData;
+import com.antigravity.protocols.ProtocolListener;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.antigravity.protocols.CarData;
-import com.antigravity.protocols.ProtocolListener;
-
 public class MockProtocolListener implements ProtocolListener {
+
   public List<Double> laps = new ArrayList<>();
   public int lastLane;
   public double lastLapTime;
   public double lastSegmentTime;
-  public com.antigravity.proto.InterfaceStatus lastStatus;
-  public com.antigravity.proto.InterfaceEvent lastEvent;
+  public InterfaceStatus lastStatus;
+  public InterfaceEvent lastEvent;
+  public List<MockSegment> segments = new ArrayList<>();
+  public List<CarData> carData = new ArrayList<>();
 
   public static class MockSegment {
+
     public int lane;
     public double time;
     public int interfaceId;
@@ -25,8 +30,6 @@ public class MockProtocolListener implements ProtocolListener {
       this.interfaceId = interfaceId;
     }
   }
-
-  public List<MockSegment> segments = new ArrayList<>();
 
   @Override
   public void onLap(int lane, double lapTime, int interfaceId) {
@@ -47,11 +50,9 @@ public class MockProtocolListener implements ProtocolListener {
   }
 
   @Override
-  public void onInterfaceStatus(com.antigravity.proto.InterfaceStatus status) {
+  public void onInterfaceStatus(InterfaceStatus status) {
     lastStatus = status;
   }
-
-  public List<CarData> carData = new ArrayList<>();
 
   @Override
   public void onCarData(CarData data) {
@@ -59,7 +60,7 @@ public class MockProtocolListener implements ProtocolListener {
   }
 
   @Override
-  public void onInterfaceEvent(com.antigravity.proto.InterfaceEvent event) {
+  public void onInterfaceEvent(InterfaceEvent event) {
     lastEvent = event;
   }
 }

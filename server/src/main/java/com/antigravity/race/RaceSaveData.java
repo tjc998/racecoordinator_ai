@@ -1,10 +1,13 @@
 package com.antigravity.race;
 
+import com.antigravity.models.Race;
+import com.antigravity.models.Track;
 import java.util.List;
 
 public class RaceSaveData {
-  private com.antigravity.models.Race model;
-  private com.antigravity.models.Track track;
+
+  private Race model;
+  private Track track;
   private List<RaceParticipant> drivers;
   private List<Heat> heats;
   private String stateClassName;
@@ -27,19 +30,19 @@ public class RaceSaveData {
     this.statistics = statistics;
   }
 
-  public com.antigravity.models.Race getModel() {
+  public Race getModel() {
     return model;
   }
 
-  public void setModel(com.antigravity.models.Race model) {
+  public void setModel(Race model) {
     this.model = model;
   }
 
-  public com.antigravity.models.Track getTrack() {
+  public Track getTrack() {
     return track;
   }
 
-  public void setTrack(com.antigravity.models.Track track) {
+  public void setTrack(Track track) {
     this.track = track;
   }
 
@@ -98,7 +101,7 @@ public class RaceSaveData {
   public void setDemoMode(boolean demoMode) {
     isDemoMode = demoMode;
   }
-  
+
   public boolean isAutoStartFired() {
     return autoStartFired;
   }

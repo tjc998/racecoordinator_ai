@@ -1,18 +1,29 @@
 package com.antigravity.handlers;
 
 import com.antigravity.context.DatabaseContext;
-import com.antigravity.proto.*;
 import com.antigravity.proto.AssetMessage;
+import com.antigravity.proto.DeleteAssetRequest;
+import com.antigravity.proto.DeleteAssetResponse;
+import com.antigravity.proto.ListAssetsResponse;
+import com.antigravity.proto.RenameAssetRequest;
+import com.antigravity.proto.RenameAssetResponse;
+import com.antigravity.proto.SaveImageSetRequest;
+import com.antigravity.proto.SaveImageSetResponse;
+import com.antigravity.proto.UploadAssetRequest;
+import com.antigravity.proto.UploadAssetResponse;
 import com.antigravity.service.AssetService;
+import io.javalin.Javalin;
 import io.javalin.http.Context;
-
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.List;
 
 public class AssetTaskHandler {
 
   private final DatabaseContext databaseContext;
 
-  public AssetTaskHandler(DatabaseContext databaseContext, io.javalin.Javalin app) {
+  public AssetTaskHandler(DatabaseContext databaseContext, Javalin app) {
     this.databaseContext = databaseContext;
 
     app.get("/api/assets/list", this::listAssets);
@@ -21,7 +32,6 @@ public class AssetTaskHandler {
     app.post("/api/assets/rename", this::renameAsset);
     app.post("/api/assets/save-image-set", this::saveImageSet);
     app.get("/assets/{filename}", this::serveAsset);
-
   }
 
   private void serveAsset(Context ctx) {
@@ -33,27 +43,29 @@ public class AssetTaskHandler {
     }
 
     String currentDbName = databaseContext.getCurrentDatabaseName();
-    if (currentDbName == null)
+    if (currentDbName == null) {
       currentDbName = "Race Coordinator AI DB";
-    java.io.File file = new java.io.File(databaseContext.getDataRoot() + currentDbName + "/assets", filename);
+    }
+    File file = new File(databaseContext.getDataRoot() + currentDbName + "/assets", filename);
     if (file.exists() && file.isFile()) {
       try {
-        ctx.result(new java.io.FileInputStream(file));
+        ctx.result(new FileInputStream(file));
         // Simple content type mapping
         String lowerName = filename.toLowerCase();
-        if (lowerName.endsWith(".png"))
+        if (lowerName.endsWith(".png")) {
           ctx.contentType("image/png");
-        else if (lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg"))
+        } else if (lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg")) {
           ctx.contentType("image/jpeg");
-        else if (lowerName.endsWith(".gif"))
+        } else if (lowerName.endsWith(".gif")) {
           ctx.contentType("image/gif");
-        else if (lowerName.endsWith(".mp3"))
+        } else if (lowerName.endsWith(".mp3")) {
           ctx.contentType("audio/mpeg");
-        else if (lowerName.endsWith(".wav"))
+        } else if (lowerName.endsWith(".wav")) {
           ctx.contentType("audio/wav");
-        else
+        } else {
           ctx.contentType("application/octet-stream");
-      } catch (java.io.FileNotFoundException e) {
+        }
+      } catch (FileNotFoundException e) {
         ctx.status(404).result("Not Found");
       }
     } else {
@@ -64,8 +76,9 @@ public class AssetTaskHandler {
   private void listAssets(Context ctx) {
     try {
       String currentDbName = databaseContext.getCurrentDatabaseName();
-      if (currentDbName == null)
+      if (currentDbName == null) {
         currentDbName = "Race Coordinator AI DB";
+      }
       AssetService service = new AssetService(databaseContext.getDatabase(),
           databaseContext.getDataRoot() + currentDbName + "/assets"); // Instantiate AssetService per request
       List<AssetMessage> assets = service.getAllAssets();
@@ -83,18 +96,12 @@ public class AssetTaskHandler {
     try {
       UploadAssetRequest request = UploadAssetRequest.parseFrom(ctx.bodyAsBytes());
       String currentDbName = databaseContext.getCurrentDatabaseName();
-      if (currentDbName == null)
+      if (currentDbName == null) {
         currentDbName = "Race Coordinator AI DB";
+      }
       AssetService service = new AssetService(databaseContext.getDatabase(),
           databaseContext.getDataRoot() + currentDbName + "/assets"); // Instantiate AssetService per request
       AssetMessage asset = service.saveAsset(request.getName(), request.getType(), request.getData().toByteArray());
-      // type
-      // to
-      // IAsset
-      // and
-      // used
-      // local
-      // service
 
       UploadAssetResponse response = UploadAssetResponse.newBuilder()
           .setSuccess(true)
@@ -116,8 +123,9 @@ public class AssetTaskHandler {
     try {
       DeleteAssetRequest request = DeleteAssetRequest.parseFrom(ctx.bodyAsBytes());
       String currentDbName = databaseContext.getCurrentDatabaseName();
-      if (currentDbName == null)
+      if (currentDbName == null) {
         currentDbName = "Race Coordinator AI DB";
+      }
       AssetService service = new AssetService(databaseContext.getDatabase(),
           databaseContext.getDataRoot() + currentDbName + "/assets"); // Instantiate AssetService per request
       boolean success = service.deleteAsset(request.getId()); // Used local service
@@ -141,8 +149,9 @@ public class AssetTaskHandler {
     try {
       RenameAssetRequest request = RenameAssetRequest.parseFrom(ctx.bodyAsBytes());
       String currentDbName = databaseContext.getCurrentDatabaseName();
-      if (currentDbName == null)
+      if (currentDbName == null) {
         currentDbName = "Race Coordinator AI DB";
+      }
       AssetService service = new AssetService(databaseContext.getDatabase(),
           databaseContext.getDataRoot() + currentDbName + "/assets"); // Instantiate AssetService per request
       boolean success = service.renameAsset(request.getId(), request.getNewName()); // Used local service
@@ -166,8 +175,9 @@ public class AssetTaskHandler {
     try {
       SaveImageSetRequest request = SaveImageSetRequest.parseFrom(ctx.bodyAsBytes());
       String currentDbName = databaseContext.getCurrentDatabaseName();
-      if (currentDbName == null)
+      if (currentDbName == null) {
         currentDbName = "Race Coordinator AI DB";
+      }
       AssetService service = new AssetService(databaseContext.getDatabase(),
           databaseContext.getDataRoot() + currentDbName + "/assets");
       AssetMessage asset = service.saveImageSet(request.getId(), request.getName(), request.getEntriesList());

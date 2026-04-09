@@ -1,5 +1,6 @@
 package com.antigravity.converters;
 
+import com.antigravity.proto.VoltageConfig;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.arduino.LedString;
 import java.util.ArrayList;
@@ -9,9 +10,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ArduinoConfigConverter {
+
   public static ArduinoConfig fromProto(com.antigravity.proto.ArduinoConfig proto) {
-    java.util.Map<String, Integer> voltageConfigs = new java.util.HashMap<>();
-    for (com.antigravity.proto.VoltageConfig vc : proto.getVoltageConfigsList()) {
+    Map<String, Integer> voltageConfigs = new HashMap<>();
+    for (VoltageConfig vc : proto.getVoltageConfigsList()) {
       voltageConfigs.put(String.valueOf(vc.getLane()), vc.getMaxVoltage());
     }
 
@@ -89,10 +91,10 @@ public class ArduinoConfigConverter {
     }
 
     if (config.voltageConfigs != null) {
-      for (java.util.Map.Entry<String, Integer> entry : config.voltageConfigs.entrySet()) {
+      for (Map.Entry<String, Integer> entry : config.voltageConfigs.entrySet()) {
         try {
           int lane = Integer.parseInt(entry.getKey());
-          builder.addVoltageConfigs(com.antigravity.proto.VoltageConfig.newBuilder()
+          builder.addVoltageConfigs(VoltageConfig.newBuilder()
               .setLane(lane)
               .setMaxVoltage(entry.getValue())
               .build());

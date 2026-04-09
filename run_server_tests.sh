@@ -13,6 +13,7 @@ SERVER_TMP="/tmp/racecoordinator"
 SERVER_BUILD_DIR="$SERVER_TMP/target_test"
 export PROTO_DEST_DIR="$SERVER_BUILD_DIR"
 export npm_config_cache="$SERVER_TMP/npm_cache"
+export EMBEDDED_MONGO_ARTIFACTS="$SERVER_TMP/.embedmongo"
 
 mkdir -p "$SERVER_TMP"
 # Pre-create all directories maven needs to avoid EPERM errors
@@ -41,4 +42,5 @@ mvn test $MVN_THREADS \
   -DforkCount="$FORK_COUNT" \
   -DreuseForks="$REUSE_FORKS" \
   -Djava.io.tmpdir="$SERVER_TMP" \
+  -Dde.flapdoodle.embed.mongo.artifacts="$SERVER_TMP/.embedmongo" \
   -Dmaven.repo.local="$SERVER_DIR/.m2/repository"

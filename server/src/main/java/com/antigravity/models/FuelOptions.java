@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 public abstract class FuelOptions {
+
   public enum FuelUsageType {
     LINEAR,
     QUADRATIC,

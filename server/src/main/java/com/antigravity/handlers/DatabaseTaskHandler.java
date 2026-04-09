@@ -2,27 +2,45 @@ package com.antigravity.handlers;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Driver;
+import com.antigravity.models.HeatRotationType;
+import com.antigravity.models.HeatScoring;
+import com.antigravity.models.Lane;
+import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.UpdateResult;
-import io.javalin.http.Context;
+import com.antigravity.models.Team;
+import com.antigravity.models.Track;
+import com.antigravity.race.DriverHeatData;
+import com.antigravity.race.Heat;
+import com.antigravity.race.RaceParticipant;
+import com.antigravity.service.DatabaseService;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.core.JsonParser;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.Updates;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
+import io.javalin.Javalin;
+import io.javalin.http.Context;
+import io.javalin.http.UploadedFile;
 import java.io.IOException;
-import org.bson.types.ObjectId;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
 public class DatabaseTaskHandler {
+
   private final DatabaseContext databaseContext;
 
-  public DatabaseTaskHandler(DatabaseContext databaseContext, io.javalin.Javalin app) {
+  public DatabaseTaskHandler(DatabaseContext databaseContext, Javalin app) {
     this.databaseContext = databaseContext;
 
     app.get("/api/drivers", this::getDrivers);
@@ -64,12 +82,12 @@ public class DatabaseTaskHandler {
     return databaseContext.getDatabase().getCollection("drivers", Driver.class);
   }
 
-  private MongoCollection<com.antigravity.models.Team> getTeamCollection() {
-    return databaseContext.getDatabase().getCollection("teams", com.antigravity.models.Team.class);
+  private MongoCollection<Team> getTeamCollection() {
+    return databaseContext.getDatabase().getCollection("teams", Team.class);
   }
 
-  private MongoCollection<com.antigravity.models.Track> getTrackCollection() {
-    return databaseContext.getDatabase().getCollection("tracks", com.antigravity.models.Track.class);
+  private MongoCollection<Track> getTrackCollection() {
+    return databaseContext.getDatabase().getCollection("tracks", Track.class);
   }
 
   private MongoCollection<Race> getRaceCollection() {
@@ -84,8 +102,9 @@ public class DatabaseTaskHandler {
       List<DatabaseContext.DatabaseStats> statsList = new ArrayList<>();
       for (String dbName : dbNames) {
         // Filter out minimal system DBs if needed, or just show all
-        if ("admin".equals(dbName) || "local".equals(dbName) || "config".equals(dbName))
+        if ("admin".equals(dbName) || "local".equals(dbName) || "config".equals(dbName)) {
           continue;
+        }
         statsList.add(databaseContext.getDatabaseStats(dbName));
       }
       ctx.json(statsList);
@@ -97,8 +116,8 @@ public class DatabaseTaskHandler {
 
   private void switchDatabase(Context ctx) {
     try {
-      Map body = ctx.bodyAsClass(Map.class);
-      String name = (String) body.get("name");
+      Map<String, String> body = ctx.bodyAsClass(Map.class);
+      String name = body.get("name");
       if (name == null || name.isEmpty()) {
         ctx.status(400).result("Database name is required");
         return;
@@ -113,8 +132,8 @@ public class DatabaseTaskHandler {
 
   private void createDatabase(Context ctx) {
     try {
-      Map body = ctx.bodyAsClass(Map.class);
-      String name = (String) body.get("name");
+      Map<String, String> body = ctx.bodyAsClass(Map.class);
+      String name = body.get("name");
       if (name == null || name.isEmpty()) {
         ctx.status(400).result("Database name is required");
         return;
@@ -127,7 +146,7 @@ public class DatabaseTaskHandler {
         return;
       }
 
-      // Explicitky create the database to ensure it exists in lists
+      // Explicitly create the database to ensure it exists in lists
       databaseContext.createDatabase(name);
       databaseContext.switchDatabase(name);
 
@@ -143,8 +162,8 @@ public class DatabaseTaskHandler {
 
   private void copyDatabase(Context ctx) {
     try {
-      Map body = ctx.bodyAsClass(Map.class);
-      String newName = (String) body.get("name");
+      Map<String, String> body = ctx.bodyAsClass(Map.class);
+      String newName = body.get("name");
       if (newName == null || newName.isEmpty()) {
         ctx.status(400).result("New database name is required");
         return;
@@ -187,8 +206,8 @@ public class DatabaseTaskHandler {
 
   private void deleteDatabase(Context ctx) {
     try {
-      Map body = ctx.bodyAsClass(Map.class);
-      String name = (String) body.get("name");
+      Map<String, String> body = ctx.bodyAsClass(Map.class);
+      String name = body.get("name");
       if (name == null || name.isEmpty()) {
         ctx.status(400).result("Database name is required");
         return;
@@ -228,7 +247,7 @@ public class DatabaseTaskHandler {
   private void importDatabase(Context ctx) {
     try {
       String name = ctx.formParam("name");
-      io.javalin.http.UploadedFile file = ctx.uploadedFile("file");
+      UploadedFile file = ctx.uploadedFile("file");
 
       if (name == null || name.isEmpty() || file == null) {
         ctx.status(400).result("Name and file are required");
@@ -304,7 +323,7 @@ public class DatabaseTaskHandler {
         return;
       }
 
-      col.replaceOne(com.mongodb.client.model.Filters.eq("entity_id", id), driver);
+      col.replaceOne(Filters.eq("entity_id", id), driver);
       ctx.json(driver);
     } catch (Exception e) {
       e.printStackTrace();
@@ -315,7 +334,7 @@ public class DatabaseTaskHandler {
   private void deleteDriver(Context ctx) {
     try {
       String id = ctx.pathParam("id");
-      getDriverCollection().deleteOne(com.mongodb.client.model.Filters.eq("entity_id", id));
+      getDriverCollection().deleteOne(Filters.eq("entity_id", id));
       ctx.status(204);
     } catch (Exception e) {
       e.printStackTrace();
@@ -324,14 +343,14 @@ public class DatabaseTaskHandler {
   }
 
   private void getTeams(Context ctx) {
-    List<com.antigravity.models.Team> teams = new ArrayList<>();
+    List<Team> teams = new ArrayList<>();
     getTeamCollection().find().forEach(teams::add);
     ctx.json(teams);
   }
 
   private void createTeam(Context ctx) {
     try {
-      com.antigravity.models.Team team = bodyAsClassWithId(ctx.body(), com.antigravity.models.Team.class);
+      Team team = bodyAsClassWithId(ctx.body(), Team.class);
       team = createTeam(team);
       ctx.status(201).json(team);
     } catch (IllegalArgumentException e) {
@@ -342,11 +361,11 @@ public class DatabaseTaskHandler {
     }
   }
 
-  public com.antigravity.models.Team createTeam(com.antigravity.models.Team team) {
-    MongoCollection<com.antigravity.models.Team> col = getTeamCollection();
+  public Team createTeam(Team team) {
+    MongoCollection<Team> col = getTeamCollection();
 
     // Uniqueness check
-    com.antigravity.models.Team existing = col.find(
+    Team existing = col.find(
         Filters.eq("name", team.getName())).first();
 
     if (existing != null) {
@@ -355,7 +374,7 @@ public class DatabaseTaskHandler {
 
     if (team.getEntityId() == null || team.getEntityId().isEmpty() || "new".equals(team.getEntityId())) {
       String nextId = getNextSequence("teams");
-      team = new com.antigravity.models.Team(
+      team = new Team(
           team.getName(),
           team.getAvatarUrl(),
           team.getDriverIds(),
@@ -369,10 +388,9 @@ public class DatabaseTaskHandler {
   private void updateTeam(Context ctx) {
     try {
       String id = ctx.pathParam("id");
-      com.antigravity.models.Team team = bodyAsClassWithId(ctx.body(), com.antigravity.models.Team.class);
+      Team team = bodyAsClassWithId(ctx.body(), Team.class);
       updateTeam(id, team);
-      ctx.json(team); // Note: updateTeam returns new object but we can return input if valid or
-                      // return result
+      ctx.json(team);
     } catch (IllegalArgumentException e) {
       ctx.status(409).result(e.getMessage());
     } catch (Exception e) {
@@ -381,10 +399,10 @@ public class DatabaseTaskHandler {
     }
   }
 
-  public com.antigravity.models.Team updateTeam(String id, com.antigravity.models.Team team) {
-    MongoCollection<com.antigravity.models.Team> col = getTeamCollection();
+  public Team updateTeam(String id, Team team) {
+    MongoCollection<Team> col = getTeamCollection();
 
-    com.antigravity.models.Team existing = col.find(Filters.and(
+    Team existing = col.find(Filters.and(
         Filters.ne("entity_id", id),
         Filters.eq("name", team.getName())))
         .first();
@@ -395,14 +413,14 @@ public class DatabaseTaskHandler {
 
     // Preservation of IDs is handled by maintaining original entity_id
     // However, we construct a new object to ensure it has the correct ID
-    team = new com.antigravity.models.Team(
+    team = new Team(
         team.getName(),
         team.getAvatarUrl(),
         team.getDriverIds(),
         id,
         team.getId());
 
-    UpdateResult result = col.replaceOne(com.mongodb.client.model.Filters.eq("entity_id", id), team);
+    UpdateResult result = col.replaceOne(Filters.eq("entity_id", id), team);
     if (result.getMatchedCount() == 0) {
       // throw new IllegalArgumentException("Team not found"); // Optional depending
       // on requirement
@@ -422,15 +440,15 @@ public class DatabaseTaskHandler {
   }
 
   public void deleteTeam(String id) {
-    getTeamCollection().deleteOne(com.mongodb.client.model.Filters.eq("entity_id", id));
+    getTeamCollection().deleteOne(Filters.eq("entity_id", id));
   }
 
   private void createTrack(Context ctx) {
     try {
-      com.antigravity.models.Track track = bodyAsClassWithId(ctx.body(), com.antigravity.models.Track.class);
-      MongoCollection<com.antigravity.models.Track> col = getTrackCollection();
+      Track track = bodyAsClassWithId(ctx.body(), Track.class);
+      MongoCollection<Track> col = getTrackCollection();
 
-      com.antigravity.models.Track existing = col.find(Filters.eq("name", track.getName())).first();
+      Track existing = col.find(Filters.eq("name", track.getName())).first();
 
       if (existing != null) {
         ctx.status(409).result("Track name already exists");
@@ -439,7 +457,7 @@ public class DatabaseTaskHandler {
 
       if (track.getEntityId() == null || track.getEntityId().isEmpty() || "new".equals(track.getEntityId())) {
         String nextId = getNextSequence("tracks");
-        track = new com.antigravity.models.Track(
+        track = new Track(
             track.getName(),
             track.getLanes(),
             track.getArduinoConfigs(),
@@ -457,10 +475,10 @@ public class DatabaseTaskHandler {
   private void updateTrack(Context ctx) {
     try {
       String id = ctx.pathParam("id");
-      com.antigravity.models.Track track = bodyAsClassWithId(ctx.body(), com.antigravity.models.Track.class);
-      MongoCollection<com.antigravity.models.Track> col = getTrackCollection();
+      Track track = bodyAsClassWithId(ctx.body(), Track.class);
+      MongoCollection<Track> col = getTrackCollection();
 
-      com.antigravity.models.Track existing = col.find(Filters.and(
+      Track existing = col.find(Filters.and(
           Filters.ne("entity_id", id),
           Filters.eq("name", track.getName())))
           .first();
@@ -470,7 +488,7 @@ public class DatabaseTaskHandler {
         return;
       }
 
-      track = new com.antigravity.models.Track(
+      track = new Track(
           track.getName(),
           track.getLanes(),
           track.getArduinoConfigs(),
@@ -485,7 +503,7 @@ public class DatabaseTaskHandler {
         System.out.println("DEBUG: Saving configs is NULL or empty");
       }
 
-      col.replaceOne(com.mongodb.client.model.Filters.eq("entity_id", id), track);
+      col.replaceOne(Filters.eq("entity_id", id), track);
       ctx.json(track);
     } catch (Exception e) {
       e.printStackTrace();
@@ -496,7 +514,7 @@ public class DatabaseTaskHandler {
   private void deleteTrack(Context ctx) {
     try {
       String id = ctx.pathParam("id");
-      getTrackCollection().deleteOne(com.mongodb.client.model.Filters.eq("entity_id", id));
+      getTrackCollection().deleteOne(Filters.eq("entity_id", id));
       ctx.status(204);
     } catch (Exception e) {
       e.printStackTrace();
@@ -506,9 +524,9 @@ public class DatabaseTaskHandler {
 
   public void handleCreateRace(Context ctx) {
     try {
-      com.antigravity.models.Race race = bodyAsClassWithId(ctx.body(), com.antigravity.models.Race.class);
+      Race race = bodyAsClassWithId(ctx.body(), Race.class);
       try {
-        com.antigravity.models.Race created = createRace(race);
+        Race created = createRace(race);
         ctx.status(201).json(created);
       } catch (IllegalArgumentException e) {
         ctx.status(409).result(e.getMessage());
@@ -519,11 +537,11 @@ public class DatabaseTaskHandler {
     }
   }
 
-  public com.antigravity.models.Race createRace(com.antigravity.models.Race race) {
-    MongoCollection<com.antigravity.models.Race> col = getRaceCollection();
+  public Race createRace(Race race) {
+    MongoCollection<Race> col = getRaceCollection();
 
     // Uniqueness check
-    com.antigravity.models.Race existing = col.find(Filters.eq("name", race.getName())).first();
+    Race existing = col.find(Filters.eq("name", race.getName())).first();
     if (existing != null) {
       throw new IllegalArgumentException("Race name already exists");
     }
@@ -554,9 +572,9 @@ public class DatabaseTaskHandler {
   public void handleUpdateRace(Context ctx) {
     try {
       String id = ctx.pathParam("id");
-      com.antigravity.models.Race race = bodyAsClassWithId(ctx.body(), com.antigravity.models.Race.class);
+      Race race = bodyAsClassWithId(ctx.body(), Race.class);
       try {
-        com.antigravity.models.Race updated = updateRace(id, race);
+        Race updated = updateRace(id, race);
         ctx.json(updated);
       } catch (IllegalArgumentException e) {
         if ("Race not found".equals(e.getMessage())) {
@@ -571,10 +589,10 @@ public class DatabaseTaskHandler {
     }
   }
 
-  public com.antigravity.models.Race updateRace(String id, com.antigravity.models.Race race) {
-    MongoCollection<com.antigravity.models.Race> col = getRaceCollection();
+  public Race updateRace(String id, Race race) {
+    MongoCollection<Race> col = getRaceCollection();
 
-    com.antigravity.models.Race existing = col.find(Filters.and(
+    Race existing = col.find(Filters.and(
         Filters.ne("entity_id", id),
         Filters.eq("name", race.getName())))
         .first();
@@ -631,12 +649,12 @@ public class DatabaseTaskHandler {
   }
 
   private String getNextSequence(String collectionName) {
-    MongoCollection<org.bson.Document> counters = databaseContext.getDatabase().getCollection("counters");
-    org.bson.Document counter = counters.findOneAndUpdate(
-        com.mongodb.client.model.Filters.eq("_id", collectionName),
-        com.mongodb.client.model.Updates.inc("seq", 1),
-        new com.mongodb.client.model.FindOneAndUpdateOptions().upsert(true)
-            .returnDocument(com.mongodb.client.model.ReturnDocument.AFTER));
+    MongoCollection<Document> counters = databaseContext.getDatabase().getCollection("counters");
+    Document counter = counters.findOneAndUpdate(
+        Filters.eq("_id", collectionName),
+        Updates.inc("seq", 1),
+        new FindOneAndUpdateOptions().upsert(true)
+            .returnDocument(ReturnDocument.AFTER));
     return String.valueOf(counter.getInteger("seq"));
   }
 
@@ -647,24 +665,24 @@ public class DatabaseTaskHandler {
   }
 
   public void getTracks(Context ctx) {
-    List<com.antigravity.models.Track> tracks = new ArrayList<>();
+    List<Track> tracks = new ArrayList<>();
     getTrackCollection().find().forEach(tracks::add);
     ctx.json(tracks);
   }
 
   private void getFactoryTrack(Context ctx) {
-    ctx.json(new com.antigravity.service.DatabaseService().getFactoryTrack());
+    ctx.json(new DatabaseService().getFactoryTrack());
   }
 
   public void getRaces(Context ctx) {
-    List<com.antigravity.models.Race> races = new ArrayList<>();
+    List<Race> races = new ArrayList<>();
     getRaceCollection().find().forEach(races::add);
 
-    List<java.util.Map<String, Object>> response = new ArrayList<>();
-    for (com.antigravity.models.Race race : races) {
-      com.antigravity.models.Track track = getTrackCollection()
-          .find(com.mongodb.client.model.Filters.eq("entity_id", race.getTrackEntityId())).first();
-      java.util.Map<String, Object> raceMap = new java.util.HashMap<>();
+    List<Map<String, Object>> response = new ArrayList<>();
+    for (Race race : races) {
+      Track track = getTrackCollection()
+          .find(Filters.eq("entity_id", race.getTrackEntityId())).first();
+      Map<String, Object> raceMap = new HashMap<>();
       raceMap.put("name", race.getName());
       raceMap.put("entity_id", race.getEntityId());
       raceMap.put("track", track);
@@ -687,8 +705,8 @@ public class DatabaseTaskHandler {
 
   public void generateHeats(Context ctx) {
     String raceId = ctx.pathParam("id");
-    java.util.Map body = ctx.bodyAsClass(java.util.Map.class);
-    Number driverCountNum = (Number) body.get("driverCount");
+    Map<String, Number> body = ctx.bodyAsClass(Map.class);
+    Number driverCountNum = body.get("driverCount");
     int driverCount = driverCountNum != null ? driverCountNum.intValue() : 0;
 
     if (driverCount <= 0) {
@@ -697,28 +715,28 @@ public class DatabaseTaskHandler {
     }
 
     // Find the race
-    com.antigravity.models.Race race = getRaceCollection()
-        .find(com.mongodb.client.model.Filters.eq("entity_id", raceId)).first();
+    Race race = getRaceCollection()
+        .find(Filters.eq("entity_id", raceId)).first();
     if (race == null) {
       ctx.status(404).result("Race not found");
       return;
     }
 
     // Find the track to get lane count
-    com.antigravity.models.Track track = getTrackCollection()
-        .find(com.mongodb.client.model.Filters.eq("entity_id", race.getTrackEntityId())).first();
+    Track track = getTrackCollection()
+        .find(Filters.eq("entity_id", race.getTrackEntityId())).first();
     if (track == null) {
       ctx.status(404).result("Track not found for race");
       return;
     }
 
     // Create mock RaceParticipant list
-    List<com.antigravity.race.RaceParticipant> mockDrivers = new ArrayList<>();
+    List<RaceParticipant> mockDrivers = new ArrayList<>();
     for (int i = 0; i < driverCount; i++) {
-      com.antigravity.models.Driver mockDriver = new com.antigravity.models.Driver(
+      Driver mockDriver = new Driver(
           "Driver " + (i + 1),
           "Driver " + (i + 1));
-      mockDrivers.add(new com.antigravity.race.RaceParticipant(mockDriver));
+      mockDrivers.add(new RaceParticipant(mockDriver));
     }
 
     // Create a temporary Race object for heat building
@@ -730,25 +748,25 @@ public class DatabaseTaskHandler {
         .build();
 
     // Get the generated heats
-    List<com.antigravity.race.Heat> heats = tempRace.getHeats();
+    List<Heat> heats = tempRace.getHeats();
 
     // Convert heats to JSON response
-    List<java.util.Map<String, Object>> heatList = new ArrayList<>();
-    for (com.antigravity.race.Heat heat : heats) {
-      java.util.Map<String, Object> heatMap = new java.util.HashMap<>();
+    List<Map<String, Object>> heatList = new ArrayList<>();
+    for (Heat heat : heats) {
+      Map<String, Object> heatMap = new HashMap<>();
       heatMap.put("heatNumber", heat.getHeatNumber());
 
-      List<java.util.Map<String, Object>> lanes = new ArrayList<>();
-      List<com.antigravity.race.DriverHeatData> drivers = heat.getDrivers();
+      List<Map<String, Object>> lanes = new ArrayList<>();
+      List<DriverHeatData> drivers = heat.getDrivers();
       for (int laneIdx = 0; laneIdx < drivers.size(); laneIdx++) {
-        com.antigravity.race.DriverHeatData driverData = drivers.get(laneIdx);
-        java.util.Map<String, Object> laneMap = new java.util.HashMap<>();
+        DriverHeatData driverData = drivers.get(laneIdx);
+        Map<String, Object> laneMap = new HashMap<>();
         laneMap.put("laneNumber", laneIdx + 1);
         laneMap.put("driverNumber", driverData.getDriver().getSeed());
 
         // Add lane colors from track
         if (laneIdx < track.getLanes().size()) {
-          com.antigravity.models.Lane lane = track.getLanes().get(laneIdx);
+          Lane lane = track.getLanes().get(laneIdx);
           laneMap.put("backgroundColor", lane.getBackground_color());
           laneMap.put("foregroundColor", lane.getForeground_color());
         }
@@ -759,7 +777,7 @@ public class DatabaseTaskHandler {
       heatList.add(heatMap);
     }
 
-    java.util.Map<String, Object> response = new java.util.HashMap<>();
+    Map<String, Object> response = new HashMap<>();
     response.put("heats", heatList);
     ctx.json(response);
 
@@ -768,7 +786,7 @@ public class DatabaseTaskHandler {
   }
 
   public void previewHeats(Context ctx) {
-    java.util.Map body = ctx.bodyAsClass(java.util.Map.class);
+    Map<String, Object> body = ctx.bodyAsClass(Map.class);
     Number driverCountNum = (Number) body.get("driverCount");
     int driverCount = driverCountNum != null ? driverCountNum.intValue() : 0;
     String trackId = (String) body.get("trackId");
@@ -790,32 +808,32 @@ public class DatabaseTaskHandler {
     }
 
     // Find the track to get lane count
-    com.antigravity.models.Track track = getTrackCollection()
-        .find(com.mongodb.client.model.Filters.eq("entity_id", trackId)).first();
+    Track track = getTrackCollection()
+        .find(Filters.eq("entity_id", trackId)).first();
     if (track == null) {
       ctx.status(404).result("Track not found");
       return;
     }
 
     // Convert rotation type string to enum
-    com.antigravity.models.HeatRotationType rotationTypeEnum;
+    HeatRotationType rotationTypeEnum;
     try {
-      rotationTypeEnum = com.antigravity.models.HeatRotationType.valueOf(rotationType);
+      rotationTypeEnum = HeatRotationType.valueOf(rotationType);
     } catch (IllegalArgumentException e) {
       ctx.status(400).result("Invalid rotation type: " + rotationType);
       return;
     }
 
     // Create a default HeatScoring and OverallScoring for heat generation preview
-    com.antigravity.models.HeatScoring defaultHeatScoring = new com.antigravity.models.HeatScoring(
-        com.antigravity.models.HeatScoring.FinishMethod.Lap,
+    HeatScoring defaultHeatScoring = new HeatScoring(
+        HeatScoring.FinishMethod.Lap,
         10, // default 10 laps
-        com.antigravity.models.HeatScoring.HeatRanking.LAP_COUNT,
-        com.antigravity.models.HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
-    com.antigravity.models.OverallScoring defaultOverallScoring = new com.antigravity.models.OverallScoring();
+        HeatScoring.HeatRanking.LAP_COUNT,
+        HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallScoring defaultOverallScoring = new OverallScoring();
 
     // Create a temporary race configuration
-    com.antigravity.models.Race tempRaceConfig = new Race.Builder()
+    Race tempRaceConfig = new Race.Builder()
         .withName("Preview")
         .withTrackEntityId(trackId)
         .withHeatRotationType(rotationTypeEnum)
@@ -828,12 +846,12 @@ public class DatabaseTaskHandler {
         .build();
 
     // Create mock RaceParticipant list
-    List<com.antigravity.race.RaceParticipant> mockDrivers = new ArrayList<>();
+    List<RaceParticipant> mockDrivers = new ArrayList<>();
     for (int i = 0; i < driverCount; i++) {
-      com.antigravity.models.Driver mockDriver = new com.antigravity.models.Driver(
+      Driver mockDriver = new Driver(
           "Driver " + (i + 1),
           "Driver " + (i + 1));
-      mockDrivers.add(new com.antigravity.race.RaceParticipant(mockDriver));
+      mockDrivers.add(new RaceParticipant(mockDriver));
     }
 
     // Create a temporary Race object for heat building
@@ -845,25 +863,25 @@ public class DatabaseTaskHandler {
         .build();
 
     // Get the generated heats
-    List<com.antigravity.race.Heat> heats = tempRace.getHeats();
+    List<Heat> heats = tempRace.getHeats();
 
     // Convert heats to JSON response
-    List<java.util.Map<String, Object>> heatList = new ArrayList<>();
-    for (com.antigravity.race.Heat heat : heats) {
-      java.util.Map<String, Object> heatMap = new java.util.HashMap<>();
+    List<Map<String, Object>> heatList = new ArrayList<>();
+    for (Heat heat : heats) {
+      Map<String, Object> heatMap = new HashMap<>();
       heatMap.put("heatNumber", heat.getHeatNumber());
 
-      List<java.util.Map<String, Object>> lanes = new ArrayList<>();
-      List<com.antigravity.race.DriverHeatData> drivers = heat.getDrivers();
+      List<Map<String, Object>> lanes = new ArrayList<>();
+      List<DriverHeatData> drivers = heat.getDrivers();
       for (int laneIdx = 0; laneIdx < drivers.size(); laneIdx++) {
-        com.antigravity.race.DriverHeatData driverData = drivers.get(laneIdx);
-        java.util.Map<String, Object> laneMap = new java.util.HashMap<>();
+        DriverHeatData driverData = drivers.get(laneIdx);
+        Map<String, Object> laneMap = new HashMap<>();
         laneMap.put("laneNumber", laneIdx + 1);
         laneMap.put("driverNumber", driverData.getDriver().getSeed());
 
         // Add lane colors from track
         if (laneIdx < track.getLanes().size()) {
-          com.antigravity.models.Lane lane = track.getLanes().get(laneIdx);
+          Lane lane = track.getLanes().get(laneIdx);
           laneMap.put("backgroundColor", lane.getBackground_color());
           laneMap.put("foregroundColor", lane.getForeground_color());
         }
@@ -874,7 +892,7 @@ public class DatabaseTaskHandler {
       heatList.add(heatMap);
     }
 
-    java.util.Map<String, Object> response = new java.util.HashMap<>();
+    Map<String, Object> response = new HashMap<>();
     response.put("heats", heatList);
     ctx.json(response);
 

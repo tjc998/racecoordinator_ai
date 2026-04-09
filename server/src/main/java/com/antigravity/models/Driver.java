@@ -1,10 +1,10 @@
 package com.antigravity.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.types.ObjectId;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Driver extends Model {
   public static final Driver EMPTY_DRIVER = new Driver("Empty", "Empty");
@@ -84,6 +84,7 @@ public class Driver extends Model {
   }
 
   public static class AudioConfig {
+
     private final String type;
     private final String url;
     private final String text;

@@ -1,11 +1,16 @@
 package com.antigravity.protocols.arduino;
 
 import com.antigravity.proto.PinBehavior;
-import java.util.List;
-import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.ArrayList;
 import java.util.HashMap;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.util.List;
+import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ArduinoConfig {
@@ -27,12 +32,12 @@ public class ArduinoConfig {
       this.value = value;
     }
 
-    @com.fasterxml.jackson.annotation.JsonValue
+    @JsonValue
     public int getValue() {
       return value;
     }
 
-    @com.fasterxml.jackson.annotation.JsonCreator
+    @JsonCreator
     public static LapPinPitBehavior fromValue(int value) {
       for (LapPinPitBehavior behavior : LapPinPitBehavior.values()) {
         if (behavior.value == value) {
@@ -92,10 +97,11 @@ public class ArduinoConfig {
   public List<Integer> digitalIds;
   public List<Integer> analogIds;
   public List<LedString> ledStrings;
-  @com.fasterxml.jackson.annotation.JsonAlias({ "voltage_configs", "voltageConfigs" })
+
+  @JsonAlias({ "voltage_configs", "voltageConfigs" })
   public Map<String, Integer> voltageConfigs = new HashMap<>();
 
-  @com.fasterxml.jackson.annotation.JsonIgnore
+  @JsonIgnore
   public Map<String, Integer> getVoltageConfigsMap() {
     return voltageConfigs;
   }
@@ -129,23 +135,23 @@ public class ArduinoConfig {
     this.lapPinPitBehavior = LapPinPitBehavior.PIT_IN_OUT;
   }
 
-  @com.fasterxml.jackson.annotation.JsonCreator
+  @JsonCreator
   public ArduinoConfig(
-      @com.fasterxml.jackson.annotation.JsonProperty("name") String name,
-      @com.fasterxml.jackson.annotation.JsonProperty("commPort") String commPort,
-      @com.fasterxml.jackson.annotation.JsonProperty("baudRate") int baudRate,
-      @com.fasterxml.jackson.annotation.JsonProperty("debounceUs") int debounceUs,
-      @com.fasterxml.jackson.annotation.JsonProperty("hardwareType") int hardwareType,
-      @com.fasterxml.jackson.annotation.JsonProperty("normallyClosedLaneSensors") boolean normallyClosedLaneSensors,
-      @com.fasterxml.jackson.annotation.JsonProperty("normallyClosedRelays") boolean normallyClosedRelays,
-      @com.fasterxml.jackson.annotation.JsonProperty("globalInvertLights") int globalInvertLights,
-      @com.fasterxml.jackson.annotation.JsonProperty("usePitsAsLaps") boolean usePitsAsLaps,
-      @com.fasterxml.jackson.annotation.JsonProperty("useLapsForSegments") boolean useLapsForSegments,
-      @com.fasterxml.jackson.annotation.JsonProperty("lapPinPitBehavior") LapPinPitBehavior lapPinPitBehavior,
-      @com.fasterxml.jackson.annotation.JsonProperty("digitalIds") List<Integer> digitalIds,
-      @com.fasterxml.jackson.annotation.JsonProperty("analogIds") List<Integer> analogIds,
-      @com.fasterxml.jackson.annotation.JsonProperty("ledStrings") List<LedString> ledStrings,
-      @com.fasterxml.jackson.annotation.JsonProperty("voltageConfigs") @com.fasterxml.jackson.annotation.JsonAlias("voltage_configs") Map<String, Integer> voltageConfigs) {
+      @JsonProperty("name") String name,
+      @JsonProperty("commPort") String commPort,
+      @JsonProperty("baudRate") int baudRate,
+      @JsonProperty("debounceUs") int debounceUs,
+      @JsonProperty("hardwareType") int hardwareType,
+      @JsonProperty("normallyClosedLaneSensors") boolean normallyClosedLaneSensors,
+      @JsonProperty("normallyClosedRelays") boolean normallyClosedRelays,
+      @JsonProperty("globalInvertLights") int globalInvertLights,
+      @JsonProperty("usePitsAsLaps") boolean usePitsAsLaps,
+      @JsonProperty("useLapsForSegments") boolean useLapsForSegments,
+      @JsonProperty("lapPinPitBehavior") LapPinPitBehavior lapPinPitBehavior,
+      @JsonProperty("digitalIds") List<Integer> digitalIds,
+      @JsonProperty("analogIds") List<Integer> analogIds,
+      @JsonProperty("ledStrings") List<LedString> ledStrings,
+      @JsonProperty("voltageConfigs") @JsonAlias("voltage_configs") Map<String, Integer> voltageConfigs) {
     this.name = name;
     this.commPort = commPort;
     this.baudRate = baudRate;

@@ -4,9 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Test;
-
 import com.antigravity.proto.PinBehavior;
+import org.junit.Test;
 
 public class ArduinoConfigTest {
 

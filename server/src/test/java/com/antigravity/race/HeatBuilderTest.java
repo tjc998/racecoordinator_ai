@@ -2,16 +2,17 @@ package com.antigravity.race;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.antigravity.models.Driver;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
-// import com.antigravity.models.RaceModel; // Removed non-existent class
+import com.antigravity.models.Lane;
+import com.antigravity.models.Race;
 import com.antigravity.models.Team;
 import com.antigravity.models.Track;
-import com.antigravity.models.Lane;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,15 +21,15 @@ import org.junit.Test;
 
 public class HeatBuilderTest {
 
-  private Race race;
-  private com.antigravity.models.Race raceModel;
+  private com.antigravity.race.Race race;
+  private Race raceModel;
   private Track track;
   private HeatScoring heatScoring;
 
   @Before
   public void setUp() {
-    race = mock(Race.class);
-    raceModel = mock(com.antigravity.models.Race.class);
+    race = mock(com.antigravity.race.Race.class);
+    raceModel = mock(Race.class);
     track = mock(Track.class);
     heatScoring = mock(HeatScoring.class);
 
@@ -58,22 +59,20 @@ public class HeatBuilderTest {
     List<RaceParticipant> participants = new ArrayList<>();
 
     // Create 3 solo drivers
-    participants.add(
-        new RaceParticipant(new Driver("D1", "d1", null, null, null, null, null, null, null, null, null, "1", null)));
-    participants.add(
-        new RaceParticipant(new Driver("D2", "d2", null, null, null, null, null, null, null, null, null, "2", null)));
-    participants.add(
-        new RaceParticipant(new Driver("D3", "d3", null, null, null, null, null, null, null, null, null, "3", null)));
+    participants.add(new RaceParticipant(
+        new Driver("D1", "d1", null, null, null, null, null, null, null, null, null, "1", null)));
+    participants.add(new RaceParticipant(
+        new Driver("D2", "d2", null, null, null, null, null, null, null, null, null, "2", null)));
+    participants.add(new RaceParticipant(
+        new Driver("D3", "d3", null, null, null, null, null, null, null, null, null, "3", null)));
 
     // Create 1 team with 2 drivers
     Team team = new Team("Team1", null, Arrays.asList("TD1", "TD2"), "t1", null);
     RaceParticipant teamParticipant = new RaceParticipant(team);
 
     List<Driver> teamDrivers = new ArrayList<>();
-    teamDrivers
-        .add(new Driver("TeamDriver1", "TD1", null, null, null, null, null, null, null, null, null, "td1", null));
-    teamDrivers
-        .add(new Driver("TeamDriver2", "TD2", null, null, null, null, null, null, null, null, null, "td2", null));
+    teamDrivers.add(new Driver("TeamDriver1", "TD1", null, null, null, null, null, null, null, null, null, "td1", null));
+    teamDrivers.add(new Driver("TeamDriver2", "TD2", null, null, null, null, null, null, null, null, null, "td2", null));
 
     teamParticipant.setTeamDrivers(teamDrivers);
     participants.add(teamParticipant); // Add as 4th participant
@@ -113,17 +112,15 @@ public class HeatBuilderTest {
 
     List<RaceParticipant> participants = new ArrayList<>();
     for (int i = 1; i <= 4; i++) {
-      participants.add(new RaceParticipant(
-          new Driver("D" + i, "d" + i, null, null, null, null, null, null, null, null, null, String.valueOf(i), null)));
+      participants.add(new RaceParticipant(new Driver("D" + i, "d" + i, null, null, null, null, null, null, null, null,
+          null, String.valueOf(i), null)));
     }
 
     Team team = new Team("Team1", null, Arrays.asList("TD1", "TD2"), "t1", null);
     RaceParticipant teamParticipant = new RaceParticipant(team);
     List<Driver> teamDrivers = new ArrayList<>();
-    teamDrivers
-        .add(new Driver("TeamDriver1", "TD1", null, null, null, null, null, null, null, null, null, "td1", null));
-    teamDrivers
-        .add(new Driver("TeamDriver2", "TD2", null, null, null, null, null, null, null, null, null, "td2", null));
+    teamDrivers.add(new Driver("TeamDriver1", "TD1", null, null, null, null, null, null, null, null, null, "td1", null));
+    teamDrivers.add(new Driver("TeamDriver2", "TD2", null, null, null, null, null, null, null, null, null, "td2", null));
     teamParticipant.setTeamDrivers(teamDrivers);
     participants.add(teamParticipant); // 5th participant
 
@@ -153,7 +150,7 @@ public class HeatBuilderTest {
       }
     }
     if (!teamFound && !allowMissing) {
-      org.junit.Assert.fail("Team not found in heat " + heat.getHeatNumber());
+      fail("Team not found in heat " + heat.getHeatNumber());
     }
   }
 }

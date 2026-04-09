@@ -1,15 +1,14 @@
 package com.antigravity.race;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.HeatScoring.HeatRanking;
 import com.antigravity.models.HeatScoring.HeatRankingTiebreaker;
 import com.antigravity.proto.HeatPositionUpdate;
 import com.antigravity.proto.StandingsUpdate;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class HeatStandings {
 
@@ -53,7 +52,9 @@ public class HeatStandings {
     // client
     for (int i = 0; i < newStandings.size(); i++) {
       String objectId = newStandings.get(i);
-      DriverHeatData dhd = driverHeatData.stream().filter(d -> d.getObjectId().equals(objectId)).findFirst()
+      DriverHeatData dhd = driverHeatData.stream()
+          .filter(d -> d.getObjectId().equals(objectId))
+          .findFirst()
           .orElse(null);
       if (dhd != null) {
         updateBuilder.addUpdates(HeatPositionUpdate.newBuilder()
@@ -86,9 +87,12 @@ public class HeatStandings {
 
     System.out.println("HeatStandings: Calculated standings: " + standings.stream()
         .map(id -> {
-          DriverHeatData d = driverHeatData.stream().filter(dhd -> dhd.getObjectId().equals(id)).findFirst()
+          DriverHeatData d = driverHeatData.stream()
+              .filter(dhd -> dhd.getObjectId().equals(id))
+              .findFirst()
               .orElse(null);
-          return (d != null ? d.getDriver().getDriver().getName() : "unknown") + "(" + (d != null ? d.getLapCount() : 0)
+          return (d != null ? d.getDriver().getDriver().getName() : "unknown") + "("
+              + (d != null ? d.getLapCount() : 0)
               + " laps)";
         })
         .collect(Collectors.joining(", ")));
@@ -131,7 +135,7 @@ public class HeatStandings {
     if (leadDriver.getLapCount() == curDriver.getLapCount()) {
       return curDriver.getTotalTime() - leadDriver.getTotalTime();
     } else if (curDriver.getLapCount() == 0) {
-      return (double) leadDriver.getTotalTime();
+      return leadDriver.getTotalTime();
     } else {
       double avgLapTime = curDriver.getAverageLapTime();
       double lapDiff = (double) leadDriver.getLapCount() - (double) curDriver.getLapCount();

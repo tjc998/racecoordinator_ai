@@ -1,11 +1,14 @@
 package com.antigravity.race;
 
 import com.antigravity.models.Driver;
+import com.antigravity.models.Team;
+import java.util.List;
 
 public class RaceParticipant extends ServerToClientObject {
-  private com.antigravity.models.Driver driver;
-  private com.antigravity.models.Team team;
-  private java.util.List<com.antigravity.models.Driver> teamDrivers;
+
+  private Driver driver;
+  private Team team;
+  private List<Driver> teamDrivers;
   private boolean isTeamParticipant;
 
   private int rank;
@@ -18,27 +21,27 @@ public class RaceParticipant extends ServerToClientObject {
   private int seed;
   private double fuelLevel;
 
-  public RaceParticipant(com.antigravity.models.Driver driver) {
+  public RaceParticipant(Driver driver) {
     super();
     this.driver = driver;
     this.team = null;
     this.isTeamParticipant = false;
   }
 
-  public RaceParticipant(com.antigravity.models.Driver driver, com.antigravity.models.Team team) {
+  public RaceParticipant(Driver driver, Team team) {
     super();
     this.driver = driver;
     this.team = team;
     this.isTeamParticipant = false;
   }
 
-  public RaceParticipant(com.antigravity.models.Team team) {
+  public RaceParticipant(Team team) {
     super();
     this.team = team;
     this.isTeamParticipant = true;
     // Create synthetic driver for the team
     // Prefix ID with t_ to avoid clashing with real driver IDs in the client cache
-    this.driver = new com.antigravity.models.Driver(
+    this.driver = new Driver(
         team.getName(),
         null, // Nickname
         team.getAvatarUrl(),
@@ -48,13 +51,13 @@ public class RaceParticipant extends ServerToClientObject {
         null);
   }
 
-  public RaceParticipant(com.antigravity.models.Driver driver, String objectId) {
+  public RaceParticipant(Driver driver, String objectId) {
     super(objectId);
     this.driver = driver;
     this.team = null;
   }
 
-  public RaceParticipant(com.antigravity.models.Team team, String objectId) {
+  public RaceParticipant(Team team, String objectId) {
     super(objectId);
     this.driver = null;
     this.team = team;
@@ -64,27 +67,27 @@ public class RaceParticipant extends ServerToClientObject {
     super();
   }
 
-  public com.antigravity.models.Driver getDriver() {
+  public Driver getDriver() {
     return driver;
   }
 
-  public void setDriver(com.antigravity.models.Driver driver) {
+  public void setDriver(Driver driver) {
     this.driver = driver;
   }
 
-  public com.antigravity.models.Team getTeam() {
+  public Team getTeam() {
     return team;
   }
 
-  public void setTeam(com.antigravity.models.Team team) {
+  public void setTeam(Team team) {
     this.team = team;
   }
 
-  public void setTeamDrivers(java.util.List<com.antigravity.models.Driver> teamDrivers) {
+  public void setTeamDrivers(List<Driver> teamDrivers) {
     this.teamDrivers = teamDrivers;
   }
 
-  public java.util.List<com.antigravity.models.Driver> getTeamDrivers() {
+  public List<Driver> getTeamDrivers() {
     return teamDrivers;
   }
 

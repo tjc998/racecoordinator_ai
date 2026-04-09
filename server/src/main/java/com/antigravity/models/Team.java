@@ -1,17 +1,16 @@
 package com.antigravity.models;
 
+import com.antigravity.proto.TeamModel;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.types.ObjectId;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import com.antigravity.proto.TeamModel;
 
 public class Team extends Model {
+
   private final String name;
   private final String avatarUrl;
   private final List<String> driverIds;

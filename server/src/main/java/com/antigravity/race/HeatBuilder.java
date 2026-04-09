@@ -1,26 +1,29 @@
 package com.antigravity.race;
 
+import com.antigravity.models.Driver;
+import com.antigravity.models.HeatRotationType;
+import com.antigravity.models.HeatScoring;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.antigravity.models.Driver;
-
 public class HeatBuilder {
-  public static List<Heat> buildHeats(
-      Race race,
-      List<RaceParticipant> drivers) {
 
+  public static List<Heat> buildHeats(Race race, List<RaceParticipant> drivers) {
     int numLanes = race.getTrack().getLanes().size();
-    com.antigravity.models.HeatRotationType rotationType = race.getRaceModel().getHeatRotationType();
+    HeatRotationType rotationType = race.getRaceModel().getHeatRotationType();
     switch (rotationType) {
       case RoundRobin:
-        return GetRoundRobinHeats(drivers, numLanes, getRoundRobinRotationSequence(numLanes), false,
+        return getRoundRobinHeats(drivers, numLanes, getRoundRobinRotationSequence(numLanes), false,
             race.getRaceModel().getHeatScoring());
       case FriendlyRoundRobin:
-        return GetRoundRobinHeats(drivers, numLanes, getRoundRobinRotationSequence(numLanes), true,
+        return getRoundRobinHeats(drivers, numLanes, getRoundRobinRotationSequence(numLanes), true,
             race.getRaceModel().getHeatScoring());
       case EuropeanRoundRobin:
-        return GetRoundRobinHeats(drivers, numLanes, getEuroRoundRobinRotationSequence(numLanes), false,
+        return getRoundRobinHeats(drivers, numLanes, getEuroRoundRobinRotationSequence(numLanes), false,
             race.getRaceModel().getHeatScoring());
       default:
         throw new IllegalArgumentException("Unknown HeatRotationType: " + rotationType);
@@ -57,12 +60,12 @@ public class HeatBuilder {
     return rotationSequence;
   }
 
-  private static List<Heat> GetRoundRobinHeats(
+  private static List<Heat> getRoundRobinHeats(
       List<RaceParticipant> drivers,
       int numLanes,
       List<Integer> rotationSequence,
       boolean friendly,
-      com.antigravity.models.HeatScoring scoring) {
+      HeatScoring scoring) {
     List<Heat> heatList = new ArrayList<>();
 
     int numHeats;
@@ -103,7 +106,7 @@ public class HeatBuilder {
                   && !participant.getTeamDrivers().isEmpty()) {
                 // Rotate drivers based on heat number
                 int driverIdx = h % participant.getTeamDrivers().size();
-                com.antigravity.models.Driver assignedDriver = participant.getTeamDrivers()
+                Driver assignedDriver = participant.getTeamDrivers()
                     .get(driverIdx);
                 logToFile("HeatBuilder: Heat " + h + ", Team "
                     + participant.getTeam().getName() + " -> Assigning driver: "
@@ -129,9 +132,9 @@ public class HeatBuilder {
   private static void logToFile(String message) {
     try {
       String tmpDir = System.getProperty("java.io.tmpdir");
-      java.nio.file.Path logPath = java.nio.file.Paths.get(tmpDir, "race_debug.log");
-      java.nio.file.Files.write(logPath, (message + "\n").getBytes(),
-          java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
+      Path logPath = Paths.get(tmpDir, "race_debug.log");
+      Files.write(logPath, (message + "\n").getBytes(),
+          StandardOpenOption.CREATE, StandardOpenOption.APPEND);
     } catch (Exception e) {
       // Ignore
     }

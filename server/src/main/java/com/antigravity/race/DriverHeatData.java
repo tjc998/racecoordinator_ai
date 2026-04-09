@@ -1,24 +1,32 @@
 package com.antigravity.race;
 
+import com.antigravity.models.Driver;
+import com.antigravity.protocols.CarLocation;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collections;
-
+import java.util.List;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 public class DriverHeatData extends ServerToClientObject {
+
   private RaceParticipant driver;
-  private com.antigravity.models.Driver actualDriver;
+  private Driver actualDriver;
 
   public static class LapData {
+
     private double lapTime;
     private String driverId;
-    private java.util.ArrayList<Double> segments = new java.util.ArrayList<>();
+    private ArrayList<Double> segments = new ArrayList<>();
 
     @BsonCreator
-    public LapData(@BsonProperty("lapTime") double lapTime, 
-                   @BsonProperty("driverId") String driverId,
-                   @BsonProperty("segments") java.util.ArrayList<Double> segments) {
+    public LapData(@BsonProperty("lapTime") double lapTime,
+        @BsonProperty("driverId") String driverId,
+        @BsonProperty("segments") ArrayList<Double> segments) {
       this.lapTime = lapTime;
       this.driverId = driverId;
       if (segments != null) {
@@ -29,27 +37,35 @@ public class DriverHeatData extends ServerToClientObject {
     public LapData() {
     }
 
-    public double getLapTime() { return lapTime; }
-    public String getDriverId() { return driverId; }
-    public java.util.List<Double> getSegments() { return java.util.Collections.unmodifiableList(segments); }
+    public double getLapTime() {
+      return lapTime;
+    }
+
+    public String getDriverId() {
+      return driverId;
+    }
+
+    public List<Double> getSegments() {
+      return Collections.unmodifiableList(segments);
+    }
   }
 
-  private ArrayList<LapData> laps = new ArrayList<>();
+  private final ArrayList<LapData> laps = new ArrayList<>();
   private double bestLapTime = 0.0f;
   private double reactionTime = 0.0f;
   private double pendingLapTime = 0.0f;
   private double initialFuelLevel = 0.0;
   private double gapLeader = 0.0;
   private double gapPosition = 0.0;
-  private ArrayList<Double> segments = new ArrayList<>();
-  private com.antigravity.protocols.CarLocation currentLocation;
+  private final ArrayList<Double> segments = new ArrayList<>();
+  private CarLocation currentLocation;
 
   private static void logToFile(String message) {
     try {
       String tmpDir = System.getProperty("java.io.tmpdir");
-      java.nio.file.Path logPath = java.nio.file.Paths.get(tmpDir, "race_debug.log");
-      java.nio.file.Files.write(logPath, (message + "\n").getBytes(),
-          java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
+      Path logPath = Paths.get(tmpDir, "race_debug.log");
+      Files.write(logPath, (message + "\n").getBytes(),
+          StandardOpenOption.CREATE, StandardOpenOption.APPEND);
     } catch (Exception e) {
       // Ignore
     }
@@ -57,7 +73,7 @@ public class DriverHeatData extends ServerToClientObject {
 
   @BsonCreator
   public DriverHeatData(@BsonProperty("driver") RaceParticipant driver,
-      @BsonProperty("actualDriver") com.antigravity.models.Driver actualDriver) {
+      @BsonProperty("actualDriver") Driver actualDriver) {
     super();
     this.driver = driver;
     if (actualDriver != null) {
@@ -87,16 +103,16 @@ public class DriverHeatData extends ServerToClientObject {
     this.driver = driver;
   }
 
-  public com.antigravity.models.Driver getActualDriver() {
+  public Driver getActualDriver() {
     return actualDriver;
   }
 
-  public void setActualDriver(com.antigravity.models.Driver actualDriver) {
+  public void setActualDriver(Driver actualDriver) {
     this.actualDriver = actualDriver;
   }
 
   public void addLap(double lapTime) {
-    laps.add(new LapData(lapTime, actualDriver != null ? actualDriver.getEntityId() : "", new java.util.ArrayList<>(segments)));
+    laps.add(new LapData(lapTime, actualDriver != null ? actualDriver.getEntityId() : "", new ArrayList<>(segments)));
     if (bestLapTime == 0.0f || lapTime < bestLapTime) {
       bestLapTime = lapTime;
     }
@@ -107,16 +123,16 @@ public class DriverHeatData extends ServerToClientObject {
     segments.add(segmentTime);
   }
 
-  public java.util.List<Double> getSegments() {
-    return java.util.Collections.unmodifiableList(segments);
+  public List<Double> getSegments() {
+    return Collections.unmodifiableList(segments);
   }
 
   public int getLapCount() {
     return laps.size();
   }
 
-  public java.util.List<LapData> getLaps() {
-    return java.util.Collections.unmodifiableList(laps);
+  public List<LapData> getLaps() {
+    return Collections.unmodifiableList(laps);
   }
 
   public double getLastLapTime() {
@@ -222,11 +238,11 @@ public class DriverHeatData extends ServerToClientObject {
     this.gapPosition = gapPosition;
   }
 
-  public com.antigravity.protocols.CarLocation getCurrentLocation() {
+  public CarLocation getCurrentLocation() {
     return currentLocation;
   }
 
-  public void setCurrentLocation(com.antigravity.protocols.CarLocation currentLocation) {
+  public void setCurrentLocation(CarLocation currentLocation) {
     this.currentLocation = currentLocation;
   }
 }

@@ -1,24 +1,27 @@
 package com.antigravity.converters;
 
+import com.antigravity.models.Track;
+import com.antigravity.proto.Model;
+import com.antigravity.proto.TrackModel;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class TrackConverter {
-  public static com.antigravity.proto.TrackModel toProto(com.antigravity.models.Track track,
-      Set<String> sentObjectIds) {
+
+  public static TrackModel toProto(Track track, Set<String> sentObjectIds) {
     String key = "Track_" + track.getObjectId();
     if (sentObjectIds.contains(key)) {
-      return com.antigravity.proto.TrackModel.newBuilder()
-          .setModel(com.antigravity.proto.Model.newBuilder().setEntityId(track.getObjectId()).build())
+      return TrackModel.newBuilder()
+          .setModel(Model.newBuilder().setEntityId(track.getObjectId()).build())
           .build();
     } else {
       sentObjectIds.add(key);
-      return com.antigravity.proto.TrackModel.newBuilder()
-          .setModel(com.antigravity.proto.Model.newBuilder().setEntityId(track.getObjectId()).build())
+      return TrackModel.newBuilder()
+          .setModel(Model.newBuilder().setEntityId(track.getObjectId()).build())
           .setName(track.getName())
           .setHasDigitalFuel(hasDigitalFuel(track))
           .addAllArduinoConfigs(track.getArduinoConfigs().stream()
-              .map(c -> ArduinoConfigConverter.toProto(c))
+              .map(ArduinoConfigConverter::toProto)
               .collect(Collectors.toList()))
           .addAllLanes(track.getLanes().stream()
               .map(l -> LaneConverter.toProto(l, sentObjectIds))
@@ -27,7 +30,7 @@ public class TrackConverter {
     }
   }
 
-  private static boolean hasDigitalFuel(com.antigravity.models.Track track) {
+  private static boolean hasDigitalFuel(Track track) {
     return track.hasDigitalFuel();
   }
 }

@@ -1,15 +1,17 @@
 package com.antigravity.protocols;
 
+import com.antigravity.proto.CallbuttonEvent;
 import com.antigravity.proto.InterfaceEvent;
+import com.antigravity.proto.InterfaceStatus;
+import com.antigravity.proto.InterfaceStatusEvent;
 import com.antigravity.proto.LapEvent;
 import com.antigravity.proto.SegmentEvent;
 import com.antigravity.race.ClientSubscriptionManager;
 
 /**
- * Interface listener for testing interface protocols. This is used when the
- * client makes an initialize-interface call. This should mean a client is on
- * the track-editor page. This is NOT a unit test class and belongs in the main
- * source folder.
+ * Interface listener for testing interface protocols. This is used when the client makes an
+ * initialize-interface call. This should mean a client is on the track-editor page. This is NOT a
+ * unit test class and belongs in the main source folder.
  */
 public class TestInterfaceListener implements ProtocolListener {
 
@@ -40,7 +42,7 @@ public class TestInterfaceListener implements ProtocolListener {
   @Override
   public void onCallbutton(int lane) {
     InterfaceEvent event = InterfaceEvent.newBuilder()
-        .setCallbutton(com.antigravity.proto.CallbuttonEvent.newBuilder()
+        .setCallbutton(CallbuttonEvent.newBuilder()
             .setLane(lane)
             .build())
         .build();
@@ -48,9 +50,9 @@ public class TestInterfaceListener implements ProtocolListener {
   }
 
   @Override
-  public void onInterfaceStatus(com.antigravity.proto.InterfaceStatus status) {
+  public void onInterfaceStatus(InterfaceStatus status) {
     InterfaceEvent event = InterfaceEvent.newBuilder()
-        .setStatus(com.antigravity.proto.InterfaceStatusEvent.newBuilder()
+        .setStatus(InterfaceStatusEvent.newBuilder()
             .setStatus(status)
             .build())
         .build();

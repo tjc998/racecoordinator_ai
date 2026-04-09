@@ -1,23 +1,26 @@
 package com.antigravity.race;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.antigravity.context.DatabaseContext;
+import com.antigravity.models.Track;
+import com.antigravity.proto.RaceData;
+import com.antigravity.proto.RaceSubscriptionRequest;
+import com.antigravity.protocols.ProtocolDelegate;
+import com.antigravity.race.states.IRaceState;
+import io.javalin.websocket.WsContext;
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.Collections;
-
+import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.antigravity.context.DatabaseContext;
-import com.antigravity.protocols.ProtocolDelegate;
-
-import io.javalin.websocket.WsContext;
 
 public class ClientSubscriptionManagerTest {
 
@@ -114,14 +117,17 @@ public class ClientSubscriptionManagerTest {
   @Test
   public void testAutoSaveCreatesFile() throws Exception {
     Race mockRace = mock(Race.class);
-    com.antigravity.models.Race realModel = new com.antigravity.models.Race.Builder().withName("Race").withTrackEntityId("track1").withEntityId("testRaceId").build();
+    com.antigravity.models.Race realModel = new com.antigravity.models.Race.Builder()
+        .withName("Race")
+        .withTrackEntityId("track1")
+        .withEntityId("testRaceId")
+        .build();
 
     when(mockRace.getRaceModel()).thenReturn(realModel);
     when(mockRace.getTrack())
-        .thenReturn(new com.antigravity.models.Track("Track", Collections.emptyList(), "track1", null));
-    when(mockRace.getDrivers()).thenReturn(Collections.emptyList());
+        .thenReturn(new Track("Track", Collections.emptyList(), "track1", null));
     when(mockRace.getHeats()).thenReturn(Collections.emptyList());
-    com.antigravity.race.states.IRaceState mockState = mock(com.antigravity.race.states.IRaceState.class);
+    IRaceState mockState = mock(IRaceState.class);
     when(mockRace.getState()).thenReturn(mockState);
 
     DatabaseContext mockDbCtx = mock(DatabaseContext.class);
@@ -159,11 +165,15 @@ public class ClientSubscriptionManagerTest {
   @Test
   public void testClientDisconnectDeletesAutoSave() throws Exception {
     Race mockRace = mock(Race.class);
-    com.antigravity.models.Race realModel = new com.antigravity.models.Race.Builder().withName("Race").withTrackEntityId("track1").withEntityId("testRaceId").build();
+    com.antigravity.models.Race realModel = new com.antigravity.models.Race.Builder()
+        .withName("Race")
+        .withTrackEntityId("track1")
+        .withEntityId("testRaceId")
+        .build();
     when(mockRace.getRaceModel()).thenReturn(realModel);
-    when(mockRace.createSnapshot()).thenReturn(com.antigravity.proto.RaceData.getDefaultInstance());
+    when(mockRace.createSnapshot()).thenReturn(RaceData.getDefaultInstance());
     when(mockRace.getHeats()).thenReturn(Collections.emptyList());
-    com.antigravity.race.states.IRaceState mockState = mock(com.antigravity.race.states.IRaceState.class);
+    IRaceState mockState = mock(IRaceState.class);
     when(mockRace.getState()).thenReturn(mockState);
 
     DatabaseContext mockDbCtx = mock(DatabaseContext.class);
@@ -181,12 +191,12 @@ public class ClientSubscriptionManagerTest {
     manager.setRace(mockRace);
 
     WsContext mockContext = mock(WsContext.class);
-    com.antigravity.proto.RaceSubscriptionRequest unsubscribeReq = com.antigravity.proto.RaceSubscriptionRequest
+    RaceSubscriptionRequest unsubscribeReq = RaceSubscriptionRequest
         .newBuilder().setSubscribe(false).build();
 
-    java.lang.reflect.Field rdsField = ClientSubscriptionManager.class.getDeclaredField("raceDataSubscribers");
+    Field rdsField = ClientSubscriptionManager.class.getDeclaredField("raceDataSubscribers");
     rdsField.setAccessible(true);
-    ((java.util.Set<?>) rdsField.get(manager)).clear();
+    ((Set<?>) rdsField.get(manager)).clear();
 
     manager.handleRaceSubscription(mockContext, unsubscribeReq); // Triggers checkAndStopRace()
 

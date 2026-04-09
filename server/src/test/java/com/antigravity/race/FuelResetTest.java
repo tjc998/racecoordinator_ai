@@ -3,27 +3,27 @@ package com.antigravity.race;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.bson.types.ObjectId;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.antigravity.models.AnalogFuelOptions;
 import com.antigravity.models.Driver;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.Lane;
 import com.antigravity.models.OverallScoring;
+import com.antigravity.models.Race;
 import com.antigravity.models.Team;
 import com.antigravity.models.Track;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.race.states.Common;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import org.bson.types.ObjectId;
+import org.junit.Before;
+import org.junit.Test;
 
 public class FuelResetTest {
 
-  private Race race;
+  private com.antigravity.race.Race race;
   private AnalogFuelOptions fuelOptions;
   private List<RaceParticipant> participants;
   private Track track;
@@ -50,7 +50,7 @@ public class FuelResetTest {
         HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
         HeatScoring.AllowFinish.None);
 
-    com.antigravity.models.Race raceModel = new com.antigravity.models.Race.Builder()
+    Race raceModel = new Race.Builder()
         .withName("Fuel Test Race")
         .withTrackEntityId("track1")
         .withHeatRotationType(HeatRotationType.RoundRobin)
@@ -81,9 +81,14 @@ public class FuelResetTest {
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "black", 100));
     lanes.add(new Lane("blue", "black", 100));
-    track = new Track("Test Track", lanes, java.util.Collections.singletonList(mock(ArduinoConfig.class)), "track1", new ObjectId());
+    track = new Track("Test Track", lanes, Collections.singletonList(mock(ArduinoConfig.class)), "track1", new ObjectId());
 
-    race = new Race.Builder().model(raceModel).drivers(participants).track(track).isDemoMode(true).build();
+    race = new com.antigravity.race.Race.Builder()
+        .model(raceModel)
+        .drivers(participants)
+        .track(track)
+        .isDemoMode(true)
+        .build();
   }
 
   @Test

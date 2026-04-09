@@ -1,32 +1,49 @@
 package com.antigravity.race;
 
+import com.antigravity.converters.HeatConverter;
+import com.antigravity.converters.RaceConverter;
+import com.antigravity.converters.RaceParticipantConverter;
+import com.antigravity.models.AnalogFuelOptions;
+import com.antigravity.models.Driver;
+import com.antigravity.models.FuelOptions;
+import com.antigravity.models.Track;
+import com.antigravity.proto.InterfaceEvent;
+import com.antigravity.proto.InterfaceStatus;
+import com.antigravity.proto.InterfaceStatusEvent;
+import com.antigravity.proto.OverallStandingsUpdate;
+import com.antigravity.proto.RaceData;
+import com.antigravity.proto.RaceModel;
+import com.antigravity.proto.RaceState;
+import com.antigravity.proto.RaceTime;
+import com.antigravity.protocols.CarData;
+import com.antigravity.protocols.ProtocolDelegate;
+import com.antigravity.protocols.ProtocolListener;
+import com.antigravity.protocols.arduino.ArduinoConfig;
+import com.antigravity.protocols.arduino.ArduinoProtocol;
+import com.antigravity.protocols.demo.Demo;
+import com.antigravity.race.states.HeatOver;
+import com.antigravity.race.states.IRaceState;
+import com.antigravity.race.states.NotStarted;
+import com.antigravity.race.states.Paused;
+import com.antigravity.race.states.RaceOver;
+import com.antigravity.race.states.Racing;
+import com.antigravity.race.states.Starting;
+import com.google.protobuf.GeneratedMessageV3;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.antigravity.protocols.demo.Demo;
-import com.antigravity.protocols.arduino.ArduinoProtocol;
-import com.antigravity.protocols.ProtocolDelegate;
-import com.antigravity.protocols.CarData;
-import com.antigravity.protocols.IProtocol;
-import com.antigravity.protocols.ProtocolListener;
-import com.antigravity.race.states.IRaceState;
-import com.antigravity.race.states.NotStarted;
-import com.antigravity.models.Track;
-import com.antigravity.service.DatabaseService;
-import com.antigravity.service.AnalyticsService;
-import com.mongodb.client.MongoDatabase;
-
 public class Race implements ProtocolListener {
+
   // Data based on the race model configuration
-  private com.antigravity.models.Race model;
-  private Track track;
-  private List<RaceParticipant> drivers;
+  private final com.antigravity.models.Race model;
+  private final Track track;
+  private final List<RaceParticipant> drivers;
   private List<Heat> heats;
   private Heat currentHeat;
-  private OverallStandings overallStandings;
+  private final OverallStandings overallStandings;
 
   public List<RaceParticipant> getDrivers() {
     return drivers;
@@ -53,25 +70,25 @@ public class Race implements ProtocolListener {
     this.model = builder.model;
     this.track = builder.track;
     this.drivers = builder.drivers;
-    
+
     // If not a restored race, ensure drivers are populated correctly and heats are built
     if (builder.heats == null) {
-        for (int i = 0; i < this.drivers.size(); i++) {
-          this.drivers.get(i).setSeed(i + 1);
-        }
-        int numLanes = this.track.getLanes().size();
-        while (this.drivers.size() < numLanes) {
-          this.drivers.add(new RaceParticipant(com.antigravity.models.Driver.EMPTY_DRIVER));
-        }
-        this.heats = HeatBuilder.buildHeats(this, this.drivers);
-        this.currentHeat = this.heats.get(0);
+      for (int i = 0; i < this.drivers.size(); i++) {
+        this.drivers.get(i).setSeed(i + 1);
+      }
+      int numLanes = this.track.getLanes().size();
+      while (this.drivers.size() < numLanes) {
+        this.drivers.add(new RaceParticipant(Driver.EMPTY_DRIVER));
+      }
+      this.heats = HeatBuilder.buildHeats(this, this.drivers);
+      this.currentHeat = this.heats.get(0);
     } else {
-        this.heats = builder.heats;
-        if (builder.currentHeatIndex >= 0 && builder.currentHeatIndex < this.heats.size()) {
-            this.currentHeat = this.heats.get(builder.currentHeatIndex);
-        } else if (!this.heats.isEmpty()) {
-            this.currentHeat = this.heats.get(0);
-        }
+      this.heats = builder.heats;
+      if (builder.currentHeatIndex >= 0 && builder.currentHeatIndex < this.heats.size()) {
+        this.currentHeat = this.heats.get(builder.currentHeatIndex);
+      } else if (!this.heats.isEmpty()) {
+        this.currentHeat = this.heats.get(0);
+      }
     }
 
     this.accumulatedRaceTime = builder.accumulatedRaceTime;
@@ -89,28 +106,28 @@ public class Race implements ProtocolListener {
     initializeHeatExecutionState();
 
     if (builder.stateClassName != null) {
-        try {
-          Class<?> clazz = Class.forName(builder.stateClassName);
-          this.state = (IRaceState) clazz.getDeclaredConstructor().newInstance();
-        } catch (Exception e) {
-          System.err.println("Failed to restore race state: " + builder.stateClassName + ", falling back to NotStarted");
-          this.state = new NotStarted();
-        }
-    } else {
+      try {
+        Class<?> clazz = Class.forName(builder.stateClassName);
+        this.state = (IRaceState) clazz.getDeclaredConstructor().newInstance();
+      } catch (Exception e) {
+        System.err.println("Failed to restore race state: " + builder.stateClassName + ", falling back to NotStarted");
         this.state = new NotStarted();
+      }
+    } else {
+      this.state = new NotStarted();
     }
-    
+
     this.state.enter(this);
-    
+
     if (builder.heats == null) {
-        initializeFuelLevels();
+      initializeFuelLevels();
     }
   }
 
   public static class Builder {
     private com.antigravity.models.Race model;
     private List<RaceParticipant> drivers;
-    private com.antigravity.models.Track track;
+    private Track track;
     private boolean isDemoMode = false;
     private List<Heat> heats;
     private int currentHeatIndex = 0;
@@ -121,21 +138,68 @@ public class Race implements ProtocolListener {
     private String stateClassName = null;
     private RaceStatistics statistics;
 
-    public Builder model(com.antigravity.models.Race model) { this.model = model; return this; }
-    public Builder drivers(List<RaceParticipant> drivers) { this.drivers = drivers; return this; }
-    public Builder track(com.antigravity.models.Track track) { this.track = track; return this; }
-    public Builder isDemoMode(boolean isDemoMode) { this.isDemoMode = isDemoMode; return this; }
-    public Builder heats(List<Heat> heats) { this.heats = heats; return this; }
-    public Builder currentHeatIndex(int currentHeatIndex) { this.currentHeatIndex = currentHeatIndex; return this; }
-    public Builder accumulatedRaceTime(float accumulatedRaceTime) { this.accumulatedRaceTime = accumulatedRaceTime; return this; }
-    public Builder hasRacedInCurrentHeat(boolean hasRacedInCurrentHeat) { this.hasRacedInCurrentHeat = hasRacedInCurrentHeat; return this; }
-    public Builder autoStartFired(boolean autoStartFired) { this.autoStartFired = autoStartFired; return this; }
-    public Builder autoAdvanceFired(boolean autoAdvanceFired) { this.autoAdvanceFired = autoAdvanceFired; return this; }
-    public Builder stateClassName(String stateClassName) { this.stateClassName = stateClassName; return this; }
-    public Builder statistics(RaceStatistics statistics) { this.statistics = statistics; return this; }
+    public Builder model(com.antigravity.models.Race model) {
+      this.model = model;
+      return this;
+    }
+
+    public Builder drivers(List<RaceParticipant> drivers) {
+      this.drivers = drivers;
+      return this;
+    }
+
+    public Builder track(Track track) {
+      this.track = track;
+      return this;
+    }
+
+    public Builder isDemoMode(boolean isDemoMode) {
+      this.isDemoMode = isDemoMode;
+      return this;
+    }
+
+    public Builder heats(List<Heat> heats) {
+      this.heats = heats;
+      return this;
+    }
+
+    public Builder currentHeatIndex(int currentHeatIndex) {
+      this.currentHeatIndex = currentHeatIndex;
+      return this;
+    }
+
+    public Builder accumulatedRaceTime(float accumulatedRaceTime) {
+      this.accumulatedRaceTime = accumulatedRaceTime;
+      return this;
+    }
+
+    public Builder hasRacedInCurrentHeat(boolean hasRacedInCurrentHeat) {
+      this.hasRacedInCurrentHeat = hasRacedInCurrentHeat;
+      return this;
+    }
+
+    public Builder autoStartFired(boolean autoStartFired) {
+      this.autoStartFired = autoStartFired;
+      return this;
+    }
+
+    public Builder autoAdvanceFired(boolean autoAdvanceFired) {
+      this.autoAdvanceFired = autoAdvanceFired;
+      return this;
+    }
+
+    public Builder stateClassName(String stateClassName) {
+      this.stateClassName = stateClassName;
+      return this;
+    }
+
+    public Builder statistics(RaceStatistics statistics) {
+      this.statistics = statistics;
+      return this;
+    }
 
     public Race build() {
-        return new Race(this);
+      return new Race(this);
     }
   }
 
@@ -150,7 +214,7 @@ public class Race implements ProtocolListener {
   }
 
   private void initializeFuelLevels() {
-    com.antigravity.models.FuelOptions fuelOptions = null;
+    FuelOptions fuelOptions = null;
     if (track != null && track.hasDigitalFuel()) {
       fuelOptions = model.getDigitalFuelOptions();
     } else {
@@ -167,25 +231,25 @@ public class Race implements ProtocolListener {
 
   private void createProtocols(boolean isDemoMode) {
     this.isDemoMode = isDemoMode;
-    List<IProtocol> protocols = new ArrayList<>();
+    List<com.antigravity.protocols.IProtocol> protocols_list = new ArrayList<>();
     if (isDemoMode) {
-      com.antigravity.models.AnalogFuelOptions fuelOptions = this.model.getFuelOptions();
+      AnalogFuelOptions fuelOptions = this.model.getFuelOptions();
       boolean isFuelRace = fuelOptions != null && fuelOptions.isEnabled();
       Demo protocol = new Demo(this.track.getLanes().size(), isFuelRace);
-      protocols.add(protocol);
+      protocols_list.add(protocol);
     } else {
-      List<com.antigravity.protocols.arduino.ArduinoConfig> configs = this.track.getArduinoConfigs();
+      List<ArduinoConfig> configs = this.track.getArduinoConfigs();
       if (configs != null && !configs.isEmpty()) {
-        for (com.antigravity.protocols.arduino.ArduinoConfig config : configs) {
+        for (ArduinoConfig config : configs) {
           ArduinoProtocol protocol = new ArduinoProtocol(config, this.track.getLanes().size());
-          protocols.add(protocol);
+          protocols_list.add(protocol);
         }
       } else {
         throw new IllegalArgumentException(
             "Race created in Real Mode, but no ArduinoConfig found for track: " + this.track.getName());
       }
     }
-    this.protocols = new ProtocolDelegate(protocols);
+    this.protocols = new ProtocolDelegate(protocols_list);
     this.protocols.setListener(this);
   }
 
@@ -193,7 +257,7 @@ public class Race implements ProtocolListener {
     return model;
   }
 
-  public com.antigravity.models.Track getTrack() {
+  public Track getTrack() {
     return track;
   }
 
@@ -243,13 +307,13 @@ public class Race implements ProtocolListener {
 
   public void broadcastRaceTime(double autoAdvanceRemaining, double autoStartRemaining) {
     float displayTime = Math.max(0, this.getRaceTime());
-    com.antigravity.proto.RaceTime raceTimeMsg = com.antigravity.proto.RaceTime.newBuilder()
+    RaceTime raceTimeMsg = RaceTime.newBuilder()
         .setTime(displayTime)
         .setAutoAdvanceRemaining(autoAdvanceRemaining)
         .setAutoStartRemaining(autoStartRemaining)
         .build();
 
-    com.antigravity.proto.RaceData raceDataMsg = com.antigravity.proto.RaceData.newBuilder()
+    RaceData raceDataMsg = RaceData.newBuilder()
         .setRaceTime(raceTimeMsg)
         .build();
 
@@ -295,20 +359,20 @@ public class Race implements ProtocolListener {
   }
 
   public void broadcastTime() {
-    com.antigravity.proto.RaceTime raceTimeMsg = com.antigravity.proto.RaceTime.newBuilder()
+    RaceTime raceTimeMsg = RaceTime.newBuilder()
         .setTime(this.getRaceTime())
         .setAutoStartRemaining(this.getAutoStartRemaining())
         .setAutoAdvanceRemaining(this.getAutoAdvanceRemaining())
         .build();
 
-    com.antigravity.proto.RaceData raceDataMsg = com.antigravity.proto.RaceData.newBuilder()
+    RaceData raceDataMsg = RaceData.newBuilder()
         .setRaceTime(raceTimeMsg)
         .build();
 
     this.broadcast(raceDataMsg);
   }
 
-  public void broadcast(com.google.protobuf.GeneratedMessageV3 message) {
+  public void broadcast(GeneratedMessageV3 message) {
     ClientSubscriptionManager.getInstance().broadcast(message);
   }
 
@@ -319,13 +383,13 @@ public class Race implements ProtocolListener {
     state = newState;
     state.enter(this);
 
-    if (state instanceof com.antigravity.race.states.RaceOver) {
+    if (state instanceof RaceOver) {
       ClientSubscriptionManager.getInstance().deleteAutoSave(model.getEntityId());
     }
 
-    com.antigravity.proto.RaceState protoState = getProtoState(state);
+    RaceState protoState = getProtoState(state);
 
-    com.antigravity.proto.RaceData raceData = com.antigravity.proto.RaceData.newBuilder()
+    RaceData raceData = RaceData.newBuilder()
         .setRaceState(protoState)
         .build();
     broadcast(raceData);
@@ -404,7 +468,7 @@ public class Race implements ProtocolListener {
 
   public void prepareHeat() {
     initializeHeatExecutionState();
-    com.antigravity.models.FuelOptions fuelOptions = null;
+    FuelOptions fuelOptions = null;
     if (track != null && track.hasDigitalFuel()) {
       fuelOptions = model.getDigitalFuelOptions();
     } else {
@@ -418,7 +482,7 @@ public class Race implements ProtocolListener {
     boolean resetAtStart = fuelOptions.isResetFuelAtHeatStart();
     double startLevel = (fuelOptions.getCapacity() * fuelOptions.getStartLevel()) / 100.0;
 
-    for (com.antigravity.race.DriverHeatData heatData : currentHeat.getDrivers()) {
+    for (DriverHeatData heatData : currentHeat.getDrivers()) {
       RaceParticipant participant = heatData.getDriver();
       if (participant == null || participant.getDriver() == null || participant.getDriver().getEntityId() == null) {
         continue;
@@ -434,7 +498,7 @@ public class Race implements ProtocolListener {
   }
 
   public void restoreHeatFuel() {
-    com.antigravity.models.FuelOptions fuelOptions = null;
+    FuelOptions fuelOptions = null;
     if (track != null && track.hasDigitalFuel()) {
       fuelOptions = model.getDigitalFuelOptions();
     } else {
@@ -445,7 +509,7 @@ public class Race implements ProtocolListener {
       return;
     }
 
-    for (com.antigravity.race.DriverHeatData heatData : currentHeat.getDrivers()) {
+    for (DriverHeatData heatData : currentHeat.getDrivers()) {
       heatData.getDriver().setFuelLevel(heatData.getInitialFuelLevel());
     }
   }
@@ -456,7 +520,7 @@ public class Race implements ProtocolListener {
     if (currentHeat != null) {
       statistics.incrementRestartCount();
       // Reset all drivers in the heat
-      for (com.antigravity.race.DriverHeatData driverData : currentHeat.getDrivers()) {
+      for (DriverHeatData driverData : currentHeat.getDrivers()) {
         driverData.reset();
       }
 
@@ -471,16 +535,16 @@ public class Race implements ProtocolListener {
       restoreHeatFuel();
 
       // Broadcast update to client
-      java.util.Set<String> sentObjectIds = new java.util.HashSet<>();
-      for (com.antigravity.race.RaceParticipant p : getDrivers()) {
-        sentObjectIds.add(com.antigravity.converters.HeatConverter.PARTICIPANT_PREFIX + p.getObjectId());
+      Set<String> sentObjectIds = new HashSet<>();
+      for (RaceParticipant p : getDrivers()) {
+        sentObjectIds.add(HeatConverter.PARTICIPANT_PREFIX + p.getObjectId());
       }
 
       com.antigravity.proto.Race raceProto = com.antigravity.proto.Race.newBuilder()
-          .setCurrentHeat(com.antigravity.converters.HeatConverter.toProto(currentHeat, sentObjectIds))
+          .setCurrentHeat(HeatConverter.toProto(currentHeat, sentObjectIds))
           .build();
 
-      broadcast(com.antigravity.proto.RaceData.newBuilder()
+      broadcast(RaceData.newBuilder()
           .setRace(raceProto)
           .build());
 
@@ -496,16 +560,16 @@ public class Race implements ProtocolListener {
     List<com.antigravity.proto.RaceParticipant> participants = new ArrayList<>();
     Set<String> sentObjectIds = new HashSet<>();
     for (RaceParticipant driver : this.drivers) {
-      if (driver.getDriver() != com.antigravity.models.Driver.EMPTY_DRIVER) {
-        participants.add(com.antigravity.converters.RaceParticipantConverter.toProto(driver, sentObjectIds));
+      if (driver.getDriver() != Driver.EMPTY_DRIVER) {
+        participants.add(RaceParticipantConverter.toProto(driver, sentObjectIds));
       }
     }
 
-    com.antigravity.proto.OverallStandingsUpdate update = com.antigravity.proto.OverallStandingsUpdate.newBuilder()
+    OverallStandingsUpdate update = OverallStandingsUpdate.newBuilder()
         .addAllParticipants(participants)
         .build();
 
-    com.antigravity.proto.RaceData raceData = com.antigravity.proto.RaceData.newBuilder()
+    RaceData raceData = RaceData.newBuilder()
         .setOverallStandingsUpdate(update)
         .build();
 
@@ -513,7 +577,7 @@ public class Race implements ProtocolListener {
   }
 
   public boolean isActive() {
-    return !(state instanceof com.antigravity.race.states.RaceOver);
+    return !(state instanceof RaceOver);
   }
 
   @Override
@@ -532,9 +596,9 @@ public class Race implements ProtocolListener {
   }
 
   @Override
-  public void onInterfaceStatus(com.antigravity.proto.InterfaceStatus status) {
-    com.antigravity.proto.InterfaceEvent event = com.antigravity.proto.InterfaceEvent.newBuilder()
-        .setStatus(com.antigravity.proto.InterfaceStatusEvent.newBuilder()
+  public void onInterfaceStatus(InterfaceStatus status) {
+    InterfaceEvent event = InterfaceEvent.newBuilder()
+        .setStatus(InterfaceStatusEvent.newBuilder()
             .setStatus(status)
             .build())
         .build();
@@ -550,7 +614,7 @@ public class Race implements ProtocolListener {
   }
 
   @Override
-  public void onInterfaceEvent(com.antigravity.proto.InterfaceEvent event) {
+  public void onInterfaceEvent(InterfaceEvent event) {
     ClientSubscriptionManager.getInstance().broadcastInterfaceEvent(event);
   }
 
@@ -560,21 +624,21 @@ public class Race implements ProtocolListener {
 
   // TODO(aufderheide): This synchronize probably isn't enough. We need to lock
   // the race object while we're creating the snapshot.
-  public synchronized com.antigravity.proto.RaceData createSnapshot() {
+  public synchronized RaceData createSnapshot() {
     Set<String> sentObjectIds = new HashSet<>();
-    com.antigravity.proto.RaceModel raceProto = com.antigravity.converters.RaceConverter.toProto(model, track,
+    RaceModel raceProto = RaceConverter.toProto(model, track,
         sentObjectIds);
 
     List<com.antigravity.proto.RaceParticipant> driverModels = new ArrayList<>();
     for (RaceParticipant participant : drivers) {
-      if (participant.getDriver() != com.antigravity.models.Driver.EMPTY_DRIVER) {
+      if (participant.getDriver() != Driver.EMPTY_DRIVER) {
         driverModels
-            .add(com.antigravity.converters.RaceParticipantConverter.toProto(participant, sentObjectIds));
+            .add(RaceParticipantConverter.toProto(participant, sentObjectIds));
       }
     }
 
     List<com.antigravity.proto.Heat> heatProtos = heats.stream()
-        .map(h -> com.antigravity.converters.HeatConverter.toProto(h, sentObjectIds))
+        .map(h -> HeatConverter.toProto(h, sentObjectIds))
         .collect(Collectors.toList());
 
     com.antigravity.proto.Race raceUpdate = com.antigravity.proto.Race.newBuilder()
@@ -582,11 +646,11 @@ public class Race implements ProtocolListener {
         .addAllDrivers(driverModels)
         .addAllHeats(heatProtos)
         .setCurrentHeat(
-            com.antigravity.converters.HeatConverter.toProto(currentHeat, sentObjectIds))
+            HeatConverter.toProto(currentHeat, sentObjectIds))
         .setState(getProtoState(state))
         .build();
 
-    return com.antigravity.proto.RaceData.newBuilder()
+    return RaceData.newBuilder()
         .setRace(raceUpdate)
         .build();
   }
@@ -601,20 +665,20 @@ public class Race implements ProtocolListener {
 
   // TODO(aufderheide): We should ask the state for it's enum value rather than
   // doing all these instanceof checks.
-  private com.antigravity.proto.RaceState getProtoState(IRaceState state) {
+  private RaceState getProtoState(IRaceState state) {
     if (state instanceof NotStarted) {
-      return com.antigravity.proto.RaceState.NOT_STARTED;
-    } else if (state instanceof com.antigravity.race.states.Starting) {
-      return com.antigravity.proto.RaceState.STARTING;
-    } else if (state instanceof com.antigravity.race.states.Racing) {
-      return com.antigravity.proto.RaceState.RACING;
-    } else if (state instanceof com.antigravity.race.states.Paused) {
-      return com.antigravity.proto.RaceState.PAUSED;
-    } else if (state instanceof com.antigravity.race.states.HeatOver) {
-      return com.antigravity.proto.RaceState.HEAT_OVER;
-    } else if (state instanceof com.antigravity.race.states.RaceOver) {
-      return com.antigravity.proto.RaceState.RACE_OVER;
+      return RaceState.NOT_STARTED;
+    } else if (state instanceof Starting) {
+      return RaceState.STARTING;
+    } else if (state instanceof Racing) {
+      return RaceState.RACING;
+    } else if (state instanceof Paused) {
+      return RaceState.PAUSED;
+    } else if (state instanceof HeatOver) {
+      return RaceState.HEAT_OVER;
+    } else if (state instanceof RaceOver) {
+      return RaceState.RACE_OVER;
     }
-    return com.antigravity.proto.RaceState.UNKNOWN_STATE;
+    return RaceState.UNKNOWN_STATE;
   }
 }

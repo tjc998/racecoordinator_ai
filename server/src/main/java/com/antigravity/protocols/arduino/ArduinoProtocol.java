@@ -1,33 +1,36 @@
 package com.antigravity.protocols.arduino;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.antigravity.proto.InterfaceAnalogDataEvent;
+import com.antigravity.proto.InterfaceEvent;
+import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.PinBehavior;
 import com.antigravity.proto.PinId;
-import com.antigravity.proto.InterfaceEvent;
-import com.antigravity.proto.InterfaceAnalogDataEvent;
+import com.antigravity.proto.RgbLedState;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.DefaultProtocol;
 import com.antigravity.protocols.PartialTime;
 import com.antigravity.protocols.interfaces.SerialConnection;
 import com.antigravity.util.CircularBuffer;
+import com.fazecast.jSerialComm.SerialPort;
+import com.fazecast.jSerialComm.SerialPortDataListener;
+import com.fazecast.jSerialComm.SerialPortEvent;
 import java.io.IOException;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ArduinoProtocol extends DefaultProtocol {
   private static final Logger logger = LoggerFactory.getLogger(ArduinoProtocol.class);
@@ -150,14 +153,14 @@ public class ArduinoProtocol extends DefaultProtocol {
       logger.info("[{}] Attempting to connect to {} at {} baud", getLogTime(), config.commPort, config.baudRate);
       serialConnection.connect(config.commPort, config.baudRate);
 
-      serialConnection.addListener(new com.fazecast.jSerialComm.SerialPortDataListener() {
+      serialConnection.addListener(new SerialPortDataListener() {
         @Override
         public int getListeningEvents() {
-          return com.fazecast.jSerialComm.SerialPort.LISTENING_EVENT_DATA_RECEIVED;
+          return SerialPort.LISTENING_EVENT_DATA_RECEIVED;
         }
 
-        public void serialEvent(com.fazecast.jSerialComm.SerialPortEvent event) {
-          if (event.getEventType() != com.fazecast.jSerialComm.SerialPort.LISTENING_EVENT_DATA_RECEIVED) {
+        public void serialEvent(SerialPortEvent event) {
+          if (event.getEventType() != SerialPort.LISTENING_EVENT_DATA_RECEIVED) {
             return;
           }
 
@@ -211,15 +214,15 @@ public class ArduinoProtocol extends DefaultProtocol {
     statusFuture = statusScheduler.scheduleAtFixedRate(() -> {
       try {
         if (listener != null) {
-          com.antigravity.proto.InterfaceStatus status;
+          InterfaceStatus status;
           if (!serialConnection.isOpen()) {
-            status = com.antigravity.proto.InterfaceStatus.DISCONNECTED;
+            status = InterfaceStatus.DISCONNECTED;
           } else if (lastHeartbeatTimeMs == 0) {
-            status = com.antigravity.proto.InterfaceStatus.NO_DATA;
+            status = InterfaceStatus.NO_DATA;
           } else if (now() - lastHeartbeatTimeMs < 2000) {
-            status = com.antigravity.proto.InterfaceStatus.CONNECTED;
+            status = InterfaceStatus.CONNECTED;
           } else {
-            status = com.antigravity.proto.InterfaceStatus.DISCONNECTED;
+            status = InterfaceStatus.DISCONNECTED;
           }
           listener.onInterfaceStatus(status);
         }
@@ -255,8 +258,8 @@ public class ArduinoProtocol extends DefaultProtocol {
   public void startTimer() {
     sendTimeReset();
     for (int i = 0; i < numLanes; i++) {
-      hwLapTime[i].Reset();
-      hwSegmentTime[i].Reset();
+      hwLapTime[i].reset();
+      hwSegmentTime[i].reset();
     }
     hwReset = 1;
   }
@@ -265,7 +268,7 @@ public class ArduinoProtocol extends DefaultProtocol {
   public List<PartialTime> stopTimer() {
     List<PartialTime> partialTimes = new ArrayList<>();
     for (int i = 0; i < numLanes; i++) {
-      partialTimes.add(new PartialTime(i, hwLapTime[i].Time(), hwSegmentTime[i].Time()));
+      partialTimes.add(new PartialTime(i, hwLapTime[i].time(), hwSegmentTime[i].time()));
     }
     return partialTimes;
   }
@@ -431,8 +434,8 @@ public class ArduinoProtocol extends DefaultProtocol {
     if (isReset == hwReset) {
       hwReset = 0;
       for (int i = 0; i < numLanes; i++) {
-        hwLapTime[i].Add(timeInUse);
-        hwSegmentTime[i].Add(timeInUse);
+        hwLapTime[i].add(timeInUse);
+        hwSegmentTime[i].add(timeInUse);
       }
     } else {
       logger.warn("Received Heartbeat - Reset mismatch: got {}, expected {}", isReset, hwReset);
@@ -595,7 +598,7 @@ public class ArduinoProtocol extends DefaultProtocol {
 
     // Handle removed strings: send a clear command (0 brightness) for any string
     // that existed previously but is not in the new config.
-    for (Integer stringNum : new java.util.ArrayList<>(lastAddressableLeds.keySet())) {
+    for (Integer stringNum : new ArrayList<>(lastAddressableLeds.keySet())) {
       if (!updatedStrings.contains(stringNum)) {
         int previousMax = lastAddressableLeds.get(stringNum);
         if (previousMax > 0) {
@@ -630,7 +633,7 @@ public class ArduinoProtocol extends DefaultProtocol {
   }
 
   public void setStringRgbLedValues(int stringNumber,
-      List<com.antigravity.proto.RgbLedState> rgbLeds) {
+      List<RgbLedState> rgbLeds) {
     if (!serialConnection.isOpen() || rgbLeds == null || rgbLeds.isEmpty()) {
       return;
     }
@@ -646,7 +649,7 @@ public class ArduinoProtocol extends DefaultProtocol {
     message[2] = (byte) (numLeds & 0xFF);
 
     int idx = 3;
-    for (com.antigravity.proto.RgbLedState led : rgbLeds) {
+    for (RgbLedState led : rgbLeds) {
       message[idx++] = (byte) (led.getIndex() & 0xFF);
       message[idx++] = (byte) (led.getR() & 0xFF);
       message[idx++] = (byte) (led.getG() & 0xFF);
@@ -767,7 +770,7 @@ public class ArduinoProtocol extends DefaultProtocol {
 
     if (state == wantState) {
       // Lap
-      double time = hwLapTime[laneIndex].Time();
+      double time = hwLapTime[laneIndex].time();
 
       // Subtract the hw debounce time from our time
       time -= (config.debounceUs / (1000.0 * 1000.0));
@@ -830,7 +833,7 @@ public class ArduinoProtocol extends DefaultProtocol {
     }
 
     if (state == wantState) {
-      double time = hwSegmentTime[laneIndex].Time();
+      double time = hwSegmentTime[laneIndex].time();
 
       // Subtract the hw debounce time from our time
       time -= (config.debounceUs / (1000.0 * 1000.0));

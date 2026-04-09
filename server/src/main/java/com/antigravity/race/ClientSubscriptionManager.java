@@ -1,21 +1,37 @@
 package com.antigravity.race;
 
+import com.antigravity.context.DatabaseContext;
+import com.antigravity.proto.InterfaceEvent;
+import com.antigravity.proto.RaceData;
+import com.antigravity.proto.RaceSubscriptionRequest;
 import com.antigravity.protocols.ProtocolDelegate;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.protobuf.GeneratedMessageV3;
 import io.javalin.websocket.WsContext;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import com.antigravity.context.DatabaseContext;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.File;
-import java.io.FileWriter;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import org.bson.types.ObjectId;
 
 public class ClientSubscriptionManager {
+
   private static ClientSubscriptionManager instance;
   private Race currentRace;
   private ProtocolDelegate currentProtocol;
@@ -100,8 +116,8 @@ public class ClientSubscriptionManager {
     System.out.println("New WebSocket session added. Total sessions: " + sessions.size());
 
     if (currentRace != null) {
-      com.antigravity.proto.RaceData snapshot = currentRace.createSnapshot();
-      ctx.send(java.nio.ByteBuffer.wrap(snapshot.toByteArray()));
+      RaceData snapshot = currentRace.createSnapshot();
+      ctx.send(ByteBuffer.wrap(snapshot.toByteArray()));
     }
   }
 
@@ -144,15 +160,15 @@ public class ClientSubscriptionManager {
     }
   }
 
-  public void handleRaceSubscription(WsContext ctx, com.antigravity.proto.RaceSubscriptionRequest request) {
+  public void handleRaceSubscription(WsContext ctx, RaceSubscriptionRequest request) {
     if (request.getSubscribe()) {
       cancelPendingCleanup();
       raceDataSubscribers.add(ctx);
       System.out.println("Client subscribed to race data. Subscribers: " + raceDataSubscribers.size());
       // Send current state immediately upon subscription if race exists
       if (currentRace != null) {
-        com.antigravity.proto.RaceData snapshot = currentRace.createSnapshot();
-        ctx.send(java.nio.ByteBuffer.wrap(snapshot.toByteArray()));
+        RaceData snapshot = currentRace.createSnapshot();
+        ctx.send(ByteBuffer.wrap(snapshot.toByteArray()));
       }
     } else {
       raceDataSubscribers.remove(ctx);
@@ -167,7 +183,8 @@ public class ClientSubscriptionManager {
         if (cleanupGracePeriodSeconds <= 0) {
           performCleanup();
         } else if (cleanupFuture == null || cleanupFuture.isDone()) {
-          System.out.println("No subscribers left. Scheduling race cleanup in " + cleanupGracePeriodSeconds + " seconds...");
+          System.out.println(
+              "No subscribers left. Scheduling race cleanup in " + cleanupGracePeriodSeconds + " seconds...");
           cleanupFuture = scheduler.schedule(() -> {
             performCleanup();
           }, cleanupGracePeriodSeconds, TimeUnit.SECONDS);
@@ -195,8 +212,9 @@ public class ClientSubscriptionManager {
   }
 
   public synchronized void autoSave(Race race) {
-    if (race == null || databaseContext == null)
+    if (race == null || databaseContext == null) {
       return;
+    }
     try {
       RaceSaveData saveData = new RaceSaveData();
       saveData.setModel(race.getRaceModel());
@@ -233,8 +251,9 @@ public class ClientSubscriptionManager {
   }
 
   public synchronized void deleteAutoSave(String raceId) {
-    if (databaseContext == null || raceId == null)
+    if (databaseContext == null || raceId == null) {
       return;
+    }
     try {
       String dbName = databaseContext.getCurrentDatabaseName();
       String saveDir = databaseContext.getDataRoot() + dbName + File.separator + "saved_races";
@@ -250,29 +269,29 @@ public class ClientSubscriptionManager {
 
   private ObjectMapper getObjectMapper() {
     ObjectMapper mapper = new ObjectMapper();
-    mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
-    mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    mapper.enable(SerializationFeature.INDENT_OUTPUT);
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-    com.fasterxml.jackson.databind.module.SimpleModule module = new com.fasterxml.jackson.databind.module.SimpleModule();
-    module.addSerializer(org.bson.types.ObjectId.class,
-        new com.fasterxml.jackson.databind.JsonSerializer<org.bson.types.ObjectId>() {
+    SimpleModule module = new SimpleModule();
+    module.addSerializer(ObjectId.class,
+        new JsonSerializer<ObjectId>() {
           @Override
-          public void serialize(org.bson.types.ObjectId value, com.fasterxml.jackson.core.JsonGenerator gen,
-              com.fasterxml.jackson.databind.SerializerProvider serializers) throws java.io.IOException {
+          public void serialize(ObjectId value, JsonGenerator gen,
+              SerializerProvider serializers) throws IOException {
             gen.writeString(value.toHexString());
           }
         });
-    module.addDeserializer(org.bson.types.ObjectId.class,
-        new com.fasterxml.jackson.databind.JsonDeserializer<org.bson.types.ObjectId>() {
+    module.addDeserializer(ObjectId.class,
+        new JsonDeserializer<ObjectId>() {
           @Override
-          public org.bson.types.ObjectId deserialize(com.fasterxml.jackson.core.JsonParser p,
-              com.fasterxml.jackson.databind.DeserializationContext ctxt) throws java.io.IOException {
+          public ObjectId deserialize(JsonParser p,
+              DeserializationContext ctxt) throws IOException {
             String value = p.getValueAsString();
             if (value == null || value.isEmpty()) {
               return null;
             }
             try {
-              return new org.bson.types.ObjectId(value);
+              return new ObjectId(value);
             } catch (IllegalArgumentException e) {
               return null;
             }
@@ -296,11 +315,11 @@ public class ClientSubscriptionManager {
     raceDataSubscribers.stream()
         .filter(ctx -> ctx.session.isOpen())
         .forEach(ctx -> {
-          ctx.send(java.nio.ByteBuffer.wrap(bytes));
+          ctx.send(ByteBuffer.wrap(bytes));
         });
   }
 
-  public void broadcastInterfaceEvent(com.antigravity.proto.InterfaceEvent event) {
+  public void broadcastInterfaceEvent(InterfaceEvent event) {
     if (interfaceSubscribers.isEmpty()) {
       return;
     }
@@ -315,7 +334,7 @@ public class ClientSubscriptionManager {
     interfaceSubscribers.stream()
         .filter(ctx -> ctx.session.isOpen())
         .forEach(ctx -> {
-          ctx.send(java.nio.ByteBuffer.wrap(bytes));
+          ctx.send(ByteBuffer.wrap(bytes));
         });
   }
 }

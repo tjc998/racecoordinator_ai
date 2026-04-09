@@ -1,18 +1,23 @@
 package com.antigravity.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.antigravity.proto.AssetMessage;
 import com.antigravity.proto.SaveImageSetEntry;
 import com.google.protobuf.ByteString;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
-import org.bson.Document;
-import org.bson.conversions.Bson;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-
+import com.mongodb.client.result.DeleteResult;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,10 +25,12 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import org.bson.Document;
+import org.bson.conversions.Bson;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 public class AssetServiceTest {
 
@@ -91,7 +98,7 @@ public class AssetServiceTest {
     when(collection.find()).thenReturn(findIterable);
 
     // Support for-each loop which calls iterator()
-    com.mongodb.client.MongoCursor<Document> cursor = mock(com.mongodb.client.MongoCursor.class);
+    MongoCursor<Document> cursor = mock(MongoCursor.class);
     when(findIterable.iterator()).thenReturn(cursor);
     when(cursor.hasNext()).thenReturn(true, false);
     when(cursor.next()).thenReturn(doc1);
@@ -117,7 +124,7 @@ public class AssetServiceTest {
     FindIterable<Document> iterable = mock(FindIterable.class);
     when(iterable.first()).thenReturn(doc);
     when(collection.find(any(Bson.class))).thenReturn(iterable);
-    when(collection.deleteOne(any(Bson.class))).thenReturn(mock(com.mongodb.client.result.DeleteResult.class));
+    when(collection.deleteOne(any(Bson.class))).thenReturn(mock(DeleteResult.class));
 
     // Create a fake file
     new File(assetsDir, "test.png").createNewFile();
@@ -147,6 +154,7 @@ public class AssetServiceTest {
 
     assertNotNull("Fuel Gauge image set should be created", fuelSet);
     assertEquals("image_set", fuelSet.getString("type"));
+    @SuppressWarnings("unchecked")
     List<Document> images = (List<Document>) fuelSet.get("images");
     assertNotNull(images);
     assertTrue("Should have multiple images in set", images.size() > 0);
@@ -210,6 +218,7 @@ public class AssetServiceTest {
     Document doc = captor.getValue();
 
     assertEquals(name, doc.getString("name"));
+    @SuppressWarnings("unchecked")
     List<Document> images = (List<Document>) doc.get("images");
     assertEquals(2, images.size());
 
@@ -223,14 +232,14 @@ public class AssetServiceTest {
     // Verify physical file was created for Entry 1
     File[] files = testDir.listFiles();
     boolean foundNewFile = false;
-    for (File f : files) {
-      if (f.getName().contains("image1.png")) {
-        foundNewFile = true;
-        break;
+    if (files != null) {
+      for (File f : files) {
+        if (f.getName().contains("image1.png")) {
+          foundNewFile = true;
+          break;
+        }
       }
     }
     assertTrue("A new physical file should have been created for image1", foundNewFile);
   }
-
-  // Helper removed to avoid nested stubbing issues
 }
