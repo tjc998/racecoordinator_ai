@@ -1,14 +1,16 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { AssetManagerComponent } from './asset-manager.component';
-import { FormsModule } from '@angular/forms';
-import { DataService } from 'src/app/data.service';
-import { TranslationService } from 'src/app/services/translation.service';
-import { Router } from '@angular/router';
 import { Pipe, PipeTransform } from '@angular/core';
-import { mockDataService, mockTranslationService, mockRouter } from 'src/app/testing/unit-test-mocks';
-import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
+
+import { DataService } from 'src/app/data.service';
+import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
+import { TranslationService } from 'src/app/services/translation.service';
+import { mockDataService, mockTranslationService, mockRouter } from 'src/app/testing/unit-test-mocks';
+
+import { AssetManagerComponent } from './asset-manager.component';
 
 @Pipe({
   name: 'translate',

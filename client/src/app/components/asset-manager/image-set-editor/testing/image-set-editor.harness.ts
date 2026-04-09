@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { ImageSetEditorHarnessBase } from './image-set-editor.harness.base';
 
 export class ImageSetEditorHarness extends ComponentHarness implements ImageSetEditorHarnessBase {

@@ -1,27 +1,28 @@
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import { TranslatePipe } from '../../pipes/translate.pipe';
-import { SvgTextScalerDirective } from '../../directives/svg-text-scaler.directive';
-import { ConfirmationModalComponent } from './confirmation-modal/confirmation-modal.component';
-import { AcknowledgementModalComponent } from './acknowledgement-modal/acknowledgement-modal.component';
-import { BackButtonComponent } from './back-button/back-button.component';
-import { AudioSelectorComponent } from './audio-selector/audio-selector.component';
-import { ItemSelectorComponent } from './item-selector/item-selector.component';
-import { UndoRedoControlsComponent } from './undo-redo-controls/undo-redo-controls.component';
-import { ToolbarComponent } from './toolbar/toolbar.component';
-import { HeatListComponent } from './heat-list/heat-list.component';
-import { AvatarUrlPipe } from '../../pipes/avatar-url.pipe';
-import { HelpOverlayComponent } from './help-overlay/help-overlay.component';
-import { ImageSelectorComponent } from './image-selector/image-selector.component';
-import { ReorderDialogComponent } from '../ui-editor/reorder-dialog/reorder-dialog.component';
-import { ColumnPreviewComponent } from '../ui-editor/column-preview/column-preview.component';
-import { AboutDialogComponent } from './about-dialog/about-dialog.component';
-import { ManagerHeaderComponent } from './manager-header/manager-header.component';
-import { EditorTitleComponent } from './editor-title/editor-title.component';
-import { InputDialogComponent } from './input-dialog/input-dialog.component';
+import { CommonModule } from '@angular/common';
+import { NgModule } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+
+import { AboutDialogComponent } from 'src/app/components/shared/about-dialog/about-dialog.component';
+import { AcknowledgementModalComponent } from 'src/app/components/shared/acknowledgement-modal/acknowledgement-modal.component';
+import { AudioSelectorComponent } from 'src/app/components/shared/audio-selector/audio-selector.component';
+import { BackButtonComponent } from 'src/app/components/shared/back-button/back-button.component';
+import { ConfirmationModalComponent } from 'src/app/components/shared/confirmation-modal/confirmation-modal.component';
+import { EditorTitleComponent } from 'src/app/components/shared/editor-title/editor-title.component';
+import { HeatListComponent } from 'src/app/components/shared/heat-list/heat-list.component';
+import { HelpOverlayComponent } from 'src/app/components/shared/help-overlay/help-overlay.component';
+import { ImageSelectorComponent } from 'src/app/components/shared/image-selector/image-selector.component';
+import { InputDialogComponent } from 'src/app/components/shared/input-dialog/input-dialog.component';
+import { ItemSelectorComponent } from 'src/app/components/shared/item-selector/item-selector.component';
+import { ManagerHeaderComponent } from 'src/app/components/shared/manager-header/manager-header.component';
+import { ToolbarComponent } from 'src/app/components/shared/toolbar/toolbar.component';
+import { UndoRedoControlsComponent } from 'src/app/components/shared/undo-redo-controls/undo-redo-controls.component';
+import { ColumnPreviewComponent } from 'src/app/components/ui-editor/column-preview/column-preview.component';
+import { ReorderDialogComponent } from 'src/app/components/ui-editor/reorder-dialog/reorder-dialog.component';
+import { SvgTextScalerDirective } from 'src/app/directives/svg-text-scaler.directive';
+import { AvatarUrlPipe } from 'src/app/pipes/avatar-url.pipe';
+import { TranslatePipe } from 'src/app/pipes/translate.pipe';
 
 @NgModule({
   declarations: [
@@ -80,5 +81,4 @@ import { InputDialogComponent } from './input-dialog/input-dialog.component';
 
 })
 export class SharedModule { }
-
 

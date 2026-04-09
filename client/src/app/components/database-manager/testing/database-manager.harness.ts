@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { DatabaseManagerHarnessBase } from './database-manager.harness.base';
 
 export class DatabaseManagerHarness extends ComponentHarness implements DatabaseManagerHarnessBase {

@@ -1,6 +1,7 @@
 import { Locator } from '@playwright/test';
-import { DriverEditorHarnessBase } from './driver-editor.harness.base';
+
 import { ConfirmationModalHarnessE2e } from '../../shared/confirmation-modal/testing/confirmation-modal.harness.e2e';
+import { DriverEditorHarnessBase } from './driver-editor.harness.base';
 
 export class DriverEditorHarnessE2e implements DriverEditorHarnessBase {
   constructor(private locator: Locator) {}

@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { HelpOverlayHarnessBase } from './help-overlay.harness.base';
 
 export class HelpOverlayHarness extends ComponentHarness implements HelpOverlayHarnessBase {

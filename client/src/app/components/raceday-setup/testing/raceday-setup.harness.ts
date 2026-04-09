@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { RacedaySetupHarnessBase } from './raceday-setup.harness.base';
 
 export class RacedaySetupHarness extends ComponentHarness implements RacedaySetupHarnessBase {

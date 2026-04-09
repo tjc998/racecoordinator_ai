@@ -1,6 +1,7 @@
 import { Locator } from '@playwright/test';
-import { TrackManagerHarnessBase } from './track-manager.harness.base';
+
 import { ArduinoSummaryHarnessE2e } from '..//arduino-summary/testing/arduino-summary.harness.e2e';
+import { TrackManagerHarnessBase } from './track-manager.harness.base';
 
 export class TrackManagerHarnessE2e implements TrackManagerHarnessBase {
   constructor(private locator: Locator) {}

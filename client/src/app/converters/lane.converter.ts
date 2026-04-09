@@ -1,5 +1,6 @@
-import { Lane } from "../models/lane";
-import { com } from "../proto/message";
+import { Lane } from "src/app/models/lane";
+import { com } from "src/app/proto/message";
+
 import { ConverterCache } from "./converter_cache";
 
 export class LaneConverter {

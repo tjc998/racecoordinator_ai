@@ -1,9 +1,11 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { AboutDialogComponent } from './about-dialog.component';
-import { TranslatePipe } from '../../../pipes/translate.pipe';
-import { TranslationService } from '../../../services/translation.service';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
+
+import { TranslatePipe } from 'src/app/pipes/translate.pipe';
+import { TranslationService } from 'src/app/services/translation.service';
+
+import { AboutDialogComponent } from './about-dialog.component';
 import { AboutDialogHarness } from './testing/about-dialog.harness';
 
 describe('AboutDialogComponent', () => {

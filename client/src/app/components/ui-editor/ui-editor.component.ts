@@ -1,16 +1,15 @@
 import { Component, OnInit, ChangeDetectorRef, OnDestroy, HostListener } from '@angular/core';
-import { SettingsService } from 'src/app/services/settings.service';
+import { Router } from '@angular/router';
+import { forkJoin, Subscription } from 'rxjs';
+
+import { AnchorPoint } from 'src/app/components/raceday/column_definition';
+import { UndoManager } from 'src/app/components/shared/undo-redo-controls/undo-manager';
+import { ReorderDialogComponent, ReorderDialogData, ReorderDialogResult } from 'src/app/components/ui-editor/reorder-dialog/reorder-dialog.component';
+import { DataService } from 'src/app/data.service';
+import { DirtyComponent } from 'src/app/interfaces/dirty-component';
 import { Settings } from 'src/app/models/settings';
 import { FileSystemService } from 'src/app/services/file-system.service';
-import { DataService } from 'src/app/data.service';
-import { Router } from '@angular/router';
-import { UndoManager } from '../shared/undo-redo-controls/undo-manager';
-import { forkJoin, Subscription } from 'rxjs';
-import { DirtyComponent } from 'src/app/interfaces/dirty-component';
-import { AnchorPoint } from '../raceday/column_definition';
-import { ReorderDialogComponent, ReorderDialogData, ReorderDialogResult } from './reorder-dialog/reorder-dialog.component';
-import { ColumnVisibility } from 'src/app/models/settings';
-
+import { SettingsService } from 'src/app/services/settings.service';
 
 @Component({
   selector: 'app-ui-editor',
@@ -353,4 +352,3 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   redo() { this.undoManager.redo(); }
   captureState() { this.undoManager.captureState(); }
 }
-

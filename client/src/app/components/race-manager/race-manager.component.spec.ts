@@ -1,14 +1,16 @@
-import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { RaceManagerComponent } from './race-manager.component';
-import { DataService } from 'src/app/data.service';
-import { TranslationService } from 'src/app/services/translation.service';
-import { ConnectionMonitorService } from 'src/app/services/connection-monitor.service';
+import { TestBed } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { FormsModule } from '@angular/forms';
+
+import { DataService } from 'src/app/data.service';
 import { TranslatePipe } from 'src/app/pipes/translate.pipe';
+import { ConnectionMonitorService } from 'src/app/services/connection-monitor.service';
+import { TranslationService } from 'src/app/services/translation.service';
+
+import { RaceManagerComponent } from './race-manager.component';
 
 describe('RaceManagerComponent', () => {
   let component: RaceManagerComponent;

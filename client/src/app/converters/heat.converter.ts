@@ -1,12 +1,12 @@
-import { com } from "../proto/message";
-import { Heat } from "../race/heat";
-import { DriverHeatData } from "../race/driver_heat_data";
-import { RaceParticipant } from "../race/race_participant";
-import { Driver } from "../models/driver";
-import { DriverConverter } from "./driver.converter";
-import { TeamConverter } from "./team.converter";
-import { RaceParticipantConverter } from "./race_participant.converter";
+import { Driver } from "src/app/models/driver";
+import { com } from "src/app/proto/message";
+import { DriverHeatData } from "src/app/race/driver_heat_data";
+import { Heat } from "src/app/race/heat";
+import { RaceParticipant } from "src/app/race/race_participant";
+
 import { ConverterCache } from "./converter_cache";
+import { DriverConverter } from "./driver.converter";
+import { RaceParticipantConverter } from "./race_participant.converter";
 
 export class HeatConverter {
     private static participantCache = new Map<string, RaceParticipant>();

@@ -1,18 +1,18 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
+
 import { DataService } from 'src/app/data.service';
-import { RaceService } from 'src/app/services/race.service';
-import { RaceFlagService } from 'src/app/services/race-flag.service';
-import { DriverHeatData } from 'src/app/race/driver_heat_data';
+import { FinishMethod } from 'src/app/models/heat_scoring';
 import { Race } from 'src/app/models/race';
 import { Track } from 'src/app/models/track';
-import { Heat } from 'src/app/race/heat';
-import { FinishMethod } from 'src/app/models/heat_scoring';
 import { com } from 'src/app/proto/message';
-import { playSound, createTTSContext } from 'src/app/utils/audio';
+import { DriverHeatData } from 'src/app/race/driver_heat_data';
+import { Heat } from 'src/app/race/heat';
 import { RaceConnectionService } from 'src/app/services/race-connection.service';
-
+import { RaceFlagService } from 'src/app/services/race-flag.service';
+import { RaceService } from 'src/app/services/race.service';
+import { playSound, createTTSContext } from 'src/app/utils/audio';
 
 @Component({
   selector: 'app-driver-station',

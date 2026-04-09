@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { DefaultRacedaySetupHarnessBase } from './default-raceday-setup.harness.base';
 
 export class DefaultRacedaySetupHarnessE2e implements DefaultRacedaySetupHarnessBase {
@@ -90,5 +91,4 @@ export class DefaultRacedaySetupHarnessE2e implements DefaultRacedaySetupHarness
     return await dropdown.isVisible();
   }
 }
-
 

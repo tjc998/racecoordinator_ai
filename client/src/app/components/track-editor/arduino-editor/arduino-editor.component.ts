@@ -1,12 +1,13 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { ArduinoConfig, LedString, MAX_DIGITAL_PINS, MAX_ANALOG_PINS } from '../../../models/track';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { Lane } from '../../../models/lane';
-import { DataService } from '../../../data.service';
-import { TranslationService } from '../../../services/translation.service';
-import { com } from '../../../proto/message';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Subscription, Subject, timer } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+
+import { DataService } from 'src/app/data.service';
+import { Lane } from 'src/app/models/lane';
+import { ArduinoConfig, LedString, MAX_DIGITAL_PINS, MAX_ANALOG_PINS } from 'src/app/models/track';
+import { com } from 'src/app/proto/message';
+import { TranslationService } from 'src/app/services/translation.service';
 
 interface PinAction {
   label: string;

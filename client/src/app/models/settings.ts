@@ -1,4 +1,4 @@
-import { AnchorPoint } from '../components/raceday/column_definition';
+import { AnchorPoint } from 'src/app/components/raceday/column_definition';
 
 export enum ColumnVisibility {
   Always = 'Always',
@@ -62,5 +62,3 @@ export class Settings {
     'imageset_fuel-gauge-builtin': ColumnVisibility.FuelRaceOnly
   };
 }
-
-

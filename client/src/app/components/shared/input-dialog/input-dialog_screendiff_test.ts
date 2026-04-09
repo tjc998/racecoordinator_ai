@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../../testing/test-setup_helper';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { InputDialogHarnessE2e } from './testing/input-dialog.harness.e2e';
 
 test.describe('Input Dialog Visuals', () => {

@@ -1,8 +1,10 @@
 import { Component } from '@angular/core';
 import { ChildrenOutletContexts, Router } from '@angular/router';
-import { slideInAnimation } from './utils/animations';
-import { DataService } from './data.service';
+
+import { slideInAnimation } from 'src/app/utils/animations';
+
 import { AnalyticsService } from './analytics.service';
+import { DataService } from './data.service';
 
 @Component({
   selector: 'app-root',

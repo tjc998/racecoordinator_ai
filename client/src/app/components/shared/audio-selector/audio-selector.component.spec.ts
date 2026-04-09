@@ -1,12 +1,12 @@
-
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { AudioSelectorComponent } from './audio-selector.component';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
+
 import { DataService } from 'src/app/data.service';
 import { TranslationService } from 'src/app/services/translation.service';
-import { FormsModule } from '@angular/forms';
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { of } from 'rxjs';
+
+import { AudioSelectorComponent } from './audio-selector.component';
 import { AudioSelectorHarness } from './testing/audio-selector.harness';
 
 @Component({ selector: 'app-item-selector', template: '', standalone: false })

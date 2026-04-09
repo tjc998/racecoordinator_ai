@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../testing/test-setup_helper';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { DriverEditorHarnessE2e } from './testing/driver-editor.harness.e2e';
 
 test.describe('Driver Editor Visuals', () => {

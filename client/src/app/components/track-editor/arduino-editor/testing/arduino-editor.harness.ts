@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { ArduinoEditorHarnessBase } from './arduino-editor.harness.base';
 
 export class ArduinoEditorHarness extends ComponentHarness implements ArduinoEditorHarnessBase {

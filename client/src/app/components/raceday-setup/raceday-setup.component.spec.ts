@@ -1,17 +1,18 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
-import { RacedaySetupComponent } from './raceday-setup.component';
-import { FileSystemService } from 'src/app/services/file-system.service';
 import { Compiler, Injector, ChangeDetectorRef } from '@angular/core';
-import { SharedModule } from 'src/app/components/shared/shared.module';
-import { DataService } from 'src/app/data.service';
-import { SettingsService } from 'src/app/services/settings.service';
-import { DynamicComponentService } from 'src/app/services/dynamic-component.service';
+import { ComponentFixture, TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
 import { BehaviorSubject, of } from 'rxjs';
 
-import { TranslationService } from 'src/app/services/translation.service';
-import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
-import { Settings } from 'src/app/models/settings';
 import { AnalyticsService } from 'src/app/analytics.service';
+import { SharedModule } from 'src/app/components/shared/shared.module';
+import { DataService } from 'src/app/data.service';
+import { Settings } from 'src/app/models/settings';
+import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
+import { DynamicComponentService } from 'src/app/services/dynamic-component.service';
+import { FileSystemService } from 'src/app/services/file-system.service';
+import { SettingsService } from 'src/app/services/settings.service';
+import { TranslationService } from 'src/app/services/translation.service';
+
+import { RacedaySetupComponent } from './raceday-setup.component';
 
 describe('RacedaySetupComponent', () => {
   let component: RacedaySetupComponent;

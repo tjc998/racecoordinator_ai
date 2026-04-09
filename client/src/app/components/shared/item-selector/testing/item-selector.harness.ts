@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { ItemSelectorHarnessBase } from './item-selector.harness.base';
 
 export class ItemSelectorHarness extends ComponentHarness implements ItemSelectorHarnessBase {

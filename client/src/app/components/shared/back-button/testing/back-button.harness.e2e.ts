@@ -1,4 +1,5 @@
 import { Locator, Page } from '@playwright/test';
+
 import { BackButtonHarnessBase } from './back-button.harness.base';
 
 export class BackButtonHarnessE2e implements BackButtonHarnessBase {

@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { AcknowledgementModalHarnessBase } from './acknowledgement-modal.harness.base';
 
 export class AcknowledgementModalHarnessE2e implements AcknowledgementModalHarnessBase {

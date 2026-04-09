@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { Track } from '../models/track';
-import { Driver } from '../models/driver';
-import { Race } from '../models/race';
 import { BehaviorSubject } from 'rxjs';
-import { Heat } from '../race/heat';
-import { RaceParticipant } from '../models/race_participant';
+
+import { Driver } from 'src/app/models/driver';
+import { Race } from 'src/app/models/race';
+import { RaceParticipant } from 'src/app/models/race_participant';
+import { Heat } from 'src/app/race/heat';
 
 @Injectable({
     providedIn: 'root'

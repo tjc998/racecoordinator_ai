@@ -1,4 +1,5 @@
 import { Locator, Page } from '@playwright/test';
+
 import { HelpOverlayHarnessBase } from './help-overlay.harness.base';
 
 export class HelpOverlayHarnessE2e implements HelpOverlayHarnessBase {

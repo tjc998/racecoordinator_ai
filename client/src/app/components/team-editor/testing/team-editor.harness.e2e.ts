@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { TeamEditorHarnessBase } from './team-editor.harness.base';
 
 export class TeamEditorHarnessE2e implements TeamEditorHarnessBase {
@@ -55,4 +56,3 @@ export class TeamEditorHarnessE2e implements TeamEditorHarnessBase {
     return await this.saveBtn.isEnabled();
   }
 }
-

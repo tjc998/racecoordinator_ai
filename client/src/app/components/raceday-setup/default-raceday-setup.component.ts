@@ -1,17 +1,17 @@
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Component, OnInit, AfterViewInit, ChangeDetectorRef, HostListener, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
+import { Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
+
 import { DataService } from 'src/app/data.service';
 import { Driver } from 'src/app/models/driver';
 import { Race } from 'src/app/models/race';
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { RaceService } from 'src/app/services/race.service';
-import { forkJoin } from 'rxjs';
-import { Router } from '@angular/router';
-import { TranslationService } from 'src/app/services/translation.service';
-import { SettingsService } from 'src/app/services/settings.service';
-import { Settings } from 'src/app/models/settings';
+import { Team } from 'src/app/models/team';
 import { FileSystemService } from 'src/app/services/file-system.service';
 import { HelpService } from 'src/app/services/help.service';
-import { Team } from 'src/app/models/team';
+import { RaceService } from 'src/app/services/race.service';
+import { SettingsService } from 'src/app/services/settings.service';
+import { TranslationService } from 'src/app/services/translation.service';
 
 type Participant = Driver | Team;
 

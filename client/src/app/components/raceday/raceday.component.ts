@@ -1,4 +1,3 @@
-
 import {
   Component,
   OnInit,
@@ -13,22 +12,20 @@ import {
   ChangeDetectorRef,
   ElementRef
 } from '@angular/core';
-import { CommonModule, NgIf } from '@angular/common';
-import { SharedModule } from 'src/app/components/shared/shared.module';
-import { FileSystemService } from 'src/app/services/file-system.service';
-import { DefaultRacedayComponent } from './default-raceday.component';
-import { CanComponentDeactivate } from '../../guards/raceday.guard';
+import { Router } from '@angular/router';
 import { Observable, of } from 'rxjs';
 
 import { DataService } from 'src/app/data.service';
-import { RaceService } from 'src/app/services/race.service';
-import { Router } from '@angular/router';
-import { TranslationService } from 'src/app/services/translation.service';
+import { CanComponentDeactivate } from 'src/app/guards/raceday.guard';
 import { DynamicComponentService } from 'src/app/services/dynamic-component.service';
-import { SettingsService } from 'src/app/services/settings.service';
-import { RaceFlagService } from 'src/app/services/race-flag.service';
+import { FileSystemService } from 'src/app/services/file-system.service';
 import { RaceConnectionService } from 'src/app/services/race-connection.service';
+import { RaceFlagService } from 'src/app/services/race-flag.service';
+import { RaceService } from 'src/app/services/race.service';
+import { SettingsService } from 'src/app/services/settings.service';
+import { TranslationService } from 'src/app/services/translation.service';
 
+import { DefaultRacedayComponent } from './default-raceday.component';
 
 // Base class for custom components to extend, providing common services
 class CustomRacedayBaseComponent extends DefaultRacedayComponent {

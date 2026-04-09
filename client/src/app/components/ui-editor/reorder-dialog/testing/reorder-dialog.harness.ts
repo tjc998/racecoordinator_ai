@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { ReorderDialogHarnessBase } from './reorder-dialog.harness.base';
 
 export class ReorderDialogHarness extends ComponentHarness implements ReorderDialogHarnessBase {

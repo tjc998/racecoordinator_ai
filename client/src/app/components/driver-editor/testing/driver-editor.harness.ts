@@ -1,6 +1,7 @@
 import { ComponentHarness } from '@angular/cdk/testing';
-import { DriverEditorHarnessBase } from './driver-editor.harness.base';
+
 import { ConfirmationModalHarness } from '../../shared/confirmation-modal/testing/confirmation-modal.harness';
+import { DriverEditorHarnessBase } from './driver-editor.harness.base';
 
 export class DriverEditorHarness extends ComponentHarness implements DriverEditorHarnessBase {
   static hostSelector = DriverEditorHarnessBase.hostSelector;

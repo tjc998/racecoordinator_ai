@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output, OnInit, OnChanges, HostListener, ChangeDetectorRef, SimpleChanges } from '@angular/core';
+
 import { DataService } from 'src/app/data.service';
 import { com } from 'src/app/proto/message';
 import { TranslationService } from 'src/app/services/translation.service';

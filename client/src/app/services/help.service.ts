@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { AnalyticsService } from '../analytics.service';
+
+import { AnalyticsService } from 'src/app/analytics.service';
 
 export interface GuideStep {
   targetId?: string; // ID of the element to highlight. If null/undefined, it's a general modal.

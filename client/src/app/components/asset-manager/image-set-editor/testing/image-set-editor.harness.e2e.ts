@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { ImageSetEditorHarnessBase } from './image-set-editor.harness.base';
 
 export class ImageSetEditorHarnessE2e implements ImageSetEditorHarnessBase {

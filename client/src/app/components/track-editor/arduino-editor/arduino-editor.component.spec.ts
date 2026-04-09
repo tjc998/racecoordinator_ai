@@ -1,15 +1,17 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { ArduinoEditorComponent } from './arduino-editor.component';
-import { TranslationService } from '../../../services/translation.service';
-import { TranslatePipe } from '../../../pipes/translate.pipe';
-import { TranslationServiceMock } from '../../../testing/translation-service.mock';
-import { ArduinoConfig, MAX_DIGITAL_PINS, MAX_ANALOG_PINS } from '../../../models/track';
-import { Lane } from '../../../models/lane';
-import { DataService } from '../../../data.service';
 import { of, Subject } from 'rxjs';
-import { com } from '../../../proto/message';
+
+import { DataService } from 'src/app/data.service';
+import { Lane } from 'src/app/models/lane';
+import { ArduinoConfig, MAX_DIGITAL_PINS, MAX_ANALOG_PINS } from 'src/app/models/track';
+import { TranslatePipe } from 'src/app/pipes/translate.pipe';
+import { com } from 'src/app/proto/message';
+import { TranslationService } from 'src/app/services/translation.service';
+import { TranslationServiceMock } from 'src/app/testing/translation-service.mock';
+
+import { ArduinoEditorComponent } from './arduino-editor.component';
 
 // BEHAVIOR_VOLTAGE_LEVEL_BASE = 7000
 const VOLTAGE_BASE = 7000;

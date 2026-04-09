@@ -1,7 +1,8 @@
-import { Track } from "../models/track";
-import { com } from "../proto/message";
-import { LaneConverter } from "./lane.converter";
+import { Track } from "src/app/models/track";
+import { com } from "src/app/proto/message";
+
 import { ConverterCache } from "./converter_cache";
+import { LaneConverter } from "./lane.converter";
 
 export class TrackConverter {
     private static cache = new ConverterCache<Track>();

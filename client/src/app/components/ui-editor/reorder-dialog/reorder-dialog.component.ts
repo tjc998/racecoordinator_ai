@@ -1,10 +1,11 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef, ApplicationRef, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { AnchorPoint } from '../../raceday/column_definition';
-import { TranslationService } from '../../../services/translation.service';
-import { Settings, ColumnVisibility } from '../../../models/settings';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef, ApplicationRef, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
+
+import { AnchorPoint } from 'src/app/components/raceday/column_definition';
+import { Settings, ColumnVisibility } from 'src/app/models/settings';
+import { TranslationService } from 'src/app/services/translation.service';
 
 export interface ReorderDialogData {
   availableValues: { key: string; label: string }[];
@@ -658,4 +659,3 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
     return index;
   }
 }
-

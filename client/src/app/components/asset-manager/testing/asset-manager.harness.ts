@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { AssetManagerHarnessBase } from './asset-manager.harness.base';
 
 export class AssetManagerHarness extends ComponentHarness implements AssetManagerHarnessBase {

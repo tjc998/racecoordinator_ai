@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../../testing/test-setup_helper';
 
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
 
 test.describe('Manager Header Component Visuals', () => {
   test.beforeEach(async ({ page }) => {

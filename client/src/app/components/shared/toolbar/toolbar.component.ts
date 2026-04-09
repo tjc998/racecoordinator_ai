@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
-import { UndoManager } from '../undo-redo-controls/undo-manager';
+
 import { AnalyticsService } from 'src/app/analytics.service';
+import { UndoManager } from 'src/app/components/shared/undo-redo-controls/undo-manager';
 import { TranslationService } from 'src/app/services/translation.service';
 
 @Component({

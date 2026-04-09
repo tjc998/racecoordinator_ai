@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { ImageSelectorHarnessBase } from './image-selector.harness.base';
 
 export class ImageSelectorHarness extends ComponentHarness implements ImageSelectorHarnessBase {

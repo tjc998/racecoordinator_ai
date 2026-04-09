@@ -1,19 +1,21 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { TeamManagerComponent } from './team-manager.component';
-import { DataService } from 'src/app/data.service';
-import { TranslationService } from 'src/app/services/translation.service';
-import { Router, ActivatedRoute } from '@angular/router';
-import { ChangeDetectorRef } from '@angular/core';
-import { ConnectionMonitorService, ConnectionState } from '../../services/connection-monitor.service';
-import { HelpService } from '../../services/help.service';
-import { SettingsService } from '../../services/settings.service';
-import { of, BehaviorSubject } from 'rxjs';
-import { Team } from 'src/app/models/team';
-import { Driver } from 'src/app/models/driver';
-import { SharedModule } from 'src/app/components/shared/shared.module';
-import { AvatarUrlPipe } from 'src/app/pipes/avatar-url.pipe';
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+import { ChangeDetectorRef } from '@angular/core';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { Router, ActivatedRoute } from '@angular/router';
+import { of, BehaviorSubject } from 'rxjs';
+
+import { SharedModule } from 'src/app/components/shared/shared.module';
+import { DataService } from 'src/app/data.service';
+import { Driver } from 'src/app/models/driver';
+import { Team } from 'src/app/models/team';
+import { AvatarUrlPipe } from 'src/app/pipes/avatar-url.pipe';
+import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
+import { HelpService } from 'src/app/services/help.service';
+import { SettingsService } from 'src/app/services/settings.service';
+import { TranslationService } from 'src/app/services/translation.service';
+
+import { TeamManagerComponent } from './team-manager.component';
 import { TeamManagerHarness } from './testing/team-manager.harness';
 
 describe('TeamManagerComponent', () => {

@@ -1,14 +1,15 @@
-
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
-import { DriverEditorComponent } from './driver-editor.component';
-import { DataService } from 'src/app/data.service';
-import { TranslationService } from 'src/app/services/translation.service';
-import { ConnectionMonitorService } from '../../services/connection-monitor.service';
+import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { of, BehaviorSubject, throwError } from 'rxjs';
-import { FormsModule } from '@angular/forms';
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+
+import { DataService } from 'src/app/data.service';
 import { Driver } from 'src/app/models/driver';
+import { ConnectionMonitorService } from 'src/app/services/connection-monitor.service';
+import { TranslationService } from 'src/app/services/translation.service';
+
+import { DriverEditorComponent } from './driver-editor.component';
 
 // Mock Child Components
 @Component({ selector: 'app-back-button', template: '', standalone: false })

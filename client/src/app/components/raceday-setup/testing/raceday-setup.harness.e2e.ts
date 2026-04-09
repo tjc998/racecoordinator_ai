@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { RacedaySetupHarnessBase } from './raceday-setup.harness.base';
 
 export class RacedaySetupHarnessE2e implements RacedaySetupHarnessBase {

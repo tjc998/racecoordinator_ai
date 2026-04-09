@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../testing/test-setup_helper';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { TeamManagerHarnessE2e } from './testing/team-manager.harness.e2e';
 
 test.describe('Team Manager Visuals', () => {
@@ -60,4 +62,3 @@ test.describe('Team Manager Visuals', () => {
     await expect(page).toHaveScreenshot('team-manager-guided-help.png');
   });
 });
-

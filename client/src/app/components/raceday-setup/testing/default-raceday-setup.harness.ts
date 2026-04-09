@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { DefaultRacedaySetupHarnessBase } from './default-raceday-setup.harness.base';
 
 export class DriverItemHarness extends ComponentHarness {
@@ -184,5 +185,4 @@ export class DefaultRacedaySetupHarness extends ComponentHarness implements Defa
     return dropdown !== null;
   }
 }
-
 

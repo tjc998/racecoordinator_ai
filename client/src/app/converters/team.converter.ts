@@ -1,5 +1,6 @@
-import { Team } from "../models/team";
-import { com } from "../proto/message";
+import { Team } from "src/app/models/team";
+import { com } from "src/app/proto/message";
+
 import { ConverterCache } from "./converter_cache";
 
 export class TeamConverter {

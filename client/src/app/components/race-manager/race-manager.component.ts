@@ -1,11 +1,12 @@
 import { Component, OnInit, ChangeDetectorRef, OnDestroy, HostListener, ViewChildren, QueryList, ElementRef } from '@angular/core';
-import { DataService } from 'src/app/data.service';
 import { Router } from '@angular/router';
-import { TranslationService } from 'src/app/services/translation.service';
-import { ConnectionMonitorService, ConnectionState } from '../../services/connection-monitor.service';
-import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { HelpService, GuideStep } from '../../services/help.service';
+import { Subscription } from 'rxjs';
+
+import { DataService } from 'src/app/data.service';
+import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
+import { HelpService, GuideStep } from 'src/app/services/help.service';
+import { TranslationService } from 'src/app/services/translation.service';
 
 @Component({
   selector: 'app-race-manager',

@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { ReorderDialogHarnessBase } from './reorder-dialog.harness.base';
 
 export class ReorderDialogHarnessE2e implements ReorderDialogHarnessBase {
@@ -56,4 +57,3 @@ export class ReorderDialogHarnessE2e implements ReorderDialogHarnessBase {
     await this.cancelBtn.click();
   }
 }
-

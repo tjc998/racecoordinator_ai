@@ -1,15 +1,16 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Subscription, Subject, BehaviorSubject, Observable } from 'rxjs';
-import { DataService } from '../data.service';
-import { RaceService } from './race.service';
-import { com } from '../proto/message';
-import { RaceConverter } from '../converters/race.converter';
-import { DriverConverter } from '../converters/driver.converter';
-import { HeatConverter } from '../converters/heat.converter';
-import { RaceParticipantConverter } from '../converters/race_participant.converter';
-import { TrackConverter } from '../converters/track.converter';
-import { LaneConverter } from '../converters/lane.converter';
 
+import { DriverConverter } from 'src/app/converters/driver.converter';
+import { HeatConverter } from 'src/app/converters/heat.converter';
+import { LaneConverter } from 'src/app/converters/lane.converter';
+import { RaceConverter } from 'src/app/converters/race.converter';
+import { RaceParticipantConverter } from 'src/app/converters/race_participant.converter';
+import { TrackConverter } from 'src/app/converters/track.converter';
+import { DataService } from 'src/app/data.service';
+import { com } from 'src/app/proto/message';
+
+import { RaceService } from './race.service';
 
 import InterfaceStatus = com.antigravity.InterfaceStatus;
 
@@ -91,7 +92,6 @@ export class RaceConnectionService implements OnDestroy {
 
   private startConnection() {
     console.log('RaceConnectionService: Starting connection...');
-    
     // Clear caches to ensure fresh data for new race (mirrors DefaultRacedayComponent)
     RaceConverter.clearCache();
     DriverConverter.clearCache();

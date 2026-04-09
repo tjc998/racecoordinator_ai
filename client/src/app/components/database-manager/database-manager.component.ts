@@ -1,8 +1,9 @@
 import { Component, OnInit, HostListener, ChangeDetectorRef } from '@angular/core';
-import { DataService } from '../../data.service';
-import { SettingsService } from '../../services/settings.service';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
+
+import { DataService } from 'src/app/data.service';
+import { SettingsService } from 'src/app/services/settings.service';
 
 @Component({
   selector: 'app-database-manager',

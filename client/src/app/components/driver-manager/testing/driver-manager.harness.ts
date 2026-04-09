@@ -1,7 +1,7 @@
 import { ComponentHarness } from '@angular/cdk/testing';
-import { DriverManagerHarnessBase } from './driver-manager.harness.base';
-import { ManagerHeaderHarness } from '../../shared/manager-header/testing/manager-header.harness';
 
+import { ManagerHeaderHarness } from '../../shared/manager-header/testing/manager-header.harness';
+import { DriverManagerHarnessBase } from './driver-manager.harness.base';
 
 export class DriverManagerHarness extends ComponentHarness implements DriverManagerHarnessBase {
   static hostSelector = DriverManagerHarnessBase.hostSelector;

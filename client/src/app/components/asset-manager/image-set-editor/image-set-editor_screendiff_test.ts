@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../../testing/test-setup_helper';
+
+import { AssetManagerHarnessE2e } from 'src/app/components/asset-manager/testing/asset-manager.harness.e2e';
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { ImageSetEditorHarnessE2e } from './testing/image-set-editor.harness.e2e';
-import { AssetManagerHarnessE2e } from '../testing/asset-manager.harness.e2e';
 
 test.describe('Image Set Editor Visuals', () => {
   test.beforeEach(async ({ page }) => {
@@ -74,4 +76,3 @@ test.describe('Image Set Editor Visuals', () => {
     await expect(modalHost.locator('.modal-content')).toHaveScreenshot('image-set-editor-edit.png');
   });
 });
-

@@ -1,4 +1,5 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
+
 import { DataService } from 'src/app/data.service';
 import { TranslationService } from 'src/app/services/translation.service';
 import { playSound, mockTTSContext } from 'src/app/utils/audio';

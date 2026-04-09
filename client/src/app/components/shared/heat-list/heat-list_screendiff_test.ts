@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../../testing/test-setup_helper';
-import { HeatListHarnessE2e } from './testing/heat-list.harness.e2e';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { HeatListHarnessBase } from './testing/heat-list.harness.base';
+import { HeatListHarnessE2e } from './testing/heat-list.harness.e2e';
 
 test.describe('Heat List Visuals', () => {
   test.beforeEach(async ({ page }) => {

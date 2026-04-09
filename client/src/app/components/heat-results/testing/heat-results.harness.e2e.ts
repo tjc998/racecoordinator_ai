@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { HeatResultsHarnessBase } from './heat-results.harness.base';
 
 export class HeatResultsHarnessE2e implements HeatResultsHarnessBase {

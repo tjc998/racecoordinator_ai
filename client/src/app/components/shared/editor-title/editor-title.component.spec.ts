@@ -1,10 +1,12 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { EditorTitleComponent } from './editor-title.component';
-import { Router } from '@angular/router';
-import { TranslationService } from 'src/app/services/translation.service';
-import { EditorTitleHarness } from './testing/editor-title.harness';
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+
+import { TranslationService } from 'src/app/services/translation.service';
+
+import { EditorTitleComponent } from './editor-title.component';
+import { EditorTitleHarness } from './testing/editor-title.harness';
 
 @Component({ selector: 'app-back-button', template: '', standalone: false })
 class MockBackButtonComponent {

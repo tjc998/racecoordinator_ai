@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../testing/test-setup_helper';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { DefaultRacedaySetupHarnessE2e } from './testing/default-raceday-setup.harness.e2e';
 
 const allLanguages = ['en', 'de', 'es', 'fr', 'it', 'nl', 'pt'];
@@ -171,4 +173,3 @@ test.describe('Raceday Setup Functional - en', () => {
     });
   });
 });
-

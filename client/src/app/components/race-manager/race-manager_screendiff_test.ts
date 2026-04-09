@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../testing/test-setup_helper';
-import { RaceManagerHarnessE2e } from './testing/race-manager.harness.e2e';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { RaceManagerHarnessBase } from './testing/race-manager.harness.base';
 
 test.describe('Race Manager Visuals', () => {

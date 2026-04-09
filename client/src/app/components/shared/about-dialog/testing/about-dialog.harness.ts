@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { AboutDialogHarnessBase } from './about-dialog.harness.base';
 
 export class AboutDialogHarness extends ComponentHarness implements AboutDialogHarnessBase {

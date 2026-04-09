@@ -1,13 +1,15 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HeatResultsComponent } from './heat-results.component';
-import { RaceConnectionService } from 'src/app/services/race-connection.service';
-import { RaceService } from 'src/app/services/race.service';
 import { ChangeDetectorRef, Pipe, PipeTransform } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BehaviorSubject, of } from 'rxjs';
-import { Heat } from 'src/app/race/heat';
+
+import { Driver } from 'src/app/models/driver';
 import { Race } from 'src/app/models/race';
 import { DriverHeatData } from 'src/app/race/driver_heat_data';
-import { Driver } from 'src/app/models/driver';
+import { Heat } from 'src/app/race/heat';
+import { RaceConnectionService } from 'src/app/services/race-connection.service';
+import { RaceService } from 'src/app/services/race.service';
+
+import { HeatResultsComponent } from './heat-results.component';
 
 @Pipe({ name: 'translate', standalone: false })
 class MockTranslatePipe implements PipeTransform {

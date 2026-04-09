@@ -1,10 +1,11 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Observable, BehaviorSubject, Subject, ReplaySubject } from 'rxjs';
-import { com } from './proto/message';
 import { map } from 'rxjs/operators';
-import { SettingsService } from './services/settings.service';
-import { ArduinoConfig } from './models/track';
+
+import { ArduinoConfig } from 'src/app/models/track';
+import { com } from 'src/app/proto/message';
+import { SettingsService } from 'src/app/services/settings.service';
 
 @Injectable({
   providedIn: 'root'

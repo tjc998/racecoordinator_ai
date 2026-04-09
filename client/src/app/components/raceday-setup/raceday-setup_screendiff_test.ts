@@ -1,6 +1,7 @@
-
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../testing/test-setup_helper';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { RacedaySetupHarnessE2e } from './testing/raceday-setup.harness.e2e';
 
 test.describe('Splash Screen Visuals', () => {
@@ -73,4 +74,3 @@ test.describe('Splash Screen Visuals', () => {
     // Modal screenshot taken above, ending test
   });
 });
-

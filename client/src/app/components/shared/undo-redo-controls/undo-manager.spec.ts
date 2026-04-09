@@ -1,4 +1,5 @@
 import { fakeAsync, tick } from '@angular/core/testing';
+
 import { UndoManager, UndoConfig } from './undo-manager';
 
 interface TestItem {

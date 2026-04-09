@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../../testing/test-setup_helper';
+
+import { ItemSelectorHarnessE2e } from 'src/app/components/shared/item-selector/testing/item-selector.harness.e2e';
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { AudioSelectorHarnessE2e } from './testing/audio-selector.harness.e2e';
-import { ItemSelectorHarnessE2e } from '../item-selector/testing/item-selector.harness.e2e';
 
 test.describe('Audio Selector Visuals', () => {
   test.beforeEach(async ({ page }) => {

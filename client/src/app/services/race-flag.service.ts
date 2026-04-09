@@ -1,9 +1,11 @@
 import { Injectable } from '@angular/core';
+
+import { FinishMethod, AllowFinish, HeatScoring } from 'src/app/models/heat_scoring';
+import { com } from 'src/app/proto/message';
+import { DriverHeatData } from 'src/app/race/driver_heat_data';
+import { Heat } from 'src/app/race/heat';
+
 import { RaceService } from './race.service';
-import { com } from '../proto/message';
-import { FinishMethod, AllowFinish, HeatScoring } from '../models/heat_scoring';
-import { Heat } from '../race/heat';
-import { DriverHeatData } from '../race/driver_heat_data';
 
 export type FlagType = 'red' | 'green' | 'yellow' | 'white' | 'checkered' | 'green_yellow';
 

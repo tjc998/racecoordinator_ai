@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
+
 import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
 
 @Component({

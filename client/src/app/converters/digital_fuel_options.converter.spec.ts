@@ -1,5 +1,6 @@
+import { FuelUsageType } from "src/app/models/fuel_options";
+
 import { DigitalFuelOptionsConverter } from "./digital_fuel_options.converter";
-import { FuelUsageType } from "../models/fuel_options";
 
 describe('DigitalFuelOptionsConverter', () => {
   it('should convert from proto with default values', () => {

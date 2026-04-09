@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { AudioSelectorHarnessBase } from './audio-selector.harness.base';
 
 export class AudioSelectorHarness extends ComponentHarness implements AudioSelectorHarnessBase {

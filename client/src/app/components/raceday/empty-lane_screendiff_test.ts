@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../testing/test-setup_helper';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { DefaultRacedayHarnessE2e } from './testing/default-raceday.harness.e2e';
 
 test.describe('Raceday Visuals for Empty Lanes', () => {
@@ -209,4 +211,3 @@ test.describe('Raceday Visuals for Empty Lanes', () => {
     await expect(page).toHaveScreenshot('raceday-empty-lanes-blank-name.png', { maxDiffPixelRatio: 0.1 });
   });
 });
-

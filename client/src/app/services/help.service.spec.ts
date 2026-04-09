@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
+
+import { AnalyticsService } from 'src/app/analytics.service';
+
 import { HelpService, GuideStep } from './help.service';
-import { AnalyticsService } from '../analytics.service';
-import { take } from 'rxjs/operators';
 
 describe('HelpService', () => {
   let service: HelpService;

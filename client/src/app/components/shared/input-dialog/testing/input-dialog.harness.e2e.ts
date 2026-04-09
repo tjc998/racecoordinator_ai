@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { InputDialogHarnessBase } from './input-dialog.harness.base';
 
 export class InputDialogHarnessE2e implements InputDialogHarnessBase {

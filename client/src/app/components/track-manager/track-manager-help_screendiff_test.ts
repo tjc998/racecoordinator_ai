@@ -1,6 +1,7 @@
 import { test, expect, Page } from '@playwright/test';
-import { TestSetupHelper } from '../../testing/test-setup_helper';
-import { HelpOverlayHarnessE2e } from '../shared/help-overlay/testing/help-overlay.harness.e2e';
+
+import { HelpOverlayHarnessE2e } from 'src/app/components/shared/help-overlay/testing/help-overlay.harness.e2e';
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
 
 test.describe('Track Manager Guided Help Visuals', () => {
   test.beforeEach(async ({ page }) => {

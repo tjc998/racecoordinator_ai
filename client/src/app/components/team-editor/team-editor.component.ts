@@ -1,16 +1,17 @@
-import { Component, OnInit, ChangeDetectorRef, OnDestroy, HostListener } from '@angular/core';
-import { DataService } from 'src/app/data.service';
-import { Team } from 'src/app/models/team';
-import { Driver } from 'src/app/models/driver';
-import { Router, ActivatedRoute } from '@angular/router';
-import { TranslationService } from 'src/app/services/translation.service';
-import { ConnectionMonitorService, ConnectionState } from '../../services/connection-monitor.service';
-import { Subscription, forkJoin } from 'rxjs';
-import { UndoManager } from '../shared/undo-redo-controls/undo-manager';
-import { HelpService, GuideStep } from '../../services/help.service';
-import { SettingsService } from '../../services/settings.service';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Location } from '@angular/common';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy, HostListener } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
+import { Subscription, forkJoin } from 'rxjs';
+
+import { UndoManager } from 'src/app/components/shared/undo-redo-controls/undo-manager';
+import { DataService } from 'src/app/data.service';
+import { Driver } from 'src/app/models/driver';
+import { Team } from 'src/app/models/team';
+import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
+import { HelpService, GuideStep } from 'src/app/services/help.service';
+import { SettingsService } from 'src/app/services/settings.service';
+import { TranslationService } from 'src/app/services/translation.service';
 
 @Component({
   selector: 'app-team-editor',

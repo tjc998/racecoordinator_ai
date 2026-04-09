@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { EditorTitleHarnessBase } from './editor-title.harness.base';
 
 export class EditorTitleHarness extends ComponentHarness implements EditorTitleHarnessBase {

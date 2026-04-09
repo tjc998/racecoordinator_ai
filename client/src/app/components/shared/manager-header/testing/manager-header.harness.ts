@@ -1,7 +1,8 @@
 import { ComponentHarness } from '@angular/cdk/testing';
-import { ManagerHeaderHarnessBase } from './manager-header.harness.base';
+
 import { BackButtonHarness } from '../../back-button/testing/back-button.harness';
 import { ToolbarHarness } from '../../toolbar/testing/toolbar.harness';
+import { ManagerHeaderHarnessBase } from './manager-header.harness.base';
 
 export class ManagerHeaderHarness extends ComponentHarness implements ManagerHeaderHarnessBase {
   static hostSelector = ManagerHeaderHarnessBase.hostSelector;

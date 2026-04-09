@@ -1,14 +1,14 @@
 import { Component, OnInit, ChangeDetectorRef, OnDestroy, HostListener, ViewChildren, QueryList, ElementRef } from '@angular/core';
+import { Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
+import { Subscription, forkJoin } from 'rxjs';
+
 import { DataService } from 'src/app/data.service';
 import { Driver } from 'src/app/models/driver';
-import { Router } from '@angular/router';
+import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
+import { HelpService, GuideStep } from 'src/app/services/help.service';
+import { SettingsService } from 'src/app/services/settings.service';
 import { TranslationService } from 'src/app/services/translation.service';
-import { ConnectionMonitorService, ConnectionState } from '../../services/connection-monitor.service';
-import { Subscription, forkJoin } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
-import { HelpService, GuideStep } from '../../services/help.service';
-import { SettingsService } from '../../services/settings.service';
-
 
 @Component({
   selector: 'app-driver-manager',
@@ -339,4 +339,3 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
     this.helpService.startGuide(steps);
   }
 }
-

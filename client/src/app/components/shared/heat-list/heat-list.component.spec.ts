@@ -1,9 +1,11 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { TranslatePipe } from 'src/app/pipes/translate.pipe';
+import { TranslationService } from 'src/app/services/translation.service';
+
 import { HeatListComponent } from './heat-list.component';
-import { TranslatePipe } from '../../../pipes/translate.pipe';
-import { TranslationService } from '../../../services/translation.service';
 import { HeatListHarness } from './testing/heat-list.harness';
 
 describe('HeatListComponent', () => {

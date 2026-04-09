@@ -1,6 +1,4 @@
-
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../testing/test-setup_helper';
 
 test.describe('Splash Screen Version', () => {
   test.beforeEach(async ({ page }) => {

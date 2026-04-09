@@ -1,15 +1,16 @@
-
-import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
-import { UIEditorComponent } from './ui-editor.component';
-import { SettingsService } from 'src/app/services/settings.service';
-import { FileSystemService } from 'src/app/services/file-system.service';
-import { DataService } from 'src/app/data.service';
-import { Router } from '@angular/router';
 import { ChangeDetectorRef, Component, Input, Output, EventEmitter, Pipe, PipeTransform } from '@angular/core';
+import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { of, throwError, delay } from 'rxjs';
+
+import { AnchorPoint } from 'src/app/components/raceday/column_definition';
+import { DataService } from 'src/app/data.service';
 import { Settings } from 'src/app/models/settings';
-import { AnchorPoint } from '../raceday/column_definition';
+import { FileSystemService } from 'src/app/services/file-system.service';
+import { SettingsService } from 'src/app/services/settings.service';
+
+import { UIEditorComponent } from './ui-editor.component';
 
 @Component({ selector: 'app-image-selector', template: '', standalone: false })
 class MockImageSelectorComponent {

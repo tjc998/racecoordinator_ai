@@ -1,5 +1,5 @@
-import { Model } from "./model";
 import { Lane } from "./lane";
+import { Model } from "./model";
 
 export const MAX_DIGITAL_PINS = 60;
 export const MAX_ANALOG_PINS = 16;

@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../../testing/test-setup_helper';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { ArduinoSummaryHarnessE2e } from './testing/arduino-summary.harness.e2e';
 
 test.describe('Arduino Summary Component Visuals', () => {
@@ -56,4 +58,3 @@ test.describe('Arduino Summary Component Visuals', () => {
     await expect(page).toHaveScreenshot('arduino-summary-with-relays.png');
   });
 });
-

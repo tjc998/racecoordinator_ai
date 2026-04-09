@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { HeatResultsHarnessBase } from './heat-results.harness.base';
 
 export class HeatResultsHarness extends ComponentHarness implements HeatResultsHarnessBase {

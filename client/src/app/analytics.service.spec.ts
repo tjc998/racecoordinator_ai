@@ -1,10 +1,12 @@
+import { DOCUMENT } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { Router, NavigationEnd } from '@angular/router';
-import { AnalyticsService } from './analytics.service';
-import { SettingsService } from './services/settings.service';
-import { Settings } from './models/settings';
-import { DOCUMENT } from '@angular/common';
 import { Subject, of, throwError } from 'rxjs';
+
+import { Settings } from 'src/app/models/settings';
+import { SettingsService } from 'src/app/services/settings.service';
+
+import { AnalyticsService } from './analytics.service';
 import { DataService } from './data.service';
 
 describe('AnalyticsService', () => {

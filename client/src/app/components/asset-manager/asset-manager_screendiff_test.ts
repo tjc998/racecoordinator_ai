@@ -1,6 +1,7 @@
-
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../testing/test-setup_helper';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { AssetManagerHarnessE2e } from './testing/asset-manager.harness.e2e';
 
 test.describe('Asset Manager Visuals', () => {
@@ -61,4 +62,3 @@ test.describe('Asset Manager Visuals', () => {
 
   // Navigation test removed as it has no screenshot and is covered by unit tests
 });
-

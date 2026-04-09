@@ -1,11 +1,12 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
+import { Subscription } from 'rxjs';
+
 import { DataService } from 'src/app/data.service';
 import { com } from 'src/app/proto/message';
-import { forkJoin } from 'rxjs';
+import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
 import { TranslationService } from 'src/app/services/translation.service';
-import { Router } from '@angular/router';
-import { ConnectionMonitorService, ConnectionState } from '../../services/connection-monitor.service';
-import { Subscription } from 'rxjs';
 import { playSound, mockTTSContext } from 'src/app/utils/audio';
 
 // Interface matching the mock/view needs, mapped from Protobuf

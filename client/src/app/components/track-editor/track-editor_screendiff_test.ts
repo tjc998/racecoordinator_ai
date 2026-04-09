@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../testing/test-setup_helper';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { TrackEditorHarnessE2e } from './testing/track-editor.harness.e2e';
-import { ConfirmationModalHarnessE2e } from '../shared/confirmation-modal/testing/confirmation-modal.harness.e2e';
 
 test.describe('Track Editor Visuals', () => {
   test.beforeEach(async ({ page }) => {

@@ -1,6 +1,7 @@
 import { ComponentHarness } from '@angular/cdk/testing';
-import { UIEditorHarnessBase } from './ui-editor.harness.base';
+
 import { ReorderDialogHarness } from '..//reorder-dialog/testing/reorder-dialog.harness';
+import { UIEditorHarnessBase } from './ui-editor.harness.base';
 
 export class UIEditorHarness extends ComponentHarness implements UIEditorHarnessBase {
   static hostSelector = UIEditorHarnessBase.hostSelector;

@@ -1,7 +1,8 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, interval, Subscription, of } from 'rxjs';
 import { switchMap, catchError, map, retry, timeout } from 'rxjs/operators';
-import { DataService } from '../data.service';
+
+import { DataService } from 'src/app/data.service';
 
 export enum ConnectionState {
   CONNECTED = 'CONNECTED',

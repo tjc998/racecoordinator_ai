@@ -1,17 +1,18 @@
-import { Component, OnInit, ChangeDetectorRef, HostListener, OnDestroy, ViewChildren, QueryList } from '@angular/core';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { DataService } from '../../data.service';
-import { Track, ArduinoConfig, LedString, MAX_DIGITAL_PINS, MAX_ANALOG_PINS } from '../../models/track';
-import { Lane } from '../../models/lane';
-import { Router, ActivatedRoute } from '@angular/router';
-import { TranslationService } from '../../services/translation.service';
-import { HelpService, GuideStep } from '../../services/help.service';
-import { SettingsService } from '../../services/settings.service';
-import { UndoManager } from '../shared/undo-redo-controls/undo-manager';
-import { BehaviorSubject, Observable, interval, Subscription, of } from 'rxjs';
-import { com } from '../../proto/message';
 import { Location } from '@angular/common';
-import { ArduinoEditorComponent } from './arduino-editor/arduino-editor.component';
+import { Component, OnInit, ChangeDetectorRef, HostListener, OnDestroy, ViewChildren, QueryList } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
+import { BehaviorSubject, Observable, interval, Subscription, of } from 'rxjs';
+
+import { UndoManager } from 'src/app/components/shared/undo-redo-controls/undo-manager';
+import { ArduinoEditorComponent } from 'src/app/components/track-editor/arduino-editor/arduino-editor.component';
+import { DataService } from 'src/app/data.service';
+import { Lane } from 'src/app/models/lane';
+import { Track, ArduinoConfig, LedString, MAX_DIGITAL_PINS, MAX_ANALOG_PINS } from 'src/app/models/track';
+import { com } from 'src/app/proto/message';
+import { HelpService, GuideStep } from 'src/app/services/help.service';
+import { SettingsService } from 'src/app/services/settings.service';
+import { TranslationService } from 'src/app/services/translation.service';
 
 @Component({
   selector: 'app-track-editor',

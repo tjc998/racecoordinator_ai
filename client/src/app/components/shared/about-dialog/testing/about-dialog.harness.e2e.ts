@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { AboutDialogHarnessBase } from './about-dialog.harness.base';
 
 export class AboutDialogHarnessE2e implements AboutDialogHarnessBase {

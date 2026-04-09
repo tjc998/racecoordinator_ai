@@ -1,6 +1,7 @@
 import { ComponentHarness } from '@angular/cdk/testing';
-import { TrackManagerHarnessBase } from './track-manager.harness.base';
+
 import { ArduinoSummaryHarness } from '..//arduino-summary/testing/arduino-summary.harness';
+import { TrackManagerHarnessBase } from './track-manager.harness.base';
 
 export class TrackManagerHarness extends ComponentHarness implements TrackManagerHarnessBase {
   static hostSelector = TrackManagerHarnessBase.hostSelector;

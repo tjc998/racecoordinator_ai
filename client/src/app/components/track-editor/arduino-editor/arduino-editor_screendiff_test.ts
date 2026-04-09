@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../../testing/test-setup_helper';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { ArduinoEditorHarnessE2e } from './testing/arduino-editor.harness.e2e';
-import { InputDialogHarnessE2e } from '../../shared/input-dialog/testing/input-dialog.harness.e2e';
 
 async function waitForBoardImage(page: any, root: any) {
   const boardImg = root.locator('.board-image');
@@ -313,4 +314,3 @@ test.describe('Arduino Editor RGB LED Visuals', () => {
     await expect(ledSection).toHaveScreenshot('arduino-editor-led-config-expanded.png');
   });
 });
-

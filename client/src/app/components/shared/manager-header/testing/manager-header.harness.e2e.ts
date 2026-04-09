@@ -1,7 +1,8 @@
 import { Locator, Page } from '@playwright/test';
-import { ManagerHeaderHarnessBase } from './manager-header.harness.base';
+
 import { BackButtonHarnessE2e } from '../../back-button/testing/back-button.harness.e2e';
 import { ToolbarHarnessE2e } from '../../toolbar/testing/toolbar.harness.e2e';
+import { ManagerHeaderHarnessBase } from './manager-header.harness.base';
 
 export class ManagerHeaderHarnessE2e implements ManagerHeaderHarnessBase {
   constructor(private locator: Locator, private page?: Page) {}

@@ -1,11 +1,12 @@
-import { Race } from "../models/race";
-import { com } from "../proto/message";
-import { TrackConverter } from "./track.converter";
-import { ConverterCache } from "./converter_cache";
-import { HeatScoring, FinishMethod, HeatRanking, HeatRankingTiebreaker, AllowFinish } from "../models/heat_scoring";
-import { OverallScoring, OverallRanking, OverallRankingTiebreaker } from "../models/overall_scoring";
+import { HeatScoring, FinishMethod, HeatRanking, HeatRankingTiebreaker, AllowFinish } from "src/app/models/heat_scoring";
+import { OverallScoring, OverallRanking, OverallRankingTiebreaker } from "src/app/models/overall_scoring";
+import { Race } from "src/app/models/race";
+import { com } from "src/app/proto/message";
+
 import { AnalogFuelOptionsConverter } from "./analog_fuel_options.converter";
+import { ConverterCache } from "./converter_cache";
 import { DigitalFuelOptionsConverter } from "./digital_fuel_options.converter";
+import { TrackConverter } from "./track.converter";
 
 export class RaceConverter {
     private static cache = new ConverterCache<Race>();

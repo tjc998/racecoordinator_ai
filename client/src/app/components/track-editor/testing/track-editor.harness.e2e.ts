@@ -1,6 +1,7 @@
 import { Locator } from '@playwright/test';
-import { TrackEditorHarnessBase } from './track-editor.harness.base';
+
 import { ArduinoEditorHarnessE2e } from '..//arduino-editor/testing/arduino-editor.harness.e2e';
+import { TrackEditorHarnessBase } from './track-editor.harness.base';
 
 export class TrackEditorHarnessE2e implements TrackEditorHarnessBase {
   constructor(private locator: Locator) {}
@@ -80,4 +81,3 @@ export class TrackEditorHarnessE2e implements TrackEditorHarnessBase {
     await this.locator.page().waitForSelector('app-back-button app-confirmation-modal .modal-content', { timeout });
   }
 }
-

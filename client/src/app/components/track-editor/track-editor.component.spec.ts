@@ -1,18 +1,19 @@
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import { Component, Input, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick, flush, discardPeriodicTasks } from '@angular/core/testing';
-import { TrackEditorComponent } from './track-editor.component';
-import { DataService } from '../../data.service';
-import { TranslationService } from '../../services/translation.service';
+import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError, BehaviorSubject } from 'rxjs';
-import { TranslatePipe } from '../../pipes/translate.pipe';
-import { HelpService } from '../../services/help.service';
-import { FormsModule } from '@angular/forms';
-import { SettingsService } from '../../services/settings.service';
-import { Settings } from '../../models/settings';
-import { Component, Input, NO_ERRORS_SCHEMA } from '@angular/core';
-import { Lane } from '../../models/lane';
-import { com } from '../../proto/message';
-import { DragDropModule } from '@angular/cdk/drag-drop';
+
+import { DataService } from 'src/app/data.service';
+import { Lane } from 'src/app/models/lane';
+import { Settings } from 'src/app/models/settings';
+import { TranslatePipe } from 'src/app/pipes/translate.pipe';
+import { HelpService } from 'src/app/services/help.service';
+import { SettingsService } from 'src/app/services/settings.service';
+import { TranslationService } from 'src/app/services/translation.service';
+
+import { TrackEditorComponent } from './track-editor.component';
 
 // TODO(aufderheide): Move MockDataService to a shared test file and 
 // allow users of it to customize it beyond the simple defaults.

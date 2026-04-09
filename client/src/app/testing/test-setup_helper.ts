@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+
 import { com } from '../proto/message';
 
 export interface SetupOptions {

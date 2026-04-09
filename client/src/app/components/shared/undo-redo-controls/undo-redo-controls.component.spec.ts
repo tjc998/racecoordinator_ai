@@ -1,9 +1,10 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { UndoRedoControlsComponent } from './undo-redo-controls.component';
-import { UndoManager } from './undo-manager';
 import { Pipe, PipeTransform } from '@angular/core';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+
 import { UndoRedoControlsHarness } from './testing/undo-redo-controls.harness';
+import { UndoManager } from './undo-manager';
+import { UndoRedoControlsComponent } from './undo-redo-controls.component';
 
 @Pipe({
   name: 'translate',

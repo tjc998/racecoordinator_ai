@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { ToolbarHarnessBase } from './toolbar.harness.base';
 
 export class ToolbarHarnessE2e implements ToolbarHarnessBase {

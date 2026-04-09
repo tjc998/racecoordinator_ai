@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { ConfirmationModalHarnessBase } from './confirmation-modal.harness.base';
 
 export class ConfirmationModalHarnessE2e implements ConfirmationModalHarnessBase {

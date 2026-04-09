@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Subscription } from 'rxjs';
+
+import { Race } from 'src/app/models/race';
+import { Heat } from 'src/app/race/heat';
 import { RaceConnectionService } from 'src/app/services/race-connection.service';
 import { RaceService } from 'src/app/services/race.service';
 import { TranslationService } from 'src/app/services/translation.service';
-import { DriverHeatData } from 'src/app/race/driver_heat_data';
-import { Heat } from 'src/app/race/heat';
-import { Race } from 'src/app/models/race';
 
 interface GraphPoint {
   x: number;

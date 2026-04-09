@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../../testing/test-setup_helper';
-import { UIEditorHarnessE2e } from '../testing/ui-editor.harness.e2e';
+
+import { UIEditorHarnessE2e } from 'src/app/components/ui-editor/testing/ui-editor.harness.e2e';
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
 
 test.describe('Reorder Dialog Visuals', () => {
   test.beforeEach(async ({ page }) => {
@@ -73,4 +74,3 @@ test.describe('Reorder Dialog Visuals', () => {
     await expect(page.locator('.reorder-modal')).toHaveScreenshot('reorder-dialog-reset.png');
   });
 });
-

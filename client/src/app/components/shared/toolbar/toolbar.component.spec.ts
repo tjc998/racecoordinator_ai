@@ -1,13 +1,15 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { ToolbarComponent } from './toolbar.component';
-import { TranslationService } from '../../../services/translation.service';
-import { TranslatePipe } from '../../../pipes/translate.pipe';
-import { UndoManager } from '../undo-redo-controls/undo-manager';
-import { ToolbarHarness } from './testing/toolbar.harness';
-import { AnalyticsService } from 'src/app/analytics.service';
-import { AcknowledgementModalComponent } from '../acknowledgement-modal/acknowledgement-modal.component';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
+
+import { AnalyticsService } from 'src/app/analytics.service';
+import { AcknowledgementModalComponent } from 'src/app/components/shared/acknowledgement-modal/acknowledgement-modal.component';
+import { UndoManager } from 'src/app/components/shared/undo-redo-controls/undo-manager';
+import { TranslatePipe } from 'src/app/pipes/translate.pipe';
+import { TranslationService } from 'src/app/services/translation.service';
+
+import { ToolbarHarness } from './testing/toolbar.harness';
+import { ToolbarComponent } from './toolbar.component';
 
 describe('ToolbarComponent', () => {
   let component: ToolbarComponent;

@@ -1,16 +1,16 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { DriverManagerComponent } from './driver-manager.component';
-import { DataService } from 'src/app/data.service';
-import { TranslationService } from 'src/app/services/translation.service';
-import { Router, ActivatedRoute } from '@angular/router';
 import { ChangeDetectorRef } from '@angular/core';
-import { ConnectionMonitorService, ConnectionState } from '../../services/connection-monitor.service';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { Router, ActivatedRoute } from '@angular/router';
 import { of, BehaviorSubject, throwError } from 'rxjs';
-import { Driver } from 'src/app/models/driver';
-import { SharedModule } from 'src/app/components/shared/shared.module';
-import { BackButtonComponent } from 'src/app/components/shared/back-button/back-button.component';
 
+import { SharedModule } from 'src/app/components/shared/shared.module';
+import { DataService } from 'src/app/data.service';
+import { Driver } from 'src/app/models/driver';
 import { AvatarUrlPipe } from 'src/app/pipes/avatar-url.pipe';
+import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
+import { TranslationService } from 'src/app/services/translation.service';
+
+import { DriverManagerComponent } from './driver-manager.component';
 
 describe('DriverManagerComponent', () => {
   let component: DriverManagerComponent;

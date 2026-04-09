@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../testing/test-setup_helper';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { TrackManagerHarnessE2e } from './testing/track-manager.harness.e2e';
 
 test.describe('Track Manager Visuals', () => {

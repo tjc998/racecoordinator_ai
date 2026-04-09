@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { ArduinoSummaryHarnessBase } from './arduino-summary.harness.base';
 
 export class ArduinoSummaryHarness extends ComponentHarness implements ArduinoSummaryHarnessBase {

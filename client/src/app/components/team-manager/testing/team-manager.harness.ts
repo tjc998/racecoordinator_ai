@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { TeamManagerHarnessBase } from './team-manager.harness.base';
 
 export class TeamManagerHarness extends ComponentHarness implements TeamManagerHarnessBase {

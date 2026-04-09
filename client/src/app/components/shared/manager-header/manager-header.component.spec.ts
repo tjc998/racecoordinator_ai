@@ -1,10 +1,12 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { ManagerHeaderComponent } from './manager-header.component';
-import { TranslationService } from '../../../services/translation.service';
-import { TranslatePipe } from '../../../pipes/translate.pipe';
-import { ManagerHeaderHarness } from './testing/manager-header.harness';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { TranslatePipe } from 'src/app/pipes/translate.pipe';
+import { TranslationService } from 'src/app/services/translation.service';
+
+import { ManagerHeaderComponent } from './manager-header.component';
+import { ManagerHeaderHarness } from './testing/manager-header.harness';
 
 describe('ManagerHeaderComponent', () => {
   let component: ManagerHeaderComponent;

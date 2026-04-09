@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { BackButtonHarnessBase } from './back-button.harness.base';
 
 export class BackButtonHarness extends ComponentHarness implements BackButtonHarnessBase {

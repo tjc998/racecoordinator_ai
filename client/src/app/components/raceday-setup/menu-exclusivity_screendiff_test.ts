@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../testing/test-setup_helper';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { DefaultRacedaySetupHarnessE2e } from './testing/default-raceday-setup.harness.e2e';
 
 test.describe('Raceday Setup Menu Exclusivity', () => {
@@ -94,4 +96,3 @@ test.describe('Raceday Setup Menu Exclusivity', () => {
     await expect(page).toHaveScreenshot('race-closes-localization.png', { maxDiffPixelRatio: 0.05 });
   });
 });
-

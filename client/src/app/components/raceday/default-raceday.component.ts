@@ -1,32 +1,33 @@
 import { Component, ElementRef, HostListener, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
-import { Subscription, Subject, of, Observable } from 'rxjs';
 import { Router } from '@angular/router';
-import { Heat } from '../../race/heat';
-import { DriverHeatData } from '../../race/driver_heat_data';
-import { Track } from 'src/app/models/track';
-import { Race } from 'src/app/models/race';
-import { RaceParticipant } from 'src/app/models/race_participant';
-import { TranslationService } from 'src/app/services/translation.service';
-import { DataService } from 'src/app/data.service';
-import { RaceService } from 'src/app/services/race.service';
-import { RaceConverter } from 'src/app/converters/race.converter';
+import { Subscription, Subject, of, Observable } from 'rxjs';
+
 import { DriverConverter } from 'src/app/converters/driver.converter';
 import { HeatConverter } from 'src/app/converters/heat.converter';
-import { TrackConverter } from 'src/app/converters/track.converter';
 import { LaneConverter } from 'src/app/converters/lane.converter';
-import { playSound, createTTSContext } from 'src/app/utils/audio';
-import { com } from 'src/app/proto/message';
-import { SettingsService } from 'src/app/services/settings.service';
-import { RaceFlagService, FlagType } from 'src/app/services/race-flag.service';
-import { AnchorPoint } from './column_definition';
-import { Settings, ColumnVisibility } from 'src/app/models/settings';
+import { RaceConverter } from 'src/app/converters/race.converter';
+import { TrackConverter } from 'src/app/converters/track.converter';
+import { DataService } from 'src/app/data.service';
+import { CanComponentDeactivate } from 'src/app/guards/raceday.guard';
 import { FinishMethod, AllowFinish, HeatScoring } from 'src/app/models/heat_scoring';
+import { Race } from 'src/app/models/race';
+import { RaceParticipant } from 'src/app/models/race_participant';
+import { Settings, ColumnVisibility } from 'src/app/models/settings';
+import { Track } from 'src/app/models/track';
+import { com } from 'src/app/proto/message';
+import { DriverHeatData } from 'src/app/race/driver_heat_data';
+import { Heat } from 'src/app/race/heat';
+import { RaceFlagService, FlagType } from 'src/app/services/race-flag.service';
+import { RaceService } from 'src/app/services/race.service';
+import { SettingsService } from 'src/app/services/settings.service';
+import { TranslationService } from 'src/app/services/translation.service';
+import { playSound, createTTSContext } from 'src/app/utils/audio';
+
+import { AnchorPoint } from './column_definition';
+import { ColumnDefinition } from './column_definition';
+
 import InterfaceStatus = com.antigravity.InterfaceStatus;
 import { RaceConnectionService } from 'src/app/services/race-connection.service';
-
-import { ColumnDefinition } from './column_definition';
-import { CanComponentDeactivate } from '../../guards/raceday.guard';
-
 /**
  * The raceday component is the main component for the raceday screen.
  */

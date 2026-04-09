@@ -1,10 +1,11 @@
 import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
-import { DataService } from '../../data.service';
-import { Track } from '../../models/track';
 import { Router, ActivatedRoute } from '@angular/router';
-import { TranslationService } from '../../services/translation.service';
-import { HelpService, GuideStep } from '../../services/help.service';
-import { SettingsService } from '../../services/settings.service';
+
+import { DataService } from 'src/app/data.service';
+import { Track } from 'src/app/models/track';
+import { HelpService, GuideStep } from 'src/app/services/help.service';
+import { SettingsService } from 'src/app/services/settings.service';
+import { TranslationService } from 'src/app/services/translation.service';
 
 @Component({
   selector: 'app-track-manager',

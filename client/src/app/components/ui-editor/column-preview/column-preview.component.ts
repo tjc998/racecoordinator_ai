@@ -1,6 +1,7 @@
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
-import { AnchorPoint } from '../../raceday/column_definition';
-import { ColumnVisibility } from '../../../models/settings';
+
+import { AnchorPoint } from 'src/app/components/raceday/column_definition';
+import { ColumnVisibility } from 'src/app/models/settings';
 
 // TODO(aufderheide): This may be the third time this list appears in code
 const PREVIEW_LABELS: { [key: string]: string } = {

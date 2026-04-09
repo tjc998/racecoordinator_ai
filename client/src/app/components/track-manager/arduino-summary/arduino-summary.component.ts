@@ -1,7 +1,8 @@
 import { Component, Input } from '@angular/core';
-import { Track, ArduinoConfig } from '../../../models/track';
-import { TranslationService } from '../../../services/translation.service';
-import { com } from '../../../proto/message';
+
+import { Track, ArduinoConfig } from 'src/app/models/track';
+import { com } from 'src/app/proto/message';
+import { TranslationService } from 'src/app/services/translation.service';
 
 @Component({
   selector: 'app-arduino-summary',

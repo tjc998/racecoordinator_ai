@@ -11,22 +11,20 @@ import {
   Inject,
   HostListener
 } from '@angular/core';
-import { CommonModule, NgIf } from '@angular/common';
-import { SharedModule } from 'src/app/components/shared/shared.module';
+import { ChangeDetectorRef } from '@angular/core';
+import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+
+import { DataService } from 'src/app/data.service';
+import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
+import { DynamicComponentService } from 'src/app/services/dynamic-component.service';
 import { FileSystemService } from 'src/app/services/file-system.service';
 import { HelpService } from 'src/app/services/help.service';
-import { DefaultRacedaySetupComponent } from './default-raceday-setup.component';
-import { timeout } from 'rxjs/operators';
-import { DataService } from 'src/app/data.service';
 import { RaceService } from 'src/app/services/race.service';
-import { Router } from '@angular/router';
-import { TranslationService } from 'src/app/services/translation.service';
 import { SettingsService } from 'src/app/services/settings.service';
-import { ChangeDetectorRef } from '@angular/core';
-import { DynamicComponentService } from 'src/app/services/dynamic-component.service';
-import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
-import { Subscription } from 'rxjs';
-import { AnalyticsService } from 'src/app/analytics.service';
+import { TranslationService } from 'src/app/services/translation.service';
+
+import { DefaultRacedaySetupComponent } from './default-raceday-setup.component';
 
 class CustomUiBaseComponent extends DefaultRacedaySetupComponent {
   constructor(

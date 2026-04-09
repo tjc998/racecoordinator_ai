@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../testing/test-setup_helper';
+
+import { com } from 'src/app/proto/message';
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { DefaultRacedayHarnessE2e } from './testing/default-raceday.harness.e2e';
-import { com } from '../../proto/message';
 
 test.describe('Raceday Visuals for Fuel', () => {
   test.beforeEach(async ({ page }) => {
@@ -545,4 +547,3 @@ test.describe('Raceday Visuals for Fuel', () => {
     await expect(page).toHaveScreenshot('raceday-team-driver-stats-dropdown.png', { maxDiffPixelRatio: 0.1 });
   });
 });
-

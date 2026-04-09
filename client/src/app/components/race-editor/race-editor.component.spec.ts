@@ -1,16 +1,18 @@
-import { TestBed, fakeAsync, tick, ComponentFixture } from '@angular/core/testing';
+import { HarnessLoader } from '@angular/cdk/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { RaceEditorComponent } from './race-editor.component';
-import { DataService } from 'src/app/data.service';
-import { TranslationService } from 'src/app/services/translation.service';
+import { TestBed, fakeAsync, tick, ComponentFixture } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from 'src/app/pipes/translate.pipe';
+
+import { DataService } from 'src/app/data.service';
 import { FuelUsageType } from 'src/app/models/fuel_options';
 import { Track } from 'src/app/models/track';
-import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { HarnessLoader } from '@angular/cdk/testing';
+import { TranslatePipe } from 'src/app/pipes/translate.pipe';
+import { TranslationService } from 'src/app/services/translation.service';
+
+import { RaceEditorComponent } from './race-editor.component';
 import { RaceEditorHarness } from './testing/race-editor.harness';
 
 describe('RaceEditorComponent', () => {

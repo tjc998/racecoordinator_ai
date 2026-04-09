@@ -179,4 +179,3 @@ export class InputDialogComponent {
     this.cancel.emit();
   }
 }
-

@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { ImageSelectorHarnessBase } from './image-selector.harness.base';
 
 export class ImageSelectorHarnessE2e implements ImageSelectorHarnessBase {

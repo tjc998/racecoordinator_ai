@@ -1,10 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { Track, ArduinoConfig } from 'src/app/models/track';
+import { TranslatePipe } from 'src/app/pipes/translate.pipe';
+import { com } from 'src/app/proto/message';
+import { TranslationService } from 'src/app/services/translation.service';
+import { TranslationServiceMock } from 'src/app/testing/translation-service.mock';
+
 import { ArduinoSummaryComponent } from './arduino-summary.component';
-import { TranslationService } from '../../../services/translation.service';
-import { TranslatePipe } from '../../../pipes/translate.pipe';
-import { TranslationServiceMock } from '../../../testing/translation-service.mock';
-import { Track, ArduinoConfig } from '../../../models/track';
-import { com } from '../../../proto/message';
 
 describe('ArduinoSummaryComponent', () => {
   let component: ArduinoSummaryComponent;

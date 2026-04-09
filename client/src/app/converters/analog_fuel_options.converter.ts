@@ -1,6 +1,6 @@
-import { AnalogFuelOptions } from "../models/analog_fuel_options";
-import { FuelUsageType } from "../models/fuel_options";
-import { com } from "../proto/message";
+import { AnalogFuelOptions } from "src/app/models/analog_fuel_options";
+import { FuelUsageType } from "src/app/models/fuel_options";
+import { com } from "src/app/proto/message";
 
 export class AnalogFuelOptionsConverter {
   static fromProto(proto?: com.antigravity.IAnalogFuelOptions | null): AnalogFuelOptions {

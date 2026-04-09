@@ -1,8 +1,10 @@
-import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { TranslationService } from './translation.service';
+import { TestBed } from '@angular/core/testing';
+
+import { Settings } from 'src/app/models/settings';
+
 import { SettingsService } from './settings.service';
-import { Settings } from '../models/settings';
+import { TranslationService } from './translation.service';
 
 describe('TranslationService', () => {
   let service: TranslationService;

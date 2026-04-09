@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../testing/test-setup_helper';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { DefaultRacedayHarnessE2e } from './testing/default-raceday.harness.e2e';
 
 test.describe('Raceday Visuals for Sorting', () => {

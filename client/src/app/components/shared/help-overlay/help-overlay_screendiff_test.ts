@@ -1,5 +1,7 @@
 import { test, expect, Page } from '@playwright/test';
-import { TestSetupHelper } from '../../../testing/test-setup_helper';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { HelpOverlayHarnessE2e } from './testing/help-overlay.harness.e2e';
 
 test.describe('Help Overlay Visuals', () => {

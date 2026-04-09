@@ -1,8 +1,10 @@
 import { TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
-import { ConnectionMonitorService, ConnectionState } from './connection-monitor.service';
-import { DataService } from '../data.service';
-import { mockDataService } from '../testing/unit-test-mocks';
 import { of, throwError } from 'rxjs';
+
+import { DataService } from 'src/app/data.service';
+import { mockDataService } from 'src/app/testing/unit-test-mocks';
+
+import { ConnectionMonitorService, ConnectionState } from './connection-monitor.service';
 
 describe('ConnectionMonitorService', () => {
   let service: ConnectionMonitorService;

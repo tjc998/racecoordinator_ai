@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../testing/test-setup_helper';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { TeamEditorHarnessE2e } from './testing/team-editor.harness.e2e';
 
 test.describe('Team Editor Visuals', () => {

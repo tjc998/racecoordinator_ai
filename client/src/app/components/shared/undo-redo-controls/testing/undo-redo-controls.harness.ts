@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { UndoRedoControlsHarnessBase } from './undo-redo-controls.harness.base';
 
 export class UndoRedoControlsHarness extends ComponentHarness implements UndoRedoControlsHarnessBase {

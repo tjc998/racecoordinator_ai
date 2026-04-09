@@ -1,19 +1,20 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { TeamEditorComponent } from './team-editor.component';
-import { DataService } from 'src/app/data.service';
-import { TranslationService } from 'src/app/services/translation.service';
-import { ConnectionMonitorService } from '../../services/connection-monitor.service';
-import { Router, ActivatedRoute } from '@angular/router';
-import { of, BehaviorSubject, throwError } from 'rxjs';
-import { FormsModule } from '@angular/forms';
-import { Component, Input, Output, EventEmitter, Pipe, PipeTransform } from '@angular/core';
-import { Team } from 'src/app/models/team';
-import { Driver } from 'src/app/models/driver';
-
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { Location } from '@angular/common';
-import { HelpService } from '../../services/help.service';
-import { SettingsService } from '../../services/settings.service';
+import { Component, Input, Output, EventEmitter, Pipe, PipeTransform } from '@angular/core';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
+import { of, BehaviorSubject, throwError } from 'rxjs';
+
+import { DataService } from 'src/app/data.service';
+import { Driver } from 'src/app/models/driver';
+import { Team } from 'src/app/models/team';
+import { ConnectionMonitorService } from 'src/app/services/connection-monitor.service';
+import { HelpService } from 'src/app/services/help.service';
+import { SettingsService } from 'src/app/services/settings.service';
+import { TranslationService } from 'src/app/services/translation.service';
+
+import { TeamEditorComponent } from './team-editor.component';
 
 // Mock Child Components
 @Component({ selector: 'app-back-button', template: '', standalone: false })

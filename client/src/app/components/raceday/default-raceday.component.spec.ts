@@ -1,5 +1,5 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
 import { Component, Input, Output, EventEmitter, Pipe, PipeTransform, Directive } from '@angular/core';
+import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
 
 @Pipe({
   name: 'translate',

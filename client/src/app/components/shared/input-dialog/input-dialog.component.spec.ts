@@ -1,7 +1,8 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { InputDialogComponent } from './input-dialog.component';
 import { Pipe, PipeTransform } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { InputDialogComponent } from './input-dialog.component';
 import { InputDialogHarness } from './testing/input-dialog.harness';
 
 @Pipe({

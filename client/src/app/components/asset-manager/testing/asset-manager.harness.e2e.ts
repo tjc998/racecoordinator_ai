@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { AssetManagerHarnessBase } from './asset-manager.harness.base';
 
 export class AssetManagerHarnessE2e implements AssetManagerHarnessBase {

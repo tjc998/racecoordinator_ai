@@ -1,6 +1,7 @@
 import { Locator } from '@playwright/test';
-import { UIEditorHarnessBase } from './ui-editor.harness.base';
+
 import { ReorderDialogHarnessE2e } from '..//reorder-dialog/testing/reorder-dialog.harness.e2e';
+import { UIEditorHarnessBase } from './ui-editor.harness.base';
 
 export class UIEditorHarnessE2e implements UIEditorHarnessBase {
   constructor(private locator: Locator) {}

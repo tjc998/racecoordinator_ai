@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { TeamEditorHarnessBase } from './team-editor.harness.base';
 
 export class TeamEditorHarness extends ComponentHarness implements TeamEditorHarnessBase {
@@ -69,4 +70,3 @@ export class TeamEditorHarness extends ComponentHarness implements TeamEditorHar
     return !(await btn.getProperty('disabled'));
   }
 }
-

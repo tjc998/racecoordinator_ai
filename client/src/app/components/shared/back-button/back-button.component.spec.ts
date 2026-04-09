@@ -1,8 +1,9 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { BackButtonComponent } from './back-button.component';
-import { Router } from '@angular/router';
 import { CUSTOM_ELEMENTS_SCHEMA, Pipe, PipeTransform } from '@angular/core';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { Router } from '@angular/router';
+
+import { BackButtonComponent } from './back-button.component';
 import { BackButtonHarness } from './testing/back-button.harness';
 
 @Pipe({

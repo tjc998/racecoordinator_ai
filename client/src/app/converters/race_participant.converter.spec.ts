@@ -1,6 +1,7 @@
-import { RaceParticipantConverter } from './race_participant.converter';
-import { com } from '../proto/message';
+import { com } from 'src/app/proto/message';
+
 import { DriverConverter } from './driver.converter';
+import { RaceParticipantConverter } from './race_participant.converter';
 import { TeamConverter } from './team.converter';
 
 describe('RaceParticipantConverter', () => {

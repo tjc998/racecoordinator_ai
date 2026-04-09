@@ -1,5 +1,6 @@
-import { Driver } from "../models/driver";
-import { com } from "../proto/message";
+import { Driver } from "src/app/models/driver";
+import { com } from "src/app/proto/message";
+
 import { ConverterCache } from "./converter_cache";
 
 export class DriverConverter {

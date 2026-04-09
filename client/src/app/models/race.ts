@@ -1,10 +1,10 @@
-import { Model } from "./model";
-import { Track } from "./track";
-import { HeatScoring } from "./heat_scoring";
-import { OverallScoring } from "./overall_scoring";
 import { AnalogFuelOptions } from "./analog_fuel_options";
 import { DigitalFuelOptions } from "./digital_fuel_options";
+import { HeatScoring } from "./heat_scoring";
+import { Model } from "./model";
+import { OverallScoring } from "./overall_scoring";
 import { TeamOptions } from "./team_options";
+import { Track } from "./track";
 
 export class Race implements Model {
   readonly entity_id: string;

@@ -1,4 +1,5 @@
 import { of } from 'rxjs';
+
 import { com } from '../proto/message';
 
 export class DataServiceMock {

@@ -1,8 +1,7 @@
+import { com } from 'src/app/proto/message';
 
-import { HeatConverter } from './heat.converter';
-import { com } from '../proto/message';
 import { DriverConverter } from './driver.converter';
-import { RaceParticipantConverter } from './race_participant.converter';
+import { HeatConverter } from './heat.converter';
 
 describe('HeatConverter', () => {
   beforeEach(() => {

@@ -1,6 +1,7 @@
-
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../testing/test-setup_helper';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { RacedaySetupHarnessE2e } from './testing/raceday-setup.harness.e2e';
 
 test.describe('Connection Loss Visuals', () => {
@@ -102,4 +103,3 @@ test.describe('Connection Loss Visuals', () => {
     });
   });
 });
-

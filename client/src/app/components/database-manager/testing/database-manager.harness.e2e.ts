@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { DatabaseManagerHarnessBase } from './database-manager.harness.base';
 
 export class DatabaseManagerHarnessE2e implements DatabaseManagerHarnessBase {

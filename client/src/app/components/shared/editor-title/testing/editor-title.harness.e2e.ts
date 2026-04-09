@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { EditorTitleHarnessBase } from './editor-title.harness.base';
 
 export class EditorTitleHarnessE2e implements EditorTitleHarnessBase {

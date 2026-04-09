@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { ConfirmationModalHarnessBase } from './confirmation-modal.harness.base';
 
 export class ConfirmationModalHarness extends ComponentHarness implements ConfirmationModalHarnessBase {

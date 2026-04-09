@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../testing/test-setup_helper';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { DatabaseManagerHarnessE2e } from './testing/database-manager.harness.e2e';
 
 test.describe('Database Manager Visuals', () => {
@@ -115,4 +117,3 @@ test.describe('Database Manager Visuals', () => {
     await expect(page).toHaveScreenshot('database-manager-import-error.png');
   });
 });
-

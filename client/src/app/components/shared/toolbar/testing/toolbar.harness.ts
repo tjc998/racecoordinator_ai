@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { ToolbarHarnessBase } from './toolbar.harness.base';
 
 export class ToolbarHarness extends ComponentHarness implements ToolbarHarnessBase {

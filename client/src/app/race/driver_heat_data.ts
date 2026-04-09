@@ -1,5 +1,6 @@
+import { Driver } from "src/app/models/driver";
+
 import { RaceParticipant } from "./race_participant";
-import { Driver } from "../models/driver";
 
 /**
  * Data for a driver in a specific heat.

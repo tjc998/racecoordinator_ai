@@ -1,14 +1,16 @@
+import { Component, Input, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TrackManagerComponent } from './track-manager.component';
-import { DataService } from '../../data.service';
-import { TranslationService } from '../../services/translation.service';
 import { Router, ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { SettingsService } from '../../services/settings.service';
-import { Settings } from '../../models/settings';
-import { TranslatePipe } from '../../pipes/translate.pipe';
-import { Component, Input, NO_ERRORS_SCHEMA } from '@angular/core';
-import { Track } from '../../models/track';
+
+import { DataService } from 'src/app/data.service';
+import { Settings } from 'src/app/models/settings';
+import { Track } from 'src/app/models/track';
+import { TranslatePipe } from 'src/app/pipes/translate.pipe';
+import { SettingsService } from 'src/app/services/settings.service';
+import { TranslationService } from 'src/app/services/translation.service';
+
+import { TrackManagerComponent } from './track-manager.component';
 
 // Mock DataService
 class MockDataService {

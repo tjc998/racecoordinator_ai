@@ -1,10 +1,11 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AppComponent } from './app.component';
-import { Router } from '@angular/router';
-import { DataService } from './data.service';
-import { AnalyticsService } from './analytics.service';
-import { of } from 'rxjs';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { of } from 'rxjs';
+
+import { AnalyticsService } from './analytics.service';
+import { AppComponent } from './app.component';
+import { DataService } from './data.service';
 
 describe('AppComponent', () => {
   let fixture: ComponentFixture<AppComponent>;

@@ -1,11 +1,13 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { HelpOverlayComponent } from './help-overlay.component';
-import { HelpService, GuideStep } from '../../../services/help.service';
-import { TranslationService } from '../../../services/translation.service';
-import { TranslatePipe } from '../../../pipes/translate.pipe';
-import { BehaviorSubject } from 'rxjs';
 import { ChangeDetectorRef } from '@angular/core';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { BehaviorSubject } from 'rxjs';
+
+import { TranslatePipe } from 'src/app/pipes/translate.pipe';
+import { HelpService, GuideStep } from 'src/app/services/help.service';
+import { TranslationService } from 'src/app/services/translation.service';
+
+import { HelpOverlayComponent } from './help-overlay.component';
 import { HelpOverlayHarness } from './testing/help-overlay.harness';
 
 describe('HelpOverlayComponent', () => {

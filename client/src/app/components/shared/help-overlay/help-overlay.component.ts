@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
-import { HelpService, GuideStep } from '../../../services/help.service';
 import { Subscription } from 'rxjs';
+
+import { HelpService, GuideStep } from 'src/app/services/help.service';
 
 @Component({
   selector: 'app-help-overlay',

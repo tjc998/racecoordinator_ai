@@ -1,7 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../../testing/test-setup_helper';
+
+import { com } from 'src/app/proto/message';
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { AcknowledgementModalHarnessE2e } from './testing/acknowledgement-modal.harness.e2e';
-import { com } from '../../../proto/message';
+
 import InterfaceStatus = com.antigravity.InterfaceStatus;
 
 test.describe('Acknowledgement Modal Visuals', () => {

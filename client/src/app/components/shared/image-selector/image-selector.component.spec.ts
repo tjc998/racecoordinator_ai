@@ -1,9 +1,11 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { ImageSelectorComponent } from './image-selector.component';
-import { DataService } from 'src/app/data.service';
 import { ChangeDetectorRef, Component, Input, Output, EventEmitter, Pipe, PipeTransform } from '@angular/core';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
+
+import { DataService } from 'src/app/data.service';
+
+import { ImageSelectorComponent } from './image-selector.component';
 import { ImageSelectorHarness } from './testing/image-selector.harness';
 
 @Component({ selector: 'app-item-selector', template: '', standalone: false })

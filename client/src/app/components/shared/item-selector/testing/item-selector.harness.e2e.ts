@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { ItemSelectorHarnessBase } from './item-selector.harness.base';
 
 export class ItemSelectorHarnessE2e implements ItemSelectorHarnessBase {

@@ -1,25 +1,24 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-import { RacedayComponent } from './components/raceday/raceday.component';
-import { DefaultRacedayComponent } from './components/raceday/default-raceday.component';
-import { RacedaySetupComponent } from './components/raceday-setup/raceday-setup.component';
-import { AssetManagerComponent } from './components/asset-manager/asset-manager.component';
-import { DriverEditorComponent } from './components/driver-editor/driver-editor.component';
-import { DriverManagerComponent } from './components/driver-manager/driver-manager.component';
-import { TrackManagerComponent } from './components/track-manager/track-manager.component';
-import { TrackEditorComponent } from './components/track-editor/track-editor.component';
-import { DatabaseManagerComponent } from './components/database-manager/database-manager.component';
-import { RaceManagerComponent } from './components/race-manager/race-manager.component';
-import { RaceEditorComponent } from './components/race-editor/race-editor.component';
-import { TeamManagerComponent } from './components/team-manager/team-manager.component';
-import { TeamEditorComponent } from './components/team-editor/team-editor.component';
-import { UIEditorComponent } from './components/ui-editor/ui-editor.component';
-import { DriverStationComponent } from './components/driver-station/driver-station.component';
-import { DirtyCheckGuard } from './guards/dirty-check.guard';
-import { RacedayGuard } from './guards/raceday.guard';
-import { HeatResultsComponent } from './components/heat-results/heat-results.component';
-
+import { AssetManagerComponent } from 'src/app/components/asset-manager/asset-manager.component';
+import { DatabaseManagerComponent } from 'src/app/components/database-manager/database-manager.component';
+import { DriverEditorComponent } from 'src/app/components/driver-editor/driver-editor.component';
+import { DriverManagerComponent } from 'src/app/components/driver-manager/driver-manager.component';
+import { DriverStationComponent } from 'src/app/components/driver-station/driver-station.component';
+import { HeatResultsComponent } from 'src/app/components/heat-results/heat-results.component';
+import { RaceEditorComponent } from 'src/app/components/race-editor/race-editor.component';
+import { RaceManagerComponent } from 'src/app/components/race-manager/race-manager.component';
+import { RacedaySetupComponent } from 'src/app/components/raceday-setup/raceday-setup.component';
+import { DefaultRacedayComponent } from 'src/app/components/raceday/default-raceday.component';
+import { RacedayComponent } from 'src/app/components/raceday/raceday.component';
+import { TeamEditorComponent } from 'src/app/components/team-editor/team-editor.component';
+import { TeamManagerComponent } from 'src/app/components/team-manager/team-manager.component';
+import { TrackEditorComponent } from 'src/app/components/track-editor/track-editor.component';
+import { TrackManagerComponent } from 'src/app/components/track-manager/track-manager.component';
+import { UIEditorComponent } from 'src/app/components/ui-editor/ui-editor.component';
+import { DirtyCheckGuard } from 'src/app/guards/dirty-check.guard';
+import { RacedayGuard } from 'src/app/guards/raceday.guard';
 
 const routes: Routes = [
     { path: '', redirectTo: 'raceday-setup', pathMatch: 'full' },

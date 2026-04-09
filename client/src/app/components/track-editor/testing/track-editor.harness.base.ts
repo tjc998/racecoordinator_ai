@@ -26,4 +26,3 @@ export abstract class TrackEditorHarnessBase {
   abstract clickSaveAsNew(): Promise<void>;
   abstract isNameInvalid(): Promise<boolean>;
 }
-

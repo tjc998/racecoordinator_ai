@@ -1,11 +1,13 @@
+import { DOCUMENT } from '@angular/common';
 import { Injectable, Inject } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { filter } from 'rxjs/operators';
-import { DOCUMENT } from '@angular/common';
-import { SettingsService } from './services/settings.service';
-import { DataService } from './data.service';
 import { Observable, of } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { map, catchError } from 'rxjs/operators';
+
+import { SettingsService } from 'src/app/services/settings.service';
+
+import { DataService } from './data.service';
 
 // Declare standard gtag function
 declare const gtag: Function;

@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { RaceManagerHarnessBase } from './race-manager.harness.base';
 
 export class RaceManagerHarnessE2e implements RaceManagerHarnessBase {

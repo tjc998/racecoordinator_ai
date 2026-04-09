@@ -1,24 +1,25 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
-import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { DefaultRacedaySetupComponent } from './default-raceday-setup.component';
-import { DataService } from 'src/app/data.service';
-import { RaceService } from 'src/app/services/race.service';
-import { TranslationService } from 'src/app/services/translation.service';
-import { SettingsService } from 'src/app/services/settings.service';
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { TranslatePipe } from 'src/app/pipes/translate.pipe';
-import { FileSystemService } from 'src/app/services/file-system.service';
-import { HelpService } from 'src/app/services/help.service';
-import { HelpOverlayComponent } from '../shared/help-overlay/help-overlay.component';
 import { of, BehaviorSubject, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { DefaultRacedaySetupHarness } from './testing/default-raceday-setup.harness';
 
-import { FormsModule } from '@angular/forms';
-import { DragDropModule } from '@angular/cdk/drag-drop';
-import { com } from 'src/app/proto/message';
+import { HelpOverlayComponent } from 'src/app/components/shared/help-overlay/help-overlay.component';
+import { DataService } from 'src/app/data.service';
 import { Settings } from 'src/app/models/settings';
+import { TranslatePipe } from 'src/app/pipes/translate.pipe';
+import { com } from 'src/app/proto/message';
+import { FileSystemService } from 'src/app/services/file-system.service';
+import { HelpService } from 'src/app/services/help.service';
+import { RaceService } from 'src/app/services/race.service';
+import { SettingsService } from 'src/app/services/settings.service';
+import { TranslationService } from 'src/app/services/translation.service';
+
+import { DefaultRacedaySetupComponent } from './default-raceday-setup.component';
+import { DefaultRacedaySetupHarness } from './testing/default-raceday-setup.harness';
 
 describe('DefaultRacedaySetupComponent', () => {
   let component: DefaultRacedaySetupComponent;
@@ -512,4 +513,3 @@ describe('DefaultRacedaySetupComponent', () => {
     expect(component.errorMessage).toContain('Team B');
   }));
 });
-

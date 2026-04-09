@@ -1,5 +1,5 @@
-import { Driver } from "../models/driver";
-import { Team } from "../models/team";
+import { Driver } from "src/app/models/driver";
+import { Team } from "src/app/models/team";
 
 export class RaceParticipant {
     readonly driver: Driver;

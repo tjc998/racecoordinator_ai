@@ -1,17 +1,17 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, Input, Output, EventEmitter, Pipe, PipeTransform } from '@angular/core';
-import { DriverStationComponent } from './driver-station.component';
+import { ChangeDetectorRef } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
+
 import { DataService } from 'src/app/data.service';
 import { FinishMethod } from 'src/app/models/heat_scoring';
 import { com } from 'src/app/proto/message';
-
+import { RaceConnectionService } from 'src/app/services/race-connection.service';
 import { RaceService } from 'src/app/services/race.service';
 import { TranslationService } from 'src/app/services/translation.service';
-import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
-import { ChangeDetectorRef } from '@angular/core';
-import { RaceConnectionService } from 'src/app/services/race-connection.service';
 
+import { DriverStationComponent } from './driver-station.component';
 
 @Pipe({
   name: 'translate',

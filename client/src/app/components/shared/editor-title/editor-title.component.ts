@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { UndoManager } from '../undo-redo-controls/undo-manager';
 import { Router } from '@angular/router';
+
+import { UndoManager } from 'src/app/components/shared/undo-redo-controls/undo-manager';
 
 @Component({
   selector: 'app-editor-title',

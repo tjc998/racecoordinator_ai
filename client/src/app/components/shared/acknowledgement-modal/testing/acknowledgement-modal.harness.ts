@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { AcknowledgementModalHarnessBase } from './acknowledgement-modal.harness.base';
 
 export class AcknowledgementModalHarness extends ComponentHarness implements AcknowledgementModalHarnessBase {

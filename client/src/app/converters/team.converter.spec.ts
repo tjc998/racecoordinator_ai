@@ -1,5 +1,6 @@
+import { com } from 'src/app/proto/message';
+
 import { TeamConverter } from './team.converter';
-import { com } from '../proto/message';
 
 describe('TeamConverter', () => {
   beforeEach(() => {

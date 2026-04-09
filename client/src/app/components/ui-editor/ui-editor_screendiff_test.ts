@@ -1,6 +1,7 @@
-
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../testing/test-setup_helper';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { UIEditorHarnessE2e } from './testing/ui-editor.harness.e2e';
 
 test.describe('UI Editor Visuals', () => {
@@ -84,4 +85,3 @@ test.describe('UI Editor Visuals', () => {
     await expect(page.locator('.reorder-modal')).toHaveScreenshot('ui-editor-columns-list.png');
   });
 });
-

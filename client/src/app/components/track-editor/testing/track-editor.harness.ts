@@ -1,6 +1,7 @@
 import { ComponentHarness } from '@angular/cdk/testing';
-import { TrackEditorHarnessBase } from './track-editor.harness.base';
+
 import { ArduinoEditorHarness } from '..//arduino-editor/testing/arduino-editor.harness';
+import { TrackEditorHarnessBase } from './track-editor.harness.base';
 
 export class TrackEditorHarness extends ComponentHarness implements TrackEditorHarnessBase {
   static hostSelector = TrackEditorHarnessBase.hostSelector;
@@ -78,4 +79,3 @@ export class TrackEditorHarness extends ComponentHarness implements TrackEditorH
     return await section.hasClass('invalid');
   }
 }
-

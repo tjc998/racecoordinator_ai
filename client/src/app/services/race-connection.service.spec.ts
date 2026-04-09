@@ -1,9 +1,11 @@
 import { TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
-import { RaceConnectionService } from './race-connection.service';
-import { DataService } from '../data.service';
-import { RaceService } from './race.service';
 import { of, Subject } from 'rxjs';
-import { com } from '../proto/message';
+
+import { DataService } from 'src/app/data.service';
+import { com } from 'src/app/proto/message';
+
+import { RaceConnectionService } from './race-connection.service';
+import { RaceService } from './race.service';
 
 describe('RaceConnectionService', () => {
   let service: RaceConnectionService;

@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { HeatListHarnessBase, LaneItemData } from './heat-list.harness.base';
 
 export class LaneItemHarness extends ComponentHarness {

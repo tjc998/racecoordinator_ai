@@ -1,13 +1,15 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { DatabaseManagerComponent } from './database-manager.component';
-import { DataService } from '../../data.service';
-import { Router } from '@angular/router';
 import { ChangeDetectorRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { of, throwError } from 'rxjs';
-import { TranslationService } from '../../services/translation.service';
-import { mockTranslationService, mockRouter } from '../../testing/unit-test-mocks';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from '../../pipes/translate.pipe';
+import { Router } from '@angular/router';
+import { of, throwError } from 'rxjs';
+
+import { DataService } from 'src/app/data.service';
+import { TranslatePipe } from 'src/app/pipes/translate.pipe';
+import { TranslationService } from 'src/app/services/translation.service';
+import { mockTranslationService, mockRouter } from 'src/app/testing/unit-test-mocks';
+
+import { DatabaseManagerComponent } from './database-manager.component';
 
 describe('DatabaseManagerComponent', () => {
   let component: DatabaseManagerComponent;

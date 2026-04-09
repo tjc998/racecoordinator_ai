@@ -1,8 +1,8 @@
 import { Locator } from '@playwright/test';
-import { DriverManagerHarnessBase } from './driver-manager.harness.base';
-import { ManagerHeaderHarnessE2e } from '../../shared/manager-header/testing/manager-header.harness.e2e';
-import { ManagerHeaderHarnessBase } from '../../shared/manager-header/testing/manager-header.harness.base';
 
+import { ManagerHeaderHarnessBase } from '../../shared/manager-header/testing/manager-header.harness.base';
+import { ManagerHeaderHarnessE2e } from '../../shared/manager-header/testing/manager-header.harness.e2e';
+import { DriverManagerHarnessBase } from './driver-manager.harness.base';
 
 export class DriverManagerHarnessE2e implements DriverManagerHarnessBase {
   constructor(private locator: Locator) {}

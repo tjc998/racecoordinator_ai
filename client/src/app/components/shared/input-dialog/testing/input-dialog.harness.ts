@@ -1,4 +1,5 @@
 import { ComponentHarness } from '@angular/cdk/testing';
+
 import { InputDialogHarnessBase } from './input-dialog.harness.base';
 
 export class InputDialogHarness extends ComponentHarness implements InputDialogHarnessBase {

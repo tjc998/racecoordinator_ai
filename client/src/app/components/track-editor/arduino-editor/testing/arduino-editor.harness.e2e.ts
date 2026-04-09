@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { ArduinoEditorHarnessBase } from './arduino-editor.harness.base';
 
 export class ArduinoEditorHarnessE2e implements ArduinoEditorHarnessBase {

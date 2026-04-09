@@ -1,7 +1,8 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { ConfirmationModalComponent } from './confirmation-modal.component';
 import { Pipe, PipeTransform } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { ConfirmationModalComponent } from './confirmation-modal.component';
 import { ConfirmationModalHarness } from './testing/confirmation-modal.harness';
 
 @Pipe({

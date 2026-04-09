@@ -1,14 +1,14 @@
+import { Location } from '@angular/common';
 import { Component, OnInit, HostListener, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+
+import { UndoManager } from 'src/app/components/shared/undo-redo-controls/undo-manager';
 import { DataService } from 'src/app/data.service';
-import { TranslationService } from 'src/app/services/translation.service';
-import { UndoManager } from '../shared/undo-redo-controls/undo-manager';
-import { Subscription } from 'rxjs';
-import { Track } from 'src/app/models/track';
 import { FuelUsageType } from 'src/app/models/fuel_options';
-import { Location } from '@angular/common';
-import { HelpService, GuideStep } from '../../services/help.service';
-import { SettingsService } from '../../services/settings.service';
+import { Track } from 'src/app/models/track';
+import { HelpService, GuideStep } from 'src/app/services/help.service';
+import { SettingsService } from 'src/app/services/settings.service';
+import { TranslationService } from 'src/app/services/translation.service';
 
 @Component({
   selector: 'app-race-editor',
@@ -1204,4 +1204,3 @@ function getDigitalFuelUsage(usageType: FuelUsageType | string, usageRate: numbe
   }
   return isNaN(val) || !isFinite(val) ? 0 : Math.max(0, Math.min(val, 100));
 }
-

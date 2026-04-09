@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../testing/test-setup_helper';
-import { com } from '../../proto/message';
+
+import { com } from 'src/app/proto/message';
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
 
 test.describe('Heat Results Visuals', () => {
   test.beforeEach(async ({ page }) => {

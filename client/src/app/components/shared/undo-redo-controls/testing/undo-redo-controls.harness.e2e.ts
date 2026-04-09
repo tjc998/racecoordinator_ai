@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { UndoRedoControlsHarnessBase } from './undo-redo-controls.harness.base';
 
 export class UndoRedoControlsHarnessE2e implements UndoRedoControlsHarnessBase {

@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../../testing/test-setup_helper';
+
+import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+
 import { BackButtonHarnessE2e } from './testing/back-button.harness.e2e';
 
 test.describe('Back Button Visuals', () => {

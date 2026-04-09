@@ -1,8 +1,9 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { FormsModule } from '@angular/forms';
-import { ItemSelectorComponent } from './item-selector.component';
 import { Pipe, PipeTransform } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
+
+import { ItemSelectorComponent } from './item-selector.component';
 import { ItemSelectorHarness } from './testing/item-selector.harness';
 
 @Pipe({

@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { TeamManagerHarnessBase } from './team-manager.harness.base';
 
 export class TeamManagerHarnessE2e implements TeamManagerHarnessBase {
