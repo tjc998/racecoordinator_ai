@@ -91,7 +91,7 @@ public class TeamRacingTest {
             .model(raceModel)
             .drivers(participants)
             .track(track)
-            .isDemoMode(true)
+            .isDemoMode(false)
             .build();
   }
 
