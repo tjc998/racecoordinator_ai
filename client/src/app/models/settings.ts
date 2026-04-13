@@ -23,6 +23,7 @@ export class Settings {
   serverPort: number = 7070;
   language: string = "";
   shareAnalytics: boolean = true;
+  pageTransition: string = "slide";
 
   racedaySetupWalkthroughSeen: boolean = false;
   trackManagerHelpShown: boolean = false;

@@ -59,6 +59,14 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     { key: "fuelCapacity", label: "RD_COL_FUEL_CAPACITY" },
     { key: "fuelPercentage", label: "RD_COL_FUEL_PERCENTAGE" },
   ];
+  availableTransitions = [
+    { key: "none", label: "UE_TRANSITION_NONE" },
+    { key: "random", label: "UE_TRANSITION_RANDOM" },
+    { key: "slide", label: "UE_TRANSITION_SLIDE" },
+    { key: "zoom", label: "UE_TRANSITION_ZOOM" },
+    { key: "blur", label: "UE_TRANSITION_BLUR" },
+    { key: "fade", label: "UE_TRANSITION_FADE" },
+  ];
 
   undoManager!: UndoManager<Settings>;
 
@@ -281,6 +289,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     clone.columnVisibility = JSON.parse(JSON.stringify(visibility));
 
     clone.highlightRowOnLap = s.highlightRowOnLap ?? true;
+    clone.pageTransition = s.pageTransition || "slide";
 
     return clone;
   }
@@ -299,6 +308,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       a.flagCheckered === b.flagCheckered &&
       a.sortByStandings === b.sortByStandings &&
       a.highlightRowOnLap === b.highlightRowOnLap &&
+      a.pageTransition === b.pageTransition &&
       JSON.stringify(a.racedayColumns) === JSON.stringify(b.racedayColumns) &&
       JSON.stringify(a.columnLayouts) === JSON.stringify(b.columnLayouts) &&
       JSON.stringify(a.columnVisibility) === JSON.stringify(b.columnVisibility)

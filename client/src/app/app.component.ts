@@ -1,9 +1,12 @@
 import { Component, OnInit } from "@angular/core";
-import { ChildrenOutletContexts, Router } from "@angular/router";
+import { ChildrenOutletContexts, NavigationEnd, Router } from "@angular/router";
+import { filter } from "rxjs/operators";
 import { slideInAnimation } from "src/app/utils/animations";
 
 import { AnalyticsService } from "./analytics.service";
 import { DataService } from "./data.service";
+import { NavigationService } from "./services/navigation.service";
+import { SettingsService } from "./services/settings.service";
 
 @Component({
   selector: "app-root",
@@ -23,17 +26,23 @@ import { DataService } from "./data.service";
         width: 100%;
         height: 100%;
         overflow: hidden;
+        background-color: #000;
       }
     `,
   ],
   standalone: false,
 })
 export class AppComponent implements OnInit {
+  private navigationCounter = 0;
+  private currentRandomType: string = "slide";
+
   constructor(
     private contexts: ChildrenOutletContexts,
     private dataService: DataService,
     private router: Router,
     private analyticsService: AnalyticsService,
+    private settingsService: SettingsService,
+    private navigationService: NavigationService,
   ) {}
 
   ngOnInit() {
@@ -45,11 +54,44 @@ export class AppComponent implements OnInit {
       console.log("AppComponent: Received Race Update");
       // Removed forced navigation to /raceday to allow other components to handle updates
     });
+
+    // Pick a random transition once per navigation to stabilize the animation
+    this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe(() => {
+        this.navigationCounter++;
+        this.selectRandomTransition();
+      });
+
+    // Initial random selection
+    this.selectRandomTransition();
+  }
+
+  private selectRandomTransition() {
+    const transitions = ["slide", "zoom", "blur", "fade"];
+    const randomIndex = Math.floor(Math.random() * transitions.length);
+    this.currentRandomType = transitions[randomIndex];
   }
 
   getRouteAnimationData() {
-    return this.contexts.getContext("primary")?.route?.snapshot?.data?.[
-      "animation"
-    ];
+    const settings = this.settingsService.getSettings();
+    const transition = settings.pageTransition || "slide";
+
+    if (transition === "none") {
+      return null;
+    }
+
+    const routePath =
+      this.router.url.split("?")[0].replace(/^\//, "").replace(/\//g, "-") ||
+      "home";
+    let type = transition;
+
+    if (transition === "random") {
+      type = this.currentRandomType;
+    }
+
+    // Return unique state string to ensure the animation triggers on every navigation
+    const direction = this.navigationService.getDirection();
+    return `${type}:${direction}:${routePath}:${this.navigationCounter}`;
   }
 }
