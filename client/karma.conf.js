@@ -40,7 +40,6 @@ module.exports = function (config) {
   var isAgent = !!process.env.ANTIGRAVITY_AGENT;
 
   var chromeFlags = [
-    isCI || isAgent ? "--headless=new" : "--headless",
     "--no-sandbox",
     "--disable-gpu",
     "--disable-dev-shm-usage",
@@ -67,6 +66,8 @@ module.exports = function (config) {
   if (isCI) {
     // GitHub Actions specific fixes
     chromeFlags.push(
+      "--headless=new",
+      "--ozone-platform=headless",
       "--disable-setuid-sandbox",
       "--disable-extensions",
       "--disable-features=Translate,PasswordImport,AutofillServerCommunication,OptimizationHints,VizDisplayCompositor",
@@ -74,6 +75,7 @@ module.exports = function (config) {
   } else {
     // Local/Agent flags
     chromeFlags.push(
+      isAgent ? "--headless=new" : "--headless",
       "--disable-setuid-sandbox",
       "--disable-gpu-sandbox",
       "--disable-namespace-sandbox",
@@ -112,7 +114,7 @@ module.exports = function (config) {
     browsers: ["ChromeHeadlessWithCustomConfig"],
     customLaunchers: {
       ChromeHeadlessWithCustomConfig: {
-        base: "ChromeHeadless",
+        base: "Chrome",
         flags: chromeFlags,
       },
     },
