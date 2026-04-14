@@ -52,11 +52,12 @@ export class TranslationService {
         this.translations = data as { [key: string]: any };
         this.currentLanguage.next(language);
         this.translationsLoaded.next(true);
-        // TODO(aufderheide): This is not great, and it's just used screendiff tests
-        // Delay setting the flag to ensure Angular has processed the first CD cycle
-        setTimeout(() => {
-          (window as any).isTranslationsLoaded = true;
-        }, 100);
+        // Ensure Angular has finished change detection and the DOM has settled
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            (window as any).isTranslationsLoaded = true;
+          });
+        });
       },
       error: (error: any) => {
         console.error(

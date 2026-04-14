@@ -77,10 +77,15 @@
         <div
           class="menu-dropdown-item has-submenu"
           (click)="toggleLocalizationDropdown($event)"
+          data-testid="menu-item-localization"
         >
           {{ "RDS_MENU_LOCALIZATION" | translate }}
           <span class="submenu-arrow">▶</span>
-          <div class="menu-dropdown submenu" *ngIf="isLocalizationDropdownOpen">
+          <div
+            class="menu-dropdown submenu"
+            *ngIf="isLocalizationDropdownOpen"
+            data-testid="submenu-localization"
+          >
             <div
               class="menu-dropdown-item"
               (click)="selectLanguage('')"

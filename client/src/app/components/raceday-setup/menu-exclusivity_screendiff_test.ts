@@ -91,15 +91,19 @@ test.describe("Raceday Setup Menu Exclusivity", () => {
     const harness = new DefaultRacedaySetupHarnessE2e(container);
 
     await harness.openOptionsMenu();
-    await harness.clickOptionsMenuOptionByText("Localization");
-    await expect(page.locator(".menu-dropdown.submenu")).toBeVisible();
+    await harness.openLocalizationSubMenu();
+    await expect(
+      page.locator('[data-testid="submenu-localization"]'),
+    ).toBeVisible();
 
     await harness.clickRaceDropdown();
 
     await page.waitForTimeout(500);
 
     // Exclusivity checked by screenshot
-    await expect(page.locator(".menu-dropdown.submenu")).not.toBeVisible();
+    await expect(
+      page.locator('[data-testid="submenu-localization"]'),
+    ).not.toBeVisible();
     await expect(page.locator(".dropdown-menu")).toBeVisible();
 
     await expect(page).toHaveScreenshot("race-closes-localization.png", {

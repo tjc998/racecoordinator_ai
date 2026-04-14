@@ -159,13 +159,13 @@ test.describe("Raceday Setup Functional - en", () => {
     const container = page.locator(".setup-container");
     const harness = new DefaultRacedaySetupHarnessE2e(container);
 
-    const localizationText = "Localization";
-
     await harness.openOptionsMenu();
     await expect(page.locator(".menu-dropdown")).toBeVisible();
 
-    await harness.clickOptionsMenuOptionByText(localizationText);
-    await expect(page.locator(".menu-dropdown.submenu")).toBeVisible();
+    await harness.openLocalizationSubMenu();
+    await expect(
+      page.locator('[data-testid="submenu-localization"]'),
+    ).toBeVisible();
 
     await page.waitForTimeout(500);
 
