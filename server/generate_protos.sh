@@ -53,11 +53,47 @@ PROTOC_M2="$M2_REPO/com/google/protobuf/protoc/${PROTOC_VERSION}/${PROTOC_BIN}"
 # Allow overriding the destination directory
 TARGET_DIR="${PROTO_DEST_DIR:-$SERVER_DIR/target_dist}"
 JAVA_OUT="$TARGET_DIR/generated-sources/protobuf/java"
+HASH_FILE="$TARGET_DIR/.proto_hash"
+
+# Check for --server-only flag
+SERVER_ONLY=false
+for arg in "$@"; do
+    if [ "$arg" == "--server-only" ]; then
+        SERVER_ONLY=true
+        break
+    fi
+done
+
+# Calculate hash of all .proto files to detect changes
+PROTO_HASH=""
+if command -v md5 >/dev/null 2>&1; then
+    # macOS
+    PROTO_HASH=$(find "$PROTO_ROOT" -name "*.proto" -exec md5 -q {} + | md5 -q)
+elif command -v md5sum >/dev/null 2>&1; then
+    # Linux
+    PROTO_HASH=$(find "$PROTO_ROOT" -name "*.proto" -exec md5sum {} + | md5sum | cut -d' ' -f1)
+fi
+
+# Skip if hash matches and output exists
+if [ -f "$HASH_FILE" ] && [ "$(cat "$HASH_FILE")" == "$PROTO_HASH" ] && [ -d "$JAVA_OUT" ]; then
+    echo "Protobuf files unchanged. Skipping generation."
+    
+    # Still check client protos if not server-only
+    if [ "$SERVER_ONLY" == "true" ]; then
+        exit 0
+    fi
+    # If client protos exist, we can exit. Otherwise continue to generate them.
+    CLIENT_PROTO_OUT="$PROJECT_ROOT/client/src/app/proto"
+    if [ -f "$CLIENT_PROTO_OUT/message.js" ]; then
+        exit 0
+    fi
+fi
 
 # Ensure output directory exists
 mkdir -p "$JAVA_OUT"
 
 # Priority: 1. protoc_local.exe in server dir, 2. PROTOC_M2, 3. system protoc
+# ... (rest of the protoc detection logic) ...
 if [ -f "$SERVER_DIR/protoc_local.exe" ]; then
   echo "Using local protoc found in server directory."
   PROTOC_LOCAL="$SERVER_DIR/protoc_local.exe"
@@ -126,16 +162,21 @@ fi
   --java_out="$JAVA_OUT" \
   "${PROTO_FILES[@]}"
 
+# Save hash
+echo "$PROTO_HASH" > "$HASH_FILE"
+
 echo "Protobuf compilation successful."
 
 # Generate Client-side Protos (JavaScript/TypeScript)
-if [ -d "$PROJECT_ROOT/client" ]; then
+if [ "$SERVER_ONLY" == "true" ]; then
+    echo "Skipping client-side protobuf generation (--server-only)."
+elif [ -d "$PROJECT_ROOT/client" ]; then
     echo "Generating client-side protobuf files..."
     CLIENT_PROTO_OUT="$PROJECT_ROOT/client/src/app/proto"
     mkdir -p "$CLIENT_PROTO_OUT"
     pushd "$PROTO_ROOT" > /dev/null
-    npx -y -p protobufjs-cli pbjs -p . -t static-module -w es6 -o "$CLIENT_PROTO_OUT/message.js" client/*.proto server/*.proto message.proto
-    npx -y -p protobufjs-cli pbts -o "$CLIENT_PROTO_OUT/message.d.ts" "$CLIENT_PROTO_OUT/message.js"
+    npx protobufjs-cli pbjs -p . -t static-module -w es6 -o "$CLIENT_PROTO_OUT/message.js" client/*.proto server/*.proto message.proto
+    npx protobufjs-cli pbts -o "$CLIENT_PROTO_OUT/message.d.ts" "$CLIENT_PROTO_OUT/message.js"
     popd > /dev/null
     echo "Client-side protobuf generation successful."
 fi

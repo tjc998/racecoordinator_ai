@@ -118,7 +118,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.2.5</version>
         <configuration>
-
+          <argLine>-XX:TieredStopAtLevel=1 ${argLine}</argLine>
         </configuration>
       </plugin>
       <!-- Spotless plugin for formatting -->

@@ -33,22 +33,25 @@ import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.Rule;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 public class DatabaseContextTest {
 
-  private TransitionWalker.ReachedState<RunningMongodProcess> mongodProcess;
-  private MongoClient mongoClient;
-  private DatabaseContext databaseContext;
-  private ServerConfigService configService;
+  private static TransitionWalker.ReachedState<RunningMongodProcess> mongodProcess;
+  private static MongoClient mongoClient;
+  private static DatabaseContext databaseContext;
+  private static ServerConfigService configService;
+  private static String baseDataDir;
 
-  @Rule public TemporaryFolder tempFolder = new TemporaryFolder();
+  @ClassRule public static TemporaryFolder tempFolder = new TemporaryFolder();
 
-  @Before
-  public void setup() throws Exception {
+  @BeforeClass
+  public static void setup() throws Exception {
     // Setup Embedded Mongo
     String bindIp = "localhost";
     int port = 27019; // Use unique port
@@ -77,30 +80,12 @@ public class DatabaseContextTest {
 
     mongoClient = MongoClients.create(settings);
 
-    databaseContext =
-        new DatabaseContext(
-            mongoClient,
-            "TEST_DB",
-            configService,
-            tempFolder.getRoot().getAbsolutePath() + "/data/");
+    baseDataDir = tempFolder.getRoot().getAbsolutePath() + "/data/";
+    databaseContext = new DatabaseContext(mongoClient, "TEST_DB", configService, baseDataDir);
   }
 
-  @After
-  public void teardown() throws IOException {
-    // Cleanup 'data' specific subdirectories created by tests
-    if (databaseContext != null) {
-      try {
-        List<String> dbs = databaseContext.listDatabases();
-        for (String db : dbs) {
-          if (db.startsWith("TEST_DB")) {
-            databaseContext.deleteDatabase(db);
-          }
-        }
-      } catch (Exception e) {
-        // Ignore errors during cleanup if client is already closed or issues
-      }
-    }
-
+  @AfterClass
+  public static void teardown() throws IOException {
     if (mongoClient != null) {
       try {
         mongoClient.close();
@@ -113,6 +98,28 @@ public class DatabaseContextTest {
         mongodProcess.close();
       } catch (Exception e) {
         // Ignore
+      }
+    }
+  }
+
+  @Before
+  public void beforeTest() {
+    // Optional: Reset state between tests if needed
+  }
+
+  @After
+  public void afterTest() {
+    // Cleanup 'data' specific subdirectories and databases created by tests
+    if (databaseContext != null) {
+      try {
+        List<String> dbs = databaseContext.listDatabases();
+        for (String db : dbs) {
+          if (db.startsWith("TEST_DB")) {
+            databaseContext.deleteDatabase(db);
+          }
+        }
+      } catch (Exception e) {
+        // Ignore errors during cleanup
       }
     }
   }

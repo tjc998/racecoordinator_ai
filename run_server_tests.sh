@@ -22,25 +22,30 @@ mkdir -p "$SERVER_BUILD_DIR/classes"
 mkdir -p "$SERVER_BUILD_DIR/test-classes"
 
 # 1. Generate protobufs to the /tmp-based directory
-./generate_protos.sh
+./generate_protos.sh --server-only
 
 # 2. Run tests pointing entire build output to /tmp
 # Detect Apple Silicon for parallel test optimization
 if [ "$(uname -m)" = "arm64" ] && [ "$(uname -s)" = "Darwin" ]; then
-  FORK_COUNT="4C"
+  # 0.5C is much more reasonable for an 18-core M5 than 4C.
+  FORK_COUNT="0.5C"
   REUSE_FORKS="true"
-  MVN_THREADS="-T 1C"
+  MVN_THREADS="-T 0.5C"
 else
-  FORK_COUNT="0"
+  FORK_COUNT="1"
   REUSE_FORKS="true"
   MVN_THREADS=""
 fi
+
+# JVM optimization for faster startup in tests
+JVM_OPTS="-XX:TieredStopAtLevel=1"
 
 mvn test $MVN_THREADS \
   -Dbuild.dist.dir="$SERVER_BUILD_DIR" \
   -DskipProtobuf=true \
   -DforkCount="$FORK_COUNT" \
   -DreuseForks="$REUSE_FORKS" \
+  -DargLine="$JVM_OPTS" \
   -Djava.io.tmpdir="$SERVER_TMP" \
   -Dde.flapdoodle.embed.mongo.artifacts="$SERVER_TMP/.embedmongo" \
   -Dmaven.repo.local="$SERVER_DIR/.m2/repository"
