@@ -370,7 +370,8 @@ export class TestSetupHelper {
     );
 
     // 5. Final safety wait for complex components (like SVGs) to stabilize
-    await page.waitForTimeout(750);
+    // Increased to 500ms to ensure stability with 18 workers and production rendering
+    await page.waitForTimeout(500);
   }
 
   static async setupTrackMocks(page: Page) {

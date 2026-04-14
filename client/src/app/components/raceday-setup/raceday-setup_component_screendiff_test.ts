@@ -34,7 +34,7 @@ for (const lang of allLanguages) {
       await TestSetupHelper.disableAnimations(page);
 
       await expect(page.getByText("Alice")).toBeVisible();
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(100);
     });
 
     test("Initial state", async ({ page }) => {
@@ -76,7 +76,7 @@ test.describe("Raceday Setup Functional - en", () => {
     await TestSetupHelper.disableAnimations(page);
 
     await expect(page.getByText("Alice")).toBeVisible();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
   });
 
   test("No drivers selected", async ({ page }) => {

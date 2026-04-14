@@ -32,7 +32,7 @@ test.describe("Raceday Setup Menu Exclusivity", () => {
     await TestSetupHelper.disableAnimations(page);
 
     await expect(page.getByText("Alice")).toBeVisible();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
   });
 
   test("opening Config menu should close File menu", async ({ page }) => {

@@ -26,7 +26,7 @@ test.describe("About Dialog", () => {
     });
 
     // 6. Extra stabilization wait
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
   });
 
   test("should open about dialog from help menu", async ({ page }) => {

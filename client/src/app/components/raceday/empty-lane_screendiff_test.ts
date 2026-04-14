@@ -171,7 +171,7 @@ test.describe("Raceday Visuals for Empty Lanes", () => {
 
     await TestSetupHelper.mockRaceData(page, raceData);
 
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
 
     // Wait for the first driver row to be rendered
     await page.locator(".table-row").nth(0).waitFor({ state: "visible" });
@@ -273,7 +273,7 @@ test.describe("Raceday Visuals for Empty Lanes", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
 
     // Wait for the second driver row (the empty one) to be rendered
     await page.locator(".table-row").nth(1).waitFor({ state: "visible" });

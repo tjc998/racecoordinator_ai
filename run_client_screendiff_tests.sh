@@ -23,10 +23,11 @@ echo "Syncing source to $ISOLATED_DIR..."
 # Use rsync for faster incremental syncs (only copies changed files)
 if command -v rsync &>/dev/null; then
   rsync -a --delete src/ "$ISOLATED_DIR/src/"
+  rsync -a --delete scripts/ "$ISOLATED_DIR/scripts/"
   rsync -a package.json angular.json playwright.config.ts "$ISOLATED_DIR/"
   rsync -a tsconfig*.json "$ISOLATED_DIR/"
 else
-  cp -Rf src package.json angular.json tsconfig*.json playwright.config.ts "$ISOLATED_DIR/"
+  cp -Rf src scripts package.json angular.json tsconfig*.json playwright.config.ts "$ISOLATED_DIR/"
 fi
 
 cd "$ISOLATED_DIR" || exit

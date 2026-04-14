@@ -46,7 +46,9 @@ test.describe("Splash Screen Visual", () => {
     await expect(page.locator(".server-address")).toBeVisible({
       timeout: 5000,
     });
-    await page.waitForTimeout(1000);
+    // Ensure the quote has finished its internal 500ms rotation/fade-in timer
+    await expect(page.locator(".quote-text")).toBeVisible({ timeout: 5000 });
+    await page.waitForTimeout(600);
 
     // Take a screenshot of the splash screen layout
     await expect(page).toHaveScreenshot("splash-screen-initial.png", {

@@ -111,7 +111,7 @@ test.describe("Driver Editor Visuals", () => {
 
     // Disable animations and wait for final settling
     await TestSetupHelper.disableAnimations(page);
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
 
     // Screenshot ONLY the modal box for maximum isolation
     const modalContent = page.locator("#confirmation-modal-content");
@@ -142,7 +142,7 @@ test.describe("Driver Editor Visuals", () => {
     // 2. Set name to duplicate
     await harness.setName("Duplicate Name");
     await page.keyboard.press("Tab"); // Commit
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
 
     await expect(page).toHaveScreenshot("driver-editor-validation-error.png", {
       animations: "disabled",
@@ -185,7 +185,7 @@ test.describe("Driver Editor Visuals", () => {
 
     // Disable animations and wait for settling
     await TestSetupHelper.disableAnimations(page);
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
 
     await expect(popover).toHaveScreenshot("driver-editor-guided-help.png", {
       animations: "disabled",

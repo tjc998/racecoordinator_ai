@@ -34,9 +34,9 @@ test.describe("Track Editor Visuals", () => {
     // Lane Editor
 
     // Arduino Config
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
 
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
     await expect(page).toHaveScreenshot("track-editor-existing.png");
   });
 
@@ -56,7 +56,7 @@ test.describe("Track Editor Visuals", () => {
 
     // Default lanes for new track
 
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
     await expect(page).toHaveScreenshot("track-editor-new.png");
   });
 
@@ -86,7 +86,7 @@ test.describe("Track Editor Visuals", () => {
     // Confirmation modal should appear
     await harness.waitForConfirmationModalVisible(5000);
 
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
     await expect(page).toHaveScreenshot(
       "track-editor-unsaved-changes-modal.png",
     );
@@ -114,7 +114,7 @@ test.describe("Track Editor Visuals", () => {
 
     // Verify pin 2 action (checked visually)
 
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
     await expect(page).toHaveScreenshot("track-editor-pins-grid.png");
   });
 
@@ -134,7 +134,7 @@ test.describe("Track Editor Visuals", () => {
 
     // Invalid state checked visually
 
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
     await expect(page).toHaveScreenshot(
       "track-editor-duplicate-name-error.png",
     );

@@ -95,7 +95,7 @@ test.describe("Track Manager Visuals", () => {
     // Wait for the editor to load
     await expect(page.locator("app-track-editor")).toBeVisible();
 
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
     await expect(page).toHaveScreenshot("track-manager-after-create-new.png");
   });
 
@@ -112,7 +112,7 @@ test.describe("Track Manager Visuals", () => {
     const overlay = page.locator("app-help-overlay");
     await overlay.locator(".help-popover").waitFor({ state: "visible" });
 
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
     await expect(page).toHaveScreenshot("track-manager-guided-help.png");
   });
 });

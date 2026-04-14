@@ -9,7 +9,8 @@
     "proto:gen": "mkdir -p src/app/proto && ./node_modules/protobufjs-cli/bin/pbjs -p ../server/proto -t static-module -w es6 -o src/app/proto/message.js ../server/proto/client/model.proto ../server/proto/client/driver_model.proto ../server/proto/client/asset_model.proto ../server/proto/client/asset_management.proto ../server/proto/client/initialize_race.proto ../server/proto/client/initialize_interface.proto ../server/proto/client/update_interface_config.proto ../server/proto/client/set_interface_pin_state.proto ../server/proto/client/set_interface_rgb_led_state.proto ../server/proto/client/interface_event.proto ../server/proto/client/start_race.proto ../server/proto/client/pause_race.proto ../server/proto/client/next_heat.proto ../server/proto/client/restart_heat.proto ../server/proto/client/skip_heat.proto ../server/proto/client/defer_heat.proto ../server/proto/client/race_subscription.proto ../server/proto/client/arduino_config.proto ../server/proto/client/lane_model.proto ../server/proto/client/track_model.proto ../server/proto/client/race_model.proto ../server/proto/client/team_model.proto ../server/proto/client/audio_config.proto ../server/proto/server/race_state.proto ../server/proto/server/asset_management_response.proto ../server/proto/server/race_time.proto ../server/proto/server/lap.proto ../server/proto/server/race_data.proto ../server/proto/server/race.proto ../server/proto/server/race_participant.proto ../server/proto/server/heat_data.proto ../server/proto/server/heat.proto ../server/proto/server/reaction_time.proto ../server/proto/server/standings_update.proto ../server/proto/server/overall_standings_update.proto && ./node_modules/protobufjs-cli/bin/pbts -o src/app/proto/message.d.ts src/app/proto/message.js",
     "postinstall": "npm run proto:gen",
     "test": "ng test --watch=false",
-    "test:visual": "PLAYWRIGHT_BROWSERS_PATH=./.playwright-browsers npx playwright test"
+    "test:visual": "PLAYWRIGHT_BROWSERS_PATH=./.playwright-browsers npx playwright test",
+    "test:visual:serve": "node scripts/test-visual-serve.js"
   },
   "private": true,
   "dependencies": {
@@ -31,12 +32,21 @@
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^21.0.5",
+    "@angular-eslint/builder": "^18.0.0",
+    "@angular-eslint/eslint-plugin": "^18.0.0",
+    "@angular-eslint/eslint-plugin-template": "^18.0.0",
+    "@angular-eslint/schematics": "^18.0.0",
+    "@angular-eslint/template-parser": "^18.0.0",
     "@angular/cli": "^18.0.0",
     "@angular/compiler-cli": "^21.0.8",
     "@playwright/test": "^1.59.1",
     "@types/jasmine": "~5.1.0",
     "@types/long": "^4.0.2",
     "@types/node": "^18.11.9",
+    "@typescript-eslint/eslint-plugin": "^7.14.0",
+    "@typescript-eslint/parser": "^7.14.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-prettier": "^5.1.3",
     "jasmine-core": "~5.1.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
@@ -44,17 +54,9 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "playwright": "^1.58.0",
+    "prettier": "^3.2.5",
     "protobufjs-cli": "^1.1.2",
-    "@angular-eslint/builder": "^18.0.0",
-    "@angular-eslint/eslint-plugin": "^18.0.0",
-    "@angular-eslint/eslint-plugin-template": "^18.0.0",
-    "@angular-eslint/schematics": "^18.0.0",
-    "@angular-eslint/template-parser": "^18.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.14.0",
-    "@typescript-eslint/parser": "^7.14.0",
-    "eslint": "^8.57.0",
-    "eslint-plugin-prettier": "^5.1.3",
-    "prettier": "^3.2.5"
+    "sirv-cli": "^3.0.1"
   },
   "overrides": {
     "tmp": "^0.2.3"

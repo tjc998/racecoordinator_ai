@@ -23,7 +23,7 @@ test.describe("Track Manager UI Refinements", () => {
     await expect(listItems).toHaveCount(20);
 
     // Capture the sidebar state (scrollbar and truncation)
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
     await expect(page).toHaveScreenshot(
       "track-manager-sidebar-scrolling-truncation.png",
     );
@@ -45,7 +45,7 @@ test.describe("Track Manager UI Refinements", () => {
     await expect(summaryTitle).toBeVisible();
 
     // Check for ellipsis (via screenshot verification)
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
     await expect(page).toHaveScreenshot(
       "track-manager-summary-title-truncation.png",
     );

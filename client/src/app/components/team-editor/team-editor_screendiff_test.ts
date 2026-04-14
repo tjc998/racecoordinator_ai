@@ -21,7 +21,7 @@ test.describe("Team Editor Visuals", () => {
     await page.locator(".loader-overlay").waitFor({ state: "hidden" });
 
     // Wait for settling
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
     await expect(page).toHaveScreenshot("team-editor-initial.png", {
       animations: "disabled",
       maxDiffPixelRatio: 0.05,
@@ -43,7 +43,7 @@ test.describe("Team Editor Visuals", () => {
     await page.keyboard.press("Tab");
 
     // Save enabled state checked visually
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
     await expect(page).toHaveScreenshot("team-editor-name-changed.png", {
       animations: "disabled",
       maxDiffPixelRatio: 0.05,
@@ -66,7 +66,7 @@ test.describe("Team Editor Visuals", () => {
 
     await page.locator(".modal-header").waitFor({ state: "visible" });
 
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
     await expect(page).toHaveScreenshot("team-editor-avatar-selector.png", {
       animations: "disabled",
       maxDiffPixelRatio: 0.05,
@@ -89,7 +89,7 @@ test.describe("Team Editor Visuals", () => {
     const availableDriver = page.locator(".driver-grid .driver-item").first();
     await availableDriver.click();
 
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
     await expect(page).toHaveScreenshot("team-editor-driver-added.png", {
       animations: "disabled",
       maxDiffPixelRatio: 0.05,
@@ -115,7 +115,7 @@ test.describe("Team Editor Visuals", () => {
     });
 
     const popover = page.locator(".popover-content");
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(100);
     await expect(popover).toHaveScreenshot("team-editor-guided-help.png", {
       animations: "disabled",
       maxDiffPixelRatio: 0.05,
