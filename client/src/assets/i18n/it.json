@@ -551,6 +551,8 @@
   "RE_LAP_COUNT": "Numero di Giri",
   "RE_MIN_LAP_TIME": "Tempo Minimo Giro",
   "RE_MIN_LAP_TIME_HINT": "I tempi sul giro inferiori a questo valore verranno accumulati (0 per ignorare).",
+  "RE_DRIFT_TIME": "Tempo di deriva",
+  "RE_DRIFT_TIME_HINT": "Il tempo (in secondi) concesso alle auto per continuare e far contare i giri dopo que la batteria è stata messa in pausa.",
   "RE_OVERALL_RANKING": "Classifica Generale",
   "RE_OVERALL_SCORING_HEADER": "PUNTEGGIO GENERALE",
   "RE_OVERALL_TIEBREAKER": "Spareggio Generale",

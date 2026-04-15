@@ -551,6 +551,8 @@
   "RE_LAP_COUNT": "Número de Vueltas",
   "RE_MIN_LAP_TIME": "Tiempo Mínimo de Vuelta",
   "RE_MIN_LAP_TIME_HINT": "Los tiempos de vuelta por debajo de este valor se acumularán (0 para ignorar).",
+  "RE_DRIFT_TIME": "Tiempo de deriva",
+  "RE_DRIFT_TIME_HINT": "El tiempo (en segundos) permitido para que los autos continúen y se cuenten las vueltas después de que la manga se haya pausado.",
   "RE_OVERALL_RANKING": "Clasificación General",
   "RE_OVERALL_SCORING_HEADER": "CONFIGURACIÓN GENERAL",
   "RE_OVERALL_TIEBREAKER": "Desempate General",

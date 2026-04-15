@@ -19,6 +19,7 @@ export class Race implements Model {
   readonly auto_start_time: number;
   readonly auto_advance_warmup_time: number;
   readonly auto_start_warmup_time: number;
+  readonly drift_time: number;
 
   constructor(
     entity_id: string,
@@ -32,7 +33,8 @@ export class Race implements Model {
     auto_advance_time: number = 0,
     auto_start_time: number = 0,
     auto_advance_warmup_time: number = 0,
-    auto_start_warmup_time: number = 0
+    auto_start_warmup_time: number = 0,
+    drift_time: number = 0.5,
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -46,6 +48,7 @@ export class Race implements Model {
     this.auto_start_time = auto_start_time;
     this.auto_advance_warmup_time = auto_advance_warmup_time;
     this.auto_start_warmup_time = auto_start_warmup_time;
+    this.drift_time = drift_time;
   }
 
   get objectId(): string {

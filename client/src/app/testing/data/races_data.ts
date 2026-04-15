@@ -151,5 +151,10 @@ export const MOCK_RACE_INSTANCES = MOCK_RACES.map((r: any) => {
     fuelOptions,
     digitalFuelOptions,
     r.team_options,
+    0, // auto_advance_time
+    0, // auto_start_time
+    0, // auto_advance_warmup_time
+    0, // auto_start_warmup_time
+    r.drift_time ?? 0.5,
   );
 });

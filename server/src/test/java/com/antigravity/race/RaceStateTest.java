@@ -331,4 +331,84 @@ public class RaceStateTest {
     assertEquals(0.0, race.getAutoAdvanceRemaining(), 0.001);
     assertTrue(race.getState() instanceof HeatOver);
   }
+
+  @Test
+  public void testDriftLapCountingDuringPause() throws Exception {
+    // 1. Setup race with drift time
+    injectDriftTime(2.0);
+
+    // 2. Start -> Racing
+    race.startRace();
+    race.changeState(new Racing());
+
+    // 3. Trigger reaction lap first
+    race.onLap(0, 1.0, 1, 0);
+    assertEquals(0, race.getCurrentHeat().getDrivers().get(0).getLapCount());
+
+    // 4. Pause
+    race.pauseRace();
+    assertTrue(race.getState() instanceof Paused);
+
+    // 5. Trigger lap immediately (within drift window)
+    race.onLap(0, 5.0, 1, 0);
+
+    // 6. Verify lap was counted
+    assertEquals(1, race.getCurrentHeat().getDrivers().get(0).getLapCount());
+    assertTrue(race.getCurrentHeat().getDrivers().get(0).getLaps().get(0).isDrift());
+  }
+
+  @Test
+  public void testLapIgnoredAfterDriftTime() throws Exception {
+    // 1. Setup race with VERY short drift time
+    injectDriftTime(0.1); // 100ms
+
+    // 2. Start -> Racing
+    race.startRace();
+    race.changeState(new Racing());
+
+    // 3. Trigger reaction lap first
+    race.onLap(0, 1.0, 1, 0);
+
+    // 4. Pause
+    race.pauseRace();
+
+    // 5. Wait for drift time to expire
+    Thread.sleep(200);
+
+    // 6. Trigger lap
+    race.onLap(0, 5.0, 1, 0);
+
+    // 7. Verify lap was NOT counted (it remains 0 because reaction lap is not counted as a full
+    // lap)
+    assertEquals(0, race.getCurrentHeat().getDrivers().get(0).getLapCount());
+  }
+
+  private void injectDriftTime(double driftTime) throws Exception {
+    // We need to inject the driftTime into the realRaceModel since it's immutable (Builder)
+    Field modelField = com.antigravity.race.Race.class.getDeclaredField("model");
+    modelField.setAccessible(true);
+    Race oldModel = (Race) modelField.get(race);
+
+    Race newModel =
+        new Race.Builder()
+            .withName(oldModel.getName())
+            .withTrackEntityId(oldModel.getTrackEntityId())
+            .withHeatRotationType(oldModel.getHeatRotationType())
+            .withHeatScoring(oldModel.getHeatScoring())
+            .withOverallScoring(oldModel.getOverallScoring())
+            .withMinLapTime(oldModel.getMinLapTime())
+            .withFuelOptions(oldModel.getFuelOptions())
+            .withDigitalFuelOptions(oldModel.getDigitalFuelOptions())
+            .withTeamOptions(oldModel.getTeamOptions())
+            .withAutoAdvanceTime(oldModel.getAutoAdvanceTime())
+            .withAutoStartTime(oldModel.getAutoStartTime())
+            .withAutoAdvanceWarmupTime(oldModel.getAutoAdvanceWarmupTime())
+            .withAutoStartWarmupTime(oldModel.getAutoStartWarmupTime())
+            .withEntityId(oldModel.getEntityId())
+            .withId(oldModel.getId())
+            .withDriftTime(driftTime)
+            .build();
+
+    modelField.set(race, newModel);
+  }
 }

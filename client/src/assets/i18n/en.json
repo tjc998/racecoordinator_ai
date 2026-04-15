@@ -551,6 +551,8 @@
   "RE_LAP_COUNT": "Lap Count",
   "RE_MIN_LAP_TIME": "Minimum Lap Time",
   "RE_MIN_LAP_TIME_HINT": "Lap times below this value will be accumulated (0 to ignore).",
+  "RE_DRIFT_TIME": "Drift Time",
+  "RE_DRIFT_TIME_HINT": "The time (in seconds) allowed for cars to continue and have laps counted after the heat is paused.",
   "RE_OVERALL_RANKING": "Overall Ranking",
   "RE_OVERALL_SCORING_HEADER": "OVERALL SCORING",
   "RE_OVERALL_TIEBREAKER": "Overall Tiebreaker",

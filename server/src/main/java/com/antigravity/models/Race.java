@@ -106,7 +106,7 @@ public class Race extends Model {
     this.autoStartTime = autoStartTime != null ? autoStartTime : 0.0;
     this.autoAdvanceWarmupTime = autoAdvanceWarmupTime != null ? autoAdvanceWarmupTime : 0.0;
     this.autoStartWarmupTime = autoStartWarmupTime != null ? autoStartWarmupTime : 0.0;
-    this.driftTime = driftTime != null ? driftTime : 0.0;
+    this.driftTime = driftTime != null ? driftTime : 0.5;
   }
 
   public static class Builder {
@@ -124,7 +124,7 @@ public class Race extends Model {
     private double autoStartTime = 0.0;
     private double autoAdvanceWarmupTime = 0.0;
     private double autoStartWarmupTime = 0.0;
-    private double driftTime = 0.0;
+    private double driftTime = 0.5;
     private String entityId;
     private ObjectId id;
 

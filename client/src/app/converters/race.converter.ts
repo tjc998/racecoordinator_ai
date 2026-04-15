@@ -133,6 +133,7 @@ export class RaceConverter {
           proto.autoStartTime || 0,
           proto.autoAdvanceWarmupTime || 0,
           proto.autoStartWarmupTime || 0,
+          proto.driftTime ?? 0.5,
         );
       },
       () => {

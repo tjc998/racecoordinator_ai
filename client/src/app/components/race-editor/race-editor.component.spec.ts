@@ -136,6 +136,33 @@ describe("RaceEditorComponent", () => {
     expect(component.editingRace?.entity_id).toBe("r1");
   }));
 
+  it("should initialize drift_time to 0.5 for new race", fakeAsync(() => {
+    activatedRoute.snapshot.queryParamMap.get.and.callFake((key: string) => {
+      if (key === "id") return "new";
+      return null;
+    });
+    dataService.getTracks.and.returnValue(of(MOCK_TRACKS));
+    dataService.getRaces.and.returnValue(of([]));
+
+    component.ngOnInit();
+    tick();
+
+    expect(component.editingRace.drift_time).toBe(0.5);
+  }));
+
+  it("should fallback to 0.5 drift_time when loading race without it", fakeAsync(() => {
+    const raceWithoutDrift: any = JSON.parse(JSON.stringify(MOCK_RACES[0]));
+    delete raceWithoutDrift.drift_time; // Ensure it's missing
+    dataService.getRaces.and.returnValue(of([raceWithoutDrift]));
+    dataService.getTracks.and.returnValue(of(MOCK_TRACKS));
+    dataService.previewHeats.and.returnValue(of({ heats: [] }));
+
+    component.ngOnInit();
+    tick();
+
+    expect(component.editingRace.drift_time).toBe(0.5);
+  }));
+
   it("should load heats when race is loaded", fakeAsync(() => {
     const mockHeats = {
       heats: [{ heatNumber: 1, lanes: [{ laneNumber: 1, driverNumber: 1 }] }],

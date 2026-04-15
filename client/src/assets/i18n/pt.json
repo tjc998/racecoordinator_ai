@@ -551,6 +551,8 @@
   "RE_LAP_COUNT": "Número de Voltas",
   "RE_MIN_LAP_TIME": "Tempo Mínimo de Volta",
   "RE_MIN_LAP_TIME_HINT": "Os tempos de volta abaixo deste valor serão acumulados (0 para ignorar).",
+  "RE_DRIFT_TIME": "Tempo de deriva",
+  "RE_DRIFT_TIME_HINT": "O tempo (em segundos) concedido para os carros continuarem e terem as voltas contadas após a bateria ter sido pausada.",
   "RE_OVERALL_RANKING": "Classificação Geral",
   "RE_OVERALL_SCORING_HEADER": "PONTUAÇÃO GERAL",
   "RE_OVERALL_TIEBREAKER": "Desempate Geral",

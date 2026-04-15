@@ -2,10 +2,6 @@ package com.antigravity.race;
 
 import com.antigravity.models.Driver;
 import com.antigravity.protocols.CarLocation;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -67,20 +63,6 @@ public class DriverHeatData extends ServerToClientObject {
   private final ArrayList<Double> segments = new ArrayList<>();
   private CarLocation currentLocation;
 
-  private static void logToFile(String message) {
-    try {
-      String tmpDir = System.getProperty("java.io.tmpdir");
-      Path logPath = Paths.get(tmpDir, "race_debug.log");
-      Files.write(
-          logPath,
-          (message + "\n").getBytes(),
-          StandardOpenOption.CREATE,
-          StandardOpenOption.APPEND);
-    } catch (Exception e) {
-      // Ignore
-    }
-  }
-
   @BsonCreator
   public DriverHeatData(
       @BsonProperty("driver") RaceParticipant driver,
@@ -88,12 +70,8 @@ public class DriverHeatData extends ServerToClientObject {
     super();
     this.driver = driver;
     if (actualDriver != null) {
-      // logToFile("DriverHeatData (BsonCreator): Loaded with ActualDriver: " +
-      // actualDriver.getName());
       this.actualDriver = actualDriver;
     } else {
-      // logToFile("DriverHeatData (BsonCreator): Missing ActualDriver, falling back
-      // to: " + driver.getDriver().getName());
       this.actualDriver = driver.getDriver(); // Default to participant driver (null if team)
     }
   }

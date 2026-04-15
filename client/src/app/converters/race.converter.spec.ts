@@ -36,4 +36,27 @@ describe("RaceConverter", () => {
     expect(result.fuel_options).toBeDefined();
     expect(result.fuel_options.enabled).toBeFalse();
   });
+
+  it("should map drift time from proto", () => {
+    const mockProto: com.antigravity.IRaceModel = {
+      model: { entityId: "r3" },
+      name: "Test Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      driftTime: 1.5,
+    };
+
+    const result = RaceConverter.fromProto(mockProto);
+    expect(result.drift_time).toBe(1.5);
+  });
+
+  it("should fallback to 0.5 drift time if missing in proto", () => {
+    const mockProto: com.antigravity.IRaceModel = {
+      model: { entityId: "r4" },
+      name: "Test Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+    };
+
+    const result = RaceConverter.fromProto(mockProto);
+    expect(result.drift_time).toBe(0.5);
+  });
 });

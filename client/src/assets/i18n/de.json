@@ -551,6 +551,8 @@
   "RE_LAP_COUNT": "Rundenanzahl",
   "RE_MIN_LAP_TIME": "Mindestrundenzeit",
   "RE_MIN_LAP_TIME_HINT": "Rundenzeiten unter diesem Wert werden gesammelt (0 zur Deaktivierung).",
+  "RE_DRIFT_TIME": "Driftzeit",
+  "RE_DRIFT_TIME_HINT": "Die Zeit (in Sekunden), in der Autos weiterfahren und Runden gezählt werden können, nachdem der Lauf pausiert wurde.",
   "RE_OVERALL_RANKING": "Gesamtrangliste",
   "RE_OVERALL_SCORING_HEADER": "GESAMT-WERTUNG",
   "RE_OVERALL_TIEBREAKER": "Gesamt-Stichscheid",

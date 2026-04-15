@@ -562,6 +562,7 @@ public class DatabaseTaskHandler {
               .withAutoStartTime(race.getAutoStartTime())
               .withAutoAdvanceWarmupTime(race.getAutoAdvanceWarmupTime())
               .withAutoStartWarmupTime(race.getAutoStartWarmupTime())
+              .withDriftTime(race.getDriftTime())
               .withEntityId(nextId)
               .build();
     }
@@ -615,6 +616,7 @@ public class DatabaseTaskHandler {
             .withAutoStartTime(race.getAutoStartTime())
             .withAutoAdvanceWarmupTime(race.getAutoAdvanceWarmupTime())
             .withAutoStartWarmupTime(race.getAutoStartWarmupTime())
+            .withDriftTime(race.getDriftTime())
             .withEntityId(id)
             .withId(race.getId())
             .build();
@@ -698,6 +700,7 @@ public class DatabaseTaskHandler {
       raceMap.put("auto_start_time", race.getAutoStartTime());
       raceMap.put("auto_advance_warmup_time", race.getAutoAdvanceWarmupTime());
       raceMap.put("auto_start_warmup_time", race.getAutoStartWarmupTime());
+      raceMap.put("drift_time", race.getDriftTime());
       response.add(raceMap);
     }
     ctx.json(response);

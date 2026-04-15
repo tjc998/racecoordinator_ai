@@ -551,6 +551,8 @@
   "RE_LAP_COUNT": "Nombre de Tours",
   "RE_MIN_LAP_TIME": "Temps au Tour Minimum",
   "RE_MIN_LAP_TIME_HINT": "Les temps au tour inférieurs à cette valeur seront accumulés (0 pour ignorer).",
+  "RE_DRIFT_TIME": "Temps de dérive",
+  "RE_DRIFT_TIME_HINT": "Le temps (en secondes) alloué aux voitures pour continuer et faire compter les tours après que la manche a été mise en pause.",
   "RE_OVERALL_RANKING": "Classement Général",
   "RE_OVERALL_SCORING_HEADER": "CLASSEMENT GÉNÉRAL",
   "RE_OVERALL_TIEBREAKER": "Égalité Générale",
