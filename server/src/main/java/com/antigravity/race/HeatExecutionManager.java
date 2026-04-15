@@ -57,7 +57,12 @@ public class HeatExecutionManager {
   }
 
   public void onLap(
-      int lane, double lapTime, int interfaceId, boolean ignoreTeamLimits, boolean checkFinish) {
+      int lane,
+      double lapTime,
+      int interfaceId,
+      boolean ignoreTeamLimits,
+      boolean checkFinish,
+      boolean isDrift) {
     System.out.println(
         "HeatExecutionManager: Received onLap for lane " + lane + " time " + lapTime);
 
@@ -93,9 +98,9 @@ public class HeatExecutionManager {
       }
       double finalLapTime = driverData.getPendingLapTime();
       driverData.setPendingLapTime(0.0);
-      handleLapTime(driverData, finalLapTime, lane, interfaceId);
+      handleLapTime(driverData, finalLapTime, lane, interfaceId, isDrift);
     } else {
-      handleLapTime(driverData, lapTime, lane, interfaceId);
+      handleLapTime(driverData, lapTime, lane, interfaceId, isDrift);
     }
 
     // Check for finish condition immediately after a lap if requested
@@ -536,13 +541,14 @@ public class HeatExecutionManager {
     }
   }
 
-  private void handleLapTime(DriverHeatData driverData, double lapTime, int lane, int interfaceId) {
+  private void handleLapTime(
+      DriverHeatData driverData, double lapTime, int lane, int interfaceId, boolean isDrift) {
     double effectiveLapTime = lapTime;
     if (driverData.getLapCount() == 0) {
       effectiveLapTime += driverData.getReactionTime();
     }
 
-    driverData.addLap(effectiveLapTime);
+    driverData.addLap(effectiveLapTime, isDrift);
 
     // Handle analog fuel usage, but exclude reaction time as it could be extremely
     // high if the driver has technical issues at the start of the heat.

@@ -230,13 +230,13 @@ public class CsvExporter {
             }
 
             if (hasSegments) {
-              sb.append("#Lap,Driver,Nickname,Lap Time");
+              sb.append("#Lap,Driver,Nickname,Lap Time,Drift");
               for (int i = 0; i < maxSegments; i++) {
                 sb.append(",Segment ").append(i + 1);
               }
               sb.append("\n");
             } else {
-              sb.append("#Lap,Driver,Nickname,Lap Time\n");
+              sb.append("#Lap,Driver,Nickname,Lap Time,Drift\n");
             }
 
             if (hasLaps) {
@@ -255,7 +255,9 @@ public class CsvExporter {
                     .append(",")
                     .append(escape(lapNickname))
                     .append(",")
-                    .append(lap.getLapTime());
+                    .append(lap.getLapTime())
+                    .append(",")
+                    .append(lap.isDrift());
 
                 if (hasSegments) {
                   for (int i = 0; i < maxSegments; i++) {

@@ -11,10 +11,12 @@ public class Paused implements IRaceState {
     return RaceFlag.YELLOW;
   }
 
+  private Race race;
   private long pauseStartTimeMillis;
 
   @Override
   public void enter(Race race) {
+    this.race = race;
     System.out.println("Paused state entered. Race paused.");
     race.setMainPower(false);
     this.pauseStartTimeMillis = System.currentTimeMillis();
@@ -64,8 +66,29 @@ public class Paused implements IRaceState {
   }
 
   @Override
-  public void onLap(int lane, double lapTime, int interfaceId) {
-    // Not while paused
+  public void onLap(int lane, double lapTime, int interfaceId, boolean isDrift) {
+    if (race != null && race.getRaceModel() != null) {
+      double driftTime = race.getRaceModel().getDriftTime();
+      if (driftTime > 0) {
+        long elapsedMillis = System.currentTimeMillis() - pauseStartTimeMillis;
+        if (elapsedMillis <= driftTime * 1000) {
+          System.out.println(
+              "Paused: Counting lap during drift time. Elapsed: "
+                  + elapsedMillis
+                  + "ms, Drift: "
+                  + (driftTime * 1000)
+                  + "ms");
+          handleLap(race, lane, lapTime, interfaceId, true);
+        } else {
+          System.out.println(
+              "Paused: Drift time expired. Lap ignored. Elapsed: "
+                  + elapsedMillis
+                  + "ms, Drift: "
+                  + (driftTime * 1000)
+                  + "ms");
+        }
+      }
+    }
   }
 
   @Override

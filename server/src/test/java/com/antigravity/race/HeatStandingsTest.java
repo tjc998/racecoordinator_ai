@@ -24,11 +24,11 @@ public class HeatStandingsTest {
     RaceParticipant p2 = createDriver("p2");
 
     DriverHeatData d1 = new DriverHeatData(p1);
-    d1.addLap(10.0);
-    d1.addLap(10.0); // 2 laps, 20s
+    d1.addLap(10.0, false);
+    d1.addLap(10.0, false); // 2 laps, 20s
 
     DriverHeatData d2 = new DriverHeatData(p2);
-    d2.addLap(10.0); // 1 lap, 10s
+    d2.addLap(10.0, false); // 1 lap, 10s
 
     List<DriverHeatData> data = new ArrayList<>();
     data.add(d1);
@@ -55,12 +55,12 @@ public class HeatStandingsTest {
 
     // Both have 2 laps, but p2 has faster best lap
     DriverHeatData d1 = new DriverHeatData(p1);
-    d1.addLap(10.0);
-    d1.addLap(10.0); // best 10.0
+    d1.addLap(10.0, false);
+    d1.addLap(10.0, false); // best 10.0
 
     DriverHeatData d2 = new DriverHeatData(p2);
-    d2.addLap(15.0);
-    d2.addLap(5.0); // best 5.0
+    d2.addLap(15.0, false);
+    d2.addLap(5.0, false); // best 5.0
 
     List<DriverHeatData> data = new ArrayList<>();
     data.add(d1);
@@ -86,12 +86,12 @@ public class HeatStandingsTest {
     RaceParticipant p2 = createDriver("p2");
 
     DriverHeatData d1 = new DriverHeatData(p1);
-    d1.addLap(10.0);
-    d1.addLap(10.0); // Avg 10.0
+    d1.addLap(10.0, false);
+    d1.addLap(10.0, false); // Avg 10.0
 
     DriverHeatData d2 = new DriverHeatData(p2);
-    d2.addLap(12.0);
-    d2.addLap(12.0); // Avg 12.0
+    d2.addLap(12.0, false);
+    d2.addLap(12.0, false); // Avg 12.0
 
     List<DriverHeatData> data = new ArrayList<>();
     data.add(d1);
@@ -114,14 +114,14 @@ public class HeatStandingsTest {
     RaceParticipant p2 = createDriver("p2");
 
     DriverHeatData d1 = new DriverHeatData(p1);
-    d1.addLap(10.0);
-    d1.addLap(10.0);
-    d1.addLap(10.0); // Median 10.0
+    d1.addLap(10.0, false);
+    d1.addLap(10.0, false);
+    d1.addLap(10.0, false); // Median 10.0
 
     DriverHeatData d2 = new DriverHeatData(p2);
-    d2.addLap(5.0);
-    d2.addLap(15.0);
-    d2.addLap(15.0); // Median 15.0
+    d2.addLap(5.0, false);
+    d2.addLap(15.0, false);
+    d2.addLap(15.0, false); // Median 15.0
 
     List<DriverHeatData> data = new ArrayList<>();
     data.add(d1);
@@ -145,11 +145,11 @@ public class HeatStandingsTest {
     RaceParticipant p3 = createDriver("p3");
 
     DriverHeatData d1 = new DriverHeatData(p1);
-    d1.addLap(10.0);
-    d1.addLap(10.0); // 2 laps
+    d1.addLap(10.0, false);
+    d1.addLap(10.0, false); // 2 laps
 
     DriverHeatData d2 = new DriverHeatData(p2);
-    d2.addLap(10.0); // 1 lap
+    d2.addLap(10.0, false); // 1 lap
 
     DriverHeatData d3 = new DriverHeatData(p3);
     // 0 laps
@@ -190,10 +190,10 @@ public class HeatStandingsTest {
     RaceParticipant p2 = createDriver("p2");
 
     DriverHeatData d1 = new DriverHeatData(p1);
-    d1.addLap(10.0); // 10.0s total
+    d1.addLap(10.0, false); // 10.0s total
 
     DriverHeatData d2 = new DriverHeatData(p2);
-    d2.addLap(12.5); // 12.5s total
+    d2.addLap(12.5, false); // 12.5s total
 
     List<DriverHeatData> data = new ArrayList<>();
     data.add(d1);

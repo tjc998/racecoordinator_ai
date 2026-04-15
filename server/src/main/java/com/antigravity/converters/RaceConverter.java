@@ -119,6 +119,7 @@ public class RaceConverter {
       builder.setAutoStartTime(race.getAutoStartTime());
       builder.setAutoAdvanceWarmupTime(race.getAutoAdvanceWarmupTime());
       builder.setAutoStartWarmupTime(race.getAutoStartWarmupTime());
+      builder.setDriftTime(race.getDriftTime());
       return builder.build();
     }
   }

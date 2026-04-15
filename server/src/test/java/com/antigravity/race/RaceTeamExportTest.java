@@ -89,11 +89,11 @@ public class RaceTeamExportTest {
 
     // 2. Teammate A records a lap
     dhd.setActualDriver(teammateA);
-    dhd.addLap(10.5);
+    dhd.addLap(10.5, false);
 
     // 3. Teammate B records a lap
     dhd.setActualDriver(teammateB);
-    dhd.addLap(12.3);
+    dhd.addLap(12.3, false);
 
     // 4. Export to CSV
     String csv = CsvExporter.export(race);
@@ -103,12 +103,15 @@ public class RaceTeamExportTest {
 
     // 6. Verify #Lap header (Show Driver and Nickname columns)
     assertTrue(
-        "CSV should contain updated #Lap header", csv.contains("#Lap,Driver,Nickname,Lap Time"));
+        "CSV should contain updated #Lap header",
+        csv.contains("#Lap,Driver,Nickname,Lap Time,Drift"));
 
     // 7. Verify Lap 1 (Teammate A)
-    assertTrue("CSV should attribute Lap 1 to Teammate A", csv.contains("1,Teammate A,TA,10.5"));
+    assertTrue(
+        "CSV should attribute Lap 1 to Teammate A", csv.contains("1,Teammate A,TA,10.5,false"));
 
     // 8. Verify Lap 2 (Teammate B)
-    assertTrue("CSV should attribute Lap 2 to Teammate B", csv.contains("2,Teammate B,TB,12.3"));
+    assertTrue(
+        "CSV should attribute Lap 2 to Teammate B", csv.contains("2,Teammate B,TB,12.3,false"));
   }
 }

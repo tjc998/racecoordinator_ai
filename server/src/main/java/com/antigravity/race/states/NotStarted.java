@@ -171,7 +171,7 @@ public class NotStarted implements IRaceState {
   }
 
   @Override
-  public void onLap(int lane, double lapTime, int interfaceId) {
+  public void onLap(int lane, double lapTime, int interfaceId, boolean isDrift) {
     if (this.race == null) {
       return;
     }
@@ -183,7 +183,12 @@ public class NotStarted implements IRaceState {
     if (autoStartWarmupTime > 0 && elapsed <= autoStartWarmupTime) {
       System.out.println("NotStarted: Warmup lap detected, delegating to executor.");
       executionManager.onLap(
-          lane, lapTime, interfaceId, true, false); // ignoreTeamLimits = true, checkFinish = false
+          lane,
+          lapTime,
+          interfaceId,
+          true,
+          false,
+          false); // ignoreTeamLimits = true, checkFinish = false, isDrift = false
     }
   }
 

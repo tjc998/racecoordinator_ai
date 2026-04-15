@@ -101,10 +101,10 @@ public class RacingTest {
     race.changeState(racing);
 
     // Driver 1 completes 3rd lap (limit is 3)
-    racing.onLap(0, 1.0, 1); // Reaction
-    racing.onLap(0, 5.0, 1); // Lap 1
-    racing.onLap(0, 5.0, 1); // Lap 2
-    racing.onLap(0, 5.0, 1); // Lap 3 (Finished)
+    racing.onLap(0, 1.0, 1, false); // Reaction
+    racing.onLap(0, 5.0, 1, false); // Lap 1
+    racing.onLap(0, 5.0, 1, false); // Lap 2
+    racing.onLap(0, 5.0, 1, false); // Lap 3 (Finished)
     assertTrue(race.getState() instanceof HeatOver);
   }
 
@@ -187,10 +187,10 @@ public class RacingTest {
     racing.enter(mockRace);
 
     // Driver 1 completes 3 laps
-    racing.onLap(0, 1.0, 1); // Reaction
-    racing.onLap(0, 5.0, 1); // Lap 1
-    racing.onLap(0, 5.0, 1); // Lap 2
-    racing.onLap(0, 5.0, 1); // Lap 3 (Finish)
+    racing.onLap(0, 1.0, 1, false); // Reaction
+    racing.onLap(0, 5.0, 1, false); // Lap 1
+    racing.onLap(0, 5.0, 1, false); // Lap 2
+    racing.onLap(0, 5.0, 1, false); // Lap 3 (Finish)
 
     verify(mockRace).setLanePower(false, 0);
   }
@@ -348,13 +348,13 @@ public class RacingTest {
     verify(mockRace).broadcastFlag(com.antigravity.proto.RaceFlag.GREEN);
 
     // Advance to 2nd lap (limit 3) -> Should be WHITE flag
-    d1.addLap(1.0);
-    d1.addLap(1.0); // Now 2 laps
+    d1.addLap(1.0, false);
+    d1.addLap(1.0, false); // Now 2 laps
     Thread.sleep(200);
     verify(mockRace).broadcastFlag(com.antigravity.proto.RaceFlag.WHITE);
 
     // Advance to 3rd lap -> Should be CHECKERED flag
-    d1.addLap(1.0); // Now 3 laps
+    d1.addLap(1.0, false); // Now 3 laps
     Thread.sleep(200);
     verify(mockRace).broadcastFlag(com.antigravity.proto.RaceFlag.CHECKERED);
 

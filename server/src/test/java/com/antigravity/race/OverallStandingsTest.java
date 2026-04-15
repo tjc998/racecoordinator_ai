@@ -36,12 +36,12 @@ public class OverallStandingsTest {
     DriverHeatData d1 = new DriverHeatData(p1);
     // Add laps to simulate average time
     for (int i = 0; i < laps1; i++) {
-      d1.addLap(time1 / laps1);
+      d1.addLap(time1 / laps1, false);
     }
 
     DriverHeatData d2 = new DriverHeatData(p2);
     for (int i = 0; i < laps2; i++) {
-      d2.addLap(time2 / laps2);
+      d2.addLap(time2 / laps2, false);
     }
 
     dhdList.add(d1);
@@ -160,14 +160,14 @@ public class OverallStandingsTest {
     // Both have 30s total, 3 laps.
 
     DriverHeatData d1 = new DriverHeatData(p1);
-    d1.addLap(10.0);
-    d1.addLap(10.0);
-    d1.addLap(10.0);
+    d1.addLap(10.0, false);
+    d1.addLap(10.0, false);
+    d1.addLap(10.0, false);
 
     DriverHeatData d2 = new DriverHeatData(p2);
-    d2.addLap(5.0);
-    d2.addLap(15.0);
-    d2.addLap(15.0);
+    d2.addLap(5.0, false);
+    d2.addLap(15.0, false);
+    d2.addLap(15.0, false);
 
     List<DriverHeatData> dhdList = new ArrayList<>();
     dhdList.add(d1);

@@ -59,6 +59,10 @@ public class Race extends Model {
   @JsonProperty("auto_start_warmup_time")
   private final double autoStartWarmupTime;
 
+  @BsonProperty("drift_time")
+  @JsonProperty("drift_time")
+  private final double driftTime;
+
   @BsonCreator
   @JsonCreator
   public Race(
@@ -81,6 +85,7 @@ public class Race extends Model {
           Double autoAdvanceWarmupTime,
       @BsonProperty("auto_start_warmup_time") @JsonProperty("auto_start_warmup_time")
           Double autoStartWarmupTime,
+      @BsonProperty("drift_time") @JsonProperty("drift_time") Double driftTime,
       @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
       @BsonId @JsonProperty("_id") ObjectId id) {
     super(id, entityId);
@@ -101,6 +106,7 @@ public class Race extends Model {
     this.autoStartTime = autoStartTime != null ? autoStartTime : 0.0;
     this.autoAdvanceWarmupTime = autoAdvanceWarmupTime != null ? autoAdvanceWarmupTime : 0.0;
     this.autoStartWarmupTime = autoStartWarmupTime != null ? autoStartWarmupTime : 0.0;
+    this.driftTime = driftTime != null ? driftTime : 0.0;
   }
 
   public static class Builder {
@@ -118,6 +124,7 @@ public class Race extends Model {
     private double autoStartTime = 0.0;
     private double autoAdvanceWarmupTime = 0.0;
     private double autoStartWarmupTime = 0.0;
+    private double driftTime = 0.0;
     private String entityId;
     private ObjectId id;
 
@@ -186,6 +193,11 @@ public class Race extends Model {
       return this;
     }
 
+    public Builder withDriftTime(double driftTime) {
+      this.driftTime = driftTime;
+      return this;
+    }
+
     public Builder withEntityId(String entityId) {
       this.entityId = entityId;
       return this;
@@ -212,6 +224,7 @@ public class Race extends Model {
           autoStartTime,
           autoAdvanceWarmupTime,
           autoStartWarmupTime,
+          driftTime,
           entityId,
           id);
     }
@@ -267,5 +280,9 @@ public class Race extends Model {
 
   public double getAutoStartWarmupTime() {
     return autoStartWarmupTime;
+  }
+
+  public double getDriftTime() {
+    return driftTime;
   }
 }

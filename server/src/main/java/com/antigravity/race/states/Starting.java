@@ -116,7 +116,7 @@ public class Starting implements IRaceState {
   }
 
   @Override
-  public void onLap(int lane, double lapTime, int interfaceId) {
+  public void onLap(int lane, double lapTime, int interfaceId, boolean isDrift) {
     // Not while starting
   }
 

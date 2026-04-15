@@ -76,7 +76,7 @@ public class RaceOver implements IRaceState {
   }
 
   @Override
-  public void onLap(int lane, double lapTime, int interfaceId) {}
+  public void onLap(int lane, double lapTime, int interfaceId, boolean isDrift) {}
 
   @Override
   public void onSegment(int lane, double segmentTime, int interfaceId) {}

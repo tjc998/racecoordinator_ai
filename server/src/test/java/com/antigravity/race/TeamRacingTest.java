@@ -121,8 +121,8 @@ public class TeamRacingTest {
     // Team (Lane 0) completes a lap
     // This should trigger handleLapTime -> heatStandings.onLap ->
     // calculateStandings
-    racing.onLap(0, 1.0, 1); // Reaction
-    racing.onLap(0, 5.0, 1); // Lap 1
+    racing.onLap(0, 1.0, 1, false); // Reaction
+    racing.onLap(0, 5.0, 1, false); // Lap 1
 
     assertNotNull(race.getCurrentHeat().getDrivers().get(0).getLaps());
   }
@@ -135,21 +135,21 @@ public class TeamRacingTest {
     DriverHeatData teamHeatData = race.getCurrentHeat().getDrivers().get(0);
 
     // 0. Reaction time (first trigger)
-    racing.onLap(0, 1.0, 1);
+    racing.onLap(0, 1.0, 1, false);
 
     // 1. Set Actual Driver to Driver 1
     Driver driver1 = new Driver("Driver 1", "D1", "d1", new ObjectId());
     teamHeatData.setActualDriver(driver1);
 
     // Simulate lap 1
-    racing.onLap(0, 5.0, 1);
+    racing.onLap(0, 5.0, 1, false);
 
     // 2. Set Actual Driver to Driver 2
     Driver driver2 = new Driver("Driver 2", "D2", "d2", new ObjectId());
     teamHeatData.setActualDriver(driver2);
 
     // Simulate lap 2
-    racing.onLap(0, 6.0, 1);
+    racing.onLap(0, 6.0, 1, false);
 
     // 3. Verify
     List<DriverHeatData.LapData> laps = teamHeatData.getLaps();

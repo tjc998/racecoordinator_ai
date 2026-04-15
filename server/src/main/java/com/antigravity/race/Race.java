@@ -679,7 +679,7 @@ public class Race implements ProtocolListener {
 
   @Override
   public void onLap(int lane, double lapTime, int interfaceId, int interfaceIndex) {
-    state.onLap(lane, lapTime, interfaceId);
+    state.onLap(lane, lapTime, interfaceId, false);
     // Optionally we could broadcast an InterfaceEvent here too if the UI needs it
     // but Racing state usually handles Lap updates via overall snapshot.
   }

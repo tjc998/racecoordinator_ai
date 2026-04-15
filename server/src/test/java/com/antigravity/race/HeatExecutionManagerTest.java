@@ -92,10 +92,10 @@ public class HeatExecutionManagerTest {
   @Test
   public void testLapRace_AllowFinish_None_EndsOnFirstDriver() {
     // Driver 1 completes 3rd lap (limit is 3)
-    executionManager.onLap(0, 1.0, 1, false, true); // Reaction
-    executionManager.onLap(0, 5.0, 1, false, true); // Lap 1
-    executionManager.onLap(0, 5.0, 1, false, true); // Lap 2
-    executionManager.onLap(0, 5.0, 1, false, true); // Lap 3 (Finished)
+    executionManager.onLap(0, 1.0, 1, false, true, false); // Reaction
+    executionManager.onLap(0, 5.0, 1, false, true, false); // Lap 1
+    executionManager.onLap(0, 5.0, 1, false, true, false); // Lap 2
+    executionManager.onLap(0, 5.0, 1, false, true, false); // Lap 3 (Finished)
     assertTrue(race.getState() instanceof HeatOver);
   }
 
@@ -129,18 +129,18 @@ public class HeatExecutionManagerTest {
     executionManager.initialize(track.getLanes().size());
 
     // Driver 1 completes 3 laps
-    executionManager.onLap(0, 1.0, 1, false, true); // Reaction
-    executionManager.onLap(0, 5.0, 1, false, true); // Lap 1
-    executionManager.onLap(0, 5.0, 1, false, true); // Lap 2
-    executionManager.onLap(0, 5.0, 1, false, true); // Lap 3 (Finished)
+    executionManager.onLap(0, 1.0, 1, false, true, false); // Reaction
+    executionManager.onLap(0, 5.0, 1, false, true, false); // Lap 1
+    executionManager.onLap(0, 5.0, 1, false, true, false); // Lap 2
+    executionManager.onLap(0, 5.0, 1, false, true, false); // Lap 3 (Finished)
     assertFalse(race.getState() instanceof HeatOver);
     assertTrue(executionManager.getFinishedLanes().contains(0));
 
     // Driver 2 completes 3 laps
-    executionManager.onLap(1, 1.0, 1, false, true); // Reaction
-    executionManager.onLap(1, 5.0, 1, false, true); // Lap 1
-    executionManager.onLap(1, 5.0, 1, false, true); // Lap 2
-    executionManager.onLap(1, 5.0, 1, false, true); // Lap 3 (Finished)
+    executionManager.onLap(1, 1.0, 1, false, true, false); // Reaction
+    executionManager.onLap(1, 5.0, 1, false, true, false); // Lap 1
+    executionManager.onLap(1, 5.0, 1, false, true, false); // Lap 2
+    executionManager.onLap(1, 5.0, 1, false, true, false); // Lap 3 (Finished)
     assertTrue(race.getState() instanceof HeatOver);
   }
 
@@ -170,14 +170,14 @@ public class HeatExecutionManagerTest {
     assertEquals(0, race.getCurrentHeat().getDrivers().get(0).getLapCount());
 
     // Reaction time
-    executionManager.onLap(0, 1.0, 1, false, true);
+    executionManager.onLap(0, 1.0, 1, false, true, false);
 
     // Lap 1: 4.0s (accumulated: 4.0s) - below min 10.0s
-    executionManager.onLap(0, 4.0, 1, false, true);
+    executionManager.onLap(0, 4.0, 1, false, true, false);
     assertEquals(0, race.getCurrentHeat().getDrivers().get(0).getLapCount());
 
     // Lap 2: 7.0s (accumulated: 11.0s) - above min 10.0s
-    executionManager.onLap(0, 7.0, 1, false, true);
+    executionManager.onLap(0, 7.0, 1, false, true, false);
     assertEquals(1, race.getCurrentHeat().getDrivers().get(0).getLapCount());
     // The lap time should be 12.0s (1.0s reaction + 4.0s + 7.0s accumulated)
     assertEquals(
@@ -224,10 +224,10 @@ public class HeatExecutionManagerTest {
     race.getCurrentHeat().getDrivers().get(0).getDriver().setFuelLevel(100.0);
 
     // Reaction
-    executionManager.onLap(0, 1.0, 1, false, true);
+    executionManager.onLap(0, 1.0, 1, false, true, false);
 
     // Lap time exactly equal to reference time (5.0s) should use exactly the usageRate (4.0)
-    executionManager.onLap(0, 5.0, 1, false, true);
+    executionManager.onLap(0, 5.0, 1, false, true, false);
 
     assertEquals(96.0, race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
   }
@@ -242,7 +242,7 @@ public class HeatExecutionManagerTest {
     assertEquals(0, driverData.getSegments().size());
 
     // First lap hit sets reaction time
-    executionManager.onLap(0, 1.5, 1, false, true);
+    executionManager.onLap(0, 1.5, 1, false, true, false);
     assertEquals(1.5, driverData.getReactionTime(), 0.001);
 
     // Subsequent segments are added
@@ -285,10 +285,10 @@ public class HeatExecutionManagerTest {
     driverData.setActualDriver(new Driver("1A", "1A", "sd1", new ObjectId()));
 
     // Warmup lap handling (ignoreTeamLimits = true, checkFinish = false)
-    executionManager.onLap(0, 1.0, 1, true, false); // Reaction
+    executionManager.onLap(0, 1.0, 1, true, false, false); // Reaction
     executionManager.onLap(
-        0, 20.0, 1, true, false); // Lap 1 (both limits exceeded: 1 lap and 10s time)
-    executionManager.onLap(0, 20.0, 1, true, false); // Lap 2 (should STILL be counted)
+        0, 20.0, 1, true, false, false); // Lap 1 (both limits exceeded: 1 lap and 10s time)
+    executionManager.onLap(0, 20.0, 1, true, false, false); // Lap 2 (should STILL be counted)
 
     assertEquals(2, driverData.getLapCount());
     assertTrue("State should still be NotStarted", race.getState() instanceof NotStarted);
@@ -324,9 +324,9 @@ public class HeatExecutionManagerTest {
     executionManager.initialize(track.getLanes().size());
 
     // Trigger many more laps than the 3 lap limit
-    executionManager.onLap(0, 1.0, 1, true, false); // Reaction
+    executionManager.onLap(0, 1.0, 1, true, false, false); // Reaction
     for (int i = 0; i < 10; i++) {
-      executionManager.onLap(0, 5.0, 1, true, false);
+      executionManager.onLap(0, 5.0, 1, true, false, false);
     }
 
     assertEquals(10, race.getCurrentHeat().getDrivers().get(0).getLapCount());

@@ -22,17 +22,20 @@ public class DriverHeatData extends ServerToClientObject {
     private double lapTime;
     private String driverId;
     private ArrayList<Double> segments = new ArrayList<>();
+    private boolean isDrift;
 
     @BsonCreator
     public LapData(
         @BsonProperty("lapTime") double lapTime,
         @BsonProperty("driverId") String driverId,
-        @BsonProperty("segments") ArrayList<Double> segments) {
+        @BsonProperty("segments") ArrayList<Double> segments,
+        @BsonProperty("isDrift") boolean isDrift) {
       this.lapTime = lapTime;
       this.driverId = driverId;
       if (segments != null) {
         this.segments = segments;
       }
+      this.isDrift = isDrift;
     }
 
     public LapData() {}
@@ -47,6 +50,10 @@ public class DriverHeatData extends ServerToClientObject {
 
     public List<Double> getSegments() {
       return Collections.unmodifiableList(segments);
+    }
+
+    public boolean isDrift() {
+      return isDrift;
     }
   }
 
@@ -115,12 +122,13 @@ public class DriverHeatData extends ServerToClientObject {
     this.actualDriver = actualDriver;
   }
 
-  public void addLap(double lapTime) {
+  public void addLap(double lapTime, boolean isDrift) {
     laps.add(
         new LapData(
             lapTime,
             actualDriver != null ? actualDriver.getEntityId() : "",
-            new ArrayList<>(segments)));
+            new ArrayList<>(segments),
+            isDrift));
     if (bestLapTime == 0.0f || lapTime < bestLapTime) {
       bestLapTime = lapTime;
     }
