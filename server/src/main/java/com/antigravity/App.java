@@ -298,6 +298,17 @@ public class App {
 
     System.out.println("Connected to MongoDB successfully.");
 
+    // Backfill defaults for all databases
+    for (String dbName : databaseContext.listDatabases()) {
+      if (dbName.equals("admin") || dbName.equals("local") || dbName.equals("config")) {
+        continue;
+      }
+      System.out.println("Backfilling default assets for database: " + dbName);
+      MongoDatabase db = mongoClient.getDatabase(dbName);
+      new AssetService(db, appDataDir + File.separator + dbName + File.separator + "assets")
+          .backfillDefaults();
+    }
+
     // Determine client path once
     String[] possiblePaths = {"web", "server/web", "client/dist/client", "../client/dist/client"};
     String resolvedClientPath = null;
