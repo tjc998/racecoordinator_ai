@@ -675,10 +675,13 @@ export class DefaultRacedayComponent
 
     const settings = this.settingsService.getSettings();
     if (settings.sortByStandings) {
+      // TODO(aufderheide): Server should 100% control the presentation order.  I'm worried this may cause issues when we do disqualifications and such.
       // Sort a separate copy to determine visual positions
       const ranked = [...this.heat.heatDrivers].sort((a, b) => {
-        const rankA = this.driverRankings.get(a.objectId) ?? 999;
-        const rankB = this.driverRankings.get(b.objectId) ?? 999;
+        let rankA = this.driverRankings.get(a.objectId) ?? 999;
+        let rankB = this.driverRankings.get(b.objectId) ?? 999;
+        if (rankA === 0) rankA = 999;
+        if (rankB === 0) rankB = 999;
         return rankA - rankB;
       });
       this.driverVisualPositions.clear();

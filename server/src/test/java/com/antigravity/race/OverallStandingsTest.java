@@ -231,9 +231,9 @@ public class OverallStandingsTest {
 
     os.recalculate(drivers, heats);
 
-    // D1 (real) should be rank 1, Empty should be rank 0
+    // D1 (real) should be rank 1, Empty should be rank 99
     assertEquals(1, p1.getRank());
-    assertEquals(0, p2.getRank());
+    assertEquals(99, p2.getRank());
 
     // Verify sorting order in the list (Empty should be at the bottom)
     assertEquals(p1, drivers.get(0));

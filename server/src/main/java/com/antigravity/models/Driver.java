@@ -84,6 +84,10 @@ public class Driver extends Model {
     return bestLapAudio;
   }
 
+  public boolean isEmpty() {
+    return "Empty".equals(name) && "Empty".equals(nickname) && getEntityId() == null;
+  }
+
   public static class AudioConfig {
 
     private final String type;

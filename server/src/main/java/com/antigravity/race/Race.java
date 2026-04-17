@@ -464,7 +464,7 @@ public class Race implements ProtocolListener {
           DriverHeatData dhd = heatDrivers.get(i);
           if (dhd.getObjectId().equals(id)) {
             // Only add if not an empty driver
-            if (dhd.getActualDriver() != Driver.EMPTY_DRIVER) {
+            if (dhd.getActualDriver() != null && !dhd.getActualDriver().isEmpty()) {
               rankings.add(i);
             }
             break;

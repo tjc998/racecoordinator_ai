@@ -138,7 +138,7 @@ public class RaceLifecycleTest {
     assertEquals("Test Driver", snapshot.getRace().getDrivers(0).getDriver().getName());
     // And rank should be 1 for real driver
     assertEquals(1, snapshot.getRace().getDrivers(0).getRank());
-    // And rank should be 0 for empty driver (index 1)
-    assertEquals(0, snapshot.getRace().getDrivers(1).getRank());
+    // And rank should be 99 for empty driver (index 1)
+    assertEquals(99, snapshot.getRace().getDrivers(1).getRank());
   }
 }

@@ -1,6 +1,5 @@
 package com.antigravity.race;
 
-import com.antigravity.models.Driver;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.OverallScoring;
 import java.util.ArrayList;
@@ -93,8 +92,8 @@ public class OverallStandings {
     int currentRank = 1;
     for (int i = 0; i < drivers.size(); i++) {
       RaceParticipant driver = drivers.get(i);
-      boolean isEmpty = driver.getDriver() == Driver.EMPTY_DRIVER;
-      driver.setRank(isEmpty ? 0 : currentRank++);
+      boolean isEmpty = driver.getDriver() != null && driver.getDriver().isEmpty();
+      driver.setRank(isEmpty ? 99 : currentRank++);
 
       double rankValue = 0;
       if (overallScoring != null && overallScoring.getRankingMethod() != null) {
@@ -235,7 +234,8 @@ public class OverallStandings {
       comparator = Comparator.comparingInt(RaceParticipant::getTotalLaps).reversed();
     }
 
-    return Comparator.<RaceParticipant, Boolean>comparing(p -> p.getDriver() == Driver.EMPTY_DRIVER)
+    return Comparator.<RaceParticipant, Boolean>comparing(
+            p -> p.getDriver() != null && p.getDriver().isEmpty())
         .thenComparing(comparator.thenComparing(getTieBreakerComparator()));
   }
 
