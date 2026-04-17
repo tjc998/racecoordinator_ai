@@ -158,6 +158,9 @@ public class ArduinoProtocol extends DefaultProtocol {
           "[{}] No COM port specified for ArduinoProtocol on lanes {}, status will be DISCONNECTED",
           getLogTime(),
           numLanes);
+      if (listener != null) {
+        listener.onInterfaceStatus(InterfaceStatus.DISCONNECTED, getInterfaceIndex());
+      }
       startStatusScheduler();
       return true;
     }
@@ -207,6 +210,9 @@ public class ArduinoProtocol extends DefaultProtocol {
           config.commPort,
           numLanes,
           e.getMessage());
+      if (listener != null) {
+        listener.onInterfaceStatus(InterfaceStatus.DISCONNECTED, getInterfaceIndex());
+      }
       return false;
     }
   }
@@ -228,6 +234,11 @@ public class ArduinoProtocol extends DefaultProtocol {
       statusScheduler.shutdown();
     }
     statusScheduler = null;
+
+    if (listener != null) {
+      listener.onInterfaceStatus(InterfaceStatus.DISCONNECTED, getInterfaceIndex());
+    }
+    lastHeartbeatTimeMs = 0;
 
     if (serialConnection != null && serialConnection.isOpen()) {
       serialConnection.disconnect();
@@ -351,6 +362,7 @@ public class ArduinoProtocol extends DefaultProtocol {
           getLogTime(),
           oldPort,
           newConfig.commPort);
+      lastHeartbeatTimeMs = 0;
       close();
       open();
     } else if (versionVerified) {

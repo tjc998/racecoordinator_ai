@@ -262,11 +262,49 @@ public class ArduinoProtocolTest {
   public void testStatusDisconnected_OnFailure() {
     config.commPort = "FAIL";
     protocol.open();
-    scheduler.tick();
-    // open() returns true but status loop should see !serialConnection.isOpen()
+    // No need to tick scheduler, it should broadcast immediately on failure
     assertEquals(
         "Status should be DISCONNECTED on connection failure",
         InterfaceStatus.DISCONNECTED,
+        listener.lastStatus);
+  }
+
+  @Test
+  public void testStatusBroadcastOnClose() {
+    protocol.open();
+    // Simulate connection success and heartbeat so it's CONNECTED
+    protocol.simulateHeartbeat();
+    scheduler.tick();
+    assertEquals(InterfaceStatus.CONNECTED, listener.lastStatus);
+
+    // Call close
+    protocol.close();
+
+    // Verify it changed to DISCONNECTED immediately
+    assertEquals(
+        "Status should be DISCONNECTED immediately on close",
+        InterfaceStatus.DISCONNECTED,
+        listener.lastStatus);
+  }
+
+  @Test
+  public void testHeartbeatResetOnConfigChange() {
+    protocol.open();
+    protocol.simulateHeartbeat();
+    scheduler.tick();
+    assertEquals(InterfaceStatus.CONNECTED, listener.lastStatus);
+
+    // Change port
+    ArduinoConfig newConfig = new ArduinoConfig();
+    newConfig.commPort = "COM2";
+    protocol.updateConfig(newConfig);
+
+    // After switching port, lastHeartbeatTimeMs should be 0.
+    // Since serialConnection.isOpen() is true for COM2, it should report NO_DATA
+    scheduler.tick();
+    assertEquals(
+        "Status should be NO_DATA immediately after port change (until heartbeat)",
+        InterfaceStatus.NO_DATA,
         listener.lastStatus);
   }
 

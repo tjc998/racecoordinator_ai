@@ -34,7 +34,10 @@ interface PinAction {
 })
 export class ArduinoEditorComponent implements OnInit, OnDestroy {
   @Input() config?: ArduinoConfig;
-  @Input() index: number = 0;
+  @Output() configChange = new EventEmitter<void>();
+  @Output() remove = new EventEmitter<void>();
+  @Output() requestLedStringDialog = new EventEmitter<void>();
+
   @Input() count: number = 1;
 
   private _lanes: Lane[] = [];
@@ -45,9 +48,17 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   get lanes(): Lane[] {
     return this._lanes;
   }
-  @Output() configChange = new EventEmitter<void>();
-  @Output() remove = new EventEmitter<void>();
-  @Output() requestLedStringDialog = new EventEmitter<void>();
+
+  private _index: number = 0;
+  @Input() set index(value: number) {
+    if (this._index !== value) {
+      this._index = value;
+      this.interfaceStatus = 1; // Reset status on index change
+    }
+  }
+  get index(): number {
+    return this._index;
+  }
 
   availablePorts: string[] = [];
   interfaceStatus: number = 1; // 0=Connected, 1=Disconnected, 2=NoData
