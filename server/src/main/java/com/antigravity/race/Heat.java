@@ -10,18 +10,32 @@ public class Heat extends ServerToClientObject {
   private int heatNumber;
   private List<DriverHeatData> drivers;
   private RaceHeatStatistics statistics = new RaceHeatStatistics();
-  private HeatStandings heatStandings;
+  @org.bson.codecs.pojo.annotations.BsonIgnore private HeatStandings heatStandings;
+
+  private HeatScoring scoring;
 
   public Heat(int heatNumber, List<DriverHeatData> drivers, HeatScoring scoring) {
     super();
     this.heatNumber = heatNumber;
-    this.drivers = drivers;
-    HeatScoring safeScoring = scoring != null ? scoring : new HeatScoring();
-    this.heatStandings = new HeatStandings(drivers, safeScoring);
+    this.drivers = drivers != null ? drivers : new ArrayList<>();
+    this.scoring = scoring;
+    if (this.drivers != null) {
+      HeatScoring safeScoring = scoring != null ? scoring : new HeatScoring();
+      this.heatStandings = new HeatStandings(this.drivers, safeScoring);
+    }
+  }
+
+  public Heat(int heatNumber, List<DriverHeatData> drivers) {
+    this(heatNumber, drivers, null);
   }
 
   public Heat() {
     super();
+    this.drivers = new ArrayList<>();
+  }
+
+  public void setDrivers(List<DriverHeatData> drivers) {
+    this.drivers = drivers != null ? drivers : new ArrayList<>();
   }
 
   public void initializeStandings(HeatScoring scoring) {
@@ -38,11 +52,13 @@ public class Heat extends ServerToClientObject {
   }
 
   @JsonIgnore
+  @org.bson.codecs.pojo.annotations.BsonIgnore
   public List<String> getStandings() {
     return heatStandings != null ? heatStandings.getStandings() : new ArrayList<>();
   }
 
   @JsonIgnore
+  @org.bson.codecs.pojo.annotations.BsonIgnore
   public HeatStandings getHeatStandings() {
     return heatStandings;
   }

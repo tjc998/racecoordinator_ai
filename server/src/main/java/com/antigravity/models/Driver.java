@@ -7,7 +7,7 @@ import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.types.ObjectId;
 
 public class Driver extends Model {
-  public static final Driver EMPTY_DRIVER = new Driver("Empty", "Empty");
+  public static final Driver EMPTY_DRIVER = new Driver("Empty", "Empty", "", null);
 
   private final String name;
   private final String nickname;
@@ -85,7 +85,9 @@ public class Driver extends Model {
   }
 
   public boolean isEmpty() {
-    return "Empty".equals(name) && "Empty".equals(nickname) && getEntityId() == null;
+    // TODO(aufderheide): We should never have to use a string comparison on the
+    // name like this.
+    return "".equals(getEntityId()) || "Empty".equals(name);
   }
 
   public static class AudioConfig {

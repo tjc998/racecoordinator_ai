@@ -866,6 +866,7 @@ public class ClientCommandTaskHandler {
       ctx.contentType("application/json").result(mapper.writeValueAsString(files));
     } catch (Exception e) {
       System.err.println("Error getting saved races: " + e.getMessage());
+      e.printStackTrace();
       ctx.status(500).result("Error: " + e.getMessage());
     }
   }

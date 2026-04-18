@@ -13,7 +13,7 @@ export class RaceParticipantConverter {
   }
 
   static fromProto(proto: com.antigravity.IRaceParticipant): RaceParticipant {
-    const id = proto.objectId || '';
+    const id = proto.objectId || "";
 
     const cached = this.cache.get(id);
     if (cached && proto.driver) {
@@ -36,7 +36,9 @@ export class RaceParticipantConverter {
 
     return this.cache.process(id, false, () => {
       // If driver is missing and not in cache, we have a problem, but let's try to handle it gracefully
-      const driver = proto.driver ? DriverConverter.fromProto(proto.driver) : DriverConverter.get('')!;
+      const driver = proto.driver
+        ? DriverConverter.fromProto(proto.driver)
+        : DriverConverter.getEmptyDriver();
       const team = proto.team ? TeamConverter.fromProto(proto.team) : undefined;
       return new RaceParticipant(
         id,
@@ -50,7 +52,7 @@ export class RaceParticipantConverter {
         proto.rankValue || 0,
         proto.seed || 0,
         proto.fuelLevel || 0,
-        team
+        team,
       );
     });
   }

@@ -16,6 +16,7 @@ import com.antigravity.models.Team;
 import com.antigravity.models.Track;
 import com.antigravity.proto.AssetMessage;
 import com.antigravity.protocols.arduino.ArduinoConfig;
+import com.antigravity.race.Heat;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.RaceSaveData;
 import com.mongodb.client.MongoCollection;
@@ -34,6 +35,8 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 
 public class DatabaseService {
+  private static final org.slf4j.Logger logger =
+      org.slf4j.LoggerFactory.getLogger(DatabaseService.class);
   private static final DatabaseService instance = new DatabaseService();
 
   public static DatabaseService getInstance() {
@@ -550,10 +553,52 @@ public class DatabaseService {
   }
 
   public List<RaceSaveData> getSavedRaces(MongoDatabase database) {
+    long startTime = System.currentTimeMillis();
     MongoCollection<RaceSaveData> collection =
         database.getCollection("saved_races", RaceSaveData.class);
+
+    long totalDocs = collection.countDocuments();
+    logger.info(
+        "DIAGNOSTIC: Loading saved races from collection. Total documents found: {}", totalDocs);
+
     List<RaceSaveData> saves = new ArrayList<>();
-    collection.find().into(saves);
+    try {
+      collection
+          .find()
+          .forEach(
+              race -> {
+                try {
+                  if (race != null) {
+                    // Re-initialize transient standings after load
+                    if (race.getHeats() != null && race.getModel() != null) {
+                      for (Heat heat : race.getHeats()) {
+                        heat.initializeStandings(race.getModel().getHeatScoring());
+                      }
+                    }
+
+                    saves.add(race);
+                    logger.info(
+                        "DIAGNOSTIC: Successfully loaded and initialized race: {}",
+                        (race.getSaveName() != null ? race.getSaveName() : "Unnamed"));
+                  } else {
+                    logger.error("DIAGNOSTIC: Received null race object from MongoDB iterator.");
+                  }
+                } catch (Exception e) {
+                  logger.error(
+                      "DIAGNOSTIC: Error decoding/initializing a single race record, skipping: {}",
+                      e.getMessage(),
+                      e);
+                }
+              });
+    } catch (Exception e) {
+      logger.error("DIAGNOSTIC: Fatal error during race collection iteration", e);
+    }
+
+    logger.info(
+        "DIAGNOSTIC: Finished loading saved races. Successfully loaded {}/{} records in {}ms",
+        saves.size(),
+        totalDocs,
+        (System.currentTimeMillis() - startTime));
     return saves;
   }
 

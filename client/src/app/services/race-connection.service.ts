@@ -109,7 +109,6 @@ export class RaceConnectionService implements OnDestroy {
   }
 
   private startConnection() {
-    console.log("RaceConnectionService: Starting connection...");
     // Clear caches to ensure fresh data for new race (mirrors DefaultRacedayComponent)
     RaceConverter.clearCache();
     DriverConverter.clearCache();
@@ -117,6 +116,8 @@ export class RaceConnectionService implements OnDestroy {
     TrackConverter.clearCache();
     LaneConverter.clearCache();
 
+    this.driversLoaded = false;
+    this.pendingUpdate = null;
     this.hydrateDrivers();
 
     this.dataService.updateRaceSubscription(true);
@@ -126,9 +127,6 @@ export class RaceConnectionService implements OnDestroy {
         if (this.driversLoaded) {
           this.processRaceUpdate(update);
         } else {
-          console.log(
-            "RaceConnectionService: Deferring race update until drivers are hydrated.",
-          );
           this.pendingUpdate = update;
         }
       }),
@@ -142,18 +140,12 @@ export class RaceConnectionService implements OnDestroy {
 
     this.subscriptions.push(
       this.dataService.getLaps().subscribe((lap) => {
-        console.log("RaceConnectionService: Lap Received:", lap);
         const heat = this.raceService.getCurrentHeat();
         if (heat && heat.heatDrivers && lap && lap.objectId) {
           const driverData = heat.heatDrivers.find(
             (d) => d.objectId === lap.objectId,
           );
           if (driverData) {
-            if (lap.isDrift) {
-              console.log(
-                `RaceConnectionService [DEBUG]: Received DRIFT lap update for hd=${lap.objectId}, time=${lap.lapTime}`,
-              );
-            }
             driverData.addLapTime(
               lap.lapNumber!,
               lap.lapTime!,
@@ -263,12 +255,13 @@ export class RaceConnectionService implements OnDestroy {
   }
 
   private stopConnection() {
-    console.log("RaceConnectionService: Stopping connection...");
     this.dataService.updateRaceSubscription(false);
     this.dataService.disconnectFromInterfaceDataSocket();
 
     this.subscriptions.forEach((sub) => sub.unsubscribe());
     this.subscriptions = [];
+    this.driversLoaded = false;
+    this.pendingUpdate = null;
 
     if (this.noStatusWatchdog) clearTimeout(this.noStatusWatchdog);
     this.clearDisconnectedError();
@@ -278,9 +271,6 @@ export class RaceConnectionService implements OnDestroy {
     this.subscriptions.push(
       this.dataService.getDrivers().subscribe({
         next: (drivers) => {
-          console.log(
-            `RaceConnectionService: Hydrating ${drivers.length} drivers into cache.`,
-          );
           drivers.forEach((d) => {
             const driver = DriverConverter.fromJSON(d);
             DriverConverter.register(driver);
@@ -292,10 +282,6 @@ export class RaceConnectionService implements OnDestroy {
           }
         },
         error: (err) => {
-          console.error(
-            "RaceConnectionService: Failed to load drivers for hydration",
-            err,
-          );
           this.driversLoaded = true;
           if (this.pendingUpdate) {
             this.processRaceUpdate(this.pendingUpdate);
@@ -307,6 +293,10 @@ export class RaceConnectionService implements OnDestroy {
   }
 
   private processRaceUpdate(update: com.antigravity.IRace) {
+    console.log(
+      "RaceConnectionService: processRaceUpdate called with:",
+      update,
+    );
     let raceDataChanged = false;
 
     if (update.race) {

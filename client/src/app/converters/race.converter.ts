@@ -11,6 +11,7 @@ import {
   OverallScoring,
 } from "src/app/models/overall_scoring";
 import { Race } from "src/app/models/race";
+import { Track } from "src/app/models/track";
 import { com } from "src/app/proto/message";
 
 import { AnalogFuelOptionsConverter } from "./analog_fuel_options.converter";
@@ -26,9 +27,23 @@ export class RaceConverter {
   }
 
   static fromProto(proto: com.antigravity.IRaceModel): Race {
+    if (!proto) {
+      return new Race(
+        "",
+        "Unknown Race",
+        new Track("", "Unknown Track", [], false, []),
+        new HeatScoring(),
+        new OverallScoring(),
+      );
+    }
     const p = proto as any;
     const objectId = proto.model?.entityId;
     const isReference = !proto.track;
+
+    if (isReference) {
+      const cached = this.cache.get(objectId || "");
+      if (cached) return cached;
+    }
 
     return this.cache.process(
       objectId,
@@ -166,14 +181,9 @@ export class RaceConverter {
         );
       },
       () => {
-        if (!proto.track) {
-          if (!objectId) {
-            throw new Error(
-              "RaceConverter: proto.track is undefined and no objectId",
-            );
-          }
+        if (!proto.track && !isReference) {
           throw new Error(
-            "RaceConverter: proto.track is undefined for new/full Race",
+            "RaceConverter: proto.track is missing for full Race",
           );
         }
       },

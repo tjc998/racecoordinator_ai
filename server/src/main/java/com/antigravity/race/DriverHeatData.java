@@ -5,7 +5,6 @@ import com.antigravity.protocols.CarLocation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 public class DriverHeatData extends ServerToClientObject {
@@ -17,19 +16,14 @@ public class DriverHeatData extends ServerToClientObject {
 
     private double lapTime;
     private String driverId;
-    private ArrayList<Double> segments = new ArrayList<>();
+    private List<Double> segments = new ArrayList<>();
     private boolean isDrift;
 
-    @BsonCreator
-    public LapData(
-        @BsonProperty("lapTime") double lapTime,
-        @BsonProperty("driverId") String driverId,
-        @BsonProperty("segments") ArrayList<Double> segments,
-        @BsonProperty("isDrift") boolean isDrift) {
+    public LapData(double lapTime, String driverId, List<Double> segments, boolean isDrift) {
       this.lapTime = lapTime;
       this.driverId = driverId;
       if (segments != null) {
-        this.segments = segments;
+        this.segments = new ArrayList<>(segments);
       }
       this.isDrift = isDrift;
     }
@@ -40,16 +34,34 @@ public class DriverHeatData extends ServerToClientObject {
       return lapTime;
     }
 
+    public void setLapTime(double lapTime) {
+      this.lapTime = lapTime;
+    }
+
     public String getDriverId() {
       return driverId;
     }
 
-    public List<Double> getSegments() {
-      return Collections.unmodifiableList(segments);
+    public void setDriverId(String driverId) {
+      this.driverId = driverId;
     }
 
+    public List<Double> getSegments() {
+      return segments;
+    }
+
+    public void setSegments(List<Double> segments) {
+      this.segments = segments != null ? new ArrayList<>(segments) : new ArrayList<>();
+    }
+
+    @BsonProperty("isDrift")
     public boolean isDrift() {
       return isDrift;
+    }
+
+    @BsonProperty("isDrift")
+    public void setDrift(boolean drift) {
+      isDrift = drift;
     }
   }
 
@@ -63,16 +75,13 @@ public class DriverHeatData extends ServerToClientObject {
   private final ArrayList<Double> segments = new ArrayList<>();
   private CarLocation currentLocation;
 
-  @BsonCreator
-  public DriverHeatData(
-      @BsonProperty("driver") RaceParticipant driver,
-      @BsonProperty("actualDriver") Driver actualDriver) {
+  public DriverHeatData(RaceParticipant driver, Driver actualDriver) {
     super();
     this.driver = driver;
     if (actualDriver != null) {
       this.actualDriver = actualDriver;
-    } else {
-      this.actualDriver = driver.getDriver(); // Default to participant driver (null if team)
+    } else if (driver != null) {
+      this.actualDriver = driver.getDriver();
     }
   }
 
@@ -82,6 +91,20 @@ public class DriverHeatData extends ServerToClientObject {
 
   public DriverHeatData() {
     super();
+  }
+
+  public void setLaps(List<LapData> laps) {
+    this.laps.clear();
+    if (laps != null) {
+      this.laps.addAll(laps);
+    }
+  }
+
+  public void setSegments(List<Double> segments) {
+    this.segments.clear();
+    if (segments != null) {
+      this.segments.addAll(segments);
+    }
   }
 
   public RaceParticipant getDriver() {

@@ -58,7 +58,7 @@ public class HeatStandings {
               .findFirst()
               .orElse(null);
       if (dhd != null) {
-        boolean isEmpty = dhd.getActualDriver() != null && dhd.getActualDriver().isEmpty();
+        boolean isEmpty = dhd.getActualDriver() == null || dhd.getActualDriver().isEmpty();
         int rank = isEmpty ? 99 : currentRank++;
 
         updateBuilder.addUpdates(
@@ -179,7 +179,7 @@ public class HeatStandings {
     }
 
     return Comparator.<DriverHeatData, Boolean>comparing(
-            d -> d.getActualDriver() != null && d.getActualDriver().isEmpty())
+            d -> d.getActualDriver() == null || d.getActualDriver().isEmpty())
         .thenComparing(comparator)
         .thenComparing(d -> d.getReactionTime() == 0 ? Double.MAX_VALUE : d.getReactionTime())
         .thenComparing(getTieBreakerComparator());

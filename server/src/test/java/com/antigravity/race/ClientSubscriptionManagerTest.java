@@ -47,11 +47,20 @@ public class ClientSubscriptionManagerTest {
     manager.setProtocol(null);
     manager.setCleanupGracePeriodSeconds(0);
 
-    // We need to clear sessions, but there is no public method to clear them.
-    // However, for unit testing we can assume start fresh or we might need to rely
-    // on clear side effects.
-    // Since it's a singleton, we have to be careful.
-    // Let's rely on removeSession to clear things up if we track them.
+    // Since it's a singleton, we have to clear internal state for isolation
+    clearPrivateSet("sessions");
+    clearPrivateSet("raceDataSubscribers");
+    clearPrivateSet("interfaceSubscribers");
+  }
+
+  private void clearPrivateSet(String fieldName) {
+    try {
+      Field field = ClientSubscriptionManager.class.getDeclaredField(fieldName);
+      field.setAccessible(true);
+      ((Set<?>) field.get(manager)).clear();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   @Test

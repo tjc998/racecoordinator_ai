@@ -74,349 +74,364 @@ public class App {
   public static final String SERVER_VERSION = "0.0.0.13";
 
   public static void main(String[] args) {
-    System.out.println("Race Coordinator AI Server " + SERVER_VERSION);
-    System.out.println("Build Time: " + new Date());
-    String projectDir = System.getProperty("user.dir");
-    String appDataDir =
-        System.getProperty("app.data.dir", Paths.get(projectDir, "app_data").toString());
-    appDataDir = Paths.get(appDataDir).toAbsolutePath().normalize().toString();
-    System.out.println("Using app data directory: " + appDataDir);
-    String tmpDir = Paths.get(appDataDir, "server_temp").toString();
-    System.setProperty("de.flapdoodle.embed.io.tmpdir", tmpDir);
-    System.out.println("Set de.flapdoodle.embed.io.tmpdir to: " + tmpDir);
     try {
-      Path tmpPath = Paths.get(tmpDir);
-      if (!Files.exists(tmpPath)) {
-        Files.createDirectories(tmpPath);
+      System.out.println("Race Coordinator AI Server " + SERVER_VERSION);
+      System.out.println("Build Time: " + new Date());
+      String projectDir = System.getProperty("user.dir");
+      String appDataDir =
+          System.getProperty("app.data.dir", Paths.get(projectDir, "app_data").toString());
+      appDataDir = Paths.get(appDataDir).toAbsolutePath().normalize().toString();
+      System.out.println("Using app data directory: " + appDataDir);
+      String tmpDir = Paths.get(appDataDir, "server_temp").toString();
+      System.setProperty("de.flapdoodle.embed.io.tmpdir", tmpDir);
+      System.out.println("Set de.flapdoodle.embed.io.tmpdir to: " + tmpDir);
+      try {
+        Path tmpPath = Paths.get(tmpDir);
+        if (!Files.exists(tmpPath)) {
+          Files.createDirectories(tmpPath);
+        }
+        // System.setProperty("java.io.tmpdir", tmpDir);
+        System.out.println("Left java.io.tmpdir as default (commented out custom setter)");
+      } catch (Exception e) {
+        System.err.println("Failed to set java.io.tmpdir: " + e.getMessage());
       }
-      // System.setProperty("java.io.tmpdir", tmpDir);
-      System.out.println("Left java.io.tmpdir as default (commented out custom setter)");
-    } catch (Exception e) {
-      System.err.println("Failed to set java.io.tmpdir: " + e.getMessage());
-    }
 
-    boolean useEmbeddedMongo = true;
-    boolean headless = false;
-    for (String arg : args) {
-      if ("--no-embedded-mongo".equals(arg)) {
-        useEmbeddedMongo = false;
-      } else if ("--headless".equals(arg)) {
-        headless = true;
+      boolean useEmbeddedMongo = true;
+      boolean headless = false;
+      for (String arg : args) {
+        if ("--no-embedded-mongo".equals(arg)) {
+          useEmbeddedMongo = false;
+        } else if ("--headless".equals(arg)) {
+          headless = true;
+        }
       }
-    }
 
-    if (useEmbeddedMongo) {
-      startEmbeddedMongo();
-    } else {
-      logger.info(
-          "Skipping embedded MongoDB start (requested via --no-embedded-mongo). Ensuring external MongoDB is available...");
-    }
+      if (useEmbeddedMongo) {
+        startEmbeddedMongo();
+      } else {
+        logger.info(
+            "Skipping embedded MongoDB start (requested via --no-embedded-mongo). Ensuring external MongoDB is available...");
+      }
 
-    // Add a shutdown hook to stop the embedded MongoDB server
-    Runtime.getRuntime()
-        .addShutdownHook(
-            new Thread(
-                () -> {
-                  logger.info("Shutting down server...");
-                  ClientSubscriptionManager.getInstance().setShuttingDown(true);
-                  if (app != null) {
-                    try {
-                      app.stop();
-                    } catch (Exception e) {
-                      logger.error("Error stopping Javalin: " + e.getMessage());
+      // Add a shutdown hook to stop the embedded MongoDB server
+      Runtime.getRuntime()
+          .addShutdownHook(
+              new Thread(
+                  () -> {
+                    logger.info("Shutting down server...");
+                    ClientSubscriptionManager.getInstance().setShuttingDown(true);
+                    if (app != null) {
+                      try {
+                        app.stop();
+                      } catch (Exception e) {
+                        logger.error("Error stopping Javalin: " + e.getMessage());
+                      }
                     }
-                  }
-                  if (mongoClient != null) {
-                    try {
-                      mongoClient.close();
-                    } catch (Exception e) {
-                      logger.error("Error closing MongoClient: " + e.getMessage());
+                    if (mongoClient != null) {
+                      try {
+                        mongoClient.close();
+                      } catch (Exception e) {
+                        logger.error("Error closing MongoClient: " + e.getMessage());
+                      }
                     }
-                  }
-                  if (mongodProcess != null) {
-                    logger.info("Stopping embedded MongoDB...");
-                    mongodProcess.close();
-                    logger.info("Embedded MongoDB stopped.");
-                  }
-                  if (manualMongoProcess != null) {
-                    logger.info("Stopping manual MongoDB process...");
-                    manualMongoProcess.destroy();
-                    try {
-                      if (!manualMongoProcess.waitFor(5, TimeUnit.SECONDS)) {
-                        logger.warn("MongoDB did not shut down gracefully. Forcing termination...");
+                    if (mongodProcess != null) {
+                      logger.info("Stopping embedded MongoDB...");
+                      mongodProcess.close();
+                      logger.info("Embedded MongoDB stopped.");
+                    }
+                    if (manualMongoProcess != null) {
+                      logger.info("Stopping manual MongoDB process...");
+                      manualMongoProcess.destroy();
+                      try {
+                        if (!manualMongoProcess.waitFor(5, TimeUnit.SECONDS)) {
+                          logger.warn(
+                              "MongoDB did not shut down gracefully. Forcing termination...");
+                          manualMongoProcess.destroyForcibly();
+                        }
+                      } catch (InterruptedException e) {
                         manualMongoProcess.destroyForcibly();
                       }
-                    } catch (InterruptedException e) {
-                      manualMongoProcess.destroyForcibly();
-                    }
 
-                    // Fallback for Windows if process is still alive (often happens on Win7)
-                    if (manualMongoProcess.isAlive()
-                        && System.getProperty("os.name").toLowerCase().contains("win")) {
-                      logger.info("MongoDB still alive on Windows. Using taskkill fallback...");
-                      try {
-                        // Kill by image name to be sure, targeting the one we started
-                        Runtime.getRuntime().exec("taskkill /F /IM mongod.exe /T");
-                      } catch (IOException e) {
-                        logger.error("Failed to run taskkill: " + e.getMessage());
+                      // Fallback for Windows if process is still alive (often happens on Win7)
+                      if (manualMongoProcess.isAlive()
+                          && System.getProperty("os.name").toLowerCase().contains("win")) {
+                        logger.info("MongoDB still alive on Windows. Using taskkill fallback...");
+                        try {
+                          // Kill by image name to be sure, targeting the one we started
+                          Runtime.getRuntime().exec("taskkill /F /IM mongod.exe /T");
+                        } catch (IOException e) {
+                          logger.error("Failed to run taskkill: " + e.getMessage());
+                        }
                       }
+                      logger.info("Manual MongoDB process handling complete.");
                     }
-                    logger.info("Manual MongoDB process handling complete.");
-                  }
-                  logger.info("Server stopped.");
-                }));
+                    logger.info("Server stopped.");
+                  }));
 
-    // MongoDB Setup
-    CodecRegistry robustBooleanRegistry = CodecRegistries.fromCodecs(new RobustBooleanCodec());
+      // MongoDB Setup
+      CodecRegistry robustBooleanRegistry = CodecRegistries.fromCodecs(new RobustBooleanCodec());
 
-    CodecRegistry pojoCodecRegistry =
-        fromRegistries(
-            robustBooleanRegistry,
-            MongoClientSettings.getDefaultCodecRegistry(),
-            fromProviders(PojoCodecProvider.builder().automatic(true).build()));
+      CodecRegistry pojoCodecRegistry =
+          fromRegistries(
+              robustBooleanRegistry,
+              MongoClientSettings.getDefaultCodecRegistry(),
+              fromProviders(PojoCodecProvider.builder().automatic(true).build()));
 
-    MongoClientSettings settings =
-        MongoClientSettings.builder()
-            .applyConnectionString(new ConnectionString("mongodb://localhost:" + MONGO_PORT))
-            .codecRegistry(pojoCodecRegistry)
-            .applyToClusterSettings(b -> b.serverSelectionTimeout(30000, TimeUnit.MILLISECONDS))
-            .build();
+      MongoClientSettings settings =
+          MongoClientSettings.builder()
+              .applyConnectionString(new ConnectionString("mongodb://localhost:" + MONGO_PORT))
+              .codecRegistry(pojoCodecRegistry)
+              .applyToClusterSettings(b -> b.serverSelectionTimeout(30000, TimeUnit.MILLISECONDS))
+              .build();
 
-    mongoClient = MongoClients.create(settings);
+      mongoClient = MongoClients.create(settings);
 
-    // Wait for MongoDB to be ready
-    boolean mongoReady = false;
-    for (int i = 0; i < 30; i++) {
-      try {
-        mongoClient.listDatabaseNames().first();
-        mongoReady = true;
-        System.out.println("MongoDB is ready.");
-        break;
-      } catch (Exception e) {
-        System.out.println("Waiting for MongoDB... (" + (i + 1) + "/30)");
-        if (manualMongoProcess != null && !manualMongoProcess.isAlive()) {
-          System.err.println("Bundled MongoDB process has stopped unexpectedly!");
+      // Wait for MongoDB to be ready
+      boolean mongoReady = false;
+      for (int i = 0; i < 30; i++) {
+        try {
+          mongoClient.listDatabaseNames().first();
+          mongoReady = true;
+          System.out.println("MongoDB is ready.");
+          break;
+        } catch (Exception e) {
+          System.out.println("Waiting for MongoDB... (" + (i + 1) + "/30)");
+          if (manualMongoProcess != null && !manualMongoProcess.isAlive()) {
+            System.err.println("Bundled MongoDB process has stopped unexpectedly!");
+            break;
+          }
+          try {
+            Thread.sleep(1000);
+          } catch (InterruptedException ie) {
+            // Ignore
+          }
+        }
+      }
+
+      if (!mongoReady) {
+        System.err.println("Fatal: MongoDB failed to start correctly within 30 seconds.");
+        System.exit(1);
+      }
+      // Initialize Database
+
+      // Migration: Move legacy assets if they exist
+      File legacyAssets = new File("data/assets");
+      File newDefaultAssets = new File("data/Race Coordinator AI DB/assets");
+      if (legacyAssets.exists() && legacyAssets.isDirectory() && !newDefaultAssets.exists()) {
+        System.out.println("Migrating legacy assets to default database...");
+        if (newDefaultAssets.mkdirs()) {
+          // Actually we want to move the CONTENTS, or rename the directory if parent
+          // structure allows.
+          // Simplest is to rename data/assets to data/Race Coordinator AI DB/assets
+          // But Wait, 'data' is the parent.
+          // We can rename "data/assets" to a temporary name, then move it into "data/Race
+          // Coordinator AI DB/"
+
+          // Better plan:
+          // 1. Rename "data/assets" to "data/assets_legacy"
+          // 2. Create "data/Race Coordinator AI DB/assets"
+          // 3. Move contents.
+
+          // Even better: Rename "data/assets" -> "data/Race Coordinator AI DB/assets"
+          // works if "Race Coordinator AI DB" dir exists.
+          // But "data/Race Coordinator AI DB" likely doesn't exist yet (created by Mongo
+          // later?).
+          // Actually Mongo creates DB files in 'db' path (configured in embedded mongo).
+          // 'data' is our own app configuration dir.
+
+          try {
+            Path legacyPath = legacyAssets.toPath();
+            Path newPath = newDefaultAssets.toPath();
+            Files.createDirectories(newPath.getParent()); // Ensure parent exists
+            Files.move(legacyPath, newPath, StandardCopyOption.REPLACE_EXISTING);
+            System.out.println("Assets migrated successfully.");
+          } catch (IOException e) {
+            System.err.println("Asset migration failed: " + e.getMessage());
+          }
+        }
+      }
+      ServerConfigService configService = new ServerConfigService();
+      String lastActiveDb = configService.getLastActiveDatabase();
+
+      List<String> databaseNames = new ArrayList<>();
+      mongoClient.listDatabaseNames().forEach(databaseNames::add);
+
+      // Filter out system databases
+      List<String> userDatabases = new ArrayList<>();
+      for (String dbName : databaseNames) {
+        if (!dbName.equals("admin") && !dbName.equals("local") && !dbName.equals("config")) {
+          userDatabases.add(dbName);
+        }
+      }
+
+      String initialDbName;
+      boolean needsFactoryReset = false;
+
+      if (userDatabases.isEmpty()) {
+        initialDbName = "RaceCoordinator_AI_DB";
+        needsFactoryReset = true;
+        System.out.println(
+            "No existing databases found. Creating '" + initialDbName + "' with factory defaults.");
+      } else {
+        // Prioritize last active DB if it exists
+        if (lastActiveDb != null && userDatabases.contains(lastActiveDb)) {
+          initialDbName = lastActiveDb;
+          System.out.println("Resuming last active database: '" + initialDbName + "'.");
+        } else if (userDatabases.contains("Race Coordinator AI DB")) {
+          initialDbName = "Race Coordinator AI DB";
+          System.out.println("Found existing 'Race Coordinator AI DB'. Connecting to it.");
+        } else {
+          initialDbName = userDatabases.get(0);
+          System.out.println("Connecting to first available database: '" + initialDbName + "'.");
+        }
+      }
+
+      DatabaseContext databaseContext =
+          new DatabaseContext(mongoClient, initialDbName, configService, appDataDir);
+
+      ClientSubscriptionManager.getInstance().setDatabaseContext(databaseContext);
+
+      if (needsFactoryReset) {
+        MongoDatabase db = databaseContext.getDatabase();
+        String dataRoot = databaseContext.getDataRoot();
+        new AssetService(db, dataRoot + initialDbName + "/assets").resetAssets();
+        DatabaseService.getInstance().resetToFactory(databaseContext, db);
+      }
+
+      System.out.println("Connected to MongoDB successfully.");
+
+      // Backfill defaults for all databases
+      for (String dbName : databaseContext.listDatabases()) {
+        if (dbName.equals("admin") || dbName.equals("local") || dbName.equals("config")) {
+          continue;
+        }
+        System.out.println("Backfilling default assets for database: " + dbName);
+        MongoDatabase db = mongoClient.getDatabase(dbName);
+        new AssetService(db, appDataDir + File.separator + dbName + File.separator + "assets")
+            .backfillDefaults();
+      }
+
+      // Determine client path once
+      String[] possiblePaths = {"web", "server/web", "client/dist/client", "../client/dist/client"};
+      String resolvedClientPath = null;
+      for (String path : possiblePaths) {
+        if (Files.exists(Paths.get(path))) {
+          resolvedClientPath = path;
           break;
         }
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException ie) {
-          // Ignore
-        }
       }
-    }
 
-    if (!mongoReady) {
-      System.err.println("Fatal: MongoDB failed to start correctly within 30 seconds.");
-      System.exit(1);
-    }
-    // Initialize Database
+      final String staticFilePath = resolvedClientPath != null ? resolvedClientPath : "web";
+      System.out.println("Serving static files from: " + staticFilePath);
 
-    // Migration: Move legacy assets if they exist
-    File legacyAssets = new File("data/assets");
-    File newDefaultAssets = new File("data/Race Coordinator AI DB/assets");
-    if (legacyAssets.exists() && legacyAssets.isDirectory() && !newDefaultAssets.exists()) {
-      System.out.println("Migrating legacy assets to default database...");
-      if (newDefaultAssets.mkdirs()) {
-        // Actually we want to move the CONTENTS, or rename the directory if parent
-        // structure allows.
-        // Simplest is to rename data/assets to data/Race Coordinator AI DB/assets
-        // But Wait, 'data' is the parent.
-        // We can rename "data/assets" to a temporary name, then move it into "data/Race
-        // Coordinator AI DB/"
+      app =
+          Javalin.create(
+                  config -> {
+                    config.addStaticFiles(staticFilePath, Location.EXTERNAL);
+                    config.enableCorsForAllOrigins();
 
-        // Better plan:
-        // 1. Rename "data/assets" to "data/assets_legacy"
-        // 2. Create "data/Race Coordinator AI DB/assets"
-        // 3. Move contents.
-
-        // Even better: Rename "data/assets" -> "data/Race Coordinator AI DB/assets"
-        // works if "Race Coordinator AI DB" dir exists.
-        // But "data/Race Coordinator AI DB" likely doesn't exist yet (created by Mongo
-        // later?).
-        // Actually Mongo creates DB files in 'db' path (configured in embedded mongo).
-        // 'data' is our own app configuration dir.
-
-        try {
-          Path legacyPath = legacyAssets.toPath();
-          Path newPath = newDefaultAssets.toPath();
-          Files.createDirectories(newPath.getParent()); // Ensure parent exists
-          Files.move(legacyPath, newPath, StandardCopyOption.REPLACE_EXISTING);
-          System.out.println("Assets migrated successfully.");
-        } catch (IOException e) {
-          System.err.println("Asset migration failed: " + e.getMessage());
-        }
-      }
-    }
-    ServerConfigService configService = new ServerConfigService();
-    String lastActiveDb = configService.getLastActiveDatabase();
-
-    List<String> databaseNames = new ArrayList<>();
-    mongoClient.listDatabaseNames().forEach(databaseNames::add);
-
-    // Filter out system databases
-    List<String> userDatabases = new ArrayList<>();
-    for (String dbName : databaseNames) {
-      if (!dbName.equals("admin") && !dbName.equals("local") && !dbName.equals("config")) {
-        userDatabases.add(dbName);
-      }
-    }
-
-    String initialDbName;
-    boolean needsFactoryReset = false;
-
-    if (userDatabases.isEmpty()) {
-      initialDbName = "RaceCoordinator_AI_DB";
-      needsFactoryReset = true;
-      System.out.println(
-          "No existing databases found. Creating '" + initialDbName + "' with factory defaults.");
-    } else {
-      // Prioritize last active DB if it exists
-      if (lastActiveDb != null && userDatabases.contains(lastActiveDb)) {
-        initialDbName = lastActiveDb;
-        System.out.println("Resuming last active database: '" + initialDbName + "'.");
-      } else if (userDatabases.contains("Race Coordinator AI DB")) {
-        initialDbName = "Race Coordinator AI DB";
-        System.out.println("Found existing 'Race Coordinator AI DB'. Connecting to it.");
-      } else {
-        initialDbName = userDatabases.get(0);
-        System.out.println("Connecting to first available database: '" + initialDbName + "'.");
-      }
-    }
-
-    DatabaseContext databaseContext =
-        new DatabaseContext(mongoClient, initialDbName, configService, appDataDir);
-
-    ClientSubscriptionManager.getInstance().setDatabaseContext(databaseContext);
-
-    if (needsFactoryReset) {
-      MongoDatabase db = databaseContext.getDatabase();
-      String dataRoot = databaseContext.getDataRoot();
-      new AssetService(db, dataRoot + initialDbName + "/assets").resetAssets();
-      DatabaseService.getInstance().resetToFactory(databaseContext, db);
-    }
-
-    System.out.println("Connected to MongoDB successfully.");
-
-    // Backfill defaults for all databases
-    for (String dbName : databaseContext.listDatabases()) {
-      if (dbName.equals("admin") || dbName.equals("local") || dbName.equals("config")) {
-        continue;
-      }
-      System.out.println("Backfilling default assets for database: " + dbName);
-      MongoDatabase db = mongoClient.getDatabase(dbName);
-      new AssetService(db, appDataDir + File.separator + dbName + File.separator + "assets")
-          .backfillDefaults();
-    }
-
-    // Determine client path once
-    String[] possiblePaths = {"web", "server/web", "client/dist/client", "../client/dist/client"};
-    String resolvedClientPath = null;
-    for (String path : possiblePaths) {
-      if (Files.exists(Paths.get(path))) {
-        resolvedClientPath = path;
-        break;
-      }
-    }
-
-    final String staticFilePath = resolvedClientPath != null ? resolvedClientPath : "web";
-    System.out.println("Serving static files from: " + staticFilePath);
-
-    app =
-        Javalin.create(
-                config -> {
-                  config.addStaticFiles(staticFilePath, Location.EXTERNAL);
-                  config.enableCorsForAllOrigins();
-
-                  ObjectMapper mapper = new ObjectMapper();
-                  SimpleModule module = new SimpleModule();
-                  module.addDeserializer(
-                      ObjectId.class,
-                      new JsonDeserializer<ObjectId>() {
-                        @Override
-                        public ObjectId deserialize(JsonParser p, DeserializationContext ctxt)
-                            throws IOException {
-                          String value = p.getValueAsString();
-                          if (value == null || value.isEmpty()) {
-                            return null;
+                    ObjectMapper mapper = new ObjectMapper();
+                    SimpleModule module = new SimpleModule();
+                    module.addDeserializer(
+                        ObjectId.class,
+                        new JsonDeserializer<ObjectId>() {
+                          @Override
+                          public ObjectId deserialize(JsonParser p, DeserializationContext ctxt)
+                              throws IOException {
+                            String value = p.getValueAsString();
+                            if (value == null || value.isEmpty()) {
+                              return null;
+                            }
+                            try {
+                              return new ObjectId(value);
+                            } catch (IllegalArgumentException e) {
+                              return null;
+                            }
                           }
-                          try {
-                            return new ObjectId(value);
-                          } catch (IllegalArgumentException e) {
-                            return null;
-                          }
-                        }
-                      });
-                  mapper.registerModule(module);
-                  config.jsonMapper(new JavalinJackson(mapper));
-                })
-            .start(7070);
+                        });
+                    mapper.registerModule(module);
+                    config.jsonMapper(new JavalinJackson(mapper));
+                  })
+              .start(7070);
 
-    // SPA Fallback: Serve index.html for 404s on HTML requests
-    app.error(
-        404,
-        ctx -> {
-          String accept = ctx.header("Accept");
-          if (accept != null && accept.contains("text/html")) {
-            Path indexPath = Paths.get(staticFilePath, "index.html");
-            if (Files.exists(indexPath)) {
-              ctx.contentType("text/html");
-              ctx.result(new String(Files.readAllBytes(indexPath)));
-            } else {
-              System.err.println(
-                  "SPA Fallback: index.html not found at " + indexPath.toAbsolutePath());
+      app.exception(
+          Exception.class,
+          (e, ctx) -> {
+            System.err.println("Uncaught exception in " + ctx.path() + ":");
+            e.printStackTrace();
+            ctx.status(500).result("Internal Server Error: " + e.getMessage());
+          });
+
+      // SPA Fallback: Serve index.html for 404s on HTML requests
+      app.error(
+          404,
+          ctx -> {
+            String accept = ctx.header("Accept");
+            if (accept != null && accept.contains("text/html")) {
+              Path indexPath = Paths.get(staticFilePath, "index.html");
+              if (Files.exists(indexPath)) {
+                ctx.contentType("text/html");
+                ctx.result(new String(Files.readAllBytes(indexPath)));
+              } else {
+                System.err.println(
+                    "SPA Fallback: index.html not found at " + indexPath.toAbsolutePath());
+              }
             }
-          }
-        });
+          });
 
-    app.ws(
-        "/api/race-data",
-        ws -> {
-          ws.onConnect(
-              ctx -> {
-                ClientSubscriptionManager.getInstance().addSession(ctx);
-              });
-          ws.onClose(
-              ctx -> {
-                ClientSubscriptionManager.getInstance().removeSession(ctx);
-              });
-          ws.onBinaryMessage(
-              ctx -> {
-                try {
-                  RaceSubscriptionRequest request = RaceSubscriptionRequest.parseFrom(ctx.data());
-                  ClientSubscriptionManager.getInstance().handleRaceSubscription(ctx, request);
-                } catch (Exception e) {
-                  // Ignore non-subscription messages or invalid protos
-                }
-              });
-        });
+      app.ws(
+          "/api/race-data",
+          ws -> {
+            ws.onConnect(
+                ctx -> {
+                  ClientSubscriptionManager.getInstance().addSession(ctx);
+                });
+            ws.onClose(
+                ctx -> {
+                  ClientSubscriptionManager.getInstance().removeSession(ctx);
+                });
+            ws.onBinaryMessage(
+                ctx -> {
+                  try {
+                    RaceSubscriptionRequest request = RaceSubscriptionRequest.parseFrom(ctx.data());
+                    ClientSubscriptionManager.getInstance().handleRaceSubscription(ctx, request);
+                  } catch (Exception e) {
+                    // Ignore non-subscription messages or invalid protos
+                  }
+                });
+          });
 
-    app.ws(
-        "/api/interface-data",
-        ws -> {
-          ws.onConnect(
-              ctx -> {
-                ClientSubscriptionManager.getInstance().addInterfaceSession(ctx);
-              });
-          ws.onClose(
-              ctx -> {
-                ClientSubscriptionManager.getInstance().removeInterfaceSession(ctx);
-              });
-        });
+      app.ws(
+          "/api/interface-data",
+          ws -> {
+            ws.onConnect(
+                ctx -> {
+                  ClientSubscriptionManager.getInstance().addInterfaceSession(ctx);
+                });
+            ws.onClose(
+                ctx -> {
+                  ClientSubscriptionManager.getInstance().removeInterfaceSession(ctx);
+                });
+          });
 
-    new ClientCommandTaskHandler(databaseContext, app);
-    new DatabaseTaskHandler(databaseContext, app);
-    new AssetTaskHandler(databaseContext, app);
+      new ClientCommandTaskHandler(databaseContext, app);
+      new DatabaseTaskHandler(databaseContext, app);
+      new AssetTaskHandler(databaseContext, app);
 
-    app.get("/api/version", ctx -> ctx.result(SERVER_VERSION));
-    app.get("/api/server-ip", ctx -> ctx.result(getLocalIpAddress()));
+      app.get("/api/version", ctx -> ctx.result(SERVER_VERSION));
+      app.get("/api/server-ip", ctx -> ctx.result(getLocalIpAddress()));
 
-    // Open Browser after successful start
-    if (!headless) {
-      openBrowser("http://localhost:7070");
-    } else {
-      System.out.println("Headless mode: Browser will not be opened automatically.");
-      System.out.println("Server is running at http://localhost:7070");
+      // Open Browser after successful start
+      if (!headless) {
+        openBrowser("http://localhost:7070");
+      } else {
+        System.out.println("Headless mode: Browser will not be opened automatically.");
+        System.out.println("Server is running at http://localhost:7070");
+      }
+    } catch (Exception e) {
+      System.err.println("Fatal error during startup:");
+      e.printStackTrace();
+      System.exit(1);
     }
   }
 

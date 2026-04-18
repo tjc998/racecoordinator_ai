@@ -777,30 +777,17 @@ export class DefaultRacedayComponent
 
     const heats = this.raceService.getHeats();
     if (heats && heats.length > 0) {
-      console.log("RacedayComponent: Using heats from server:", heats);
       this.totalHeats = heats.length;
       const prevHeatNumber = this.heat?.heatNumber;
       this.heat = this.raceService.getCurrentHeat();
-      console.log("RacedayComponent: Current Heat:", this.heat);
 
       if (this.heat && this.heat.heatNumber !== prevHeatNumber) {
-        console.log(
-          `RacedayComponent: Heat changed from ${prevHeatNumber} to ${this.heat.heatNumber}. Resetting hasRacedInCurrentHeat.`,
-        );
         this.hasRacedInCurrentHeat = false;
       }
 
       // Initialize rankings
       this.driverRankings.clear();
       if (this.heat) {
-        console.log("RacedayComponent: Heat drivers:", this.heat.heatDrivers);
-        this.heat.heatDrivers.forEach((hd, idx) => {
-          console.log(`Driver ${idx}:`, hd);
-          if (hd) {
-            console.log(`Driver ${idx} details:`, hd.driver.name);
-          }
-        });
-
         if (this.heat.standings && this.heat.standings.length > 0) {
           this.heat.standings.forEach((sid, index) =>
             this.driverRankings.set(sid, index + 1),
@@ -816,7 +803,7 @@ export class DefaultRacedayComponent
       this.sortHeatDrivers();
       this.cdr.detectChanges();
     } else {
-      console.warn("RacedayComponent: No heats available from server.");
+      // No heats available
     }
   }
 

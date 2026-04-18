@@ -2,10 +2,8 @@ package com.antigravity.race;
 
 import com.antigravity.models.Race;
 import com.antigravity.models.Track;
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
-import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.types.ObjectId;
@@ -39,26 +37,22 @@ public class RaceSaveData {
 
   public RaceSaveData() {}
 
-  @BsonCreator
-  @JsonCreator
   public RaceSaveData(
-      @BsonId @JsonProperty("_id") ObjectId id,
-      @BsonProperty("saveName") @JsonProperty("saveName") String saveName,
-      @BsonProperty("isAutoSave") @JsonProperty("isAutoSave") boolean isAutoSave,
-      @BsonProperty("model") @JsonProperty("model") Race model,
-      @BsonProperty("track") @JsonProperty("track") Track track,
-      @BsonProperty("drivers") @JsonProperty("drivers") List<RaceParticipant> drivers,
-      @BsonProperty("heats") @JsonProperty("heats") List<Heat> heats,
-      @BsonProperty("stateClassName") @JsonProperty("stateClassName") String stateClassName,
-      @BsonProperty("accumulatedRaceTime") @JsonProperty("accumulatedRaceTime")
-          float accumulatedRaceTime,
-      @BsonProperty("hasRacedInCurrentHeat") @JsonProperty("hasRacedInCurrentHeat")
-          boolean hasRacedInCurrentHeat,
-      @BsonProperty("currentHeatIndex") @JsonProperty("currentHeatIndex") int currentHeatIndex,
-      @BsonProperty("isDemoMode") @JsonProperty("isDemoMode") boolean isDemoMode,
-      @BsonProperty("autoStartFired") @JsonProperty("autoStartFired") boolean autoStartFired,
-      @BsonProperty("autoAdvanceFired") @JsonProperty("autoAdvanceFired") boolean autoAdvanceFired,
-      @BsonProperty("statistics") @JsonProperty("statistics") RaceStatistics statistics) {
+      ObjectId id,
+      String saveName,
+      boolean isAutoSave,
+      Race model,
+      Track track,
+      List<RaceParticipant> drivers,
+      List<Heat> heats,
+      String stateClassName,
+      float accumulatedRaceTime,
+      boolean hasRacedInCurrentHeat,
+      int currentHeatIndex,
+      boolean isDemoMode,
+      boolean autoStartFired,
+      boolean autoAdvanceFired,
+      RaceStatistics statistics) {
     this.id = id;
     this.saveName = saveName;
     this.isAutoSave = isAutoSave;

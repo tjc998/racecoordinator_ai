@@ -45,12 +45,6 @@ export class HeatConverter {
             let actualDriver: Driver | undefined;
             if (dProto.actualDriver) {
               actualDriver = DriverConverter.fromProto(dProto.actualDriver);
-              console.log(
-                `HeatConverter (Client): DriverHeatData ${dProto.objectId} has actualDriver:`,
-                actualDriver.name,
-              );
-            } else {
-              // console.log(`HeatConverter (Client): DriverHeatData ${dProto.objectId} missing actualDriver`);
             }
 
             const heatDriverId = dProto.objectId;
@@ -90,9 +84,6 @@ export class HeatConverter {
       }
       const validHeatDrivers = heatDrivers.filter(
         (d): d is DriverHeatData => d !== null,
-      );
-      console.log(
-        `HeatConverter: Processed ${validHeatDrivers.length} valid drivers for heat ${heatNumber}`,
       );
 
       return new Heat(

@@ -21,7 +21,7 @@ public class Model extends ServerToClientObject {
       @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId) {
     super(entityId);
     this.id = id;
-    this.entityId = entityId;
+    this.entityId = (entityId != null) ? entityId : getObjectId();
   }
 
   public ObjectId getId() {

@@ -129,7 +129,14 @@ public class ClientSubscriptionManager {
 
     if (currentRace != null) {
       RaceData snapshot = currentRace.createSnapshot();
-      ctx.send(snapshot.toByteArray());
+      if (snapshot.hasRace() && snapshot.getRace().hasCurrentHeat()) {
+        System.out.println(
+            "DIAGNOSTIC: Snapshot includes Current Heat: "
+                + snapshot.getRace().getCurrentHeat().getObjectId());
+      } else {
+        System.out.println("DIAGNOSTIC: Snapshot MISSING Current Heat!");
+      }
+      ctx.send(ByteBuffer.wrap(snapshot.toByteArray()));
     }
   }
 
@@ -191,7 +198,14 @@ public class ClientSubscriptionManager {
       // Send current state immediately upon subscription if race exists
       if (currentRace != null) {
         RaceData snapshot = currentRace.createSnapshot();
-        ctx.send(snapshot.toByteArray());
+        if (snapshot.hasRace() && snapshot.getRace().hasCurrentHeat()) {
+          System.out.println(
+              "DIAGNOSTIC (Sub): Snapshot includes Current Heat: "
+                  + snapshot.getRace().getCurrentHeat().getObjectId());
+        } else {
+          System.out.println("DIAGNOSTIC (Sub): Snapshot MISSING Current Heat!");
+        }
+        ctx.send(ByteBuffer.wrap(snapshot.toByteArray()));
       }
     } else {
       raceDataSubscribers.remove(ctx);
@@ -353,8 +367,10 @@ public class ClientSubscriptionManager {
 
     byte[] bytes = event.toByteArray();
     for (WsContext session : interfaceSubscribers) {
-      if (session.session.isOpen()) {
+      try {
         session.send(ByteBuffer.wrap(bytes));
+      } catch (Exception e) {
+        // Ignore or log
       }
     }
   }

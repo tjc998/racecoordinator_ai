@@ -4,10 +4,6 @@ import com.antigravity.proto.DriverHeatData;
 import com.antigravity.proto.DriverModel;
 import com.antigravity.proto.Heat;
 import com.antigravity.proto.LapData;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -33,20 +29,6 @@ public class HeatConverter {
     }
   }
 
-  private static void logToFile(String message) {
-    try {
-      String tmpDir = System.getProperty("java.io.tmpdir");
-      Path logPath = Paths.get(tmpDir, "race_debug.log");
-      Files.write(
-          logPath,
-          (message + "\n").getBytes(),
-          StandardOpenOption.CREATE,
-          StandardOpenOption.APPEND);
-    } catch (Exception e) {
-      // Ignore
-    }
-  }
-
   public static DriverHeatData toProto(
       com.antigravity.race.DriverHeatData data, Set<String> sentObjectIds) {
     String key = data.getObjectId();
@@ -60,18 +42,6 @@ public class HeatConverter {
           .build();
     } else {
       sentObjectIds.add(key);
-      if (data.getActualDriver() != null) {
-        logToFile(
-            "HeatConverter: Serializing DriverHeatData "
-                + data.getObjectId()
-                + " with ActualDriver: "
-                + data.getActualDriver().getName()
-                + " (ID: "
-                + data.getActualDriver().getEntityId()
-                + ")");
-      } else {
-        logToFile("HeatConverter: DriverHeatData " + data.getObjectId() + " has NO ActualDriver");
-      }
       return DriverHeatData.newBuilder()
           .setObjectId(data.getObjectId())
           .setDriver(RaceParticipantConverter.toProto(data.getDriver(), sentObjectIds))
