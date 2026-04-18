@@ -48,6 +48,7 @@ public class ArduinoProtocolTest {
     SerialPort mockPort = mock(SerialPort.class);
     public byte[] lastWrittenData;
     public List<byte[]> allWrittenData = new ArrayList<>();
+    public List<String> eventLog = new ArrayList<>(); // Track order of events
     public int connectionCount = 0;
     public String lastPortName;
     public int lastBaudRate;
@@ -61,11 +62,13 @@ public class ArduinoProtocolTest {
         throw new IOException("Connection failed");
       }
       open = true;
+      eventLog.add("CONNECT");
     }
 
     @Override
     public void disconnect() {
       open = false;
+      eventLog.add("DISCONNECT");
     }
 
     @Override
@@ -82,6 +85,7 @@ public class ArduinoProtocolTest {
     public void writeData(byte[] data) throws IOException {
       lastWrittenData = data;
       allWrittenData.add(data);
+      eventLog.add("WRITE");
     }
 
     public void injectData(byte[] data) {
@@ -144,6 +148,35 @@ public class ArduinoProtocolTest {
     public void onInterfaceEvent(InterfaceEvent event) {
       lastEvent = event;
     }
+  }
+
+  @Test
+  public void testCloseSequence() {
+    // Add an LED string so clearLeds() actually sends data
+    LedString string0 = new LedString(2, Arrays.asList(1), 255, 0, 5.0, new ArrayList<>());
+    config.ledStrings = Collections.singletonList(string0);
+
+    protocol.open();
+    serialConnection.eventLog.clear();
+
+    protocol.close();
+
+    // Verify sequence: WRITE (for clearLeds) should happen BEFORE DISCONNECT
+    int lastWrite = -1;
+    int lastDisconnect = -1;
+
+    for (int i = 0; i < serialConnection.eventLog.size(); i++) {
+      String event = serialConnection.eventLog.get(i);
+      if (event.equals("WRITE")) {
+        lastWrite = i;
+      } else if (event.equals("DISCONNECT")) {
+        lastDisconnect = i;
+      }
+    }
+
+    assertTrue("Should have performed at least one write (LED clear)", lastWrite != -1);
+    assertTrue("Should have disconnected", lastDisconnect != -1);
+    assertTrue("LED clear must happen BEFORE serial disconnect", lastWrite < lastDisconnect);
   }
 
   private static class TestableArduinoProtocol extends ArduinoProtocol {

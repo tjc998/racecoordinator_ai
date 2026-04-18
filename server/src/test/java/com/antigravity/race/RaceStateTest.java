@@ -114,7 +114,7 @@ public class RaceStateTest {
       ClientSubscriptionManager.getInstance().removeSession(currentMockWsContext);
     }
 
-    currentMockWsContext = mock(WsContext.class);
+    currentMockWsContext = mock(io.javalin.websocket.WsContext.class);
     Session mockSession = mock(Session.class);
     RemoteEndpoint mockRemote = mock(RemoteEndpoint.class);
 
@@ -122,6 +122,15 @@ public class RaceStateTest {
     when(mockSession.getRemote()).thenReturn(mockRemote);
 
     injectSession(currentMockWsContext, mockSession);
+
+    org.mockito.Mockito.doAnswer(
+            invocation -> {
+              byte[] bytes = invocation.getArgument(0);
+              mockRemote.sendBytesByFuture(java.nio.ByteBuffer.wrap(bytes));
+              return null;
+            })
+        .when(currentMockWsContext)
+        .send(org.mockito.ArgumentMatchers.any(byte[].class));
 
     ClientSubscriptionManager.getInstance().addSession(currentMockWsContext);
     ClientSubscriptionManager.getInstance()

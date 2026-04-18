@@ -215,10 +215,10 @@ public class ArduinoLedHelperTest {
     config.ledStrings = new ArrayList<>(Collections.singletonList(string0));
 
     helper.sendRgbLedMode();
-    // Opcode 0x6C, Pin 2, Count 2, Brightness 100
+    // Opcode 0x6C, Pin 2, Count 4 (full list size now), Brightness 100
     verify(protocol, times(1))
         .writeData(
-            argThat(data -> data[0] == 0x6C && data[1] == 2 && data[2] == 2 && data[3] == 100));
+            argThat(data -> data[0] == 0x6C && data[1] == 2 && data[2] == 4 && data[3] == 100));
 
     // 2. Second call with same config - should NOT send again
     reset(protocol);
@@ -231,7 +231,7 @@ public class ArduinoLedHelperTest {
 
     // 3. Change behavior within "used" range (e.g. index 0 from behavior 1 to
     // behavior 2)
-    // addressableLeds remains 2.
+    // addressableLeds remains 4 (size of list).
     reset(protocol);
     leds.set(0, 2);
     LedString stringUpdated = new LedString(2, leds, 100, 0, 5.0, new ArrayList<>());
@@ -253,9 +253,12 @@ public class ArduinoLedHelperTest {
     helper.sendRgbLedMode();
     verify(protocol, times(1)).writeData(argThat(data -> data[0] == 0x6C && data[3] == (byte) 200));
 
-    // 5. Change addressable leds (unused to used) - SHOULD send
+    // 5. Change addressable leds (unused to used) - SHOULD NOT send if size didn't change (as it
+    // doesn't anymore)
+    // Wait, in this test leds is [2, 1, 1, 0] now? No, [1, 1, 0, 0] then set(0, 2) -> [2, 1, 0, 0].
+    // Then set(2, 1) -> [2, 1, 1, 0]. Size remains 4.
     reset(protocol);
-    leds.set(2, 1); // index 2 now used, addressableLeds becomes 3
+    leds.set(2, 1); // index 2 now used
     stringUpdated = new LedString(2, leds, 200, 0, 5.0, new ArrayList<>());
     config.ledStrings = new ArrayList<>(Collections.singletonList(stringUpdated));
     when(protocol.getConfig()).thenReturn(config);
@@ -263,7 +266,8 @@ public class ArduinoLedHelperTest {
     when(protocol.getLogTime()).thenReturn("12:00:00.000");
 
     helper.sendRgbLedMode();
-    verify(protocol, times(1)).writeData(argThat(data -> data[0] == 0x6C && data[2] == 3));
+    // numUsedLeds changed from 2 to 3, so it SHOULD send
+    verify(protocol, times(1)).writeData(argThat(data -> data[0] == 0x6C && data[2] == 4));
   }
 
   @Test

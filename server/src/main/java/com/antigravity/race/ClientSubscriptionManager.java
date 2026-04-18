@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.protobuf.GeneratedMessageV3;
 import io.javalin.websocket.WsContext;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -126,7 +125,7 @@ public class ClientSubscriptionManager {
 
     if (currentRace != null) {
       RaceData snapshot = currentRace.createSnapshot();
-      ctx.send(ByteBuffer.wrap(snapshot.toByteArray()));
+      ctx.send(snapshot.toByteArray());
     }
   }
 
@@ -186,7 +185,7 @@ public class ClientSubscriptionManager {
       // Send current state immediately upon subscription if race exists
       if (currentRace != null) {
         RaceData snapshot = currentRace.createSnapshot();
-        ctx.send(ByteBuffer.wrap(snapshot.toByteArray()));
+        ctx.send(snapshot.toByteArray());
       }
     } else {
       raceDataSubscribers.remove(ctx);
@@ -200,7 +199,8 @@ public class ClientSubscriptionManager {
     if (currentRace != null && raceDataSubscribers.isEmpty()) {
       if (!isShuttingDown) {
         // If there are NO sessions at all (not even splash screen), we should stop quickly
-        long gracePeriod = sessions.isEmpty() ? 1 : cleanupGracePeriodSeconds;
+        long gracePeriod =
+            sessions.isEmpty() ? Math.min(1, cleanupGracePeriodSeconds) : cleanupGracePeriodSeconds;
 
         if (gracePeriod <= 0) {
           performCleanup();
@@ -334,12 +334,10 @@ public class ClientSubscriptionManager {
 
     byte[] bytes = message.toByteArray();
 
-    raceDataSubscribers.stream()
-        .filter(ctx -> ctx.session.isOpen())
-        .forEach(
-            ctx -> {
-              ctx.send(ByteBuffer.wrap(bytes));
-            });
+    raceDataSubscribers.forEach(
+        ctx -> {
+          ctx.send(bytes);
+        });
   }
 
   public void broadcastInterfaceEvent(InterfaceEvent event) {
@@ -358,11 +356,9 @@ public class ClientSubscriptionManager {
 
     byte[] bytes = event.toByteArray();
 
-    interfaceSubscribers.stream()
-        .filter(ctx -> ctx.session.isOpen())
-        .forEach(
-            ctx -> {
-              ctx.send(ByteBuffer.wrap(bytes));
-            });
+    interfaceSubscribers.forEach(
+        ctx -> {
+          ctx.send(bytes);
+        });
   }
 }
