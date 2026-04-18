@@ -276,10 +276,6 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     if (this.colorDebounceTimer) {
       clearTimeout(this.colorDebounceTimer);
     }
-    this.dataService.closeInterface().subscribe({
-      next: () => console.log("Interface closed successfully"),
-      error: (err) => console.error("Error closing interface", err),
-    });
   }
 
   fetchPorts() {
@@ -809,7 +805,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
         com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED,
       ),
       numUsedLeds: 0,
-      addressableLeds: 0,
+      addressableLeds: n,
       brightness: 255,
       ledType: 0,
       flagFlashRate: 5,
@@ -873,18 +869,23 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
   updateLedBehavior(stringIndex: number, ledIndex: number, behavior: any) {
     if (!this.config || !this.config.ledStrings) return;
+    const val = parseInt(behavior, 10);
     const ls = this.config.ledStrings[stringIndex];
-    ls.leds[ledIndex] = parseInt(behavior, 10);
+    ls.leds[ledIndex] = val;
+
+    if (this.isLedStringsLinked) {
+      this.config.ledStrings.forEach((string, i) => {
+        if (i !== stringIndex) {
+          if (string.leds.length > ledIndex) {
+            string.leds[ledIndex] = val;
+            this.updateDerivedLedFields(i);
+          }
+        }
+      });
+    }
 
     // Update derived fields
-    ls.numUsedLeds = 0;
-    ls.addressableLeds = 0;
-    ls.leds.forEach((b, i) => {
-      if (b !== com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED) {
-        ls.numUsedLeds++;
-        ls.addressableLeds = i + 1;
-      }
-    });
+    this.updateDerivedLedFields(stringIndex);
 
     this.updateArduinoConfig();
   }
@@ -920,6 +921,57 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       });
     }
     this.updateArduinoConfig();
+  }
+
+  onLedStringCountChange(stringIdx: number, val: any) {
+    if (!this.config?.ledStrings) return;
+    const count = parseInt(val, 10);
+    if (isNaN(count) || count < 0) return;
+
+    this.resizeLedString(stringIdx, count);
+
+    if (this.isLedStringsLinked) {
+      this.config.ledStrings.forEach((ls, i) => {
+        if (i !== stringIdx) {
+          this.resizeLedString(i, count);
+        }
+      });
+    }
+    this.updateArduinoConfig();
+  }
+
+  private resizeLedString(stringIdx: number, count: number) {
+    if (!this.config?.ledStrings) return;
+    const ls = this.config.ledStrings[stringIdx];
+    const currentLength = ls.leds.length;
+
+    if (count > currentLength) {
+      // Growing: fill with UNUSED
+      const extra = new Array(count - currentLength).fill(
+        com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED,
+      );
+      ls.leds = [...ls.leds, ...extra];
+    } else if (count < currentLength) {
+      // Shrinking: truncate
+      ls.leds = ls.leds.slice(0, count);
+    }
+
+    // Update derived fields
+    this.updateDerivedLedFields(stringIdx);
+  }
+
+  private updateDerivedLedFields(stringIdx: number) {
+    if (!this.config?.ledStrings) return;
+    const ls = this.config.ledStrings[stringIdx];
+    ls.numUsedLeds = 0;
+    // The user now controls the number of LEDs on the string via the leds array length.
+    // We want addressableLeds to represent the total physical count for the Arduino.
+    ls.addressableLeds = ls.leds.length;
+    ls.leds.forEach((b) => {
+      if (b !== com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED) {
+        ls.numUsedLeds++;
+      }
+    });
   }
 
   onLedStringLedTypeChange(stringIdx: number, val: any) {

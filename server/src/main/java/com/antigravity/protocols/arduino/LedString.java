@@ -45,12 +45,10 @@ public class LedString {
         ledLaneColorOverrides != null ? ledLaneColorOverrides : new ArrayList<>();
 
     this.numUsedLeds = 0;
-    this.addressableLeds = 0;
-    for (int i = 0; i < this.leds.size(); i++) {
-      Integer behavior = this.leds.get(i);
+    this.addressableLeds = this.leds.size();
+    for (Integer behavior : this.leds) {
       if (behavior != null && behavior != 0) { // 0 = RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED_VALUE
         this.numUsedLeds++;
-        this.addressableLeds = (i + 1);
       }
     }
   }

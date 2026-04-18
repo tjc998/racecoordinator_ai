@@ -447,6 +447,16 @@
                     >
                       <div class="ls-settings-row">
                         <div class="control-group">
+                          <label>{{ "AE_NUM_LEDS" | translate }}</label>
+                          <input
+                            type="number"
+                            [ngModel]="ls.leds.length"
+                            min="0"
+                            max="255"
+                            (ngModelChange)="onLedStringCountChange(i, $event)"
+                          />
+                        </div>
+                        <div class="control-group">
                           <label
                             >{{ "AE_BRIGHTNESS" | translate }} [0-255]</label
                           >

@@ -31,6 +31,7 @@
   "AE_LAP_PIN_PIT_NONE": "Ninguno",
   "AE_LAP_PIN_PIT_OUT": "Salida de pits",
   "AE_LEDS": "LEDs",
+  "AE_NUM_LEDS": "Número de LEDs",
   "AE_LED_TYPE": "Tipo de LED",
   "AE_LED_TYPE_NEOPIXEL": "NEOPIXEL",
   "AE_LED_TYPE_WS2811": "WS2811",

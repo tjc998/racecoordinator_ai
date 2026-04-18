@@ -271,7 +271,7 @@ int allocateRgbSlotForPin(byte pin) {
 
 // Change this if you have a different pixel type than what we support out of
 // the box. This is used if you select 'Other' in the Arduino Config Editor.
-#define OTHER_LED_TYPE NEOPIXEL
+#define OTHER_LED_TYPE WS2812B
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
 // Uno/Nano optimization: Only support NEOPIXEL and OTHER_LED_TYPE to save Flash
@@ -279,7 +279,7 @@ int allocateRgbSlotForPin(byte pin) {
   case PIN:                                                                    \
     if (ledType == 12)                                                         \
       return &FastLED.addLeds<OTHER_LED_TYPE, PIN>(leds, numLeds);             \
-    return &FastLED.addLeds<NEOPIXEL, PIN>(leds, numLeds);
+    return &FastLED.addLeds<WS2812B, PIN>(leds, numLeds);
 #else
 // Mega support for more types
 #define ADD_LEDS_ON_PIN(PIN)                                                   \

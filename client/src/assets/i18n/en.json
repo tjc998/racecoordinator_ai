@@ -32,6 +32,7 @@
   "AE_LAP_PIN_PIT_OUT": "Pit Out",
   "AE_LED_STRING": "LED String",
   "AE_LEDS": "LEDs",
+  "AE_NUM_LEDS": "Number of LEDs",
   "AE_LED_TYPE": "LED Type",
   "AE_LED_TYPE_NEOPIXEL": "NEOPIXEL",
   "AE_LED_TYPE_WS2811": "WS2811",

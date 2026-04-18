@@ -64,6 +64,11 @@ public class ClientSubscriptionManager {
 
   public void setShuttingDown(boolean shuttingDown) {
     this.isShuttingDown = shuttingDown;
+    if (shuttingDown) {
+      System.out.println("Server shutting down. Cleaning up race and protocols...");
+      setRace(null);
+      setProtocol(null);
+    }
   }
 
   public synchronized void setCleanupGracePeriodSeconds(long seconds) {
@@ -94,7 +99,9 @@ public class ClientSubscriptionManager {
 
   public synchronized void setProtocol(ProtocolDelegate protocol) {
     if (protocol != null && this.currentRace != null) {
-      throw new IllegalStateException("Cannot set protocol while race is active");
+      System.out.println(
+          "New protocol being set while race is active. Stopping race to allow take-over.");
+      setRace(null);
     }
     if (this.currentProtocol != null) {
       try {
@@ -112,7 +119,6 @@ public class ClientSubscriptionManager {
   }
 
   public void addSession(WsContext ctx) {
-    cancelPendingCleanup();
     sessions.add(ctx);
     // Remove auto-subscription: clients must call subscribe() explicitly
     // raceDataSubscribers.add(ctx);
@@ -136,7 +142,7 @@ public class ClientSubscriptionManager {
     checkAndStopRace();
   }
 
-  public void addInterfaceSession(WsContext ctx) {
+  public synchronized void addInterfaceSession(WsContext ctx) {
     sessions.add(ctx);
     interfaceSubscribers.add(ctx);
     System.out.println(
@@ -146,7 +152,7 @@ public class ClientSubscriptionManager {
             + interfaceSubscribers.size());
   }
 
-  public void removeInterfaceSession(WsContext ctx) {
+  public synchronized void removeInterfaceSession(WsContext ctx) {
     sessions.remove(ctx);
     interfaceSubscribers.remove(ctx);
     System.out.println(
@@ -157,7 +163,7 @@ public class ClientSubscriptionManager {
     checkAndCloseProtocol();
   }
 
-  private void checkAndCloseProtocol() {
+  private synchronized void checkAndCloseProtocol() {
     if (interfaceSubscribers.isEmpty() && currentProtocol != null && currentRace == null) {
       System.out.println(
           "Last interested interface client disconnected. Closing current protocol.");
@@ -191,21 +197,26 @@ public class ClientSubscriptionManager {
   }
 
   private synchronized void checkAndStopRace() {
-    if (raceDataSubscribers.isEmpty() && currentRace != null) {
+    if (currentRace != null && raceDataSubscribers.isEmpty()) {
       if (!isShuttingDown) {
-        if (cleanupGracePeriodSeconds <= 0) {
+        // If there are NO sessions at all (not even splash screen), we should stop quickly
+        long gracePeriod = sessions.isEmpty() ? 1 : cleanupGracePeriodSeconds;
+
+        if (gracePeriod <= 0) {
           performCleanup();
         } else if (cleanupFuture == null || cleanupFuture.isDone()) {
           System.out.println(
-              "No subscribers left. Scheduling race cleanup in "
-                  + cleanupGracePeriodSeconds
+              "No subscribers left (Sessions: "
+                  + sessions.size()
+                  + "). Scheduling race cleanup in "
+                  + gracePeriod
                   + " seconds...");
           cleanupFuture =
               scheduler.schedule(
                   () -> {
                     performCleanup();
                   },
-                  cleanupGracePeriodSeconds,
+                  gracePeriod,
                   TimeUnit.SECONDS);
         }
       } else {

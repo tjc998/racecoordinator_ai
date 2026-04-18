@@ -26,8 +26,8 @@ public class ArduinoLedHelper {
   private final Map<Integer, Integer> lastBrightness = new HashMap<>();
   private final Map<Integer, Integer> lastNumUsedLeds = new HashMap<>();
   private final Map<String, Long> lastLedColors = new HashMap<>();
-  private RaceState lastState = RaceState.NOT_STARTED;
-  private RaceFlag lastFlag = RaceFlag.RED; // Default to RED or safe state
+  private RaceState lastState = RaceState.UNKNOWN_STATE;
+  private RaceFlag lastFlag = RaceFlag.UNKNOWN_FLAG; // Default to unknown
   private double lastCountdown = 0.0;
 
   public ArduinoLedHelper(ArduinoProtocol protocol) {
@@ -231,6 +231,10 @@ public class ArduinoLedHelper {
     RaceState state = lastState;
     RaceFlag flag = lastFlag;
     double countdown = lastCountdown;
+
+    if (state == RaceState.UNKNOWN_STATE || flag == RaceFlag.UNKNOWN_FLAG) {
+      return;
+    }
 
     int raceStateBehavior = RgbLedBehavior.RGB_LED_BEHAVIOR_RACE_STATE_BASE_VALUE;
     long now = getCurrentTimeMillis();

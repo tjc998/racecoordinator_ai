@@ -219,28 +219,46 @@ public class ArduinoProtocol extends DefaultProtocol {
 
   @Override
   public void close() {
-    logger.info("[{}] Closing ArduinoProtocol", getLogTime());
-    clearLeds();
+    logger.info("[{}] Closing ArduinoProtocol (Serial Open: {})", getLogTime(), isSerialOpen());
+
+    // Stop all scheduled tasks first
     if (statusFuture != null) {
       statusFuture.cancel(true);
+      statusFuture = null;
     }
     if (refuelFuture != null) {
       refuelFuture.cancel(true);
+      refuelFuture = null;
     }
     if (ledFlashFuture != null) {
       ledFlashFuture.cancel(true);
+      ledFlashFuture = null;
     }
     if (statusScheduler != null) {
-      statusScheduler.shutdown();
+      statusScheduler.shutdownNow();
+      statusScheduler = null;
     }
-    statusScheduler = null;
+
+    // Now that tasks are stopped, clear the LEDs
+    if (isSerialOpen()) {
+      clearLeds();
+
+      // Small delay to ensure clearLeds commands are transmitted before closing the port
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+    }
 
     if (listener != null) {
       listener.onInterfaceStatus(InterfaceStatus.DISCONNECTED, getInterfaceIndex());
     }
     lastHeartbeatTimeMs = 0;
+    versionVerified = false; // Reset version verification for next open
 
     if (serialConnection != null && serialConnection.isOpen()) {
+      logger.info("[{}] Disconnecting serial port", getLogTime());
       serialConnection.disconnect();
     }
   }
