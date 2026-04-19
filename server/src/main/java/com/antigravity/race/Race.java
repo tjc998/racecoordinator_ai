@@ -684,8 +684,13 @@ public class Race implements ProtocolListener {
     }
   }
 
-  public void startRace() {
+  public boolean startRace() {
+    if (protocols != null && !protocols.isHealthy()) {
+      logger.warn("Cannot start race: Track interface not healthy.");
+      return false;
+    }
     state.start(this);
+    return true;
   }
 
   public void pauseRace() {

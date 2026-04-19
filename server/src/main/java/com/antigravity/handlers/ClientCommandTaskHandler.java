@@ -334,12 +334,13 @@ public class ClientCommandTaskHandler {
       }
 
       try {
-        race.startRace();
+        boolean success = race.startRace();
 
         StartRaceResponse response =
             StartRaceResponse.newBuilder()
-                .setSuccess(true)
-                .setMessage("Race started successfully")
+                .setSuccess(success)
+                .setMessage(
+                    success ? "Race started successfully" : "Track interface not connected.")
                 .build();
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       } catch (IllegalStateException e) {

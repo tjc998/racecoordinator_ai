@@ -46,4 +46,6 @@ public interface IProtocol {
   void setInterfaceIndex(int index);
 
   int getInterfaceIndex();
+
+  boolean isHealthy();
 }

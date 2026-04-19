@@ -337,6 +337,6 @@ public class NotStarted implements IRaceState {
   @Override
   public void onCallbutton(Race race, int lane) {
     System.out.println("NotStarted.onCallbutton() called. Starting race.");
-    start(race);
+    race.startRace();
   }
 }

@@ -103,6 +103,6 @@ public class Paused implements IRaceState {
   @Override
   public void onCallbutton(Race race, int lane) {
     System.out.println("Paused.onCallbutton() called. Resuming race.");
-    start(race);
+    race.startRace();
   }
 }

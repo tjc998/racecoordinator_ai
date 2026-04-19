@@ -162,4 +162,17 @@ public class ProtocolDelegate implements IProtocol {
   public int getInterfaceIndex() {
     return -1; // Delegate doesn't have a single index
   }
+
+  @Override
+  public boolean isHealthy() {
+    if (protocols.isEmpty()) {
+      return false;
+    }
+    for (IProtocol protocol : protocols) {
+      if (!protocol.isHealthy()) {
+        return false;
+      }
+    }
+    return true;
+  }
 }

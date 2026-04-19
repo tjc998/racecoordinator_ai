@@ -1313,4 +1313,15 @@ public class ArduinoProtocol extends DefaultProtocol {
   public boolean isOpen() {
     return versionVerified;
   }
+
+  @Override
+  public boolean isHealthy() {
+    if (!serialConnection.isOpen()) {
+      return false;
+    }
+    if (lastHeartbeatTimeMs == 0) {
+      return false;
+    }
+    return (now() - lastHeartbeatTimeMs) < 2000;
+  }
 }

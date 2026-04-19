@@ -281,6 +281,11 @@ public class Demo extends DefaultProtocol {
     return System.currentTimeMillis();
   }
 
+  @Override
+  public boolean isHealthy() {
+    return true;
+  }
+
   protected ScheduledExecutorService createScheduler() {
     return Executors.newScheduledThreadPool(1);
   }
