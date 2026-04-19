@@ -36,7 +36,7 @@ public class OverallScoring {
   public OverallScoring() {
     this.droppedHeats = 0;
     this.rankingMethod = OverallRanking.LAP_COUNT;
-    this.tiebreaker = OverallRankingTiebreaker.TOTAL_TIME;
+    this.tiebreaker = OverallRankingTiebreaker.AVERAGE_LAP_TIME;
   }
 
   @BsonCreator

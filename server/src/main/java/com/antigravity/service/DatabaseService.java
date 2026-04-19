@@ -110,7 +110,7 @@ public class DatabaseService {
     initialDrivers.add(
         createDriver(
             "Austin",
-            "Fart Goblin",
+            "Sports Mode",
             helmetAssets,
             3,
             lapAudio,
@@ -238,7 +238,7 @@ public class DatabaseService {
     // Basic Round Robin race
     HeatScoring heatScoring =
         new HeatScoring(
-            FinishMethod.Timed, 60, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
+            FinishMethod.Timed, 60, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.AVERAGE_LAP_TIME);
     OverallScoring overallScoring = new OverallScoring();
 
     Race race =
