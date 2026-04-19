@@ -36,20 +36,35 @@ public class AnalyticsService {
         props.load(input);
         this.measurementId = props.getProperty("ga.measurement.id");
         this.apiSecret = props.getProperty("ga.api.secret");
+      } else {
+        logger.error("Analytics Error: analytics.properties file not found in resources");
       }
     } catch (Exception ex) {
-      logger.warn("Could not load analytics.properties", ex);
+      logger.error("Analytics Error: Could not load analytics.properties", ex);
     }
 
     this.configService = new ServerConfigService();
     this.userEnabled = configService.isShareAnalyticsEnabled();
 
-    if (this.measurementId != null
-        && !this.measurementId.contains("XXXXX")
-        && !this.measurementId.isEmpty()
-        && this.apiSecret != null
-        && !this.apiSecret.contains("your_api_secret")
-        && !this.apiSecret.isEmpty()) {
+    boolean hasMeasurementId =
+        this.measurementId != null
+            && !this.measurementId.isEmpty()
+            && !this.measurementId.contains("XXXXX");
+    boolean hasApiSecret =
+        this.apiSecret != null
+            && !this.apiSecret.isEmpty()
+            && !this.apiSecret.contains("your_api_secret");
+
+    if (!hasMeasurementId) {
+      logger.error(
+          "Analytics Error: 'ga.measurement.id' is missing or invalid in analytics.properties");
+    }
+    if (!hasApiSecret) {
+      logger.error(
+          "Analytics Error: 'ga.api.secret' is missing or invalid in analytics.properties");
+    }
+
+    if (hasMeasurementId && hasApiSecret) {
       this.enabled = true;
       logger.info("Google Analytics Measurement Protocol configured and enabled.");
     } else {
