@@ -109,6 +109,7 @@ public class Racing implements IRaceState {
     }
 
     race.setHasRacedInCurrentHeat(true);
+    race.clearAutoTimers();
 
     int laneCount = 0;
     if (race.getTrack() != null && race.getTrack().getLanes() != null) {
@@ -244,16 +245,7 @@ public class Racing implements IRaceState {
               }
 
               // Broadcast RaceTime message wrapped in RaceData
-              // Ensure we don't send negative time for display if finished
-              float displayTime = Math.max(0, race.getRaceTime());
-
-              com.antigravity.proto.RaceTime raceTimeMsg =
-                  com.antigravity.proto.RaceTime.newBuilder().setTime(displayTime).build();
-
-              com.antigravity.proto.RaceData raceDataMsg =
-                  com.antigravity.proto.RaceData.newBuilder().setRaceTime(raceTimeMsg).build();
-
-              race.broadcast(raceDataMsg);
+              race.broadcastTime();
 
               if (allFinished) {
                 if (race.isLastHeat()) {

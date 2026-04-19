@@ -393,16 +393,16 @@ export class DefaultRacedayComponent
         this.autoStartRemaining = raceTime.autoStartRemaining || 0;
         this.autoAdvanceRemaining = raceTime.autoAdvanceRemaining || 0;
 
-        // Update countdown overlay if active
-        if (this.showCountdownOverlay) {
-          this.updateCountdownLamps(raceTime.time || 0);
-        }
-
         let time = raceTime.time || 0;
         if (this.autoStartRemaining > 0) {
           time = this.autoStartRemaining;
         } else if (this.autoAdvanceRemaining > 0) {
           time = this.autoAdvanceRemaining;
+        }
+
+        // Update countdown overlay if active
+        if (this.showCountdownOverlay) {
+          this.updateCountdownLamps(time);
         }
 
         if (time > this.previousTime) {

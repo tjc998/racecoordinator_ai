@@ -57,7 +57,8 @@ public class StartingStateTest {
     race.setHasRacedInCurrentHeat(false);
     Starting starting = new Starting();
 
-    // We can't easily "spy" on the ticker since it's an anonymous class inside enter()
+    // We can't easily "spy" on the ticker since it's an anonymous class inside
+    // enter()
     // but we can verify the state transitions.
 
     starting.enter(race);

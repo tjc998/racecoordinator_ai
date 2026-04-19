@@ -55,6 +55,7 @@ public class HeatOver implements IRaceState {
   public void exit(Race race) {
     System.out.println("HeatOver state exited.");
     stopTimer();
+    race.setAutoAdvanceRemaining(0);
   }
 
   @Override

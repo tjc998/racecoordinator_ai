@@ -406,13 +406,15 @@ public class RaceStateTest {
     // 6. Trigger lap
     race.onLap(0, 5.0, 1, 0);
 
-    // 7. Verify lap was NOT counted (it remains 0 because reaction lap is not counted as a full
+    // 7. Verify lap was NOT counted (it remains 0 because reaction lap is not
+    // counted as a full
     // lap)
     assertEquals(0, race.getCurrentHeat().getDrivers().get(0).getLapCount());
   }
 
   private void injectDriftTime(double driftTime) throws Exception {
-    // We need to inject the driftTime into the realRaceModel since it's immutable (Builder)
+    // We need to inject the driftTime into the realRaceModel since it's immutable
+    // (Builder)
     Field modelField = com.antigravity.race.Race.class.getDeclaredField("model");
     modelField.setAccessible(true);
     Race oldModel = (Race) modelField.get(race);

@@ -76,6 +76,7 @@ public class NotStarted implements IRaceState {
   public void exit(Race race) {
     System.out.println("NotStarted state exited.");
     stopTimer();
+    race.setAutoStartRemaining(0);
   }
 
   @Override

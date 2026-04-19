@@ -1,8 +1,6 @@
 package com.antigravity.race.states;
 
-import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceFlag;
-import com.antigravity.proto.RaceTime;
 import com.antigravity.protocols.CarData;
 import com.antigravity.race.Race;
 import java.util.concurrent.Executors;
@@ -61,12 +59,8 @@ public class Starting implements IRaceState {
           public void run() {
             try {
               float displayTime = Math.max(0, countdown) / 10.0f;
-
-              RaceTime raceTimeMsg = RaceTime.newBuilder().setTime(displayTime).build();
-
-              RaceData raceDataMsg = RaceData.newBuilder().setRaceTime(raceTimeMsg).build();
-
-              race.broadcast(raceDataMsg);
+              race.setAutoStartRemaining(displayTime);
+              race.broadcastTime();
               race.setRaceState(
                   com.antigravity.proto.RaceState.STARTING,
                   getFlagType(race),
@@ -96,6 +90,7 @@ public class Starting implements IRaceState {
     if (scheduler != null) {
       scheduler.shutdown();
     }
+    race.setAutoStartRemaining(0);
     System.out.println("Starting state exited.");
   }
 

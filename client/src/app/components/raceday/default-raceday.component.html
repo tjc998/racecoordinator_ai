@@ -205,7 +205,10 @@
           <div class="timer-wrapper">
             <div class="timer-text">{{ formattedTime }}</div>
             <div class="timer-status-labels">
-              <div class="status-label" *ngIf="autoStatusLabel">
+              <div
+                class="status-label"
+                *ngIf="autoStatusLabel && !showCountdownOverlay"
+              >
                 {{ autoStatusLabel | translate }}
               </div>
               <div class="warmup-label" *ngIf="isWarmup">
