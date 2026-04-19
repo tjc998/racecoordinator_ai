@@ -135,6 +135,9 @@ test.describe("Raceday Start Sequence Visuals", () => {
       autoStartRemaining: 2.5,
     });
 
+    // Wait for the component to process the WebSocket messages and fetch assets if needed
+    await page.waitForTimeout(500);
+
     await page.locator(".countdown-overlay").waitFor({ state: "visible" });
     await expect(page).toHaveScreenshot("start-sequence-3-red.png");
   });
@@ -181,6 +184,9 @@ test.describe("Raceday Start Sequence Visuals", () => {
       autoStartRemaining: 0.1,
     });
     await TestSetupHelper.sendRaceState(page, com.antigravity.RaceState.RACING);
+
+    // Wait for the component to process the WebSocket messages and fetch assets if needed
+    await page.waitForTimeout(500);
 
     await page.locator(".countdown-overlay").waitFor({ state: "visible" });
     await expect(page).toHaveScreenshot("start-sequence-all-green.png");
@@ -242,6 +248,9 @@ test.describe("Raceday Start Sequence Visuals", () => {
     });
 
     // 4. Verify it's STILL ALL GREEN
+    // Wait for the component to process the WebSocket messages and fetch assets if needed
+    await page.waitForTimeout(500);
+
     await page.locator(".countdown-overlay").waitFor({ state: "visible" });
     await expect(page).toHaveScreenshot(
       "start-sequence-stay-green-late-msg.png",
