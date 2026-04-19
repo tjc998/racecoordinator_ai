@@ -292,29 +292,29 @@ public class ArduinoLedHelperTest {
 
   @Test
   public void testSetFuelLevel_Full() {
-    // 10 LEDs for Lane 0 Fuel
+    // 8 LEDs for Lane 0 Fuel
     LedString ledString = new LedString();
     ledString.pin = 2;
     ledString.leds =
         new ArrayList<>(
-            Collections.nCopies(10, RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE_VALUE + 0));
+            Collections.nCopies(8, RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE_VALUE + 0));
     config.ledStrings = Collections.singletonList(ledString);
 
-    // 100% fuel
+    // 100% fuel (p=1.0)
     helper.setFuelLevel(0, 100);
 
-    // Expected: All 10 LEDs ON.
-    // thermometerSize=10: numGreen=5, numYellow=3, numRed=2
-    // LEDs 0-4: Green (0, 255, 0)
-    // LEDs 5-7: Yellow (255, 255, 0)
-    // LEDs 8-9: Red (255, 0, 0)
+    // Expected: All 8 LEDs ON.
+    // thermometerSize=8: numGreen=4, numYellow=2, numRed=2
+    // LEDs 0-3: Green (0, 255, 0)
+    // LEDs 4-5: Yellow (255, 255, 0)
+    // LEDs 6-7: Red (255, 0, 0)
 
     ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
     verify(protocol).writeData(captor.capture());
     byte[] data = captor.getValue();
 
     assertEquals(0x4C, data[0]);
-    assertEquals(10, data[2]);
+    assertEquals(8, data[2]);
 
     // LED 0 (Green)
     assertEquals(0x00, data[3]);
@@ -322,51 +322,58 @@ public class ArduinoLedHelperTest {
     assertEquals((byte) 0xFF, data[5]);
     assertEquals(0, data[6]);
 
-    // LED 9 (Red)
-    assertEquals(0x09, (int) data[39] & 0xFF);
-    assertEquals((byte) 0xFF, data[40]);
-    assertEquals(0, data[41]);
-    assertEquals(0, data[42]);
+    // LED 4 (Yellow)
+    assertEquals(0x04, data[19]);
+    assertEquals((byte) 0xFF, data[20]);
+    assertEquals((byte) 0xFF, data[21]);
+    assertEquals(0, data[22]);
+
+    // LED 7 (Red)
+    assertEquals(0x07, data[31]);
+    assertEquals((byte) 0xFF, data[32]);
+    assertEquals(0, data[33]);
+    assertEquals(0, data[34]);
   }
 
   @Test
-  public void testSetFuelLevel_Partial() {
-    // 10 LEDs for Lane 0 Fuel
+  public void testSetFuelLevel_SegmentedTurnOffOrder() {
+    // 4 LEDs: 2 Green, 1 Yellow, 1 Red
     LedString ledString = new LedString();
     ledString.pin = 2;
     ledString.leds =
         new ArrayList<>(
-            Collections.nCopies(10, RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE_VALUE + 0));
+            Collections.nCopies(4, RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE_VALUE + 0));
     config.ledStrings = Collections.singletonList(ledString);
 
-    // 50% fuel
-    // reverse = true, percentage = 0.5, thresholdPct = 0.5.
-    // ledPct > 0.5 -> ON.
-    // ledNum from 1..10.
-    // 1/10=0.1, 2/10=0.2, 5/10=0.5 (OFF), 6/10=0.6 (ON)
-    // LEDs 6..10 are ON. (ledNum 6, 7, 8, 9, 10 correspond to indices 5, 6, 7, 8,
-    // 9)
-    helper.setFuelLevel(0, 50);
+    // 1. 100% (p=1.0) -> All ON
+    helper.setFuelLevel(0, 100);
+    verify(protocol).writeData(argThat(data -> data[2] == 4)); // All 4 updated
+
+    // 2. 75% fuel (p=0.75) -> One Green turns off (Pixel 0)
+    reset(protocol);
+    when(protocol.isSerialOpen()).thenReturn(true);
+    when(protocol.getConfig()).thenReturn(config);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+    helper.setFuelLevel(0, 75);
 
     ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
     verify(protocol).writeData(captor.capture());
     byte[] data = captor.getValue();
+    assertEquals(1, data[2]); // One LED updated
+    assertEquals(0, data[3]); // Index 0
+    assertEquals(0, data[5]); // Pixel 0 G OFF
 
-    assertEquals(0x4C, data[0]);
-    assertEquals(10, data[2]); // All 10 are sent because it's first update
-
-    // LEDs 0-4 should be OFF
-    for (int i = 0; i < 5; i++) {
-      assertEquals(0, data[4 + i * 4]);
-      assertEquals(0, data[5 + i * 4]);
-      assertEquals(0, data[6 + i * 4]);
-    }
-
-    // LED 5 (ledNum 6) should be Yellow
-    assertEquals(0x05, data[23]);
-    assertEquals((byte) 0xFF, data[24]);
-    assertEquals((byte) 0xFF, data[25]);
-    assertEquals(0, data[26]);
+    // 3. 50% fuel (p=0.5) -> Next Green turn off (Pixel 1)
+    reset(protocol);
+    when(protocol.isSerialOpen()).thenReturn(true);
+    when(protocol.getConfig()).thenReturn(config);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+    helper.setFuelLevel(0, 50);
+    verify(protocol).writeData(captor.capture());
+    data = captor.getValue();
+    assertEquals(1, data[2]); // One LED updated
+    assertEquals(1, data[3]); // Index 1
+    assertEquals(0, data[5]); // Pixel 1 G OFF
   }
 
   @Test
@@ -404,78 +411,189 @@ public class ArduinoLedHelperTest {
   }
 
   @Test
-  public void testSetHeatProgress_OneLed() {
+  public void testSetHeatProgress_SmallString_GroupTransitions() {
+    // 1 LED: transitions through group colors
     LedString ledString = new LedString();
     ledString.pin = 2;
     ledString.leds = Collections.singletonList(RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_PROGRESS_VALUE);
     config.ledStrings = Collections.singletonList(ledString);
 
     ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
-    when(protocol.getMaxBufferSize()).thenReturn(128);
-    when(protocol.getLogTime()).thenReturn("12:00:00.000");
+    when(protocol.isSerialOpen()).thenReturn(true);
 
-    // 0-50% -> Green
-    helper.setHeatProgress(0.1);
-    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    // 0% progress (p=1.0) -> Green
+    helper.setHeatProgress(0.0);
+    verify(protocol).writeData(captor.capture());
     byte[] data = captor.getValue();
     assertEquals(0, data[4]); // R
     assertEquals((byte) 0xFF, data[5]); // G
-    assertEquals(0, data[6]); // B
 
-    // 50-75% -> Yellow (Red + Green)
+    // 60% progress (p=0.4) -> Yellow (0.25 <= 0.4 < 0.5)
     reset(protocol);
     when(protocol.isSerialOpen()).thenReturn(true);
     when(protocol.getConfig()).thenReturn(config);
     when(protocol.getMaxBufferSize()).thenReturn(128);
-    when(protocol.getLogTime()).thenReturn("12:00:00.000");
-
     helper.setHeatProgress(0.6);
-    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    verify(protocol).writeData(captor.capture());
     data = captor.getValue();
     assertEquals((byte) 0xFF, data[4]); // R
     assertEquals((byte) 0xFF, data[5]); // G
-    assertEquals(0, data[6]); // B
 
-    // 75-100% -> Red
+    // 80% progress (p=0.2) -> Red (0 < 0.2 < 0.25)
     reset(protocol);
     when(protocol.isSerialOpen()).thenReturn(true);
     when(protocol.getConfig()).thenReturn(config);
     when(protocol.getMaxBufferSize()).thenReturn(128);
-    when(protocol.getLogTime()).thenReturn("12:00:00.000");
-
-    helper.setHeatProgress(0.9);
-    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    helper.setHeatProgress(0.8);
+    verify(protocol).writeData(captor.capture());
     data = captor.getValue();
     assertEquals((byte) 0xFF, data[4]); // R
     assertEquals(0, data[5]); // G
-    assertEquals(0, data[6]); // B
+
+    // 100% progress (p=0.0) -> OFF
+    reset(protocol);
+    when(protocol.isSerialOpen()).thenReturn(true);
+    when(protocol.getConfig()).thenReturn(config);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+    helper.setHeatProgress(1.0);
+    verify(protocol).writeData(captor.capture());
+    data = captor.getValue();
+    assertEquals(0, data[4]); // R
+    assertEquals(0, data[5]); // G
   }
 
   @Test
-  public void testSetHeatProgress_Thermometer() {
+  public void testThermometer_8Leds_SequentialDraining() {
+    // 8 LEDs: 4 Green (0-3), 2 Yellow (4-5), 2 Red (6-7)
+    // Spec: numRed = max(1, floor(8*0.25)) = 2
+    //       numYellow = max(1, floor(8*0.25)) = 2
+    //       numGreen = 8 - 2 - 2 = 4
     LedString ledString = new LedString();
     ledString.pin = 2;
     ledString.leds =
         new ArrayList<>(
-            Collections.nCopies(5, RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_PROGRESS_VALUE));
+            Collections.nCopies(8, RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_PROGRESS_VALUE));
     config.ledStrings = Collections.singletonList(ledString);
 
     ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
-
+    when(protocol.isSerialOpen()).thenReturn(true);
+    when(protocol.getConfig()).thenReturn(config);
     when(protocol.getMaxBufferSize()).thenReturn(128);
     when(protocol.getLogTime()).thenReturn("12:00:00.000");
 
-    // 20% progress -> 1 LED on out of 5
-    // reverse=true in updateThermometer means thresholdPct = 1.0 - 0.2 = 0.8
-    // ledPct: 0.2, 0.4, 0.6, 0.8, 1.0
-    // ledPct > 0.8 is true for only the last LED (ledNum 5)
-    helper.setHeatProgress(0.2);
-    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    // 1. 0% progress (p=1.0) -> All 8 ON (4G, 2Y, 2R)
+    helper.setHeatProgress(0.0);
+    verify(protocol).writeData(captor.capture());
     byte[] data = captor.getValue();
+    assertEquals(8, data[2]); // 8 LEDs
+    // Check first green (Index 0)
+    assertEquals(0, data[3]);
+    assertEquals(0, data[4]); // R
+    assertEquals((byte) 0xFF, data[5]); // G
+    // Check last red (Index 7)
+    // Pixel 7 is at data[3 + 7*4] = 31
+    assertEquals(7, data[31]); // Index
+    assertEquals((byte) 0xFF, data[32]); // R
+    assertEquals(0, data[33]); // G
 
-    // On the first call, all 5 LEDs are "updated" because they transition from null to color.
-    // 1 LED will be Green, 4 will be Black (OFF).
-    assertEquals(5, (int) (data[2] & 0xFF)); // Five LEDs updated (first initialization)
+    // 2. 12.5% progress (p=0.875) -> 1 Green off (Pixel 0)
+    // segmentP = (0.875 - 0.5) / 0.5 = 0.375 / 0.5 = 0.75
+    // onGreen = ceil(0.75 * 4) = 3.
+    // numGreen - onGreen = 1. Pixel 0 is OFF.
+    reset(protocol);
+    setupMocks();
+    helper.setHeatProgress(0.125);
+    verify(protocol).writeData(captor.capture());
+    data = captor.getValue();
+    assertEquals(1, data[2]); // Only 1 update (Pixel 0)
+    assertEquals(0, data[3]); // Index 0
+    assertEquals(0, data[5]); // G=0
+
+    // 3. 50% progress (p=0.5) -> All 4 Green OFF
+    reset(protocol);
+    setupMocks();
+    helper.setHeatProgress(0.5);
+    // Since we just turned off 1 green in step 2, we expect the remaining 3 green to turn off
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    data = captor.getValue();
+    assertEquals(3, data[2]); // 3 updates (Pixels 1, 2, 3)
+
+    // 4. 75% progress (p=0.25) -> All 2 Yellow OFF
+    // p=0.25 -> onYellow = ceil(0*2) = 0.
+    reset(protocol);
+    setupMocks();
+    helper.setHeatProgress(0.75);
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    data = captor.getValue();
+    assertEquals(2, data[2]); // 2 updates (Pixels 4, 5)
+    assertEquals(4, data[3]); // Index 4
+    assertEquals(5, data[7]); // Index 5
+
+    // 5. 90% progress (p=0.1) -> 1 Red OFF (Pixel 6)
+    // p=0.1 -> onRed = ceil(0.1/0.25 * 2) = ceil(0.8) = 1.
+    // numRed - onRed = 2 - 1 = 1. First red (Pixel 6) is OFF.
+    reset(protocol);
+    setupMocks();
+    helper.setHeatProgress(0.9);
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    data = captor.getValue();
+    assertEquals(1, data[2]); // 1 update
+    assertEquals(6, data[3]); // Index 6
+    assertEquals(0, data[4]); // R=0
+
+    // 6. 100% progress (p=0.0) -> Last Red OFF (Pixel 7)
+    reset(protocol);
+    setupMocks();
+    helper.setHeatProgress(1.0);
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    data = captor.getValue();
+    assertEquals(1, data[2]);
+    assertEquals(7, data[3]);
+    assertEquals(0, data[4]); // R=0
+  }
+
+  private void setupMocks() {
+    when(protocol.isSerialOpen()).thenReturn(true);
+    when(protocol.getConfig()).thenReturn(config);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+    when(protocol.getLogTime()).thenReturn("12:00:00.000");
+  }
+
+  @Test
+  public void testStateRefresh_Persistence() {
+    LedString ledString = new LedString();
+    ledString.pin = 2;
+    ledString.leds = Collections.singletonList(RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_PROGRESS_VALUE);
+    config.ledStrings = Collections.singletonList(ledString);
+
+    // Set initial progress
+    helper.setHeatProgress(0.0);
+    verify(protocol, atLeastOnce()).writeData(argThat(data -> data[5] == (byte) 0xFF));
+
+    // Change state/flag - should trigger refresh of progress
+    reset(protocol);
+    when(protocol.isSerialOpen()).thenReturn(true);
+    when(protocol.getConfig()).thenReturn(config);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+
+    // Simulate a fresh hardware connection that triggered the state refresh
+    helper.resetCache();
+
+    helper.setRaceState(
+        com.antigravity.proto.RaceState.RACING, com.antigravity.proto.RaceFlag.GREEN, 0);
+
+    // Should have sent the progress update (Green LED) AND state update
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+
+    boolean progressFound = false;
+    for (byte[] data : captor.getAllValues()) {
+      if (data.length > 5 && data[5] == (byte) 0xFF) {
+        progressFound = true;
+        break;
+      }
+    }
+    assertTrue("Progress should have been refreshed during state change", progressFound);
   }
 
   @Test
@@ -511,6 +629,58 @@ public class ArduinoLedHelperTest {
     data = captor.getValue();
     assertEquals((byte) 0xFF, data[4]); // R
     assertEquals(0, data[5]); // G
+  }
+
+  @Test
+  public void testSetHeatProgress_100PercentOff() {
+    LedString ledString = new LedString();
+    ledString.pin = 2;
+    ledString.leds = Collections.singletonList(RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_PROGRESS_VALUE);
+    config.ledStrings = Collections.singletonList(ledString);
+
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    when(protocol.isSerialOpen()).thenReturn(true);
+    when(protocol.getConfig()).thenReturn(config);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+    when(protocol.getLogTime()).thenReturn("12:00:00.000");
+
+    // 100% progress (p=0.0) -> Off
+    helper.setHeatProgress(1.0);
+    verify(protocol).writeData(captor.capture());
+    byte[] data = captor.getValue();
+    assertEquals(0, data[4]); // R
+    assertEquals(0, data[5]); // G
+    assertEquals(0, data[6]); // B
+  }
+
+  @Test
+  public void testSetHeatProgress_NotStarted_Override() {
+    LedString ledString = new LedString();
+    ledString.pin = 2;
+    ledString.leds = Collections.singletonList(RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_PROGRESS_VALUE);
+    config.ledStrings = Collections.singletonList(ledString);
+
+    when(protocol.isSerialOpen()).thenReturn(true);
+    when(protocol.getConfig()).thenReturn(config);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+    when(protocol.getLogTime()).thenReturn("12:00:00.000");
+
+    helper.setRaceState(
+        com.antigravity.proto.RaceState.NOT_STARTED, com.antigravity.proto.RaceFlag.RED, 0);
+
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    reset(protocol);
+    when(protocol.isSerialOpen()).thenReturn(true);
+    when(protocol.getConfig()).thenReturn(config);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+    when(protocol.getLogTime()).thenReturn("12:00:00.000");
+
+    // Even if we set progress (e.g. if re-entering NOT_STARTED), it should stay GREEN (p=1.0)
+    helper.setHeatProgress(0.5);
+    verify(protocol).writeData(captor.capture());
+    byte[] data = captor.getValue();
+    assertEquals(0, data[4]); // R
+    assertEquals((byte) 0xFF, data[5]); // G
     assertEquals(0, data[6]); // B
   }
 

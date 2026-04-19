@@ -680,7 +680,6 @@ public class DatabaseTaskHandler {
   public void getDrivers(Context ctx) {
     List<Driver> drivers = new ArrayList<>();
     getDriverCollection().find().forEach(drivers::add);
-    System.out.println("DIAGNOSTIC: Serving " + drivers.size() + " drivers to client.");
     ctx.json(drivers);
   }
 
@@ -725,7 +724,6 @@ public class DatabaseTaskHandler {
       raceMap.put("restart_delay", race.getRestartDelay());
       response.add(raceMap);
     }
-    System.out.println("DIAGNOSTIC: Serving " + response.size() + " races to client.");
     ctx.json(response);
   }
 

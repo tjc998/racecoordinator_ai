@@ -198,6 +198,7 @@ public class ArduinoProtocol extends DefaultProtocol {
             }
           });
 
+      ledHelper.resetCache();
       writeData(RESET_COMMAND);
       logger.info("[{}] Connected to {}. Sent RESET command.", getLogTime(), config.commPort);
       startStatusScheduler();

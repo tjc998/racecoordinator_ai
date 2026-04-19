@@ -29,6 +29,8 @@ public class ArduinoLedHelper {
   private RaceState lastState = RaceState.UNKNOWN_STATE;
   private RaceFlag lastFlag = RaceFlag.UNKNOWN_FLAG; // Default to unknown
   private double lastCountdown = 0.0;
+  private Double lastHeatProgress = null;
+  private final Map<Integer, Double> lastFuelLevels = new HashMap<>();
 
   public ArduinoLedHelper(ArduinoProtocol protocol) {
     this.protocol = protocol;
@@ -130,6 +132,13 @@ public class ArduinoLedHelper {
     lastLedColors.clear();
   }
 
+  public void resetCache() {
+    lastLedColors.clear();
+    lastState = RaceState.UNKNOWN_STATE;
+    lastFlag = RaceFlag.UNKNOWN_FLAG;
+    lastCountdown = 0.0;
+  }
+
   public void setStringRgbLedValues(int pinId, List<RgbLedState> rgbLeds) {
     if (!protocol.isSerialOpen() || rgbLeds == null || rgbLeds.isEmpty()) {
       return;
@@ -139,9 +148,8 @@ public class ArduinoLedHelper {
     // limits.
     // Packet structure: opcode(1) + pin(1) + count(1) + items(4*count) +
     // terminator(1)
-    // 4 + 4*count <= maxBufferSize
     int maxBufferSize = protocol.getMaxBufferSize();
-    int maxLedsPerPacket = (maxBufferSize - 4) / 4;
+    int maxLedsPerPacket = Math.max(1, (maxBufferSize - 4) / 4);
 
     int totalLeds = rgbLeds.size();
     int processedLeds = 0;
@@ -215,11 +223,33 @@ public class ArduinoLedHelper {
   }
 
   public void setRaceState(RaceState state, RaceFlag flag, double countdown) {
+    RaceState oldState = this.lastState;
     this.lastState = state;
     this.lastFlag = flag;
     this.lastCountdown = countdown;
 
+    if ((state == RaceState.UNKNOWN_STATE
+            || state == RaceState.RACE_OVER
+            || state == RaceState.HEAT_OVER)
+        && (oldState != RaceState.UNKNOWN_STATE
+            && oldState != RaceState.RACE_OVER
+            && oldState != RaceState.HEAT_OVER)) {
+      lastHeatProgress = null;
+      lastFuelLevels.clear();
+      clearLeds();
+    }
+
     refreshRaceState();
+    refreshThermometers();
+  }
+
+  private void refreshThermometers() {
+    if (lastHeatProgress != null) {
+      this.setHeatProgress(lastHeatProgress);
+    }
+    for (Map.Entry<Integer, Double> entry : lastFuelLevels.entrySet()) {
+      this.setFuelLevel(entry.getKey(), (int) (entry.getValue() * 100.0));
+    }
   }
 
   public void refreshRaceState() {
@@ -382,14 +412,14 @@ public class ArduinoLedHelper {
   }
 
   public void setFuelLevel(int laneIndex, int fuelLevelPct) {
+    double percentage = fuelLevelPct / 100.0;
+    this.lastFuelLevels.put(laneIndex, percentage);
     updateThermometer(
-        RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE_VALUE,
-        laneIndex,
-        fuelLevelPct / 100.0,
-        false);
+        RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE_VALUE, laneIndex, percentage, false);
   }
 
   public void setHeatProgress(double percentage) {
+    this.lastHeatProgress = percentage;
     // Heat Progress behavior ID is 2 (global, so laneIndex doesn't matter, we'll
     // use 0)
     // and pass percentage directly.
@@ -429,57 +459,84 @@ public class ArduinoLedHelper {
         continue;
       }
 
-      int ledNum = 1;
-      double thresholdPct = percentage;
-      boolean reverse = true; // High percentage = more LEDs on
+      // Logic percentage 'p': 1.0 is "best" (all on/green), 0.0 is "worst/finish"
+      // (all off)
+      double p = displayAsProgress ? (1.0 - percentage) : percentage;
 
-      if (reverse) {
-        thresholdPct = 1.0 - thresholdPct;
+      // Force progress thermometers to stay complete (all on) during NOT_STARTED
+      if (displayAsProgress && p < 1.0 && lastState == RaceState.NOT_STARTED) {
+        p = 1.0;
       }
 
+      int numRed = 0;
+      int numYellow = 0;
+      int numGreen = 0;
+      int onRed = 0;
+      int onYellow = 0;
+      int onGreen = 0;
+
+      if (thermometerSize >= 3) {
+        numRed = Math.max(1, (int) Math.floor(thermometerSize * 0.25));
+        numYellow = Math.max(1, (int) Math.floor(thermometerSize * 0.25));
+        numGreen = thermometerSize - numRed - numYellow;
+
+        if (p > 0) {
+          // Red range (0 to 0.25]
+          onRed = (int) Math.ceil(Math.min(p, 0.25) / 0.25 * numRed);
+          if (p > 0.25) {
+            // Yellow range (0.25 to 0.5]
+            onYellow = (int) Math.ceil(Math.min(p - 0.25, 0.25) / 0.25 * numYellow);
+            if (p > 0.5) {
+              // Green range (0.5 to 1.0]
+              onGreen = (int) Math.ceil((p - 0.5) / 0.5 * numGreen);
+            }
+          }
+        }
+      } else {
+        // N <= 2: All leds share the same color based on group state
+        if (p > 0) {
+          if (p >= 0.5) {
+            onGreen = thermometerSize; // Use onGreen as a proxy for "All Green"
+          } else if (p >= 0.25) {
+            onYellow = thermometerSize; // Use onYellow as a proxy for "All Yellow"
+          } else {
+            onRed = thermometerSize; // Use onRed as a proxy for "All Red"
+          }
+        }
+      }
+
+      int ledInThermometer = 1;
       for (int i = 0; i < ledString.leds.size(); i++) {
         int behavior = ledString.leds.get(i);
         if (behavior == behaviorId) {
-          double ledPct = (double) ledNum / (double) thermometerSize;
-
           int r = 0;
           int g = 0;
           int b = 0;
 
-          if (ledPct > thresholdPct) {
-            if (thermometerSize >= 3) {
-              int numGreen = (int) (thermometerSize / 2.0 + 0.5);
-              if (thermometerSize == 3) {
-                numGreen = 1;
-              }
-
-              if (ledNum <= numGreen) {
+          if (thermometerSize >= 3) {
+            if (ledInThermometer <= numGreen) {
+              if (ledInThermometer > (numGreen - onGreen)) g = 255;
+            } else if (ledInThermometer <= (numGreen + numYellow)) {
+              int yellowIdx = ledInThermometer - numGreen;
+              if (yellowIdx > (numYellow - onYellow)) {
+                r = 255;
                 g = 255;
-              } else {
-                int numYellow = (int) ((thermometerSize - numGreen) / 2.0 + 0.5);
-                if (ledNum <= (numGreen + numYellow)) {
-                  r = 255;
-                  g = 255;
-                } else {
-                  r = 255;
-                }
               }
             } else {
-              // Same colors for all LEDs based on level
-              // normalizedProgress: 0.0 is "best/start", 1.0 is "worst/finish"
-              double normalizedProgress = displayAsProgress ? percentage : (1.0 - percentage);
-
-              if (normalizedProgress < 0.5) {
-                // 0% - 50%: Green
-                g = 255;
-              } else if (normalizedProgress < 0.75) {
-                // 50% - 75%: Yellow
-                r = 255;
-                g = 255;
-              } else {
-                // 75% - 100%: Red
+              int redIdx = ledInThermometer - numGreen - numYellow;
+              if (redIdx > (numRed - onRed)) {
                 r = 255;
               }
+            }
+          } else {
+            // N <= 2
+            if (onGreen > 0) {
+              g = 255;
+            } else if (onYellow > 0) {
+              r = 255;
+              g = 255;
+            } else if (onRed > 0) {
+              r = 255;
             }
           }
 
@@ -492,7 +549,7 @@ public class ArduinoLedHelper {
             updates.add(RgbLedState.newBuilder().setIndex(i).setR(r).setG(g).setB(b).build());
             lastLedColors.put(key, currentColor);
           }
-          ledNum++;
+          ledInThermometer++;
         }
       }
 
