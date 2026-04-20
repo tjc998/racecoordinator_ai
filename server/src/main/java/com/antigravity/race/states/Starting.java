@@ -108,6 +108,7 @@ public class Starting implements IRaceState {
   @Override
   public void pause(Race race) {
     System.out.println("Starting.pause() called. Cancelling start.");
+    race.clearAutoTimers();
     if (race.hasRacedInCurrentHeat()) {
       race.changeState(new Paused());
     } else {

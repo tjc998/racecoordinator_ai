@@ -450,6 +450,30 @@ export class DataService {
       );
   }
 
+  abortTimers(): Observable<boolean> {
+    const request = com.antigravity.PauseRaceRequest.create({});
+    const buffer = com.antigravity.PauseRaceRequest.encode(request).finish();
+
+    const headers = new HttpHeaders({
+      "Content-Type": "application/octet-stream",
+      Accept: "application/octet-stream",
+    });
+
+    return this.http
+      .post(`${this.baseUrl}/api/abort-timers`, new Blob([buffer as any]), {
+        headers,
+        responseType: "arraybuffer",
+      })
+      .pipe(
+        map((response) => {
+          const abortResponse = com.antigravity.PauseRaceResponse.decode(
+            new Uint8Array(response as any),
+          );
+          return abortResponse.success ?? false;
+        }),
+      );
+  }
+
   nextHeat(): Observable<boolean> {
     const request = com.antigravity.NextHeatRequest.create({});
     const buffer = com.antigravity.NextHeatRequest.encode(request).finish();

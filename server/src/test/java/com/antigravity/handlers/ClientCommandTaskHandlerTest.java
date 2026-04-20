@@ -408,6 +408,18 @@ public class ClientCommandTaskHandlerTest {
   }
 
   @Test
+  public void testAbortTimers_Success() throws Exception {
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    ClientSubscriptionManager.getInstance().setRace(mockRace);
+
+    handler.abortTimers(ctx);
+
+    verify(mockRace).clearAutoTimers();
+    verify(mockRace).pauseRace();
+    verify(res).setStatus(200);
+  }
+
+  @Test
   public void testToggleAnalytics_Localhost_IPv4_Success() throws Exception {
     ClientCommandTaskHandler spyHandler = spy(handler);
     Context mockCtx = mock(Context.class);

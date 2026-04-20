@@ -175,7 +175,12 @@ public class HeatOver implements IRaceState {
 
   @Override
   public void onCallbutton(Race race, int lane) {
-    System.out.println("HeatOver.onCallbutton() called. Moving to next heat.");
-    nextHeat(race);
+    if (race.getAutoAdvanceRemaining() > 0) {
+      System.out.println("HeatOver.onCallbutton() called. Aborting auto-advance timer.");
+      pause(race);
+    } else {
+      System.out.println("HeatOver.onCallbutton() called. Moving to next heat.");
+      nextHeat(race);
+    }
   }
 }

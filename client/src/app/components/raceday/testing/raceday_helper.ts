@@ -60,6 +60,7 @@ export function createRacedayMocks(overrides: any = {}) {
     "getSegments",
     "getRaceFlag",
     "getRecordData",
+    "abortTimers",
   ]);
   mockDataService.listAssets.and.returnValue(of([]));
   mockDataService.getRaceFlag.and.returnValue(of(com.antigravity.RaceFlag.RED));

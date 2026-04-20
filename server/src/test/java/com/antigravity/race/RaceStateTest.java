@@ -327,6 +327,21 @@ public class RaceStateTest {
   }
 
   @Test
+  public void testOnCallbuttonAbortsAutoAdvance() throws Exception {
+    // 1. Setup Race in HeatOver with Auto-Advance
+    race.changeState(new HeatOver());
+    race.setAutoAdvanceRemaining(10.0);
+    assertTrue(race.getState() instanceof HeatOver);
+
+    // 2. Press Call button
+    race.onCallbutton(0, 0);
+
+    // 3. Verify timer aborted (stay in HeatOver)
+    assertEquals(0.0, race.getAutoAdvanceRemaining(), 0.001);
+    assertTrue(race.getState() instanceof HeatOver);
+  }
+
+  @Test
   public void testPauseDuringAutoStartCancelsTimer() throws Exception {
     // 1. Setup Race with Auto-Start
     race.setAutoStartRemaining(10.0);

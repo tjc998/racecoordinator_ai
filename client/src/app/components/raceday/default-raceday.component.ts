@@ -1091,17 +1091,34 @@ export class DefaultRacedayComponent
           console.error("Error starting race:", error);
         },
       );
-    } else if (action === "PAUSE") {
-      this.dataService.pauseRace().subscribe(
+    } else if (action === "PAUSE" || action === "ABORT_TIMERS") {
+      if (
+        action === "PAUSE" &&
+        (this.autoStartRemaining > 0 || this.autoAdvanceRemaining > 0)
+      ) {
+        action = "ABORT_TIMERS";
+      }
+
+      const obs =
+        action === "ABORT_TIMERS"
+          ? this.dataService.abortTimers()
+          : this.dataService.pauseRace();
+
+      obs.subscribe(
         (success) => {
           if (success) {
-            console.log("Race pause command sent successfully");
+            console.log(`${action} command sent successfully`);
+            // Immediate UI feedback: clear timers if aborting
+            if (action === "ABORT_TIMERS") {
+              this.autoStartRemaining = 0;
+              this.autoAdvanceRemaining = 0;
+            }
           } else {
-            console.error("Failed to send race pause command");
+            console.error(`Failed to send ${action} command`);
           }
         },
         (error) => {
-          console.error("Error pausing race:", error);
+          console.error(`Error processing ${action}:`, error);
         },
       );
     } else if (action === "NEXT_HEAT") {
@@ -1277,7 +1294,7 @@ export class DefaultRacedayComponent
       // If an auto-timer is active, space bar should pause/cancel it
       if (this.autoStartRemaining > 0 || this.autoAdvanceRemaining > 0) {
         if (!this.isPauseDisabled) {
-          this.onMenuSelect("PAUSE");
+          this.onMenuSelect("ABORT_TIMERS");
           return;
         }
       }
@@ -1387,15 +1404,19 @@ export class DefaultRacedayComponent
     const s = this.raceState; // Shortcut
     const RS = com.antigravity.RaceState;
 
-    // Allow pause if an auto-start or auto-advance timer is active
     const isAutoTimerActive =
       this.autoStartRemaining > 0 || this.autoAdvanceRemaining > 0;
 
+    // Allow pause if an auto-timer is active, regardless of connection status
+    if (isAutoTimerActive) {
+      return false;
+    }
+
     return (
       !this.isInterfaceConnected ||
-      (s === RS.NOT_STARTED && !isAutoTimerActive) ||
+      s === RS.NOT_STARTED ||
       s === RS.PAUSED ||
-      (s === RS.HEAT_OVER && !isAutoTimerActive) ||
+      s === RS.HEAT_OVER ||
       s === RS.RACE_OVER
     );
   }

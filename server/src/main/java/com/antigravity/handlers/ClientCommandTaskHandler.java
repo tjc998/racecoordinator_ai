@@ -85,6 +85,7 @@ public class ClientCommandTaskHandler {
     app.post("/api/restart-heat", this::restartHeat);
     app.post("/api/skip-heat", this::skipHeat);
     app.post("/api/defer-heat", this::deferHeat);
+    app.post("/api/abort-timers", this::abortTimers);
     app.post("/api/update-interface-config", this::updateInterfaceConfig);
     app.post("/api/initialize-interface", this::initializeInterface);
     app.post("/api/set-interface-pin-state", this::setInterfacePinState);
@@ -380,6 +381,33 @@ public class ClientCommandTaskHandler {
       }
     } catch (Exception e) {
       System.err.println("Error processing pauseRace: " + e.getMessage());
+      e.printStackTrace();
+      ctx.status(500).result("Internal Server Error: " + e.getMessage());
+    }
+  }
+
+  void abortTimers(Context ctx) {
+    try {
+      com.antigravity.race.Race race = ClientSubscriptionManager.getInstance().getRace();
+      if (race == null) {
+        ctx.status(404).result("No active race found");
+        return;
+      }
+
+      race.clearAutoTimers();
+      // If we're in Starting or HeatOver, a pause is the appropriate state transition
+      // for an "abort" action.
+      race.pauseRace();
+
+      ctx.status(200);
+      PauseRaceResponse response =
+          PauseRaceResponse.newBuilder()
+              .setSuccess(true)
+              .setMessage("Timers aborted successfully")
+              .build();
+      ctx.contentType("application/octet-stream").result(response.toByteArray());
+    } catch (Exception e) {
+      System.err.println("Error processing abortTimers: " + e.getMessage());
       e.printStackTrace();
       ctx.status(500).result("Internal Server Error: " + e.getMessage());
     }

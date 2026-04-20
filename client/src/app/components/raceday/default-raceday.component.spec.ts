@@ -378,6 +378,13 @@ describe("DefaultRacedayComponent", () => {
       component["autoAdvanceRemaining"] = 0;
       expect(component.isPauseDisabled).toBeTrue();
     });
+
+    it("should be enabled when DISCONNECTED if an auto-timer is active", () => {
+      component["isInterfaceConnected"] = false;
+      component["raceState"] = com.antigravity.RaceState.NOT_STARTED;
+      component["autoStartRemaining"] = 5.0;
+      expect(component.isPauseDisabled).toBeFalse();
+    });
   });
 
   describe("handleKeyUpEvent (Spacebar)", () => {
@@ -425,38 +432,54 @@ describe("DefaultRacedayComponent", () => {
       expect(component.onMenuSelect).toHaveBeenCalledWith("START_RESUME");
     });
 
-    it("should trigger PAUSE when state is STARTING", () => {
+    it("should trigger ABORT_TIMERS when state is STARTING", () => {
       component["raceState"] = com.antigravity.RaceState.STARTING;
+      component["autoStartRemaining"] = 3.0;
 
       component.handleKeyUpEvent(mockEvent);
 
-      expect(component.onMenuSelect).toHaveBeenCalledWith("PAUSE");
+      expect(component.onMenuSelect).toHaveBeenCalledWith("ABORT_TIMERS");
     });
 
-    it("should trigger PAUSE when state is RACING", () => {
+    it("should trigger ABORT_TIMERS when state is RACING (if timer active)", () => {
       component["raceState"] = com.antigravity.RaceState.RACING;
+      component["autoStartRemaining"] = 3.0;
 
       component.handleKeyUpEvent(mockEvent);
 
-      expect(component.onMenuSelect).toHaveBeenCalledWith("PAUSE");
+      expect(component.onMenuSelect).toHaveBeenCalledWith("ABORT_TIMERS");
     });
 
-    it("should trigger PAUSE when state is NOT_STARTED and autoStartRemaining > 0", () => {
+    it("should trigger ABORT_TIMERS when state is NOT_STARTED and autoStartRemaining > 0", () => {
       component["raceState"] = com.antigravity.RaceState.NOT_STARTED;
       component["autoStartRemaining"] = 5.0;
 
       component.handleKeyUpEvent(mockEvent);
 
-      expect(component.onMenuSelect).toHaveBeenCalledWith("PAUSE");
+      expect(component.onMenuSelect).toHaveBeenCalledWith("ABORT_TIMERS");
     });
 
-    it("should trigger PAUSE when state is HEAT_OVER and autoAdvanceRemaining > 0", () => {
+    it("should trigger ABORT_TIMERS when state is HEAT_OVER and autoAdvanceRemaining > 0", () => {
       component["raceState"] = com.antigravity.RaceState.HEAT_OVER;
       component["autoAdvanceRemaining"] = 5.0;
 
       component.handleKeyUpEvent(mockEvent);
 
-      expect(component.onMenuSelect).toHaveBeenCalledWith("PAUSE");
+      expect(component.onMenuSelect).toHaveBeenCalledWith("ABORT_TIMERS");
+    });
+  });
+
+  describe("onMenuSelect", () => {
+    it("should call abortTimers and clear local values when ABORT_TIMERS selected", () => {
+      mockDataService.abortTimers.and.returnValue(of(true));
+      component["autoStartRemaining"] = 5.0;
+      component["autoAdvanceRemaining"] = 3.0;
+
+      component.onMenuSelect("ABORT_TIMERS");
+
+      expect(mockDataService.abortTimers).toHaveBeenCalled();
+      expect(component["autoStartRemaining"]).toBe(0);
+      expect(component["autoAdvanceRemaining"]).toBe(0);
     });
   });
 
