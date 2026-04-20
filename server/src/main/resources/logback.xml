@@ -6,9 +6,9 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_DIR:-.}/racecoordinator.log</file>
+        <file>${app.data.dir:-.}/racecoordinator.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_DIR:-.}/racecoordinator.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${app.data.dir:-.}/racecoordinator.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>

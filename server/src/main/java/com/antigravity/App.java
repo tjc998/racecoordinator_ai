@@ -69,6 +69,15 @@ public class App {
   private static final int MONGO_PORT = 27017; // Default MongoDB port
   private static Javalin app;
   private static MongoClient mongoClient;
+
+  static {
+    // Ensure app.data.dir is set as a system property early for Logback
+    String defaultDataDir = Paths.get(System.getProperty("user.dir"), "app_data").toString();
+    if (System.getProperty("app.data.dir") == null) {
+      System.setProperty("app.data.dir", defaultDataDir);
+    }
+  }
+
   private static final Logger logger = LoggerFactory.getLogger(App.class);
 
   public static final String SERVER_VERSION = "0.0.0.13";

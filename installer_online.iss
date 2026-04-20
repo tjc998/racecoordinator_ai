@@ -112,7 +112,7 @@ begin
       
       if NeedsJava then begin
         // Java 17 JRE ZIP (Adoptium Temurin)
-        DownloadPage.Add('https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.10%2B7/OpenJDK17U-jre_x64_windows_hotspot_17.0.10_7.zip', 'java_setup.zip', '');
+        DownloadPage.Add('https://api.adoptium.net/v3/binary/latest/17/ga/windows/x64/jre/hotspot/normal/eclipse', 'java_setup.zip', '');
       end;
       
       if NeedsMongo then begin

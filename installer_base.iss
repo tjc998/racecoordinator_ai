@@ -22,7 +22,6 @@ Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=admin
-AlwaysOnTop=yes
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
