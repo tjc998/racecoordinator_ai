@@ -21,8 +21,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HeatExecutionManager {
+  private static final Logger logger = LoggerFactory.getLogger(HeatExecutionManager.class);
 
   private Race race;
 
@@ -313,11 +316,6 @@ public class HeatExecutionManager {
         // Check if already at full fuel
         if (driverData.getDriver().getFuelLevel() < fuelOptions.getCapacity()) {
           refuelDelayRemaining[lane] = fuelOptions.getPitStopDelay();
-          System.out.println(
-              "HeatExecutionManager: Lane "
-                  + lane
-                  + " in pit and can refuel. Starting delay: "
-                  + refuelDelayRemaining[lane]);
         }
       }
     } else {
@@ -325,10 +323,6 @@ public class HeatExecutionManager {
       if (isRefueling[lane] || refuelDelayRemaining[lane] >= 0) {
         isRefueling[lane] = false;
         refuelDelayRemaining[lane] = -1.0;
-        System.out.println(
-            "HeatExecutionManager: Lane "
-                + lane
-                + " refueling stopped (left pit or canRefuel=false).");
       }
     }
   }

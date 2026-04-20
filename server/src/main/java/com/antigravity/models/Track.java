@@ -1,11 +1,15 @@
 package com.antigravity.models;
 
 import com.antigravity.proto.PinBehavior;
+import com.antigravity.proto.RgbLedBehavior;
 import com.antigravity.protocols.arduino.ArduinoConfig;
+import com.antigravity.protocols.arduino.LedString;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonId;
@@ -75,5 +79,108 @@ public class Track extends Model {
   @BsonProperty("arduino_configs")
   public List<ArduinoConfig> getArduinoConfigs() {
     return arduinoConfigs;
+  }
+
+  /**
+   * Synchronizes all Arduino configurations with the current lane model. This heals color mappings,
+   * removes stale behaviors, and ensures array lengths match.
+   *
+   * @return A NEW Track instance with synchronized configurations.
+   */
+  public Track syncWithLanes() {
+    List<ArduinoConfig> syncedConfigs = new ArrayList<>();
+
+    for (ArduinoConfig config : this.arduinoConfigs) {
+      if (config == null) continue;
+
+      // Create a copy of the config to modify
+      ArduinoConfig syncedConfig =
+          new ArduinoConfig(
+              config.name,
+              config.commPort,
+              config.baudRate,
+              config.debounceUs,
+              config.hardwareType,
+              config.normallyClosedLaneSensors,
+              config.normallyClosedRelays,
+              config.globalInvertLights,
+              config.usePitsAsLaps,
+              config.useLapsForSegments,
+              config.lapPinPitBehavior,
+              new ArrayList<>(config.digitalIds),
+              new ArrayList<>(config.analogIds),
+              new ArrayList<>(),
+              new HashMap<>(config.voltageConfigs));
+
+      if (config.ledStrings != null) {
+        for (LedString ls : config.ledStrings) {
+          if (ls == null) continue;
+
+          List<String> syncedOverrides = new ArrayList<>(ls.ledLaneColorOverrides);
+
+          // 1. Sync override array length
+          while (syncedOverrides.size() < this.lanes.size()) {
+            syncedOverrides.add("");
+          }
+          if (syncedOverrides.size() > this.lanes.size()) {
+            syncedOverrides = syncedOverrides.subList(0, this.lanes.size());
+          }
+
+          // 2. Sync colors (aggressive tracking)
+          for (int i = 0; i < this.lanes.size(); i++) {
+            syncedOverrides.set(i, this.lanes.get(i).getBackground_color());
+          }
+
+          // 3. Cleanup stale behaviors
+          List<Integer> syncedBehaviors = new ArrayList<>();
+          for (Integer behavior : ls.leds) {
+            int val = (behavior != null) ? behavior : 0;
+            int laneIdx = getLaneIndexFromRgbBehavior(val);
+
+            if (laneIdx != -1 && (laneIdx < 0 || laneIdx >= this.lanes.size())) {
+              syncedBehaviors.add(RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED_VALUE);
+            } else {
+              syncedBehaviors.add(val);
+            }
+          }
+
+          syncedConfig.ledStrings.add(
+              new LedString(
+                  ls.pin,
+                  syncedBehaviors,
+                  ls.brightness,
+                  ls.ledType,
+                  ls.flagFlashRate,
+                  syncedOverrides));
+        }
+      }
+      syncedConfigs.add(syncedConfig);
+    }
+
+    return new Track(this.name, this.lanes, syncedConfigs, this.getEntityId(), this.getId());
+  }
+
+  private int getLaneIndexFromRgbBehavior(int flavor) {
+    if (flavor >= RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE_VALUE
+        && flavor < RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE_VALUE + 64) {
+      return flavor - RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE_VALUE;
+    }
+    if (flavor >= RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE_VALUE
+        && flavor < RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE_VALUE + 64) {
+      return flavor - RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE_VALUE;
+    }
+    if (flavor >= RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE_VALUE
+        && flavor < RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE_VALUE + 64) {
+      return flavor - RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE_VALUE;
+    }
+    if (flavor >= RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_INDICATOR_BASE_VALUE
+        && flavor < RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_INDICATOR_BASE_VALUE + 64) {
+      return flavor - RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_INDICATOR_BASE_VALUE;
+    }
+    if (flavor >= RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_SENSOR_BASE_VALUE
+        && flavor < RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_SENSOR_BASE_VALUE + 64) {
+      return flavor - RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_SENSOR_BASE_VALUE;
+    }
+    return -1;
   }
 }

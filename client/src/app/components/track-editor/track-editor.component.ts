@@ -11,7 +11,7 @@ import {
   ViewChildren,
 } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
-import { of, Subscription } from "rxjs";
+import { Subscription } from "rxjs";
 import { EditorTitleComponent } from "src/app/components/shared/editor-title/editor-title.component";
 import { UndoManager } from "src/app/components/shared/undo-redo-controls/undo-manager";
 import { ArduinoEditorComponent } from "src/app/components/track-editor/arduino-editor/arduino-editor.component";
@@ -671,13 +671,17 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   // Lane Management
   addLane() {
-    this.lanes.push(new Lane(this.generateId(), "#ffffff", "black", 100)); // Default white lane
+    this.lanes = [
+      ...this.lanes,
+      new Lane(this.generateId(), "black", "#ffffff", 100),
+    ]; // Default white lane with black text
     this.sectionsExpanded.lanes = true;
     this.captureState();
   }
 
   removeLane(index: number) {
     this.lanes.splice(index, 1);
+    this.lanes = [...this.lanes]; // Trigger change detection
     this.updateArduinoConfigsOnLaneDeletion(index);
     this.captureState();
   }
@@ -686,8 +690,150 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     if (event.previousIndex !== event.currentIndex) {
       moveItemInArray(this.lanes, event.previousIndex, event.currentIndex);
       this.lanes = [...this.lanes]; // Trigger change detection
+
+      // Update Arduino configs to match new lane order
+      this.updateArduinoConfigsOnLaneOrderChange(
+        event.previousIndex,
+        event.currentIndex,
+      );
+
       this.captureState();
     }
+  }
+
+  private updateArduinoConfigsOnLaneOrderChange(
+    prevIndex: number,
+    currIndex: number,
+  ) {
+    this.arduinoConfigs.forEach((config) => {
+      // Helper to update pin IDs
+      const updatePinIds = (ids: number[]) => {
+        if (!ids) return;
+        for (let i = 0; i < ids.length; i++) {
+          const val = ids[i];
+          // TODO(aufderheide): Remove the absolute paths here and replace with imports
+          if (
+            val === com.antigravity.PinBehavior.BEHAVIOR_UNUSED ||
+            val === com.antigravity.PinBehavior.BEHAVIOR_RESERVED ||
+            val === com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON ||
+            val === com.antigravity.PinBehavior.BEHAVIOR_RELAY
+          ) {
+            continue;
+          }
+
+          let base = -1;
+          if (
+            val >= com.antigravity.PinBehavior.BEHAVIOR_LAP_BASE &&
+            val < com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE
+          ) {
+            base = com.antigravity.PinBehavior.BEHAVIOR_LAP_BASE;
+          } else if (
+            val >= com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE &&
+            val < com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE
+          ) {
+            base = com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE;
+          } else if (
+            val >= com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE &&
+            val < com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE
+          ) {
+            base = com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE;
+          } else if (
+            val >= com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE &&
+            val < com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE + 1000
+          ) {
+            base = com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE;
+          } else if (
+            val >= com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE &&
+            val < com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000
+          ) {
+            base = com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE;
+          }
+
+          if (base !== -1) {
+            const lane = val - base;
+            if (lane === prevIndex) {
+              ids[i] = base + currIndex;
+            } else if (prevIndex < currIndex) {
+              if (lane > prevIndex && lane <= currIndex) {
+                ids[i] = val - 1;
+              }
+            } else {
+              if (lane >= currIndex && lane < prevIndex) {
+                ids[i] = val + 1;
+              }
+            }
+          }
+        }
+      };
+
+      updatePinIds(config.digitalIds);
+      updatePinIds(config.analogIds);
+
+      // Shift voltageConfigs
+      if (config.voltageConfigs) {
+        const newVoltageConfigs: { [lane: number]: number } = {};
+        Object.entries(config.voltageConfigs).forEach(([laneStr, value]) => {
+          const lane = parseInt(laneStr, 10);
+          if (lane === prevIndex) {
+            newVoltageConfigs[currIndex] = value;
+          } else if (prevIndex < currIndex) {
+            if (lane > prevIndex && lane <= currIndex) {
+              newVoltageConfigs[lane - 1] = value;
+            } else {
+              newVoltageConfigs[lane] = value;
+            }
+          } else {
+            if (lane >= currIndex && lane < prevIndex) {
+              newVoltageConfigs[lane + 1] = value;
+            } else {
+              newVoltageConfigs[lane] = value;
+            }
+          }
+        });
+        config.voltageConfigs = newVoltageConfigs;
+      }
+
+      // Shift ledLaneColorOverrides and update behaviors for each LedString
+      if (config.ledStrings) {
+        config.ledStrings.forEach((ls) => {
+          if (ls.ledLaneColorOverrides) {
+            moveItemInArray(ls.ledLaneColorOverrides, prevIndex, currIndex);
+          }
+
+          if (ls.leds) {
+            ls.leds = ls.leds.map((val) => {
+              const bases = [
+                com.antigravity.RgbLedBehavior
+                  .RGB_LED_BEHAVIOR_HEAT_LEADER_BASE,
+                com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE,
+                com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE,
+                com.antigravity.RgbLedBehavior
+                  .RGB_LED_BEHAVIOR_LAP_INDICATOR_BASE,
+                com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_SENSOR_BASE,
+              ];
+              const base = bases.find((b) => val >= b && val < b + 1000);
+              if (base !== undefined) {
+                const lane = val - base;
+                if (lane === prevIndex) {
+                  return base + currIndex;
+                } else if (prevIndex < currIndex) {
+                  if (lane > prevIndex && lane <= currIndex) {
+                    return val - 1;
+                  }
+                } else {
+                  if (lane >= currIndex && lane < prevIndex) {
+                    return val + 1;
+                  }
+                }
+              }
+              return val;
+            });
+          }
+        });
+      }
+    });
+
+    this.arduinoConfigs = [...this.arduinoConfigs];
   }
 
   private updateArduinoConfigsOnLaneDeletion(deletedLaneIndex: number) {
@@ -763,7 +909,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
         config.voltageConfigs = newVoltageConfigs;
       }
 
-      // Shift ledLaneColorOverrides for each LedString
+      // Shift ledLaneColorOverrides and update behaviors for each LedString
       if (config.ledStrings) {
         config.ledStrings.forEach((ls) => {
           if (
@@ -771,6 +917,30 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
             ls.ledLaneColorOverrides.length > deletedLaneIndex
           ) {
             ls.ledLaneColorOverrides.splice(deletedLaneIndex, 1);
+          }
+
+          if (ls.leds) {
+            ls.leds = ls.leds.map((val) => {
+              const bases = [
+                com.antigravity.RgbLedBehavior
+                  .RGB_LED_BEHAVIOR_HEAT_LEADER_BASE,
+                com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE,
+                com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE,
+                com.antigravity.RgbLedBehavior
+                  .RGB_LED_BEHAVIOR_LAP_INDICATOR_BASE,
+                com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_SENSOR_BASE,
+              ];
+              const base = bases.find((b) => val >= b && val < b + 1000);
+              if (base !== undefined) {
+                const lane = val - base;
+                if (lane === deletedLaneIndex) {
+                  return com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED;
+                } else if (lane > deletedLaneIndex) {
+                  return val - 1;
+                }
+              }
+              return val;
+            });
           }
         });
       }
@@ -791,6 +961,22 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       l.length,
     );
 
+    // 1. ALWAYS sync the LED overrides live for smooth dragging
+    this.arduinoConfigs?.forEach((config) => {
+      config.ledStrings?.forEach((ls) => {
+        if (
+          ls.ledLaneColorOverrides &&
+          ls.ledLaneColorOverrides.length > index
+        ) {
+          ls.ledLaneColorOverrides[index] = color;
+        }
+      });
+    });
+
+    // 2. Trigger an immediate UI refresh for the child components
+    this.arduinoConfigs = [...(this.arduinoConfigs || [])];
+
+    // 3. Debounce the heavy state capture/server saving
     if (!this.colorDebounceTimer) {
       this.captureState();
     }
@@ -798,6 +984,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
     this.colorDebounceTimer = setTimeout(() => {
       this.colorDebounceTimer = null;
+      this.lanes = [...this.lanes];
     }, 400);
   }
 

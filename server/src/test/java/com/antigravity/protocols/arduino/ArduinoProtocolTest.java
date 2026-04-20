@@ -1425,12 +1425,18 @@ public class ArduinoProtocolTest {
     serialConnection.allWrittenData.clear();
     protocol.setHeatStandings(Arrays.asList(0));
 
-    // Should NOT have sent any 0x4C commands
+    // Should have sent a SET_RGB_LED_VALUES command with White fallback (FF FF FF)
+    // Opcode 0x4C, String 1, Count 1, Index 0, R=255, G=255, B=255
+    byte[] expectedFallback = {0x4C, 0x01, 0x01, 0x00, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 0x3B};
+
+    boolean found = false;
     for (byte[] data : serialConnection.allWrittenData) {
-      if (data.length > 0 && data[0] == 0x4C) {
-        assertTrue("Should not have sent LED update for missing color", false);
+      if (Arrays.equals(expectedFallback, data)) {
+        found = true;
+        break;
       }
     }
+    assertTrue("Should have sent LED update with White fallback for missing color", found);
   }
 
   @Test

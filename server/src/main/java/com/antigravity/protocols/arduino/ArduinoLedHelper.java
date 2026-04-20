@@ -32,9 +32,14 @@ public class ArduinoLedHelper {
   private Double lastHeatProgress = null;
   private long lastStateChangeTime = 0;
   private final Map<Integer, Double> lastFuelLevels = new HashMap<>();
+  private List<String> laneColors = new ArrayList<>();
 
   public ArduinoLedHelper(ArduinoProtocol protocol) {
     this.protocol = protocol;
+  }
+
+  public void setLaneColors(List<String> colors) {
+    this.laneColors = colors != null ? new ArrayList<>(colors) : new ArrayList<>();
   }
 
   public void sendRgbLedMode() {
@@ -178,12 +183,6 @@ public class ArduinoLedHelper {
       message[idx] = TERMINATOR;
 
       protocol.writeData(message);
-      logger.info(
-          "[{}] Sent SET_RGB_LED_VALUES batch - Pin: {}, Batch Size: {}/{}",
-          protocol.getLogTime(),
-          pinId,
-          currentBatchSize,
-          totalLeds);
 
       processedLeds += currentBatchSize;
     }
@@ -199,26 +198,40 @@ public class ArduinoLedHelper {
 
     for (LedString ledString : config.ledStrings) {
       List<RgbLedState> updates = new ArrayList<>();
-      boolean success = true;
-
-      for (int i = 0; i < ledString.leds.size(); i++) {
+      for (int i = 0; i < (ledString.leds != null ? ledString.leds.size() : 0); i++) {
         int behavior = ledString.leds.get(i);
         if (behavior == refuelingBehavior) {
           int[] rgb = {0, 0, 0};
           if (isRefueling) {
-            if (laneIndex < 0 || laneIndex >= ledString.ledLaneColorOverrides.size()) {
-              logger.error("Missing color mapping for lane {} on pin {}", laneIndex, ledString.pin);
-              success = false;
-              break;
+            String colorHex = null;
+            if (laneIndex >= 0 && laneIndex < ledString.ledLaneColorOverrides.size()) {
+              colorHex = ledString.ledLaneColorOverrides.get(laneIndex);
             }
-            rgb = parseColor(ledString.ledLaneColorOverrides.get(laneIndex));
+
+            if (colorHex == null || colorHex.isEmpty()) {
+              if (laneIndex >= 0 && laneIndex < laneColors.size()) {
+                colorHex = laneColors.get(laneIndex);
+              }
+            }
+
+            if (colorHex == null || colorHex.isEmpty()) {
+              rgb = new int[] {255, 255, 255};
+            } else {
+              rgb = parseColor(colorHex);
+              // Safety: If the lane color is explicitly set to black, refueling LEDs appear "off".
+              // If we are struggling with fuel sync, let's ensure they at least show white if the
+              // parse resulted in black.
+              if (rgb[0] == 0 && rgb[1] == 0 && rgb[2] == 0) {
+                rgb = new int[] {255, 255, 255};
+              }
+            }
           }
           updates.add(
               RgbLedState.newBuilder().setIndex(i).setR(rgb[0]).setG(rgb[1]).setB(rgb[2]).build());
         }
       }
 
-      if (success && !updates.isEmpty()) {
+      if (!updates.isEmpty()) {
         setStringRgbLedValues(ledString.pin, updates);
       }
     }
@@ -414,17 +427,28 @@ public class ArduinoLedHelper {
     ArduinoConfig config = protocol.getConfig();
     if (config.ledStrings != null) {
       for (LedString ledString : config.ledStrings) {
-        if (leaderLaneIndex < 0 || leaderLaneIndex >= ledString.ledLaneColorOverrides.size()) {
-          // TODO(aufderheide): We should log this error or assert on it, it should never
-          // happen.
-          continue;
+        int[] rgb = {255, 255, 255}; // Default to white if mapping missing
+        String colorHex = null;
+        if (leaderLaneIndex >= 0 && leaderLaneIndex < ledString.ledLaneColorOverrides.size()) {
+          colorHex = ledString.ledLaneColorOverrides.get(leaderLaneIndex);
         }
 
-        int[] rgb = parseColor(ledString.ledLaneColorOverrides.get(leaderLaneIndex));
+        if (colorHex == null || colorHex.isEmpty()) {
+          if (leaderLaneIndex >= 0 && leaderLaneIndex < laneColors.size()) {
+            colorHex = laneColors.get(leaderLaneIndex);
+          }
+        }
+
+        if (colorHex != null && !colorHex.isEmpty()) {
+          rgb = parseColor(colorHex);
+        } else {
+          logger.warn(
+              "Missing color mapping for leader lane {} on pin {}. Using default White.",
+              leaderLaneIndex,
+              ledString.pin);
+        }
 
         List<RgbLedState> updates = new ArrayList<>();
-        boolean success = true;
-
         for (int i = 0; i < ledString.leds.size(); i++) {
           int behavior = ledString.leds.get(i);
           // Check if this LED is configured as a heat leader
@@ -454,7 +478,7 @@ public class ArduinoLedHelper {
           }
         }
 
-        if (success && !updates.isEmpty()) {
+        if (!updates.isEmpty()) {
           setStringRgbLedValues(ledString.pin, updates);
         }
       }

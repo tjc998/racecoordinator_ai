@@ -82,13 +82,14 @@ public class ArduinoProtocol extends DefaultProtocol {
   private static final byte DIGITAL = 0x44; // 'D'
   private static final byte ANALOG = 0x41; // 'A'
 
-  public ArduinoProtocol(ArduinoConfig config, int numLanes) {
+  public ArduinoProtocol(ArduinoConfig config, int numLanes, List<String> laneColors) {
     this(config, numLanes, null, null);
 
     if (numLanes > ArduinoConfig.MAX_LANES) {
       throw new IllegalArgumentException(
           "Number of lanes " + numLanes + " exceeds maximum of " + ArduinoConfig.MAX_LANES);
     }
+    this.ledHelper.setLaneColors(laneColors);
   }
 
   protected ArduinoProtocol(
@@ -99,6 +100,7 @@ public class ArduinoProtocol extends DefaultProtocol {
     super(numLanes);
     this.config = config;
     this.numLanes = numLanes;
+    logger.info("[{}] ArduinoProtocol initialized with {} lanes", getLogTime(), numLanes);
 
     this.serialConnection = serialConnection != null ? serialConnection : createSerialConnection();
     this.statusScheduler = statusScheduler;

@@ -362,11 +362,11 @@ describe("TrackEditorComponent", () => {
     expect(updatedConfig.voltageConfigs?.[2]).toBeUndefined(); // Shifted
   });
 
-  it("should reorder lanes and NOT update Arduino configs on drop", () => {
+  it("should reorder lanes and update Arduino configs on drop", () => {
     // 1. Setup track with 2 lanes
     component.lanes = [
-      new Lane("l1", "#ff0000", "black", 100),
-      new Lane("l2", "#00ff00", "black", 100),
+      new Lane("l1", "white", "black", 100),
+      new Lane("l2", "white", "black", 100),
     ];
 
     // 2. Add Arduino config with lane-specific behaviors
@@ -391,9 +391,14 @@ describe("TrackEditorComponent", () => {
     expect(component.lanes[0].entity_id).toBe("l2");
     expect(component.lanes[1].entity_id).toBe("l1");
 
-    // Pin assignments MUST NOT change
-    expect(component.arduinoConfigs[0].digitalIds[2]).toBe(1000); // Still Lane 1
-    expect(component.arduinoConfigs[0].digitalIds[3]).toBe(1001); // Still Lane 2
+    // Pin assignments SHOULD follow the lanes
+    const updatedConfig = component.arduinoConfigs[0];
+    // Lane 1 was at index 0 (1000), moved to index 1.
+    // Pin 2 was 1000, should now be 1001 (Lane 1 index 1).
+    expect(updatedConfig.digitalIds[2]).toBe(1001);
+    // Lane 2 was at index 1 (1001), moved to index 0.
+    // Pin 3 was 1001, should now be 1000 (Lane 2 index 0).
+    expect(updatedConfig.digitalIds[3]).toBe(1000);
 
     expect(component.captureState).toHaveBeenCalled();
   });

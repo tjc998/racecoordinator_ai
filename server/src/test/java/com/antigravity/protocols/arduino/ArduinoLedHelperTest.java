@@ -30,6 +30,8 @@ public class ArduinoLedHelperTest {
     when(protocol.getLogTime()).thenReturn("12:00:00.000");
     when(protocol.getMaxBufferSize()).thenReturn(128);
     helper = new ArduinoLedHelper(protocol);
+    helper.setLaneColors(
+        Arrays.asList("#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF"));
   }
 
   @Test
@@ -136,18 +138,66 @@ public class ArduinoLedHelperTest {
   }
 
   @Test
-  public void testSetHeatStandings_MissingColorMapping() {
+  public void testSetRefueling_FallbackToTrackColor() {
     LedString ledString = new LedString();
-    ledString.pin = 1;
+    ledString.pin = 1000;
     ledString.leds =
-        Collections.singletonList(RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE_VALUE + 0);
-    ledString.ledLaneColorOverrides = new ArrayList<>(); // Empty mapping
+        Collections.singletonList(
+            RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE_VALUE + 5); // Lane 6
+    ledString.ledLaneColorOverrides = new ArrayList<>(); // No override
     config.ledStrings = Collections.singletonList(ledString);
 
-    helper.setHeatStandings(Arrays.asList(0));
+    // Lane 6 track color is Magenta (#FF00FF)
+    helper.setRefueling(5, true);
 
-    // Should NOT have sent any 0x4C commands
-    verify(protocol, never()).writeData(argThat(data -> data.length > 0 && data[0] == 0x4C));
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    byte[] data = captor.getValue();
+    assertEquals((byte) 0xFF, data[4]); // R
+    assertEquals(0, data[5]); // G
+    assertEquals((byte) 0xFF, data[6]); // B (Magenta)
+  }
+
+  @Test
+  public void testSetRefueling_FallbackToWhiteOnMissingAll() {
+    LedString ledString = new LedString();
+    ledString.pin = 1000;
+    ledString.leds =
+        Collections.singletonList(RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE_VALUE + 5);
+    ledString.ledLaneColorOverrides = new ArrayList<>();
+    config.ledStrings = Collections.singletonList(ledString);
+
+    // Provide empty lane colors to force the final fallback
+    helper.setLaneColors(new ArrayList<>());
+    helper.setRefueling(5, true);
+
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    byte[] data = captor.getValue();
+    assertEquals((byte) 0xFF, data[4]); // R
+    assertEquals((byte) 0xFF, data[5]); // G
+    assertEquals((byte) 0xFF, data[6]); // B (White)
+  }
+
+  @Test
+  public void testSetRefueling_ColorBlackSafetyFallback() {
+    LedString ledString = new LedString();
+    ledString.pin = 1000;
+    ledString.leds =
+        Collections.singletonList(RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE_VALUE + 0);
+    // Explicitly set override to black
+    ledString.ledLaneColorOverrides = Collections.singletonList("#000000");
+    config.ledStrings = Collections.singletonList(ledString);
+
+    helper.setRefueling(0, true);
+
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    byte[] data = captor.getValue();
+    // Should be White (255,255,255) because of the safety fallback for black
+    assertEquals((byte) 0xFF, data[4]);
+    assertEquals((byte) 0xFF, data[5]);
+    assertEquals((byte) 0xFF, data[6]);
   }
 
   @Test
@@ -1100,5 +1150,96 @@ public class ArduinoLedHelperTest {
     assertEquals(1, data[7]);
     assertEquals(255, data[8] & 0xFF);
     assertEquals(255, data[9] & 0xFF);
+  }
+
+  @Test
+  public void testLane6Refueling() {
+    LedString ledString = new LedString();
+    ledString.pin = 2;
+    int refuelingL6 = RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE_VALUE + 5;
+    ledString.leds = Collections.singletonList(refuelingL6);
+    // Explicitly provide 6 color mappings
+    ledString.ledLaneColorOverrides =
+        Arrays.asList("#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF");
+    config.ledStrings = Collections.singletonList(ledString);
+
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+    when(protocol.getLogTime()).thenReturn("12:00:00.000");
+
+    // Case 1: Refueling is TRUE for Lane 6 (index 5)
+    helper.setRefueling(5, true);
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    byte[] data = captor.getValue();
+    assertEquals(0x4C, data[0]);
+    assertEquals(1, data[2]); // 1 LED update
+    assertEquals(0, data[3]); // Index 0 in the string
+    assertEquals((byte) 0xFF, data[4]); // R=FF
+    assertEquals(0, data[5] & 0xFF); // G=00
+    assertEquals((byte) 0xFF, data[6]); // B=FF (Color #FF00FF for index 5)
+
+    // Case 2: Refueling is FALSE for Lane 6 (index 5)
+    reset(protocol);
+    when(protocol.isSerialOpen()).thenReturn(true);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+    when(protocol.getConfig()).thenReturn(config);
+    helper.setRefueling(5, false);
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    data = captor.getValue();
+    assertEquals(0, data[4] & 0xFF); // R=0
+    assertEquals(0, data[5] & 0xFF); // G=0
+    assertEquals(0, data[6] & 0xFF); // B=0
+  }
+
+  @Test
+  public void testLane6RefuelingFallbackToWhite() {
+    LedString ledString = new LedString();
+    ledString.pin = 2;
+    int refuelingL6 = RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE_VALUE + 5;
+    ledString.leds = Collections.singletonList(refuelingL6);
+    // Provide ONLY 2 color mappings (insufficient for Lane 6)
+    ledString.ledLaneColorOverrides = Arrays.asList("#FF0000", "#00FF00");
+    config.ledStrings = Collections.singletonList(ledString);
+
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+    when(protocol.getLogTime()).thenReturn("12:00:00.000");
+
+    // Refueling is TRUE for Lane 6 (index 5)
+    helper.setRefueling(5, true);
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    byte[] data = captor.getValue();
+
+    // Should fallback to track color #FF00FF (255, 0, 255) because overrides are missing
+    assertEquals(255, data[4] & 0xFF);
+    assertEquals(0, data[5] & 0xFF);
+    assertEquals(255, data[6] & 0xFF);
+  }
+
+  @Test
+  public void testLane6RefuelingFallbackToTrackColor() {
+    LedString ledString = new LedString();
+    ledString.pin = 2;
+    int refuelingL6 = RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE_VALUE + 5;
+    ledString.leds = Collections.singletonList(refuelingL6);
+    // Provide ONLY 2 color mappings (insufficient for Lane 6)
+    ledString.ledLaneColorOverrides = Arrays.asList("#FF0000", "#00FF00");
+    config.ledStrings = Collections.singletonList(ledString);
+
+    // Track colors are: ["#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF"]
+    // Lane 6 (index 5) is #FF00FF (Pink: 255, 0, 255)
+
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+
+    // Refueling is TRUE for Lane 6 (index 5)
+    helper.setRefueling(5, true);
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    byte[] data = captor.getValue();
+
+    // Should fallback to track color #FF00FF (255, 0, 255)
+    assertEquals(255, data[4] & 0xFF);
+    assertEquals(0, data[5] & 0xFF);
+    assertEquals(255, data[6] & 0xFF);
   }
 }

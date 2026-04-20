@@ -8,6 +8,7 @@ import com.antigravity.models.AnalogFuelOptions;
 import com.antigravity.models.Driver;
 import com.antigravity.models.FuelOptions;
 import com.antigravity.models.GlobalStatistics;
+import com.antigravity.models.Lane;
 import com.antigravity.models.Track;
 import com.antigravity.proto.CallbuttonEvent;
 import com.antigravity.proto.CurrentRecords;
@@ -502,10 +503,18 @@ public class Race implements ProtocolListener {
       protocols_list.add(protocol);
     } else {
       List<ArduinoConfig> configs = this.track.getArduinoConfigs();
+      List<String> laneColors = new ArrayList<>();
+      if (this.track.getLanes() != null) {
+        for (Lane lane : this.track.getLanes()) {
+          laneColors.add(lane.getBackground_color());
+        }
+      }
+
       if (configs != null && !configs.isEmpty()) {
         for (int i = 0; i < configs.size(); i++) {
           ArduinoConfig config = configs.get(i);
-          ArduinoProtocol protocol = new ArduinoProtocol(config, this.track.getLanes().size());
+          ArduinoProtocol protocol =
+              new ArduinoProtocol(config, this.track.getLanes().size(), laneColors);
           protocol.setInterfaceIndex(i);
           protocols_list.add(protocol);
         }

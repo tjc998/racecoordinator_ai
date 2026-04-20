@@ -1183,12 +1183,28 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
           changed = true;
         }
 
-        // Extend color overrides
+        // Sync color overrides length
         while (ls.ledLaneColorOverrides.length < laneCount) {
           const laneIdx = ls.ledLaneColorOverrides.length;
           const lane = this.lanes[laneIdx];
           ls.ledLaneColorOverrides.push(lane?.background_color || "#ffffff");
           changed = true;
+        }
+        if (ls.ledLaneColorOverrides.length > laneCount) {
+          ls.ledLaneColorOverrides.splice(laneCount);
+          changed = true;
+        }
+
+        // Heal existing overrides if they are empty or null
+        for (let i = 0; i < ls.ledLaneColorOverrides.length; i++) {
+          if (
+            !ls.ledLaneColorOverrides[i] ||
+            ls.ledLaneColorOverrides[i].trim() === ""
+          ) {
+            const lane = this.lanes[i];
+            ls.ledLaneColorOverrides[i] = lane?.background_color || "#ffffff";
+            changed = true;
+          }
         }
 
         // Validate behaviors

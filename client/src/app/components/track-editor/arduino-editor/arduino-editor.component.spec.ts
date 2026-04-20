@@ -113,8 +113,8 @@ describe("ArduinoEditorComponent", () => {
 
     component.config = makeConfig();
     component.lanes = [
-      new Lane("l1", "#fff", "#000", 10),
-      new Lane("l2", "#fff", "#000", 10),
+      new Lane("l1", "#fff", "#ff0000", 10),
+      new Lane("l2", "#fff", "#00ff00", 10),
     ];
 
     fixture.detectChanges();
@@ -144,7 +144,7 @@ describe("ArduinoEditorComponent", () => {
     fixture = TestBed.createComponent(ArduinoEditorComponent);
     component = fixture.componentInstance;
     component.config = makeConfig();
-    component.lanes = [new Lane("l1", "#fff", "#000", 10)];
+    component.lanes = [new Lane("l1", "#fff", "#ff0000", 10)];
 
     spyOn(component, "fetchPorts").and.callThrough();
     fixture.detectChanges(); // triggers ngOnInit
@@ -182,9 +182,9 @@ describe("ArduinoEditorComponent", () => {
 
   it("should regenerate actions when lanes change", () => {
     component.lanes = [
-      new Lane("l1", "#fff", "#000", 10),
-      new Lane("l2", "#fff", "#000", 10),
-      new Lane("l3", "#fff", "#000", 10),
+      new Lane("l1", "#fff", "#ff0000", 10),
+      new Lane("l2", "#fff", "#00ff00", 10),
+      new Lane("l3", "#fff", "#0000ff", 10),
     ];
 
     const voltage0 = component.analogPinActions.find(
@@ -248,9 +248,63 @@ describe("ArduinoEditorComponent", () => {
     expect(ls.ledLaneColorOverrides[3]).toBe("#ffff00");
   });
 
+  it("should heal empty color overrides when lanes change", () => {
+    const rgbBehavior = (com.antigravity.PinBehavior as any)
+      .BEHAVIOR_LED_RGB_STRING;
+    component.setPinBehavior(true, 5, rgbBehavior.toString());
+    const ls = component.config!.ledStrings[0];
+
+    // Manually mess up one entry
+    ls.ledLaneColorOverrides[1] = "";
+
+    // Trigger refresh by re-assigning lanes
+    component.lanes = [...component.lanes];
+    fixture.detectChanges();
+
+    expect(ls.ledLaneColorOverrides[1]).toBe("#00ff00"); // Healed to L2 track color
+  });
+
+  it("should remove color overrides when lanes are removed", () => {
+    const rgbBehavior = (com.antigravity.PinBehavior as any)
+      .BEHAVIOR_LED_RGB_STRING;
+    component.setPinBehavior(true, 5, rgbBehavior.toString());
+    const ls = component.config!.ledStrings[0];
+    expect(ls.ledLaneColorOverrides.length).toBe(2);
+
+    // Remove one lane
+    component.lanes = [new Lane("l1", "#fff", "#ff0000", 10)];
+    fixture.detectChanges();
+
+    expect(ls.ledLaneColorOverrides.length).toBe(1);
+  });
+
+  it("should reset lane-based LED behaviors to unused when exceeding lane count", () => {
+    const rgbBehavior = (com.antigravity.PinBehavior as any)
+      .BEHAVIOR_LED_RGB_STRING;
+    component.setPinBehavior(true, 5, rgbBehavior.toString());
+    const ls = component.config!.ledStrings[0];
+
+    // Map LED 0 to Lane 6 behavior (5000 + 5)
+    ls.leds[0] =
+      com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE + 5;
+
+    // Trigger refresh with only 2 lanes
+    component.lanes = [
+      new Lane("l1", "#fff", "#ff0000", 10),
+      new Lane("l2", "#fff", "#00ff00", 10),
+    ];
+    fixture.detectChanges();
+
+    // Behavior 5005 should be reset to UNUSED because lane 5 doesn't exist
+    expect(ls.leds[0]).toBe(
+      com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED,
+    );
+  });
+
   it("should find lanes with voltage pins", () => {
     component.config!.analogIds[1] = VOLTAGE_BASE; // Lane 0
     component.config!.analogIds[2] = VOLTAGE_BASE + 1; // Lane 1
+    fixture.detectChanges();
     const lanes = component.getVoltageLanes();
     expect(lanes).toContain(0);
     expect(lanes).toContain(1);
@@ -360,8 +414,8 @@ describe("ArduinoEditorComponent", () => {
     analogIds[1] = VOLTAGE_BASE + 1; // Lane 1
     component.config = makeConfig(analogIds);
     component.lanes = [
-      new Lane("l1", "#fff", "#000", 10),
-      new Lane("l2", "#fff", "#000", 10),
+      new Lane("l1", "#fff", "#ff0000", 10),
+      new Lane("l2", "#fff", "#00ff00", 10),
     ];
     component.isVoltageLinked = false;
     fixture.detectChanges();
@@ -398,9 +452,9 @@ describe("ArduinoEditorComponent", () => {
     analogIds[2] = VOLTAGE_BASE + 2; // Lane 2
     component.config = makeConfig(analogIds);
     component.lanes = [
-      new Lane("l1", "#fff", "#000", 10),
-      new Lane("l2", "#fff", "#000", 10),
-      new Lane("l3", "#fff", "#000", 10),
+      new Lane("l1", "#fff", "#ff0000", 10),
+      new Lane("l2", "#fff", "#00ff00", 10),
+      new Lane("l3", "#fff", "#0000ff", 10),
     ];
     component.isVoltageLinked = true;
     fixture.detectChanges();
@@ -419,8 +473,8 @@ describe("ArduinoEditorComponent", () => {
     analogIds[1] = VOLTAGE_BASE + 1; // Lane 1
     component.config = makeConfig(analogIds);
     component.lanes = [
-      new Lane("l1", "#fff", "#000", 10),
-      new Lane("l2", "#fff", "#000", 10),
+      new Lane("l1", "#fff", "#ff0000", 10),
+      new Lane("l2", "#fff", "#00ff00", 10),
     ];
     component.isVoltageLinked = false;
     fixture.detectChanges();
@@ -438,8 +492,8 @@ describe("ArduinoEditorComponent", () => {
     analogIds[1] = VOLTAGE_BASE + 1; // Lane 1
     component.config = makeConfig(analogIds);
     component.lanes = [
-      new Lane("l1", "#fff", "#000", 10),
-      new Lane("l2", "#fff", "#000", 10),
+      new Lane("l1", "#fff", "#ff0000", 10),
+      new Lane("l2", "#fff", "#00ff00", 10),
     ];
     component.isVoltageLinked = true;
     fixture.detectChanges();
@@ -478,7 +532,7 @@ describe("ArduinoEditorComponent", () => {
       fixture = TestBed.createComponent(ArduinoEditorComponent);
       component = fixture.componentInstance;
       component.config = makeConfig();
-      component.lanes = [new Lane("l1", "#fff", "#000", 10)];
+      component.lanes = [new Lane("l1", "#fff", "#ff0000", 10)];
       component.index = idx;
     }
 
@@ -548,7 +602,7 @@ describe("ArduinoEditorComponent", () => {
       fixture = TestBed.createComponent(ArduinoEditorComponent);
       component = fixture.componentInstance;
       component.config = makeConfig();
-      component.lanes = [new Lane("l1", "#fff", "#000", 10)];
+      component.lanes = [new Lane("l1", "#fff", "#ff0000", 10)];
       fixture.detectChanges();
     });
 
@@ -628,9 +682,9 @@ describe("ArduinoEditorComponent", () => {
 
       // Delete lane 4 (now only 3 lanes)
       component.lanes = [
-        new Lane("l1", "#ff0000", "#000", 10),
-        new Lane("l2", "#00ff00", "#000", 10),
-        new Lane("l3", "#0000ff", "#000", 10),
+        new Lane("l1", "#fff", "#ff0000", 10),
+        new Lane("l2", "#fff", "#00ff00", 10),
+        new Lane("l3", "#fff", "#0000ff", 10),
       ];
       fixture.detectChanges();
 
@@ -650,8 +704,8 @@ describe("ArduinoEditorComponent", () => {
       component = fixture.componentInstance;
       component.config = makeConfig();
       component.lanes = [
-        new Lane("l1", "#ff0000", "#000", 10),
-        new Lane("l2", "#00ff00", "#000", 10),
+        new Lane("l1", "#fff", "#ff0000", 10),
+        new Lane("l2", "#fff", "#00ff00", 10),
       ];
 
       // Add two strings

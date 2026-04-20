@@ -558,7 +558,7 @@ public class ClientCommandTaskHandler {
         com.antigravity.proto.ArduinoConfig protoConfig = configsList.get(i);
         com.antigravity.protocols.arduino.ArduinoConfig config =
             ArduinoConfigConverter.fromProto(protoConfig);
-        ArduinoProtocol arduino = new ArduinoProtocol(config, request.getLaneCount());
+        ArduinoProtocol arduino = new ArduinoProtocol(config, request.getLaneCount(), null);
         arduino.setInterfaceIndex(i);
         arduino.setListener(new TestInterfaceListener());
         protocols.add(arduino);
