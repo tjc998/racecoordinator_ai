@@ -627,6 +627,42 @@ public class DatabaseService {
     return result.getDeletedCount() > 0;
   }
 
+  public void deleteAllRaceData(MongoDatabase database, String raceEntityId) {
+    if (raceEntityId == null || raceEntityId.isEmpty()) return;
+
+    try {
+      // 1. Delete history records
+      database
+          .getCollection(getCollectionName("race_history", false))
+          .deleteMany(Filters.eq("original_entity_id", raceEntityId));
+      database
+          .getCollection(getCollectionName("race_history", true))
+          .deleteMany(Filters.eq("original_entity_id", raceEntityId));
+
+      // 2. Delete global statistics
+      database
+          .getCollection(getCollectionName("global_statistics", false))
+          .deleteMany(Filters.eq("race_entity_id", raceEntityId));
+      database
+          .getCollection(getCollectionName("global_statistics", true))
+          .deleteMany(Filters.eq("race_entity_id", raceEntityId));
+
+      // 3. Delete saved races and auto-saves
+      database
+          .getCollection(getCollectionName("saved_races", false))
+          .deleteMany(Filters.eq("model.entity_id", raceEntityId));
+      database
+          .getCollection(getCollectionName("saved_races", true))
+          .deleteMany(Filters.eq("model.entity_id", raceEntityId));
+
+      System.out.println("Cascading deletion complete for race records: " + raceEntityId);
+    } catch (Exception e) {
+      System.err.println(
+          "Failed to perform cascading deletion for race " + raceEntityId + ": " + e.getMessage());
+      e.printStackTrace();
+    }
+  }
+
   private String getCollectionName(String baseName, boolean isDemo) {
     return isDemo ? "demo_" + baseName : baseName;
   }

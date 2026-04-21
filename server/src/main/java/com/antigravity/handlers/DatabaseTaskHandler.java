@@ -661,6 +661,9 @@ public class DatabaseTaskHandler {
   }
 
   public void deleteRace(String id) {
+    // Perform cascading deletion of associated data (history, stats, saves)
+    DatabaseService.getInstance().deleteAllRaceData(databaseContext.getDatabase(), id);
+
     DeleteResult result = getRaceCollection().deleteOne(Filters.eq("entity_id", id));
     if (result.getDeletedCount() == 0) {
       throw new IllegalArgumentException("Race not found");

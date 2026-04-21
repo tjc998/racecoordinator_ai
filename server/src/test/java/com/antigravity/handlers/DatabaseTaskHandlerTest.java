@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -185,12 +186,30 @@ public class DatabaseTaskHandlerTest {
   public void testDeleteRace_Success() {
     String raceId = "race-to-delete";
 
+    // Mock other collections for cascading delete
+    MongoCollection historyCollection = mock(MongoCollection.class);
+    MongoCollection statsCollection = mock(MongoCollection.class);
+    MongoCollection savedRacesCollection = mock(MongoCollection.class);
+
+    when(mongoDatabase.getCollection("race_history")).thenReturn(historyCollection);
+    when(mongoDatabase.getCollection("demo_race_history")).thenReturn(historyCollection);
+    when(mongoDatabase.getCollection("global_statistics")).thenReturn(statsCollection);
+    when(mongoDatabase.getCollection("demo_global_statistics")).thenReturn(statsCollection);
+    when(mongoDatabase.getCollection("saved_races")).thenReturn(savedRacesCollection);
+    when(mongoDatabase.getCollection("demo_saved_races")).thenReturn(savedRacesCollection);
+
     DeleteResult deleteResult = mock(DeleteResult.class);
     when(deleteResult.getDeletedCount()).thenReturn(1L);
     when(raceCollection.deleteOne(any(Bson.class))).thenReturn(deleteResult);
 
     handler.deleteRace(raceId);
 
+    // Verify cascading deletions (both regular and demo collections)
+    verify(historyCollection, times(2)).deleteMany(any(Bson.class));
+    verify(statsCollection, times(2)).deleteMany(any(Bson.class));
+    verify(savedRacesCollection, times(2)).deleteMany(any(Bson.class));
+
+    // Verify race itself was deleted
     verify(raceCollection).deleteOne(any(Bson.class));
   }
 
