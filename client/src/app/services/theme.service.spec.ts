@@ -1,0 +1,117 @@
+import { TestBed } from "@angular/core/testing";
+import { of, throwError } from "rxjs";
+import { DataService } from "src/app/data.service";
+import { Settings } from "src/app/models/settings";
+import { Theme } from "src/app/models/theme";
+import { SettingsService } from "src/app/services/settings.service";
+
+import { ThemeService } from "./theme.service";
+
+describe("ThemeService", () => {
+  let service: ThemeService;
+  let dataServiceSpy: jasmine.SpyObj<DataService>;
+  let settingsServiceSpy: jasmine.SpyObj<SettingsService>;
+
+  const mockThemes: Theme[] = [
+    {
+      entity_id: "default_theme",
+      name: "Default",
+      is_default: true,
+      slots: {},
+    },
+    {
+      entity_id: "theme-1",
+      name: "Theme 1",
+      is_default: false,
+      slots: { "flag.green": "asset-1" },
+    },
+  ];
+
+  beforeEach(() => {
+    const dataSpy = jasmine.createSpyObj("DataService", [
+      "getThemes",
+      "createTheme",
+      "updateTheme",
+    ]);
+    const settingsSpy = jasmine.createSpyObj("SettingsService", [
+      "getSettings",
+      "saveSettings",
+    ]);
+
+    TestBed.configureTestingModule({
+      providers: [
+        ThemeService,
+        { provide: DataService, useValue: dataSpy },
+        { provide: SettingsService, useValue: settingsSpy },
+      ],
+    });
+
+    service = TestBed.inject(ThemeService);
+    dataServiceSpy = TestBed.inject(DataService) as jasmine.SpyObj<DataService>;
+    settingsServiceSpy = TestBed.inject(
+      SettingsService,
+    ) as jasmine.SpyObj<SettingsService>;
+
+    dataServiceSpy.getThemes.and.returnValue(of(mockThemes));
+    settingsServiceSpy.getSettings.and.returnValue(new Settings());
+  });
+
+  it("should be created", () => {
+    expect(service).toBeTruthy();
+  });
+
+  it("should initialize and set default theme if no active theme is saved", async () => {
+    await service.initialize();
+    expect(service.isInitialized()).toBeTrue();
+    expect(service.getActiveTheme()?.entity_id).toBe("default_theme");
+    expect(settingsServiceSpy.saveSettings).toHaveBeenCalled();
+  });
+
+  it("should use saved active theme on initialization", async () => {
+    const settings = new Settings();
+    settings.activeThemeId = "theme-1";
+    settingsServiceSpy.getSettings.and.returnValue(settings);
+
+    await service.initialize();
+    expect(service.getActiveTheme()?.entity_id).toBe("theme-1");
+  });
+
+  it("should resolve asset ID correctly", async () => {
+    await service.initialize();
+    service.setActiveTheme("theme-1");
+    expect(service.resolveAssetId("flag.green")).toBe("asset-1");
+    expect(service.resolveAssetId("non-existent")).toBeNull();
+  });
+
+  it("should activate race override when available", async () => {
+    const settings = new Settings();
+    settings.activeThemeId = "default_theme";
+    settings.raceThemeOverrides = { "race-1": "theme-1" };
+    settingsServiceSpy.getSettings.and.returnValue(settings);
+
+    await service.initialize();
+    service.activateForRace("race-1");
+    expect(service.getActiveTheme()?.entity_id).toBe("theme-1");
+  });
+
+  it("should fall back to global theme if race override points to deleted theme", async () => {
+    const settings = new Settings();
+    settings.activeThemeId = "default_theme";
+    settings.raceThemeOverrides = { "race-1": "non_existent" };
+    settingsServiceSpy.getSettings.and.returnValue(settings);
+
+    await service.initialize();
+    service.activateForRace("race-1");
+    expect(service.getActiveTheme()?.entity_id).toBe("default_theme");
+    expect(settings.raceThemeOverrides?.["race-1"]).toBeUndefined();
+  });
+
+  it("should handle initialization failure", async () => {
+    dataServiceSpy.getThemes.and.returnValue(
+      throwError(() => new Error("Failed")),
+    );
+    await service.initialize();
+    expect(service.isInitialized()).toBeTrue(); // Still marked as initialized but with empty themes
+    expect(service.getThemes().length).toBe(0);
+  });
+});

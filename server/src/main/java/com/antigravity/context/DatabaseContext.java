@@ -50,6 +50,10 @@ public class DatabaseContext {
   }
 
   public synchronized MongoDatabase getDatabase() {
+    if (currentDatabase == null) {
+      System.err.println(
+          "DatabaseContext: currentDatabase is NULL! (Name: " + currentDatabaseName + ")");
+    }
     return currentDatabase;
   }
 
@@ -62,8 +66,16 @@ public class DatabaseContext {
   }
 
   public synchronized void switchDatabase(String databaseName) {
+    if (databaseName == null) {
+      System.err.println("DatabaseContext: Attempted to switch to NULL database name");
+      return;
+    }
     this.currentDatabaseName = databaseName;
     this.currentDatabase = mongoClient.getDatabase(databaseName);
+    if (this.currentDatabase == null) {
+      System.err.println(
+          "DatabaseContext: mongoClient.getDatabase(" + databaseName + ") returned NULL!");
+    }
     if (this.configService != null) {
       this.configService.setLastActiveDatabase(databaseName);
     }

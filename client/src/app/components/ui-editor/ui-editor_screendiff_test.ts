@@ -8,6 +8,7 @@ test.describe("UI Editor Visuals", () => {
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
+    await TestSetupHelper.setupThemeMocks(page);
 
     await TestSetupHelper.setupSettings(page, {
       flagGreen: "/api/assets/download?filename=img1.png",
@@ -50,7 +51,17 @@ test.describe("UI Editor Visuals", () => {
     const editor = page.locator(".ue-container");
     const harness = new UIEditorHarnessE2e(editor);
 
-    await harness.clickImageSelector(0); // Green Flag
+    // Expand the custom theme section (2nd theme)
+    await page
+      .locator(".theme-sub-section")
+      .nth(1)
+      .locator(".section-header")
+      .first()
+      .click();
+
+    // "Flag Images" sub-section is expanded by default (sectionsExpanded.flags = true)
+
+    await harness.clickImageSelector(0); // Green Flag of Custom Theme (1st flag of currently expanded theme)
 
     // Wait for image selector modal to be visible
     await page
@@ -120,6 +131,52 @@ test.describe("UI Editor Visuals", () => {
 
     await expect(page.locator(".reorder-modal")).toHaveScreenshot(
       "ui-editor-columns-list.png",
+    );
+  });
+
+  test("should highlight duplicate theme name and show confirmation on leave", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    // Expand Custom Theme
+    await page
+      .locator(".theme-sub-section")
+      .nth(1)
+      .locator(".section-header")
+      .first()
+      .click();
+
+    // Set duplicate name (Default Theme)
+    const themeInput = page.locator(".theme-name-input").first();
+    await themeInput.fill("Default Theme");
+    await themeInput.blur();
+
+    // Wait for invalid class to be applied
+    const container = page.locator(".theme-title-container.invalid").first();
+    await container.waitFor({ state: "visible" });
+
+    await expect(container).toHaveScreenshot(
+      "ui-editor-duplicate-name-error.png",
+    );
+
+    // Try to navigate back
+    await page.locator("app-editor-title .back-btn").click();
+
+    // Wait for confirmation modal backdrop and content to be visible
+    const modal = page.locator(
+      "app-confirmation-modal[title='UE_CONFIRM_DISCARD_TITLE']",
+    );
+    const modalContent = modal.locator(".modal-content");
+    await modalContent.waitFor({ state: "visible" });
+
+    await expect(modalContent).toHaveScreenshot(
+      "ui-editor-discard-confirm.png",
     );
   });
 });

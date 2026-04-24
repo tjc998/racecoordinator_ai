@@ -37,13 +37,17 @@ import org.bson.types.ObjectId;
 public class DatabaseService {
   private static final org.slf4j.Logger logger =
       org.slf4j.LoggerFactory.getLogger(DatabaseService.class);
-  private static final DatabaseService instance = new DatabaseService();
+  private static DatabaseService instance = new DatabaseService();
 
   public static DatabaseService getInstance() {
     return instance;
   }
 
-  private DatabaseService() {}
+  public static void setInstance(DatabaseService service) {
+    instance = service;
+  }
+
+  public DatabaseService() {}
 
   public void resetToFactory(DatabaseContext context, MongoDatabase database) {
     System.out.println("Resetting database to factory settings...");
@@ -615,12 +619,14 @@ public class DatabaseService {
   }
 
   public RaceSaveData getSavedRace(MongoDatabase database, String saveName, boolean isDemo) {
+    if (database == null) return null;
     MongoCollection<RaceSaveData> collection =
         database.getCollection(getCollectionName("saved_races", isDemo), RaceSaveData.class);
     return collection.find(Filters.eq("saveName", saveName)).first();
   }
 
   public boolean deleteSavedRace(MongoDatabase database, String saveName, boolean isDemo) {
+    if (database == null) return false;
     MongoCollection<RaceSaveData> collection =
         database.getCollection(getCollectionName("saved_races", isDemo), RaceSaveData.class);
     DeleteResult result = collection.deleteOne(Filters.eq("saveName", saveName));
@@ -628,7 +634,7 @@ public class DatabaseService {
   }
 
   public void deleteAllRaceData(MongoDatabase database, String raceEntityId) {
-    if (raceEntityId == null || raceEntityId.isEmpty()) return;
+    if (database == null || raceEntityId == null || raceEntityId.isEmpty()) return;
 
     try {
       // 1. Delete history records

@@ -643,12 +643,12 @@
 }
 
 .all-races-selector {
-  margin-bottom: auto;
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-right: 55px;
 }
+
 
 .race-search {
   width: 100%;

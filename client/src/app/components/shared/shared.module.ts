@@ -5,6 +5,8 @@ import { NgModule } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { AboutDialogComponent } from "src/app/components/shared/about-dialog/about-dialog.component";
 import { AcknowledgementModalComponent } from "src/app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
+import { AssetPickerComponent } from "src/app/components/shared/asset-picker/asset-picker.component";
+import { AssetPreviewComponent } from "src/app/components/shared/asset-preview/asset-preview.component";
 import { AudioSelectorComponent } from "src/app/components/shared/audio-selector/audio-selector.component";
 import { BackButtonComponent } from "src/app/components/shared/back-button/back-button.component";
 import { ConfirmationModalComponent } from "src/app/components/shared/confirmation-modal/confirmation-modal.component";
@@ -26,6 +28,7 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
 @NgModule({
   declarations: [
     TranslatePipe,
+    AssetPickerComponent,
     SvgTextScalerDirective,
     ConfirmationModalComponent,
     AcknowledgementModalComponent,
@@ -44,6 +47,7 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
     ManagerHeaderComponent,
     EditorTitleComponent,
     InputDialogComponent,
+    AssetPreviewComponent,
   ],
 
   imports: [CommonModule, FormsModule, DragDropModule, ScrollingModule],
@@ -53,6 +57,7 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
     DragDropModule,
     ScrollingModule,
     TranslatePipe,
+    AssetPickerComponent,
     SvgTextScalerDirective,
     ConfirmationModalComponent,
     AcknowledgementModalComponent,
@@ -71,6 +76,7 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
     ManagerHeaderComponent,
     EditorTitleComponent,
     InputDialogComponent,
+    AssetPreviewComponent,
   ],
 })
 export class SharedModule {}

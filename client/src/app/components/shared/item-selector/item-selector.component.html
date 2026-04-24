@@ -1,27 +1,51 @@
 <div class="modal-backdrop" *ngIf="visible" (click)="onClose()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <app-back-button *ngIf="backButtonRoute" [route]="backButtonRoute" [queryParams]="backButtonQueryParams"
-        [label]="backButtonLabel || ('IS_BTN_BACK' | translate)" (back)="onBack()"></app-back-button>
-      <div class="modal-title">{{ title || ('IS_TITLE_SELECT_ITEM' | translate) }}</div>
+      <app-back-button
+        *ngIf="backButtonRoute"
+        [route]="backButtonRoute"
+        [queryParams]="backButtonQueryParams"
+        [label]="backButtonLabel || ('IS_BTN_BACK' | translate)"
+        (back)="onBack()"
+      ></app-back-button>
+      <div class="modal-title">
+        {{ title || ("IS_TITLE_SELECT_ITEM" | translate) }}
+      </div>
       <div class="search-container">
-        <input type="text" [(ngModel)]="searchTerm" [placeholder]="'IS_PLACEHOLDER_SEARCH' | translate"
-          class="search-input">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          [placeholder]="'IS_PLACEHOLDER_SEARCH' | translate"
+          class="search-input"
+        />
       </div>
     </div>
 
     <div class="modal-body">
       <div class="item-grid">
-        <div class="item-card" *ngFor="let item of filteredItems" (click)="onSelect(item)">
+        <div
+          class="item-card"
+          *ngFor="let item of filteredItems"
+          (click)="onSelect(item)"
+        >
           <div class="item-preview">
-            <ng-container *ngIf="itemType === 'image'">
-              <img [src]="item.url | avatarUrl" *ngIf="item.url" alt="preview">
-            </ng-container>
-            <ng-container *ngIf="itemType === 'sound'">
-              <img src="assets/images/default_audio_icon.png" class="preview-icon" alt="sound">
-              <button class="play-preview" (click)="onPlay($event, item)" [title]="'IS_BTN_PLAY' | translate">▶</button>
-            </ng-container>
-            <div class="no-preview" *ngIf="!item.url && itemType === 'image'">?</div>
+            <app-asset-preview
+              [type]="item.type || itemType"
+              [assetId]="item.id || item.entity_id || item.model?.entityId"
+              [imageUrl]="item.url"
+              [name]="item.name || ''"
+              [images]="item.images || undefined"
+              [animate]="true"
+            >
+            </app-asset-preview>
+            <button
+              *ngIf="itemType === 'sound'"
+              class="play-preview"
+              (click)="onPlay($event, item)"
+              [title]="'IS_BTN_PLAY' | translate"
+            >
+              ▶
+            </button>
           </div>
           <div class="item-name">{{ item.name }}</div>
         </div>

@@ -17,7 +17,9 @@ import io.javalin.http.Context;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.List;
+import org.bson.Document;
 
 public class AssetTaskHandler {
 
@@ -31,14 +33,92 @@ public class AssetTaskHandler {
     app.post("/api/assets/delete", this::deleteAsset);
     app.post("/api/assets/rename", this::renameAsset);
     app.post("/api/assets/save-image-set", this::saveImageSet);
+    app.get("/api/assets/download/{id}", this::downloadAsset);
     app.get("/assets/{filename}", this::serveAsset);
   }
 
+  protected AssetService getAssetService() {
+    String currentDbName = databaseContext.getCurrentDatabaseName();
+    if (currentDbName == null) {
+      currentDbName = "Race Coordinator AI DB";
+    }
+    return new AssetService(
+        databaseContext.getDatabase(), databaseContext.getDataRoot() + currentDbName + "/assets");
+  }
+
+  void setStatus(Context ctx, int status) {
+    ctx.status(status);
+  }
+
+  void setResult(Context ctx, String result) {
+    ctx.result(result);
+  }
+
+  void setResult(Context ctx, byte[] result) {
+    ctx.result(result);
+  }
+
+  void setJson(Context ctx, Object obj) {
+    ctx.json(obj);
+  }
+
+  void setStream(Context ctx, InputStream is) {
+    ctx.result(is);
+  }
+
+  void setContentType(Context ctx, String contentType) {
+    ctx.contentType(contentType);
+  }
+
+  String getPathParam(Context ctx, String key) {
+    return ctx.pathParam(key);
+  }
+
+  public void downloadAsset(Context ctx) {
+    String id = getPathParam(ctx, "id");
+    AssetService service = getAssetService();
+    AssetMessage asset = service.getAssetById(id);
+    if (asset == null) {
+      setStatus(ctx, 404);
+      setResult(ctx, "Asset not found");
+      return;
+    }
+
+    // Lookup internal filename from document
+    Document doc =
+        databaseContext
+            .getDatabase()
+            .getCollection("assets")
+            .find(com.mongodb.client.model.Filters.eq("_id", id))
+            .first();
+    // Support image sets by using their stored URL (thumbnail)
+    String filename = doc.getString("filename");
+    if (filename == null && "image_set".equals(doc.getString("type"))) {
+      String url = doc.getString("url");
+      if (url != null && url.startsWith("/assets/")) {
+        filename = url.substring("/assets/".length());
+      }
+    }
+
+    if (filename == null) {
+      setStatus(ctx, 404);
+      setResult(ctx, "Asset file not found");
+      return;
+    }
+
+    serveFile(ctx, filename);
+  }
+
   private void serveAsset(Context ctx) {
-    String filename = ctx.pathParam("filename");
+    String filename = getPathParam(ctx, "filename");
+    serveFile(ctx, filename);
+  }
+
+  private void serveFile(Context ctx, String filename) {
     // Security check: prevent directory traversal
     if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
-      ctx.status(403).result("Forbidden");
+      setStatus(ctx, 403);
+      setResult(ctx, "Forbidden");
       return;
     }
 
@@ -49,47 +129,42 @@ public class AssetTaskHandler {
     File file = new File(databaseContext.getDataRoot() + currentDbName + "/assets", filename);
     if (file.exists() && file.isFile()) {
       try {
-        ctx.result(new FileInputStream(file));
+        setStream(ctx, new FileInputStream(file));
         // Simple content type mapping
         String lowerName = filename.toLowerCase();
         if (lowerName.endsWith(".png")) {
-          ctx.contentType("image/png");
+          setContentType(ctx, "image/png");
         } else if (lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg")) {
-          ctx.contentType("image/jpeg");
+          setContentType(ctx, "image/jpeg");
         } else if (lowerName.endsWith(".gif")) {
-          ctx.contentType("image/gif");
+          setContentType(ctx, "image/gif");
         } else if (lowerName.endsWith(".mp3")) {
-          ctx.contentType("audio/mpeg");
+          setContentType(ctx, "audio/mpeg");
         } else if (lowerName.endsWith(".wav")) {
-          ctx.contentType("audio/wav");
+          setContentType(ctx, "audio/wav");
         } else {
-          ctx.contentType("application/octet-stream");
+          setContentType(ctx, "application/octet-stream");
         }
       } catch (FileNotFoundException e) {
-        ctx.status(404).result("Not Found");
+        setStatus(ctx, 404);
+        setResult(ctx, "Not Found");
       }
     } else {
-      ctx.status(404).result("Not Found");
+      setStatus(ctx, 404);
+      setResult(ctx, "Not Found");
     }
   }
 
   private void listAssets(Context ctx) {
     try {
-      String currentDbName = databaseContext.getCurrentDatabaseName();
-      if (currentDbName == null) {
-        currentDbName = "Race Coordinator AI DB";
-      }
-      AssetService service =
-          new AssetService(
-              databaseContext.getDatabase(),
-              databaseContext.getDataRoot()
-                  + currentDbName
-                  + "/assets"); // Instantiate AssetService per request
+      AssetService service = getAssetService();
       List<AssetMessage> assets = service.getAllAssets();
       ListAssetsResponse response = ListAssetsResponse.newBuilder().addAllAssets(assets).build();
-      ctx.contentType("application/octet-stream").result(response.toByteArray());
+      setContentType(ctx, "application/octet-stream");
+      setResult(ctx, response.toByteArray());
     } catch (Exception e) {
-      ctx.status(500).result("Error listing assets: " + e.getMessage());
+      setStatus(ctx, 500);
+      setResult(ctx, "Error listing assets: " + e.getMessage());
       e.printStackTrace();
     }
   }
@@ -97,16 +172,7 @@ public class AssetTaskHandler {
   private void uploadAsset(Context ctx) {
     try {
       UploadAssetRequest request = UploadAssetRequest.parseFrom(ctx.bodyAsBytes());
-      String currentDbName = databaseContext.getCurrentDatabaseName();
-      if (currentDbName == null) {
-        currentDbName = "Race Coordinator AI DB";
-      }
-      AssetService service =
-          new AssetService(
-              databaseContext.getDatabase(),
-              databaseContext.getDataRoot()
-                  + currentDbName
-                  + "/assets"); // Instantiate AssetService per request
+      AssetService service = getAssetService();
       AssetMessage asset =
           service.saveAsset(request.getName(), request.getType(), request.getData().toByteArray());
 
@@ -116,7 +182,8 @@ public class AssetTaskHandler {
               .setMessage("Asset uploaded successfully")
               .setAsset(asset)
               .build();
-      ctx.contentType("application/octet-stream").result(response.toByteArray());
+      setContentType(ctx, "application/octet-stream");
+      setResult(ctx, response.toByteArray());
     } catch (Exception e) {
       e.printStackTrace();
       UploadAssetResponse response =
@@ -124,31 +191,24 @@ public class AssetTaskHandler {
               .setSuccess(false)
               .setMessage("Error uploading asset: " + e.getMessage())
               .build();
-      ctx.contentType("application/octet-stream").result(response.toByteArray());
+      setContentType(ctx, "application/octet-stream");
+      setResult(ctx, response.toByteArray());
     }
   }
 
   private void deleteAsset(Context ctx) {
     try {
       DeleteAssetRequest request = DeleteAssetRequest.parseFrom(ctx.bodyAsBytes());
-      String currentDbName = databaseContext.getCurrentDatabaseName();
-      if (currentDbName == null) {
-        currentDbName = "Race Coordinator AI DB";
-      }
-      AssetService service =
-          new AssetService(
-              databaseContext.getDatabase(),
-              databaseContext.getDataRoot()
-                  + currentDbName
-                  + "/assets"); // Instantiate AssetService per request
-      boolean success = service.deleteAsset(request.getId()); // Used local service
+      AssetService service = getAssetService();
+      boolean success = service.deleteAsset(request.getId());
 
       DeleteAssetResponse response =
           DeleteAssetResponse.newBuilder()
               .setSuccess(success)
               .setMessage(success ? "Asset deleted" : "Asset not found or could not be deleted")
               .build();
-      ctx.contentType("application/octet-stream").result(response.toByteArray());
+      setContentType(ctx, "application/octet-stream");
+      setResult(ctx, response.toByteArray());
     } catch (Exception e) {
       e.printStackTrace();
       DeleteAssetResponse response =
@@ -156,32 +216,24 @@ public class AssetTaskHandler {
               .setSuccess(false)
               .setMessage("Error deleting asset: " + e.getMessage())
               .build();
-      ctx.contentType("application/octet-stream").result(response.toByteArray());
+      setContentType(ctx, "application/octet-stream");
+      setResult(ctx, response.toByteArray());
     }
   }
 
   private void renameAsset(Context ctx) {
     try {
       RenameAssetRequest request = RenameAssetRequest.parseFrom(ctx.bodyAsBytes());
-      String currentDbName = databaseContext.getCurrentDatabaseName();
-      if (currentDbName == null) {
-        currentDbName = "Race Coordinator AI DB";
-      }
-      AssetService service =
-          new AssetService(
-              databaseContext.getDatabase(),
-              databaseContext.getDataRoot()
-                  + currentDbName
-                  + "/assets"); // Instantiate AssetService per request
-      boolean success =
-          service.renameAsset(request.getId(), request.getNewName()); // Used local service
+      AssetService service = getAssetService();
+      boolean success = service.renameAsset(request.getId(), request.getNewName());
 
       RenameAssetResponse response =
           RenameAssetResponse.newBuilder()
               .setSuccess(success)
               .setMessage(success ? "Asset renamed" : "Asset not found")
               .build();
-      ctx.contentType("application/octet-stream").result(response.toByteArray());
+      setContentType(ctx, "application/octet-stream");
+      setResult(ctx, response.toByteArray());
     } catch (Exception e) {
       e.printStackTrace();
       RenameAssetResponse response =
@@ -189,21 +241,15 @@ public class AssetTaskHandler {
               .setSuccess(false)
               .setMessage("Error renaming asset: " + e.getMessage())
               .build();
-      ctx.contentType("application/octet-stream").result(response.toByteArray());
+      setContentType(ctx, "application/octet-stream");
+      setResult(ctx, response.toByteArray());
     }
   }
 
   private void saveImageSet(Context ctx) {
     try {
       SaveImageSetRequest request = SaveImageSetRequest.parseFrom(ctx.bodyAsBytes());
-      String currentDbName = databaseContext.getCurrentDatabaseName();
-      if (currentDbName == null) {
-        currentDbName = "Race Coordinator AI DB";
-      }
-      AssetService service =
-          new AssetService(
-              databaseContext.getDatabase(),
-              databaseContext.getDataRoot() + currentDbName + "/assets");
+      AssetService service = getAssetService();
       AssetMessage asset =
           service.saveImageSet(request.getId(), request.getName(), request.getEntriesList());
 
@@ -213,7 +259,8 @@ public class AssetTaskHandler {
               .setMessage("Image set saved successfully")
               .setAsset(asset)
               .build();
-      ctx.contentType("application/octet-stream").result(response.toByteArray());
+      setContentType(ctx, "application/octet-stream");
+      setResult(ctx, response.toByteArray());
     } catch (Exception e) {
       e.printStackTrace();
       SaveImageSetResponse response =
@@ -221,7 +268,8 @@ public class AssetTaskHandler {
               .setSuccess(false)
               .setMessage("Error saving image set: " + e.getMessage())
               .build();
-      ctx.contentType("application/octet-stream").result(response.toByteArray());
+      setContentType(ctx, "application/octet-stream");
+      setResult(ctx, response.toByteArray());
     }
   }
 }

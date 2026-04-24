@@ -590,6 +590,38 @@ export class DataService {
     return this.http.delete<any>(`${this.baseUrl}/api/teams/${id}`);
   }
 
+  // --- Theme API ---
+
+  getThemes(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/api/themes`);
+  }
+
+  getDefaultTheme(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/api/themes/default`);
+  }
+
+  getTheme(id: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/api/themes/${id}`);
+  }
+
+  createTheme(theme: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/themes`, theme);
+  }
+
+  updateTheme(id: string, theme: any): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/api/themes/${id}`, theme);
+  }
+
+  deleteTheme(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrl}/api/themes/${id}`);
+  }
+
+  duplicateTheme(id: string, name?: string): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/themes/${id}/duplicate`, {
+      name,
+    });
+  }
+
   getDatabases(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/api/databases`);
   }
@@ -654,6 +686,10 @@ export class DataService {
           return listResponse.assets;
         }),
       );
+  }
+
+  getAssetUrl(id: string): string {
+    return `${this.baseUrl}/api/assets/download/${id}`;
   }
 
   uploadAsset(

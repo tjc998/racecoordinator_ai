@@ -38,14 +38,13 @@ else
 fi
 
 # JVM optimization for faster startup in tests
-JVM_OPTS="-XX:TieredStopAtLevel=1 -Dnet.bytebuddy.experimental=true"
+JVM_OPTS="-XX:TieredStopAtLevel=1 -Djdk.attach.allowAttachSelf=true --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED"
 
 mvn test $MVN_THREADS "$@" \
   -Dbuild.dist.dir="$SERVER_BUILD_DIR" \
   -DskipProtobuf=true \
   -DforkCount="$FORK_COUNT" \
   -DreuseForks="$REUSE_FORKS" \
-  -DargLine="$JVM_OPTS" \
   -Djava.io.tmpdir="$SERVER_TMP" \
   -Dde.flapdoodle.embed.mongo.artifacts="$SERVER_TMP/.embedmongo" \
   -Dmaven.repo.local="$SERVER_DIR/.m2/repository"

@@ -7,6 +7,7 @@ import { AnalyticsService } from "./analytics.service";
 import { DataService } from "./data.service";
 import { NavigationService } from "./services/navigation.service";
 import { SettingsService } from "./services/settings.service";
+import { ThemeService } from "./services/theme.service";
 
 @Component({
   selector: "app-root",
@@ -43,12 +44,17 @@ export class AppComponent implements OnInit {
     private analyticsService: AnalyticsService,
     private settingsService: SettingsService,
     private navigationService: NavigationService,
+    private themeService: ThemeService,
   ) {}
 
   ngOnInit() {
     console.log("AppComponent: Initializing application...");
     this.analyticsService.initTracking();
     this.dataService.connectToRaceDataSocket();
+
+    this.themeService.initialize().then(() => {
+      console.log("AppComponent: ThemeService initialized");
+    });
 
     this.dataService.getRaceUpdate().subscribe((update) => {
       console.log("AppComponent: Received Race Update");

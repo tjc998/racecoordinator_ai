@@ -37,6 +37,7 @@ public class AssetServiceTest {
 
   private MongoDatabase mongoDatabase;
   private MongoCollection<Document> collection;
+  private MongoCollection<Document> themesCollection;
   private AssetService assetService;
   private String assetsDir;
   private File testDir;
@@ -45,13 +46,18 @@ public class AssetServiceTest {
   public void setup() throws Exception {
     mongoDatabase = mock(MongoDatabase.class);
     collection = mock(MongoCollection.class);
+    themesCollection = mock(MongoCollection.class);
 
     when(mongoDatabase.getCollection("assets")).thenReturn(collection);
+    when(mongoDatabase.getCollection("themes")).thenReturn(themesCollection);
 
     // Default to return an empty FindIterable for any find() call
     FindIterable<Document> emptyIterable = mock(FindIterable.class);
     when(collection.find(any(Bson.class))).thenReturn(emptyIterable);
     when(collection.find()).thenReturn(emptyIterable);
+
+    when(themesCollection.find(any(Bson.class))).thenReturn(emptyIterable);
+    when(themesCollection.find()).thenReturn(emptyIterable);
 
     // Manual temp dir management to avoid permission issues in /var/folders/
     testDir = new File("target/test_assets_" + System.currentTimeMillis());
@@ -355,5 +361,18 @@ public class AssetServiceTest {
     boolean readded = captor.getAllValues().stream().anyMatch(d -> id.equals(d.getString("_id")));
 
     assertFalse("Default asset should NOT be re-added if it already exists as 'deleted'", readded);
+  }
+
+  @Test
+  public void testBackfillDefaultTheme() {
+    // 1. Mock theme not found
+    FindIterable<Document> emptyIterable = mock(FindIterable.class);
+    when(emptyIterable.first()).thenReturn(null);
+    when(themesCollection.find(any(Bson.class))).thenReturn(emptyIterable);
+
+    assetService.backfillDefaultTheme();
+
+    // Verify insertion of default theme
+    verify(themesCollection, atLeastOnce()).insertOne(any(Document.class));
   }
 }

@@ -15,13 +15,17 @@ import {
   tick,
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
+import { By } from "@angular/platform-browser";
 import { Router } from "@angular/router";
 import { delay, of } from "rxjs";
 import { AnchorPoint } from "src/app/components/raceday/column_definition";
 import { DataService } from "src/app/data.service";
 import { Settings } from "src/app/models/settings";
+import { Theme } from "src/app/models/theme";
 import { FileSystemService } from "src/app/services/file-system.service";
 import { SettingsService } from "src/app/services/settings.service";
+import { ThemeService } from "src/app/services/theme.service";
+import { TranslationService } from "src/app/services/translation.service";
 
 import { UIEditorComponent } from "./ui-editor.component";
 
@@ -31,9 +35,24 @@ class MockImageSelectorComponent {
   @Input() imageUrl?: string;
   @Input() assets: any[] = [];
   @Input() size?: string;
+  @Input() disabled: boolean = false;
+  @Input() assetType: string = "image";
+  @Input() assetId?: string;
+  @Input() images?: any[];
   @Output() imageUrlChange = new EventEmitter<string>();
+  @Output() assetSelected = new EventEmitter<any>();
   @Output() uploadStarted = new EventEmitter<void>();
   @Output() uploadFinished = new EventEmitter<void>();
+}
+
+@Component({ selector: "app-asset-preview", template: "", standalone: false })
+class MockAssetPreviewComponent {
+  @Input() assetId?: string;
+  @Input() type: string = "image";
+  @Input() imageUrl?: string;
+  @Input() name: string = "";
+  @Input() images?: any[];
+  @Input() animate: boolean = true;
 }
 
 @Component({ selector: "app-editor-title", template: "", standalone: false })
@@ -51,6 +70,48 @@ class MockColumnPreviewComponent {
   @Input() columnVisibility: any = {};
 }
 
+@Component({ selector: "app-toolbar", template: "", standalone: false })
+class MockToolbarComponent {
+  @Input() showAdd = false;
+  @Input() showEdit = false;
+  @Input() showHelp = false;
+  @Input() showDelete = false;
+  @Input() showCopy = false;
+  @Input() showUndo = false;
+  @Input() showRedo = false;
+  @Input() isSaving = false;
+  @Input() disabledAdd = false;
+  @Input() disabledEdit = false;
+  @Input() disabledDelete = false;
+  @Input() disabledCopy = false;
+  @Input() showActivate = false;
+  @Input() disabledActivate = false;
+  @Input() showAnalytics = true;
+  @Input() undoManager?: any;
+  @Output() add = new EventEmitter<void>();
+  @Output() edit = new EventEmitter<void>();
+  @Output() copy = new EventEmitter<void>();
+  @Output() help = new EventEmitter<void>();
+  @Output() delete = new EventEmitter<void>();
+  @Output() activate = new EventEmitter<void>();
+}
+
+@Component({
+  selector: "app-confirmation-modal",
+  template: "",
+  standalone: false,
+})
+class MockConfirmationModalComponent {
+  @Input() visible = false;
+  @Input() title = "";
+  @Input() message = "";
+  @Input() messageParams: any = {};
+  @Input() cancelText = "NO";
+  @Input() confirmText = "YES";
+  @Output() cancel = new EventEmitter<void>();
+  @Output() confirm = new EventEmitter<void>();
+}
+
 @Component({ selector: "app-reorder-dialog", template: "", standalone: false })
 class MockReorderDialogComponent {
   @Input() visible: boolean = false;
@@ -62,6 +123,8 @@ class MockReorderDialogComponent {
 @Pipe({ name: "translate", standalone: false })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
+    if (value === "UE_LABEL_DEFAULT_THEME") return "RaceCoordinator AI";
+    if (value === "UE_LABEL_COPY_SUFFIX") return " (Copy)";
     return value;
   }
 }
@@ -73,6 +136,8 @@ describe("UIEditorComponent", () => {
   let mockFileSystem: any;
   let mockDataService: any;
   let mockRouter: any;
+  let mockThemeService: any;
+  let mockTranslationService: any;
 
   beforeEach(async () => {
     mockSettingsService = jasmine.createSpyObj("SettingsService", [
@@ -84,8 +149,38 @@ describe("UIEditorComponent", () => {
       "selectCustomFolder",
       "clearCustomFolder",
     ]);
-    mockDataService = jasmine.createSpyObj("DataService", ["listAssets"]);
+    mockDataService = jasmine.createSpyObj("DataService", [
+      "listAssets",
+      "getThemes",
+      "updateTheme",
+      "createTheme",
+      "deleteTheme",
+      "getAssetUrl",
+    ]);
     mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
+    mockThemeService = jasmine.createSpyObj("ThemeService", [
+      "getActiveTheme",
+      "isThemeActive",
+      "getThemes",
+      "refresh",
+      "setActiveTheme",
+      "deleteTheme",
+      "duplicateTheme",
+      "resolveAssetId",
+    ]);
+    mockTranslationService = jasmine.createSpyObj("TranslationService", [
+      "translate",
+    ]);
+    mockTranslationService.translate.and.callFake((key: string) => {
+      if (key === "UE_LABEL_DEFAULT_THEME") return "RaceCoordinator AI";
+      if (key === "UE_LABEL_COPY_SUFFIX") return " (Copy)";
+      return key;
+    });
+    mockDataService.listAssets.and.returnValue(of([]));
+    mockDataService.getThemes.and.returnValue(of([]));
+    mockDataService.updateTheme.and.returnValue(of({}));
+    mockDataService.deleteTheme.and.returnValue(of({}));
+    mockDataService.createTheme.and.returnValue(of({}));
 
     const settings = Object.assign(new Settings(), {
       recentRaceIds: [],
@@ -121,6 +216,10 @@ describe("UIEditorComponent", () => {
     mockFileSystem.getCustomDirectoryHandle.and.returnValue(
       of({ name: "CustomUI" }),
     );
+    mockDataService.getThemes.and.returnValue(of([]));
+    mockThemeService.getActiveTheme.and.returnValue(null);
+    mockThemeService.getThemes.and.returnValue([]);
+    mockThemeService.resolveAssetId.and.returnValue(null);
 
     await TestBed.configureTestingModule({
       declarations: [
@@ -129,6 +228,9 @@ describe("UIEditorComponent", () => {
         MockEditorTitleComponent,
         MockColumnPreviewComponent,
         MockReorderDialogComponent,
+        MockAssetPreviewComponent,
+        MockToolbarComponent,
+        MockConfirmationModalComponent,
         MockTranslatePipe,
       ],
       imports: [FormsModule],
@@ -137,15 +239,17 @@ describe("UIEditorComponent", () => {
         { provide: FileSystemService, useValue: mockFileSystem },
         { provide: DataService, useValue: mockDataService },
         { provide: Router, useValue: mockRouter },
-        ChangeDetectorRef,
+        { provide: ThemeService, useValue: mockThemeService },
+        { provide: TranslationService, useValue: mockTranslationService },
       ],
     }).compileComponents();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     fixture = TestBed.createComponent(UIEditorComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+    await fixture.whenStable();
   });
 
   it("should create and load data", () => {
@@ -193,17 +297,22 @@ describe("UIEditorComponent", () => {
   });
 
   it("should detect changes via undo manager", fakeAsync(() => {
-    tick();
-    fixture.detectChanges();
+    // Prevent auto-save from resetting the dirty state in this test
+    component.isLoading = true;
 
-    // hasChanges becomes false again because captureState triggers autoSaveSettings,
-    // which calls resetTracking on the undo manager (effectively a "save").
-    expect(component.hasChanges()).toBeFalse();
+    component.undoManager.initialize(component.editingState);
+    component.editingSettings.sortByStandings =
+      !component.editingSettings.sortByStandings;
+    component.captureState();
+    tick();
+
+    expect(component.hasChanges()).toBeTrue();
   }));
 
   it("should return correct column slots", () => {
     component.editingSettings.racedayColumns = ["driver.name", "lapCount"];
-    const slots = component.columnSlots;
+    component.refreshDisplayProperties();
+    const slots = component.displayColumnSlots;
     expect(slots.length).toBe(2);
     expect(slots[0].label).toBe("RD_COL_NAME");
     expect(slots[1].label).toBe("RD_COL_LAP");
@@ -211,6 +320,7 @@ describe("UIEditorComponent", () => {
 
   it("should determine resizing column key", () => {
     component.editingSettings.racedayColumns = ["lapCount", "driver.name"];
+    component.refreshDisplayProperties();
     component.editingSettings.columnLayouts = {
       lapCount: { [AnchorPoint.CenterCenter]: "lapCount" },
       "driver.name": { [AnchorPoint.CenterCenter]: "driver.name" },
@@ -219,6 +329,7 @@ describe("UIEditorComponent", () => {
     expect(component.resizingColumnKey).toBe("driver.name");
 
     component.editingSettings.racedayColumns = ["lapCount"];
+    component.refreshDisplayProperties();
     component.editingSettings.columnLayouts = {
       lapCount: { [AnchorPoint.CenterCenter]: "lapCount" },
     };
@@ -325,7 +436,8 @@ describe("UIEditorComponent", () => {
 
   it("should return correct label for avatar column in columnSlots", () => {
     component.editingSettings.racedayColumns = ["driver.avatarUrl"];
-    const slots = component.columnSlots;
+    component.refreshDisplayProperties();
+    const slots = component.displayColumnSlots;
     expect(slots.length).toBe(1);
     expect(slots[0].label).toBe("RD_COL_AVATAR");
   });
@@ -363,16 +475,16 @@ describe("UIEditorComponent", () => {
       const newComponent = newFixture.componentInstance;
       newFixture.detectChanges();
 
-      expect(newComponent.sectionsExpanded.layout).toBeFalse();
-      expect(newComponent.sectionsExpanded.config).toBeTrue();
-      expect(newComponent.sectionsExpanded.flags).toBeFalse();
+      expect(newComponent.sectionsExpanded["layout"]).toBeFalse();
+      expect(newComponent.sectionsExpanded["config"]).toBeTrue();
+      expect(newComponent.sectionsExpanded["flags"]).toBeFalse();
     });
 
     it("should toggle section and save to localStorage", () => {
-      const initialLayout = component.sectionsExpanded.layout;
+      const initialLayout = component.sectionsExpanded["layout"];
       component.toggleSection("layout");
 
-      expect(component.sectionsExpanded.layout).toBe(!initialLayout);
+      expect(component.sectionsExpanded["layout"]).toBe(!initialLayout);
       expect(localStorage.setItem).toHaveBeenCalledWith(
         "ui_editor_expanders",
         JSON.stringify(component.sectionsExpanded),
@@ -385,12 +497,880 @@ describe("UIEditorComponent", () => {
         "QuotaExceededError",
       );
 
-      const initialLayout = component.sectionsExpanded.layout;
+      const initialLayout = component.sectionsExpanded["layout"];
       component.toggleSection("layout");
 
       // State should still toggle locally even if save fails
-      expect(component.sectionsExpanded.layout).toBe(!initialLayout);
+      expect(component.sectionsExpanded["layout"]).toBe(!initialLayout);
       expect(console.error).toHaveBeenCalled();
     });
+  });
+
+  describe("theme toolbar states", () => {
+    it("should render a toolbar for each theme", () => {
+      const themes: Theme[] = [
+        {
+          entity_id: "t1",
+          name: "Default",
+          is_default: true,
+          slots: {},
+        } as Theme,
+        {
+          entity_id: "t2",
+          name: "Custom",
+          is_default: false,
+          slots: {},
+        } as Theme,
+      ];
+      component.editingState.themes = themes;
+      component.refreshDisplayProperties();
+      themes.forEach((t) => (component.sectionsExpanded[t.entity_id] = true));
+      fixture.detectChanges();
+
+      const toolbars = fixture.debugElement.queryAll(
+        By.css(".theme-toolbar-container app-toolbar"),
+      );
+      expect(toolbars.length).toBe(themes.length);
+    });
+
+    it("should disable Delete only on the default theme toolbar", () => {
+      const themes: Theme[] = [
+        {
+          entity_id: "t1",
+          name: "Default",
+          is_default: true,
+          slots: {},
+        } as Theme,
+        {
+          entity_id: "t2",
+          name: "Custom",
+          is_default: false,
+          slots: {},
+        } as Theme,
+      ];
+      component.editingState.themes = themes;
+      component.refreshDisplayProperties();
+      themes.forEach((t) => (component.sectionsExpanded[t.entity_id] = true));
+      fixture.detectChanges();
+
+      const toolbars = fixture.debugElement.queryAll(
+        By.css(".theme-toolbar-container app-toolbar"),
+      );
+
+      // Default theme toolbar - Delete should be hidden
+      expect(toolbars[0].componentInstance.showDelete).toBeFalse();
+
+      // Custom theme toolbar - Delete should be shown and enabled
+      expect(toolbars[1].componentInstance.showDelete).toBeTrue();
+      expect(toolbars[1].componentInstance.disabledDelete).toBeFalse();
+    });
+
+    it("should hide Add button only on the default theme toolbar", () => {
+      const themes: Theme[] = [
+        {
+          entity_id: "t1",
+          name: "Default",
+          is_default: true,
+          slots: {},
+        } as Theme,
+        {
+          entity_id: "t2",
+          name: "Custom",
+          is_default: false,
+          slots: {},
+        } as Theme,
+      ];
+      component.editingState.themes = themes;
+      component.refreshDisplayProperties();
+      themes.forEach((t) => (component.sectionsExpanded[t.entity_id] = true));
+      fixture.detectChanges();
+
+      const toolbars = fixture.debugElement.queryAll(
+        By.css(".theme-toolbar-container app-toolbar"),
+      );
+
+      // Default theme toolbar - Add should be hidden
+      expect(toolbars[0].componentInstance.showAdd).toBeFalse();
+
+      // Custom theme toolbar - Add should be shown
+      expect(toolbars[1].componentInstance.showAdd).toBeTrue();
+    });
+
+    it("should enable Edit and Copy on all theme toolbars", () => {
+      const themes: Theme[] = [
+        {
+          entity_id: "t1",
+          name: "Default",
+          is_default: true,
+          slots: {},
+        } as Theme,
+        {
+          entity_id: "t2",
+          name: "Custom",
+          is_default: false,
+          slots: {},
+        } as Theme,
+      ];
+      component.editingState.themes = themes;
+      component.refreshDisplayProperties();
+      themes.forEach((t) => (component.sectionsExpanded[t.entity_id] = true));
+      fixture.detectChanges();
+
+      const toolbars = fixture.debugElement.queryAll(
+        By.css(".theme-toolbar-container app-toolbar"),
+      );
+      toolbars.forEach((toolbar) => {
+        expect(toolbar.componentInstance.disabledEdit).toBeFalse();
+        expect(toolbar.componentInstance.disabledCopy).toBeFalse();
+      });
+    });
+
+    it("should always put the default theme first in the themes list and preserve original order for others", () => {
+      const themes: Theme[] = [
+        { entity_id: "t2", name: "ZZZ", is_default: false } as Theme,
+        { entity_id: "t3", name: "AAA", is_default: false } as Theme,
+        { entity_id: "t1", name: "Default", is_default: true } as Theme,
+      ];
+      component.editingState.themes = themes;
+      component.refreshDisplayProperties();
+
+      const sorted = component.displayThemes;
+      expect(sorted[0].is_default).toBeTrue();
+      expect(sorted[0].entity_id).toBe("t1");
+      // Should now be ZZZ first because it was first in the input array (excluding default)
+      expect(sorted[1].name).toBe("ZZZ");
+      expect(sorted[2].name).toBe("AAA");
+    });
+    it("should allow activating a theme via the toolbar", () => {
+      const themes: Theme[] = [
+        {
+          entity_id: "t1",
+          is_default: true,
+          name: "Default",
+          slots: {},
+        } as Theme,
+        {
+          entity_id: "t2",
+          is_default: false,
+          name: "Custom",
+          slots: {},
+        } as Theme,
+      ];
+      component.editingState.themes = themes;
+      component.refreshDisplayProperties();
+      component.editingSettings.activeThemeId = "t1";
+      fixture.detectChanges();
+
+      const toolbars = fixture.debugElement.queryAll(
+        By.css(".theme-toolbar-container app-toolbar"),
+      );
+
+      // Default theme (active) - Activate should be disabled
+      expect(toolbars[0].componentInstance.showActivate).toBeTrue();
+      expect(toolbars[0].componentInstance.disabledActivate).toBeTrue();
+
+      // Custom theme (inactive) - Activate should be enabled
+      expect(toolbars[1].componentInstance.showActivate).toBeTrue();
+      expect(toolbars[1].componentInstance.disabledActivate).toBeFalse();
+
+      // Click activate on custom theme
+      toolbars[1].componentInstance.activate.emit();
+      expect(component.editingSettings.activeThemeId).toBe("t2");
+      expect(mockThemeService.setActiveTheme).toHaveBeenCalledWith("t2");
+    });
+
+    it("should allow editing the name of a non-default theme", fakeAsync(() => {
+      const themes: Theme[] = [
+        {
+          entity_id: "t1",
+          is_default: true,
+          name: "Default",
+          slots: {},
+        } as Theme,
+        {
+          entity_id: "t2",
+          is_default: false,
+          name: "Custom",
+          slots: {},
+        } as Theme,
+      ];
+      component.editingState.themes = themes;
+      component.refreshDisplayProperties();
+      fixture.detectChanges();
+
+      const input = fixture.debugElement.query(By.css(".theme-name-input"));
+      expect(input).toBeTruthy();
+
+      input.nativeElement.value = "Updated Name";
+      input.nativeElement.dispatchEvent(new Event("input"));
+      input.nativeElement.dispatchEvent(new Event("change"));
+      tick();
+
+      expect(themes[1].name).toBe("Updated Name");
+      expect(mockDataService.updateTheme).toHaveBeenCalledWith("t2", themes[1]);
+    }));
+
+    it("should not show name input for the default theme", () => {
+      const themes: Theme[] = [
+        {
+          entity_id: "t1",
+          is_default: true,
+          name: "Default",
+          slots: {},
+        } as Theme,
+      ];
+      component.editingState.themes = themes;
+      component.refreshDisplayProperties();
+      fixture.detectChanges();
+
+      const inputs = fixture.debugElement.queryAll(By.css(".theme-name-input"));
+      expect(inputs.length).toBe(0);
+
+      const headers = fixture.debugElement.queryAll(
+        By.css(".section-header h1"),
+      );
+      const defaultThemeHeader = headers.find((h) =>
+        h.nativeElement.textContent.includes("RaceCoordinator AI"),
+      );
+      expect(defaultThemeHeader).toBeTruthy();
+      expect(defaultThemeHeader!.nativeElement.textContent).not.toContain(
+        "UE_LABEL_THEME",
+      );
+    });
+
+    it("should disable image selectors for the default theme", () => {
+      const themes: Theme[] = [
+        {
+          entity_id: "t1",
+          name: "Default",
+          is_default: true,
+          slots: {},
+        } as Theme,
+      ];
+      component.editingState.themes = themes;
+      component.refreshDisplayProperties();
+      component.sectionsExpanded["t1"] = true;
+      component.sectionsExpanded["flags"] = true;
+      component.sectionsExpanded["countdown"] = true;
+      component.sectionsExpanded["fuelGauge"] = true;
+      fixture.detectChanges();
+
+      const selectors = fixture.debugElement.queryAll(
+        By.css("app-image-selector"),
+      );
+      expect(selectors.length).toBeGreaterThan(0);
+      selectors.forEach((s) => {
+        expect(s.componentInstance.disabled).toBeTrue();
+      });
+    });
+
+    it("should enable image selectors for custom themes", () => {
+      const themes: Theme[] = [
+        {
+          entity_id: "t2",
+          name: "Custom",
+          is_default: false,
+          slots: {},
+        } as Theme,
+      ];
+      component.editingState.themes = themes;
+      component.refreshDisplayProperties();
+      component.sectionsExpanded["t2"] = true;
+      component.sectionsExpanded["flags"] = true;
+      component.sectionsExpanded["countdown"] = true;
+      component.sectionsExpanded["fuelGauge"] = true;
+      fixture.detectChanges();
+
+      const selectors = fixture.debugElement.queryAll(
+        By.css("app-image-selector"),
+      );
+      expect(selectors.length).toBeGreaterThan(0);
+      selectors.forEach((s) => {
+        expect(s.componentInstance.disabled).toBeFalse();
+      });
+    });
+
+    it("should not allow updating default theme slots", async () => {
+      const theme = { entity_id: "t1", is_default: true, slots: {} } as Theme;
+
+      await component.onThemeSlotChanged(theme, "flag.green", {
+        entity_id: "a1",
+      });
+
+      expect(mockDataService.updateTheme).not.toHaveBeenCalled();
+    });
+
+    it("should show confirmation modal for non-default theme deletion", () => {
+      const theme = {
+        entity_id: "t2",
+        is_default: false,
+        name: "Custom",
+        slots: {},
+      } as Theme;
+
+      component.onDeleteTheme(theme);
+
+      expect(component.showDeleteConfirm).toBeTrue();
+      expect(component.themeToDelete).toBe(theme);
+    });
+
+    it("should handle deletion confirmation and select default if deleted theme was active", fakeAsync(() => {
+      const themes: Theme[] = [
+        {
+          entity_id: "t1",
+          is_default: true,
+          name: "Default",
+          slots: {},
+        } as Theme,
+        {
+          entity_id: "t2",
+          is_default: false,
+          name: "Custom",
+          slots: {},
+        } as Theme,
+      ];
+      component.editingState.themes = themes;
+      component.refreshDisplayProperties();
+      component.editingSettings.activeThemeId = "t2";
+      component.themeToDelete = themes[1];
+      component.showDeleteConfirm = true;
+
+      mockThemeService.deleteTheme.and.returnValue(Promise.resolve());
+      mockThemeService.refresh.and.returnValue(Promise.resolve());
+      mockThemeService.getThemes.and.returnValue(themes.slice(0, 1));
+
+      component.onConfirmDeleteTheme();
+      tick();
+      tick();
+
+      expect(mockThemeService.deleteTheme).toHaveBeenCalledWith("t2");
+      expect(component.editingSettings.activeThemeId).toBe("t1");
+      expect(component.showDeleteConfirm).toBeFalse();
+    }));
+
+    it("should duplicate the default theme when creating a new theme without activating it", fakeAsync(() => {
+      const defaultTheme = {
+        entity_id: "t1",
+        is_default: true,
+        name: "Default",
+        slots: {},
+      } as Theme;
+      const newTheme = {
+        entity_id: "t3",
+        is_default: false,
+        name: "New Theme",
+        slots: {},
+      } as Theme;
+      component.editingState.themes = [defaultTheme];
+      component.refreshDisplayProperties();
+      component.editingSettings.activeThemeId = "t1";
+
+      mockThemeService.duplicateTheme.and.returnValue(
+        Promise.resolve(newTheme),
+      );
+
+      component.createNewTheme();
+      flush();
+
+      const expectedName = "RaceCoordinator AI (Copy)";
+      expect(mockThemeService.duplicateTheme).toHaveBeenCalledWith(
+        "t1",
+        expectedName,
+      );
+      expect(component.editingSettings.activeThemeId).toBe("t1"); // Should still be t1
+      expect(component.displayThemes.length).toBe(2);
+      expect(component.sectionsExpanded["t3"]).toBeTrue();
+    }));
+
+    it("should duplicate a theme without activating the copy", fakeAsync(() => {
+      const themes: Theme[] = [
+        {
+          entity_id: "t1",
+          is_default: true,
+          name: "Default",
+          slots: {},
+        } as Theme,
+        {
+          entity_id: "t2",
+          is_default: false,
+          name: "Custom",
+          slots: {},
+        } as Theme,
+      ];
+      const newTheme = {
+        entity_id: "t2_copy",
+        is_default: false,
+        name: "Custom (Copy)",
+      } as Theme;
+      component.editingState.themes = themes;
+      component.refreshDisplayProperties();
+      component.editingSettings.activeThemeId = "t1";
+
+      mockThemeService.duplicateTheme.and.returnValue(
+        Promise.resolve(newTheme),
+      );
+
+      component.onDuplicateTheme(themes[1]);
+      flush();
+
+      const expectedName = "Custom (Copy)";
+
+      expect(mockThemeService.duplicateTheme).toHaveBeenCalledWith(
+        "t2",
+        expectedName,
+      );
+      expect(component.editingSettings.activeThemeId).toBe("t1"); // Should still be t1
+      expect(mockThemeService.setActiveTheme).not.toHaveBeenCalledWith(
+        "t2_copy",
+      );
+    }));
+
+    it("should use 'RaceCoordinator AI (Copy)' when duplicating the default theme via the Copy button", fakeAsync(() => {
+      const themes: Theme[] = [
+        {
+          entity_id: "t1",
+          is_default: true,
+          name: "Default",
+          slots: {},
+        } as Theme,
+      ];
+      component.editingState.themes = themes;
+      component.refreshDisplayProperties();
+
+      mockThemeService.duplicateTheme.and.returnValue(
+        Promise.resolve({ entity_id: "t2", slots: {} } as Theme),
+      );
+
+      component.onDuplicateTheme(themes[0]);
+      flush();
+
+      expect(mockThemeService.duplicateTheme).toHaveBeenCalledWith(
+        "t1",
+        "RaceCoordinator AI (Copy)",
+      );
+    }));
+
+    it("should refresh and trigger change detection after duplication", fakeAsync(() => {
+      const themes: Theme[] = [
+        {
+          entity_id: "t1",
+          is_default: true,
+          name: "Default",
+          slots: {},
+        } as Theme,
+      ];
+      component.editingState.themes = themes;
+      component.refreshDisplayProperties();
+      const cdr = (component as any).cdr;
+      const markForCheckSpy = spyOn(cdr, "markForCheck").and.callThrough();
+
+      mockThemeService.duplicateTheme.and.returnValue(
+        Promise.resolve({ entity_id: "t2", slots: {} } as Theme),
+      );
+
+      component.onDuplicateTheme(themes[0]);
+      flush();
+
+      expect(markForCheckSpy).toHaveBeenCalled();
+      expect(component.displayThemes.length).toBe(2);
+    }));
+    it("should capture state when creating a new theme to support undo", fakeAsync(() => {
+      const defaultTheme = {
+        entity_id: "t1",
+        is_default: true,
+        name: "Default",
+      } as Theme;
+      component.editingState.themes = [defaultTheme];
+      component.refreshDisplayProperties();
+      component.undoManager.initialize(component.editingState);
+      mockThemeService.getThemes.and.returnValue([defaultTheme]);
+
+      const newTheme = {
+        entity_id: "t2",
+        is_default: false,
+        name: "Default (Copy)",
+      } as Theme;
+      mockThemeService.duplicateTheme.and.returnValue(
+        Promise.resolve(newTheme),
+      );
+
+      spyOn(component, "captureState").and.callThrough();
+      const initialUndoCount = component.undoManager.undoStackCount;
+
+      component.createNewTheme();
+      tick(); // resolve duplicateTheme
+
+      expect(component.captureState).toHaveBeenCalled();
+      expect(component.undoManager.undoStackCount).toBe(initialUndoCount + 1);
+      expect(component.displayThemes.length).toBe(2);
+
+      // Verify undo
+      component.undoManager.undo();
+      expect(component.editingState.themes.length).toBe(1);
+      expect(component.editingState.themes[0].entity_id).toBe("t1");
+
+      // Verify redo
+      component.undoManager.redo();
+      expect(component.editingState.themes.length).toBe(2);
+      expect(
+        component.editingState.themes.find((t) => t.entity_id === "t2"),
+      ).toBeTruthy();
+    }));
+
+    it("should capture state when duplicating a theme", fakeAsync(() => {
+      const theme = {
+        entity_id: "t1",
+        is_default: false,
+        name: "Custom",
+      } as Theme;
+      component.editingState.themes = [theme];
+      component.refreshDisplayProperties();
+      component.undoManager.initialize(component.editingState);
+      mockThemeService.getThemes.and.returnValue([theme]);
+
+      const copy = {
+        entity_id: "t2",
+        is_default: false,
+        name: "Custom (Copy)",
+      } as Theme;
+      mockThemeService.duplicateTheme.and.returnValue(Promise.resolve(copy));
+
+      spyOn(component, "captureState").and.callThrough();
+      const initialUndoCount = component.undoManager.undoStackCount;
+
+      component.onDuplicateTheme(theme);
+      tick();
+
+      expect(component.captureState).toHaveBeenCalled();
+      expect(component.undoManager.undoStackCount).toBe(initialUndoCount + 1);
+
+      // Verify undo
+      component.undoManager.undo();
+      expect(component.editingState.themes.length).toBe(1);
+      expect(component.editingState.themes[0].entity_id).toBe("t1");
+
+      // Verify redo
+      component.undoManager.redo();
+      expect(component.editingState.themes.length).toBe(2);
+      expect(
+        component.editingState.themes.find((t) => t.entity_id === "t2"),
+      ).toBeTruthy();
+    }));
+  });
+
+  describe("theme management undo/redo", () => {
+    let themes: Theme[];
+
+    beforeEach(() => {
+      themes = [
+        {
+          entity_id: "t1",
+          is_default: true,
+          name: "Default",
+          slots: {},
+        } as Theme,
+        {
+          entity_id: "t2",
+          is_default: false,
+          name: "Custom",
+          slots: {},
+        } as Theme,
+      ];
+      component.editingState.themes = JSON.parse(JSON.stringify(themes));
+      component.refreshDisplayProperties();
+      // Use initialize to clear stacks from previous tests
+      component.undoManager.initialize(component.editingState);
+    });
+
+    it("should undo and redo theme name changes", fakeAsync(() => {
+      const customTheme = component.editingState.themes.find(
+        (t) => t.entity_id === "t2",
+      )!;
+
+      customTheme.name = "New Name";
+      component.onThemeNameChanged(customTheme);
+      expect(customTheme.name).toBe("New Name");
+      expect(component.undoManager.undoStackCount).toBe(1);
+
+      component.undoManager.undo();
+      const undoneTheme = component.editingState.themes.find(
+        (t) => t.entity_id === "t2",
+      )!;
+      expect(undoneTheme.name).toBe("Custom");
+
+      component.undoManager.redo();
+      const redoneTheme = component.editingState.themes.find(
+        (t) => t.entity_id === "t2",
+      )!;
+      expect(redoneTheme.name).toBe("New Name");
+    }));
+
+    it("should undo and redo theme slot changes", fakeAsync(() => {
+      const customTheme = component.editingState.themes.find(
+        (t) => t.entity_id === "t2",
+      )!;
+
+      component.onThemeSlotChanged(customTheme, "flag.green", {
+        entity_id: "asset1",
+      });
+      expect(customTheme.slots["flag.green"]).toBe("asset1");
+      expect(component.undoManager.undoStackCount).toBe(1);
+
+      component.undoManager.undo();
+      const undoneTheme = component.editingState.themes.find(
+        (t) => t.entity_id === "t2",
+      )!;
+      expect(undoneTheme.slots["flag.green"]).toBeUndefined();
+
+      component.undoManager.redo();
+      const redoneTheme = component.editingState.themes.find(
+        (t) => t.entity_id === "t2",
+      )!;
+      expect(redoneTheme.slots["flag.green"]).toBe("asset1");
+    }));
+
+    it("should reset undo stack upon theme deletion", fakeAsync(() => {
+      // Create some history
+      const customTheme = component.editingState.themes.find(
+        (t) => t.entity_id === "t2",
+      )!;
+      customTheme.name = "Changed";
+      component.onThemeNameChanged(customTheme);
+      expect(component.undoManager.undoStackCount).toBe(1);
+
+      // Setup deletion
+      component.themeToDelete = customTheme;
+      mockThemeService.deleteTheme.and.returnValue(Promise.resolve());
+
+      spyOn(component.undoManager, "resetTracking").and.callThrough();
+
+      component.onConfirmDeleteTheme();
+      tick();
+
+      expect(component.undoManager.resetTracking).toHaveBeenCalled();
+      expect(component.undoManager.undoStackCount).toBe(1); // History preserved but cleaned
+      expect(component.undoManager.redoStackCount).toBe(0);
+      expect(component.displayThemes.length).toBe(1);
+    }));
+
+    it("should purge deleted theme from history during deletion", fakeAsync(() => {
+      // 1. Change a setting (captures state)
+      component.editingSettings.sortByStandings =
+        !component.editingSettings.sortByStandings;
+      component.captureState();
+
+      // 2. Setup deletion of Custom theme (t2)
+      // Setup deletion of Custom theme (t2)
+      const customTheme = component.editingState.themes.find(
+        (t) => t.entity_id === "t2",
+      )!;
+      component.themeToDelete = customTheme;
+      mockThemeService.deleteTheme.and.returnValue(Promise.resolve());
+
+      spyOn(component.undoManager, "updateHistory").and.callThrough();
+
+      component.onConfirmDeleteTheme();
+      tick();
+
+      // Verify updateHistory was called to clean up the theme
+      expect(component.undoManager.updateHistory).toHaveBeenCalled();
+
+      // Verify that even if we could undo (which we can't because stack was reset,
+      // but the history itself should be clean if we looked at it),
+      // the theme would be gone from the snapshots.
+      // We can verify this by checking if any themes in the internal state of undoManager have t2
+      // (This is a bit intrusive but validates the logic)
+      const stack = component.undoManager.undoStackItems;
+      stack.forEach((snapshot: any) => {
+        const themeIds = snapshot.themes.map((t: any) => t.entity_id);
+        expect(themeIds).not.toContain("t2");
+      });
+    }));
+
+    it("should not allow undo/redo to resurrect a deleted theme", fakeAsync(() => {
+      const customTheme = component.editingState.themes.find(
+        (t) => t.entity_id === "t2",
+      )!;
+
+      // 1. Rename theme (undoStackCount = 1)
+      customTheme.name = "Name 1";
+      component.onThemeNameChanged(customTheme);
+
+      // 2. Delete theme (resets stack)
+      component.themeToDelete = customTheme;
+      mockThemeService.deleteTheme.and.returnValue(Promise.resolve());
+
+      component.onConfirmDeleteTheme();
+      tick();
+
+      expect(component.undoManager.undoStackCount).toBe(1); // Still 1 because resetTracking preserves stacks
+      expect(component.editingState.themes.length).toBe(1);
+      expect(component.editingState.themes[0].entity_id).toBe("t1");
+
+      // 3. Try to undo (should do nothing)
+      component.undoManager.undo();
+      expect(component.editingState.themes.length).toBe(1);
+      expect(component.editingState.themes[0].entity_id).toBe("t1");
+    }));
+  });
+
+  describe("theme name validation", () => {
+    it("should identify duplicate theme names", () => {
+      const themes: Theme[] = [
+        { entity_id: "t1", name: "Theme A", is_default: false } as Theme,
+        { entity_id: "t2", name: "Theme B", is_default: false } as Theme,
+        { entity_id: "t3", name: "theme a", is_default: false } as Theme, // Duplicate of t1
+      ];
+      component.editingState.themes = themes;
+      component.refreshDisplayProperties();
+
+      expect(component.isThemeNameDuplicate(themes[0])).toBeTrue(); // t1 has duplicate t3
+      expect(component.isThemeNameDuplicate(themes[1])).toBeFalse(); // t2 is unique
+      expect(component.isThemeNameDuplicate(themes[2])).toBeTrue(); // t3 has duplicate t1
+    });
+
+    it("should identify invalid theme names (empty or duplicate)", () => {
+      const themes: Theme[] = [
+        { entity_id: "t1", name: "  ", is_default: false } as Theme,
+        { entity_id: "t2", name: "Theme B", is_default: false } as Theme,
+        { entity_id: "t3", name: "Theme B", is_default: false } as Theme,
+      ];
+      component.editingState.themes = themes;
+      component.refreshDisplayProperties();
+
+      expect(component.isThemeNameInvalid(themes[0])).toBeTrue(); // Empty
+      expect(component.isThemeNameInvalid(themes[1])).toBeTrue(); // Duplicate
+      expect(component.isThemeNameInvalid(themes[2])).toBeTrue(); // Duplicate
+    });
+
+    it("should not auto-save if any theme name is invalid", fakeAsync(() => {
+      const themes: Theme[] = [
+        { entity_id: "t1", name: "Theme A", is_default: false } as Theme,
+        { entity_id: "t2", name: "Theme A", is_default: false } as Theme,
+      ];
+      component.editingState = {
+        settings: new Settings(),
+        themes: themes,
+      } as any;
+      component.refreshDisplayProperties();
+      component.undoManager.initialize(component.editingState);
+
+      mockSettingsService.saveSettings.calls.reset();
+
+      // Trigger a change
+      component.editingState.settings.highlightRowOnLap =
+        !component.editingState.settings.highlightRowOnLap;
+      component.captureState();
+      tick();
+
+      // autoSaveState should be triggered by stateCommitted$, but should return early because of invalid name
+      expect(mockSettingsService.saveSettings).not.toHaveBeenCalled();
+    }));
+
+    it("should apply invalid class to theme name input in template", () => {
+      const themes: Theme[] = [
+        {
+          entity_id: "t1",
+          name: "Duplicate",
+          is_default: false,
+          slots: {},
+        } as Theme,
+        {
+          entity_id: "t2",
+          name: "Duplicate",
+          is_default: false,
+          slots: {},
+        } as Theme,
+      ];
+      component.editingState.themes = themes;
+      component.refreshDisplayProperties();
+      fixture.detectChanges();
+
+      const containers = fixture.debugElement.queryAll(
+        By.css(".theme-title-container.invalid"),
+      );
+      expect(containers.length).toBe(2);
+    });
+  });
+
+  describe("navigation guard", () => {
+    it("should show discard confirmation when dirty", fakeAsync(() => {
+      // Ensure fresh state for tracking
+      component.undoManager.initialize(component.editingState);
+
+      // Prevent auto-save from resetting the dirty state in this test
+      component.isLoading = true;
+
+      // Make it dirty
+      component.editingSettings.sortByStandings =
+        !component.editingSettings.sortByStandings;
+      component.captureState();
+      tick();
+
+      expect(component.hasChanges()).toBeTrue();
+
+      let resolveValue: boolean | undefined;
+      component.confirmDiscard().then((v) => (resolveValue = v));
+      fixture.detectChanges();
+      tick(); // Wait for confirmation modal
+
+      expect(component.showDiscardConfirm).toBeTrue();
+
+      // Find the confirmation modal and confirm
+      component.onConfirmDiscard();
+      tick();
+
+      expect(component.showDiscardConfirm).toBeFalse();
+      expect(resolveValue).toBeTrue();
+    }));
+  });
+
+  describe("bug fixes", () => {
+    it("should preserve unsaved duplicate theme names when creating another theme", fakeAsync(() => {
+      const themes: Theme[] = [
+        {
+          entity_id: "t1",
+          name: "Original",
+          is_default: true,
+          slots: {},
+        } as Theme,
+        {
+          entity_id: "t2",
+          name: "Custom",
+          is_default: false,
+          slots: {},
+        } as Theme,
+      ];
+      component.editingState.themes = themes;
+      component.refreshDisplayProperties();
+
+      // Change Custom to a duplicate name "Original"
+      themes[1].name = "Original";
+      expect(component.isThemeNameDuplicate(themes[1])).toBeTrue();
+
+      // Create another theme
+      const newTheme = {
+        entity_id: "t3",
+        name: "New",
+        is_default: false,
+        slots: {},
+      } as Theme;
+      mockThemeService.duplicateTheme.and.returnValue(
+        Promise.resolve(newTheme),
+      );
+
+      component.createNewTheme();
+      flush();
+
+      // Verify themes[1] is still named "Original" (not reverted to "Custom")
+      const t2 = component.editingState.themes.find(
+        (t) => t.entity_id === "t2",
+      )!;
+      expect(t2.name).toBe("Original");
+      expect(component.isThemeNameDuplicate(t2)).toBeTrue();
+
+      // Verify new theme is added
+      expect(component.editingState.themes.length).toBe(3);
+    }));
   });
 });

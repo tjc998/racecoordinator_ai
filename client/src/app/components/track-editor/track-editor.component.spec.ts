@@ -429,6 +429,7 @@ describe("TrackEditorComponent", () => {
     }));
 
     it("should remain dirty after an auto-save fails due to duplicate name (server error 409)", fakeAsync(() => {
+      spyOn(console, "error");
       dataService.updateTrack.and.returnValue(
         throwError(() => ({ status: 409 })),
       );

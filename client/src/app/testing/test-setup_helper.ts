@@ -53,6 +53,7 @@ export class TestSetupHelper {
     await this.setupTrackMocks(page);
     await this.setupTeamMocks(page);
     await this.setupAssetMocks(page);
+    await this.setupThemeMocks(page);
 
     // Mock Server Version API
     await page.route("**/api/version", async (route) => {
@@ -552,127 +553,151 @@ export class TestSetupHelper {
   }
 
   static async setupAssetMocks(page: Page) {
-    // Return a 1x1 transparent PNG for any requested images
+    const mockImage = `
+      <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100" height="100" fill="#3f51b5" />
+        <text x="50" y="50" font-family="Arial" font-size="20" text-anchor="middle" fill="white" dominant-baseline="middle">IMG</text>
+      </svg>
+    `.trim();
+
     await page.route("**/assets/images/**/*.png", async (route) => {
-      // 1x1 base64 transparent PNG
-      const transparentPng = Buffer.from(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
-        "base64",
-      );
       await route.fulfill({
         status: 200,
-        contentType: "image/png",
-        body: transparentPng,
+        contentType: "image/svg+xml",
+        body: mockImage,
       });
     });
 
-    await page.route("**/api/assets/list", async (route) => {
-      const assets = [
-        {
-          model: { entityId: "1" },
-          name: "Test Image 1",
-          type: "image",
-          size: "150 KB",
-          url: "/api/assets/download?filename=img1.png",
-          filename: "img1.png",
-        },
-        {
-          model: { entityId: "2" },
-          name: "Test Sound 1",
-          type: "sound",
-          size: "50 KB",
-          url: "/api/assets/download?filename=snd1.mp3",
-          filename: "snd1.mp3",
-        },
-        {
-          model: { entityId: "set123" },
-          name: "Custom Dash",
-          type: "image_set",
-          size: "1.2 MB",
-          url: "/api/assets/download?filename=dash.json",
-          filename: "dash.json",
-          images: [
-            {
-              percentage: 30,
-              url: "/api/assets/download?filename=img1.png",
-              name: "img1.png",
-            },
-            {
-              percentage: 70,
-              url: "/api/assets/download?filename=img2.png",
-              name: "img2.png",
-            },
-          ],
-        },
-        {
-          model: { entityId: "fuel-gauge-builtin" },
-          name: "Fuel Gauge",
-          type: "image_set",
-          size: "1.2 MB",
-          url: "/api/assets/download?filename=fuel-gauge.json",
-          filename: "fuel-gauge.json",
-          images: [
-            {
-              percentage: 0,
-              url: "/api/assets/download?filename=fuel-0.png",
-              name: "fuel-0.png",
-            },
-            {
-              percentage: 50,
-              url: "/api/assets/download?filename=fuel-50.png",
-              name: "fuel-50.png",
-            },
-            {
-              percentage: 100,
-              url: "/api/assets/download?filename=fuel-100.png",
-              name: "fuel-100.png",
-            },
-          ],
-        },
-        {
-          model: { entityId: "default_start_red_on" },
-          name: "Start Lamp Red",
-          type: "image",
-          url: "assets/images/start_red_on.png",
-        },
-        {
-          model: { entityId: "default_start_red_dim" },
-          name: "Start Lamp Dim",
-          type: "image",
-          url: "assets/images/start_red_dim.png",
-        },
-        {
-          model: { entityId: "default_start_green" },
-          name: "Start Lamp Green",
-          type: "image",
-          url: "assets/images/start_green.png",
-        },
-      ];
+    await page.route(
+      (url) =>
+        url.pathname.endsWith("/api/assets/list") ||
+        url.pathname.includes("/api/assets/list"),
+      async (route) => {
+        const assets = [
+          {
+            model: { entityId: "1" },
+            name: "Test Image 1",
+            type: "image",
+            size: "150 KB",
+            url: "/api/assets/download?filename=img1.png",
+            filename: "img1.png",
+          },
+          {
+            model: { entityId: "2" },
+            name: "Test Sound 1",
+            type: "sound",
+            size: "50 KB",
+            url: "/api/assets/download?filename=snd1.mp3",
+            filename: "snd1.mp3",
+          },
+          {
+            model: { entityId: "set123" },
+            name: "Custom Dash",
+            type: "image_set",
+            size: "1.2 MB",
+            url: "/api/assets/download?filename=dash.json",
+            filename: "dash.json",
+            images: [
+              {
+                percentage: 30,
+                url: "/api/assets/download?filename=img1.png",
+                name: "img1.png",
+              },
+              {
+                percentage: 70,
+                url: "/api/assets/download?filename=img2.png",
+                name: "img2.png",
+              },
+            ],
+          },
+          {
+            model: { entityId: "fuel-gauge-builtin" },
+            name: "Fuel Gauge",
+            type: "image_set",
+            size: "1.2 MB",
+            url: "/api/assets/download?filename=fuel-gauge.json",
+            filename: "fuel-gauge.json",
+            images: [
+              {
+                percentage: 0,
+                url: "/api/assets/download?filename=fuel-0.png",
+                name: "fuel-0.png",
+              },
+              {
+                percentage: 50,
+                url: "/api/assets/download?filename=fuel-50.png",
+                name: "fuel-50.png",
+              },
+              {
+                percentage: 100,
+                url: "/api/assets/download?filename=fuel-100.png",
+                name: "fuel-100.png",
+              },
+            ],
+          },
+          {
+            model: { entityId: "default_start_red_on" },
+            name: "Start Lamp Red",
+            type: "image",
+            url: "assets/images/start_red_on.png",
+          },
+          {
+            model: { entityId: "default_start_red_dim" },
+            name: "Start Lamp Dim",
+            type: "image",
+            url: "assets/images/start_red_dim.png",
+          },
+          {
+            model: { entityId: "default_start_green" },
+            name: "Start Lamp Green",
+            type: "image",
+            url: "assets/images/start_green.png",
+          },
+          {
+            model: { entityId: "mock-flag-1" },
+            name: "Checker Flag",
+            type: "image",
+            url: "/api/assets/download?filename=checker.png",
+          },
+          {
+            model: { entityId: "mock-flag-2" },
+            name: "Blue Flag",
+            type: "image",
+            url: "/api/assets/download?filename=blue.png",
+          },
+          {
+            model: { entityId: "mock-flag-3" },
+            name: "Yellow Flag",
+            type: "image",
+            url: "/api/assets/download?filename=yellow.png",
+          },
+        ];
 
-      const response = com.antigravity.ListAssetsResponse.create({ assets });
-      const buffer =
-        com.antigravity.ListAssetsResponse.encode(response).finish();
+        const response = com.antigravity.ListAssetsResponse.create({ assets });
+        const buffer =
+          com.antigravity.ListAssetsResponse.encode(response).finish();
 
-      await route.fulfill({
-        status: 200,
-        contentType: "application/octet-stream",
-        body: Buffer.from(buffer),
-      });
-    });
+        await route.fulfill({
+          status: 200,
+          contentType: "application/octet-stream",
+          body: Buffer.from(buffer),
+        });
+      },
+    );
 
     // Mock Asset Download API
-    await page.route("**/api/assets/download*", async (route) => {
-      // Return a 1x1 transparent pixel for all downloads in tests
-      const transparentPixel = Buffer.from(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
-        "base64",
-      );
-      await route.fulfill({
-        status: 200,
-        contentType: "image/png",
-        body: transparentPixel,
-      });
-    });
+    await page.route(
+      (url) =>
+        url.pathname.includes("/api/assets/download") ||
+        url.pathname.endsWith("/api/assets/download"),
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "image/svg+xml",
+          body: mockImage,
+        });
+      },
+    );
   }
 
   /**
@@ -1048,6 +1073,52 @@ export class TestSetupHelper {
       }
     }, settings);
   }
+  static async setupThemeMocks(page: Page) {
+    await page.route("**/api/themes", async (route) => {
+      const themes = [
+        {
+          entity_id: "t-default",
+          name: "Default Theme",
+          is_default: true,
+          slots: {
+            "flag.green": "1",
+            "flag.red": "1",
+            "flag.yellow": "1",
+            "flag.white": "1",
+            "flag.checkered": "1",
+            "flag.black": "1",
+            "lamp.red.on": "1",
+            "lamp.red.dim": "1",
+            "lamp.green": "1",
+            "gauge.fuel": "1",
+          },
+        },
+        {
+          entity_id: "t-custom",
+          name: "Custom Theme",
+          is_default: false,
+          slots: {
+            "flag.green": "1",
+            "flag.red": "1",
+            "flag.yellow": "1",
+            "flag.white": "1",
+            "flag.checkered": "1",
+            "flag.black": "1",
+            "lamp.red.on": "1",
+            "lamp.red.dim": "1",
+            "lamp.green": "1",
+            "gauge.fuel": "1",
+          },
+        },
+      ];
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(themes),
+      });
+    });
+  }
+
   static async setupFileSystemMock(
     page: Page,
     customFiles: Record<string, string>,

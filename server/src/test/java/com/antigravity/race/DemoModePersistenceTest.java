@@ -15,9 +15,9 @@ import com.antigravity.service.DatabaseService;
 import com.mongodb.client.MongoDatabase;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.MockedStatic;
 
 public class DemoModePersistenceTest {
 
@@ -49,31 +49,31 @@ public class DemoModePersistenceTest {
             .build();
   }
 
+  @After
+  public void tearDown() {
+    DatabaseService.setInstance(new DatabaseService());
+    ClientSubscriptionManager.setInstance(null); // It will lazy-init next time
+  }
+
   @Test
   public void testRaceOverSavesInDemoMode() {
-    // Mock the static instances and methods
-    try (MockedStatic<DatabaseService> dbServiceMock = mockStatic(DatabaseService.class);
-        MockedStatic<ClientSubscriptionManager> managerMock =
-            mockStatic(ClientSubscriptionManager.class)) {
+    DatabaseService mockService = mock(DatabaseService.class);
+    DatabaseService.setInstance(mockService);
 
-      DatabaseService mockService = mock(DatabaseService.class);
-      dbServiceMock.when(DatabaseService::getInstance).thenReturn(mockService);
+    ClientSubscriptionManager mockManager = mock(ClientSubscriptionManager.class);
+    ClientSubscriptionManager.setInstance(mockManager);
 
-      ClientSubscriptionManager mockManager = mock(ClientSubscriptionManager.class);
-      managerMock.when(ClientSubscriptionManager::getInstance).thenReturn(mockManager);
+    DatabaseContext mockContext = mock(DatabaseContext.class);
+    when(mockManager.getDatabaseContext()).thenReturn(mockContext);
+    when(mockContext.getDatabase()).thenReturn(mock(MongoDatabase.class));
 
-      DatabaseContext mockContext = mock(DatabaseContext.class);
-      when(mockManager.getDatabaseContext()).thenReturn(mockContext);
-      when(mockContext.getDatabase()).thenReturn(mock(MongoDatabase.class));
+    // Create and enter RaceOver state
+    RaceOver raceOver = new RaceOver();
+    raceOver.enter(race);
 
-      // Create and enter RaceOver state
-      RaceOver raceOver = new RaceOver();
-      raceOver.enter(race);
-
-      // Verify that save methods WERE called (now allowed in demo mode)
-      verify(mockService, times(1)).saveRaceHistory(any(), any());
-      verify(mockService, times(1)).updateGlobalStatistics(any(), any());
-    }
+    // Verify that save methods WERE called (now allowed in demo mode)
+    verify(mockService, times(1)).saveRaceHistory(any(), any());
+    verify(mockService, times(1)).updateGlobalStatistics(any(), any());
   }
 
   @Test
@@ -105,42 +105,27 @@ public class DemoModePersistenceTest {
             .isDemoMode(false)
             .build();
 
-    try (MockedStatic<DatabaseService> dbServiceMock = mockStatic(DatabaseService.class);
-        MockedStatic<ClientSubscriptionManager> managerMock =
-            mockStatic(ClientSubscriptionManager.class)) {
+    DatabaseService mockService = mock(DatabaseService.class);
+    DatabaseService.setInstance(mockService);
 
-      DatabaseService mockService = mock(DatabaseService.class);
-      dbServiceMock.when(DatabaseService::getInstance).thenReturn(mockService);
+    ClientSubscriptionManager mockManager = mock(ClientSubscriptionManager.class);
+    ClientSubscriptionManager.setInstance(mockManager);
 
-      ClientSubscriptionManager mockManager = mock(ClientSubscriptionManager.class);
-      managerMock.when(ClientSubscriptionManager::getInstance).thenReturn(mockManager);
+    DatabaseContext mockContext = mock(DatabaseContext.class);
+    when(mockManager.getDatabaseContext()).thenReturn(mockContext);
+    when(mockContext.getDatabase()).thenReturn(mock(MongoDatabase.class));
 
-      DatabaseContext mockContext = mock(DatabaseContext.class);
-      when(mockManager.getDatabaseContext()).thenReturn(mockContext);
-      when(mockContext.getDatabase()).thenReturn(mock(MongoDatabase.class));
+    RaceOver raceOver = new RaceOver();
+    raceOver.enter(normalRace);
 
-      RaceOver raceOver = new RaceOver();
-      raceOver.enter(normalRace);
-
-      // Verify that save methods WERE called
-      verify(mockService, times(1)).saveRaceHistory(any(), any());
-      verify(mockService, times(1)).updateGlobalStatistics(any(), any());
-    }
+    // Verify that save methods WERE called
+    verify(mockService, times(1)).saveRaceHistory(any(), any());
+    verify(mockService, times(1)).updateGlobalStatistics(any(), any());
   }
 
   @Test
   public void testAutoSaveBypassedInDemoMode() {
-    try (MockedStatic<ClientSubscriptionManager> managerMock =
-        mockStatic(ClientSubscriptionManager.class)) {
-
-      // We need a real instance to test the logic in ClientSubscriptionManager.autoSave
-      // but ClientSubscriptionManager has a private constructor and a singleton
-      // Let's see if we can just test the method logic if we had an instance.
-
-      // Actually, ClientSubscriptionManager.autoSave is public.
-      // But it's a singleton.
-      // If I can't easily create a new instance, I'll rely on the RaceOver test which is the most
-      // critical.
-    }
+    // This test was incomplete and didn't really test anything before either.
+    // It is kept for future expansion if needed, but no longer uses static mocks.
   }
 }

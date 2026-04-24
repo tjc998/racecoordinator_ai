@@ -22,6 +22,7 @@ import { ColumnVisibility, Settings } from "src/app/models/settings";
 import { RaceService } from "src/app/services/race.service";
 import { RaceFlagService } from "src/app/services/race-flag.service";
 import { SettingsService } from "src/app/services/settings.service";
+import { ThemeService } from "src/app/services/theme.service";
 import { TranslationService } from "src/app/services/translation.service";
 
 @Pipe({
@@ -149,6 +150,10 @@ describe("DefaultRacedayComponent", () => {
             getSettings: () => mockSettings,
             saveSettings: jasmine.createSpy("saveSettings"),
           },
+        },
+        {
+          provide: ThemeService,
+          useValue: jasmine.createSpyObj("ThemeService", ["resolveAssetId"]),
         },
         { provide: Router, useValue: mockRouter },
         ChangeDetectorRef,
@@ -1551,5 +1556,76 @@ describe("DefaultRacedayComponent", () => {
       tick();
       expect(component["showCountdownOverlay"]).toBeFalse();
     }));
+  });
+
+  describe("Theme Asset Integration", () => {
+    let mockThemeService: any;
+
+    beforeEach(() => {
+      mockThemeService = TestBed.inject(ThemeService);
+      const themeAssets = [
+        {
+          model: { entityId: "theme-green-flag" },
+          url: "/theme/green.png",
+          name: "Theme Green Flag",
+        },
+        {
+          model: { entityId: "theme-red-on" },
+          url: "/theme/red-on.png",
+          name: "Theme Red On",
+        },
+        {
+          model: { entityId: "theme-fuel-gauge" },
+          url: "/theme/fuel.png",
+          name: "Theme Fuel Gauge",
+          type: "image_set",
+          images: [{ percentage: 100, url: "/theme/fuel-100.png" }],
+        },
+      ];
+      mockDataService.listAssets.and.returnValue(of(themeAssets));
+      (component as any).assets = themeAssets;
+      fixture.detectChanges();
+    });
+
+    it("should use theme for flag images", () => {
+      mockThemeService.resolveAssetId.and.callFake((slot: string) => {
+        if (slot === "flag.green") return "theme-green-flag";
+        return null;
+      });
+      mockRaceFlagService.getFlagType.and.returnValue("green");
+
+      const url = component.getCurrentFlagUrl();
+      expect(url).toBe("http://localhost/theme/green.png");
+    });
+
+    it("should use theme for countdown lamps", () => {
+      mockThemeService.resolveAssetId.and.callFake((slot: string) => {
+        if (slot === "lamp.red.on") return "theme-red-on";
+        return null;
+      });
+
+      component["showCountdownOverlay"] = true;
+      component["countdownTotalLamps"] = 5;
+      component["updateCountdownLamps"](4.5); // 1 lamp on
+
+      expect(component["countdownLamps"][0].url).toBe(
+        "http://localhost/theme/red-on.png",
+      );
+    });
+
+    it("should use theme for fuel gauge image set", () => {
+      mockThemeService.resolveAssetId.and.callFake((slot: string) => {
+        if (slot === "gauge.fuel") return "theme-fuel-gauge";
+        return null;
+      });
+
+      const asset = component["findAssetById"]("fuel-gauge-builtin");
+      expect(asset.model.entityId).toBe("theme-fuel-gauge");
+
+      const imageUrl = component["getSelectedImageFromSet"](asset, 100, {
+        participant: { fuelLevel: 100 },
+      } as any);
+      expect(imageUrl).toBe("http://localhost/theme/fuel-100.png");
+    });
   });
 });

@@ -19,6 +19,7 @@ import { RaceService } from "src/app/services/race.service";
 import { RaceConnectionService } from "src/app/services/race-connection.service";
 import { RaceFlagService } from "src/app/services/race-flag.service";
 import { SettingsService } from "src/app/services/settings.service";
+import { ThemeService } from "src/app/services/theme.service";
 import { TranslationService } from "src/app/services/translation.service";
 
 import { DefaultRacedayComponent } from "./default-raceday.component";
@@ -35,6 +36,7 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
     @Inject(Router) router: Router,
     @Inject(RaceConnectionService) raceConnectionService: RaceConnectionService,
     @Inject(ChangeDetectorRef) cdr: ChangeDetectorRef,
+    @Inject(ThemeService) themeService: ThemeService,
   ) {
     super(
       el,
@@ -46,6 +48,7 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
       router,
       raceConnectionService,
       cdr,
+      themeService,
     );
   }
 }

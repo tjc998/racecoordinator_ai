@@ -42,6 +42,19 @@ export class Settings {
   flagWhite?: string;
   flagBlack?: string;
   flagCheckered?: string;
+
+  // Theme system
+  activeThemeId?: string; // entity_id of the active theme (server-side)
+  raceThemeOverrides: { [raceId: string]: string } = {}; // race entity_id → theme entity_id
+
+  // Individual overrides for start lamps (used when no theme is active)
+  lampRedOn?: string;
+  lampRedDim?: string;
+  lampGreen?: string;
+
+  // Individual override for fuel gauge image set (used when no theme is active)
+  fuelGaugeImageSet: string = "default_fuel-gauge-builtin";
+
   sortByStandings: boolean = true;
   highlightRowOnLap: boolean = true;
   racedayColumns: string[] = Settings.DEFAULT_COLUMNS;

@@ -59,6 +59,16 @@ module.exports = {
         "@angular-eslint/template/eqeqeq": "off",
         "@angular-eslint/template/alt-text": "off"
       }
+    },
+    {
+      "files": ["*.js", "*.cjs"],
+      "env": {
+        "node": true,
+        "es2021": true
+      },
+      "parserOptions": {
+        "ecmaVersion": 2021
+      }
     }
   ]
 };

@@ -101,7 +101,7 @@ export const MOCK_TRACK_INSTANCES = MOCK_TRACKS.map(
       t.name,
       t.lanes.map(
         (l: any) =>
-          new Lane(l.entity_id, l.length, l.backgroundColor, l.foregroundColor),
+          new Lane(l.entity_id, l.foregroundColor, l.backgroundColor, l.length),
       ),
       t.has_digital_fuel || false,
       t.arduino_configs,

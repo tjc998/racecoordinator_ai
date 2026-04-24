@@ -165,12 +165,18 @@ public class RaceRecordTest {
     race.onLap(3, 2.0, 0, 0); // effective 2.0, lapCount 2
 
     RecordData recordData = race.getRecordData();
+    System.out.println(
+        "DEBUG: recordData.getCurrent().getLaneFastestLap(3).getValue() = "
+            + recordData.getCurrent().getLaneFastestLap(3).getValue());
 
     RecordEntry lapRecord = recordData.getCurrent().getLaneFastestLap(3);
     assertEquals(2.0, lapRecord.getValue(), 0.001);
     assertEquals("D3", lapRecord.getHolderName());
 
     RecordEntry scoreRecord = recordData.getCurrent().getLaneHighestScore(3);
+    System.out.println(
+        "DEBUG: recordData.getCurrent().getLaneHighestScore(3).getValue() = "
+            + recordData.getCurrent().getLaneHighestScore(3).getValue());
     assertEquals(2.0, scoreRecord.getValue(), 0.001);
     assertEquals("D3", scoreRecord.getHolderName());
   }

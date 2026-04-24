@@ -57,6 +57,10 @@ public class ClientSubscriptionManager {
     return instance;
   }
 
+  public static synchronized void setInstance(ClientSubscriptionManager mgr) {
+    instance = mgr;
+  }
+
   public synchronized void setDatabaseContext(DatabaseContext databaseContext) {
     this.databaseContext = databaseContext;
   }

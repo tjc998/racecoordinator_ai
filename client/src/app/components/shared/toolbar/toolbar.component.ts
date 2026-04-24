@@ -29,6 +29,13 @@ export class ToolbarComponent implements OnInit {
   @Input() showUndo = false;
   @Input() showRedo = false;
   @Input() isSaving = false;
+  @Input() showAnalytics = true;
+  @Input() disabledAdd = false;
+  @Input() disabledEdit = false;
+  @Input() disabledDelete = false;
+  @Input() disabledCopy = false;
+  @Input() showActivate = false;
+  @Input() disabledActivate = false;
   @Input() undoManager?: UndoManager<any>;
   @Input() helpSteps: GuideStep[] = [];
   @Input() helpTitle: string = "";
@@ -75,6 +82,12 @@ export class ToolbarComponent implements OnInit {
   @Output() help = new EventEmitter<void>();
   @Output() delete = new EventEmitter<void>();
 
+  @Output() activate = new EventEmitter<void>();
+
+  onActivate() {
+    this.activate.emit();
+  }
+
   onAdd() {
     this.add.emit();
   }
@@ -85,6 +98,17 @@ export class ToolbarComponent implements OnInit {
 
   getToolbarHelpSteps(): GuideStep[] {
     const defaultSteps: GuideStep[] = [];
+
+    if (this.showActivate) {
+      defaultSteps.push({
+        targetId: "activate-item-btn",
+        title: this.translationService.translate("TOOLBAR_HELP_ACTIVATE_TITLE"),
+        content: this.translationService.translate(
+          "TOOLBAR_HELP_ACTIVATE_CONTENT",
+        ),
+        position: "bottom",
+      });
+    }
 
     if (this.showUndo) {
       defaultSteps.push({
@@ -142,14 +166,18 @@ export class ToolbarComponent implements OnInit {
       });
     }
 
-    defaultSteps.push({
-      targetId: "analytics-btn",
-      title: this.translationService.translate("TOOLBAR_HELP_ANALYTICS_TITLE"),
-      content: this.translationService.translate(
-        "TOOLBAR_HELP_ANALYTICS_CONTENT",
-      ),
-      position: "bottom",
-    });
+    if (this.showAnalytics) {
+      defaultSteps.push({
+        targetId: "analytics-btn",
+        title: this.translationService.translate(
+          "TOOLBAR_HELP_ANALYTICS_TITLE",
+        ),
+        content: this.translationService.translate(
+          "TOOLBAR_HELP_ANALYTICS_CONTENT",
+        ),
+        position: "bottom",
+      });
+    }
 
     if (this.showHelp) {
       defaultSteps.push({

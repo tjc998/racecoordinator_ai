@@ -106,7 +106,11 @@ module.exports = function (config) {
     },
     port: 9876,
     colors: true,
-    logLevel: config.LOG_INFO,
+    browserConsoleLogOptions: {
+      level: "error",
+      terminal: true,
+    },
+    logLevel: config.LOG_ERROR,
     autoWatch: true,
     browsers: ["ChromeHeadlessWithCustomConfig"],
     customLaunchers: {

@@ -1,19 +1,19 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, EventEmitter, Input, Output } from "@angular/core";
+import { Router } from "@angular/router";
 
 @Component({
-  selector: 'app-item-selector',
+  selector: "app-item-selector",
   standalone: false,
-  templateUrl: './item-selector.component.html',
-  styleUrls: ['./item-selector.component.css']
+  templateUrl: "./item-selector.component.html",
+  styleUrls: ["./item-selector.component.css"],
 })
 export class ItemSelectorComponent {
   @Input() visible = false;
   @Input() title?: string;
   @Input() items: any[] = [];
-  searchTerm: string = '';
+  searchTerm: string = "";
 
-  @Input() itemType: 'image' | 'sound' = 'image';
+  @Input() itemType: "image" | "sound" | "image_set" = "image";
 
   @Input() backButtonRoute: string | null = null;
   @Input() backButtonQueryParams: any = {};
@@ -24,18 +24,22 @@ export class ItemSelectorComponent {
       return this.items;
     }
     const lowerTerm = this.searchTerm.toLowerCase();
-    return this.items.filter(item => item.name && item.name.toLowerCase().includes(lowerTerm));
+    return this.items.filter(
+      (item) => item.name && item.name.toLowerCase().includes(lowerTerm),
+    );
   }
 
   @Output() select = new EventEmitter<any>();
   @Output() play = new EventEmitter<any>();
   @Output() close = new EventEmitter<void>();
 
-  constructor(private router: Router) { }
+  constructor(private router: Router) {}
 
   onBack() {
     if (this.backButtonRoute) {
-      this.router.navigate([this.backButtonRoute], { queryParams: this.backButtonQueryParams });
+      this.router.navigate([this.backButtonRoute], {
+        queryParams: this.backButtonQueryParams,
+      });
     }
     this.close.emit();
   }

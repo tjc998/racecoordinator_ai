@@ -114,48 +114,18 @@ public class RaceStateTest {
       ClientSubscriptionManager.getInstance().removeSession(currentMockWsContext);
     }
 
-    currentMockWsContext = mock(io.javalin.websocket.WsContext.class);
     Session mockSession = mock(Session.class);
     RemoteEndpoint mockRemote = mock(RemoteEndpoint.class);
 
     when(mockSession.isOpen()).thenReturn(true);
     when(mockSession.getRemote()).thenReturn(mockRemote);
 
-    injectSession(currentMockWsContext, mockSession);
-
-    org.mockito.Mockito.doAnswer(
-            invocation -> {
-              byte[] bytes = invocation.getArgument(0);
-              mockRemote.sendBytesByFuture(java.nio.ByteBuffer.wrap(bytes));
-              return null;
-            })
-        .when(currentMockWsContext)
-        .send(org.mockito.ArgumentMatchers.any(byte[].class));
-
-    org.mockito.Mockito.doAnswer(
-            invocation -> {
-              ByteBuffer buf = invocation.getArgument(0);
-              mockRemote.sendBytesByFuture(buf);
-              return null;
-            })
-        .when(currentMockWsContext)
-        .send(org.mockito.ArgumentMatchers.any(ByteBuffer.class));
+    currentMockWsContext = new WsContext("session1", mockSession) {};
 
     ClientSubscriptionManager.getInstance().addSession(currentMockWsContext);
     ClientSubscriptionManager.getInstance()
         .handleRaceSubscription(
             currentMockWsContext, RaceSubscriptionRequest.newBuilder().setSubscribe(true).build());
-  }
-
-  private void injectSession(WsContext ctx, Session session) throws Exception {
-    Field sessionField;
-    try {
-      sessionField = WsContext.class.getDeclaredField("session");
-    } catch (NoSuchFieldException e) {
-      throw e;
-    }
-    sessionField.setAccessible(true);
-    sessionField.set(ctx, session);
   }
 
   @Test

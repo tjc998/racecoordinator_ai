@@ -1,12 +1,14 @@
 package com.antigravity.models;
 
 import com.antigravity.race.ServerToClientObject;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.types.ObjectId;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Model extends ServerToClientObject {
 
   private final ObjectId id;

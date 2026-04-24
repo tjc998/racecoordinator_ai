@@ -32,6 +32,16 @@ class MockItemSelectorComponent {
   @Output() close = new EventEmitter<void>();
 }
 
+@Component({ selector: "app-asset-preview", template: "", standalone: false })
+class MockAssetPreviewComponent {
+  @Input() assetId?: string;
+  @Input() type: string = "image";
+  @Input() imageUrl?: string;
+  @Input() name: string = "";
+  @Input() images?: any[];
+  @Input() animate: boolean = true;
+}
+
 @Pipe({ name: "translate", standalone: false })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
@@ -59,6 +69,7 @@ describe("ImageSelectorComponent", () => {
       declarations: [
         ImageSelectorComponent,
         MockItemSelectorComponent,
+        MockAssetPreviewComponent,
         MockTranslatePipe,
         MockAvatarUrlPipe,
       ],

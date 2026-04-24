@@ -1,0 +1,33 @@
+import { Model } from "./model";
+
+/**
+ * A theme groups visual and audio asset assignments into logical "slots."
+ * Each slot maps a purpose (e.g., "flag.green", "lamp.red_on") to an asset entity ID.
+ *
+ * Themes are stored server-side (MongoDB) and selected per-client via Settings.
+ */
+export interface Theme extends Model {
+  entity_id: string;
+  name: string;
+  is_default: boolean;
+  slots: { [key: string]: string }; // slot key → asset entity ID
+}
+
+/** All known theme slot keys for Phase 1 (images). */
+export const THEME_SLOT_KEYS = {
+  // Flags
+  FLAG_GREEN: "flag.green",
+  FLAG_RED: "flag.red",
+  FLAG_YELLOW: "flag.yellow",
+  FLAG_WHITE: "flag.white",
+  FLAG_CHECKERED: "flag.checkered",
+  FLAG_BLACK: "flag.black",
+
+  // Start lamps
+  LAMP_RED_ON: "lamp.red.on",
+  LAMP_RED_DIM: "lamp.red.dim",
+  LAMP_GREEN: "lamp.green",
+
+  // Fuel gauge
+  FUEL_GAUGE: "gauge.fuel",
+} as const;

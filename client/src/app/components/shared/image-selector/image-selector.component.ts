@@ -18,8 +18,13 @@ export class ImageSelectorComponent {
   @Input() imageUrl?: string;
   @Input() assets: any[] = [];
   @Input() size: "small" | "medium" | "large" = "medium";
+  @Input() disabled: boolean = false;
+  @Input() assetId?: string;
+  @Input() assetType: "image" | "image_set" = "image";
+  @Input() images?: any[];
 
   @Output() imageUrlChange = new EventEmitter<string>();
+  @Output() assetSelected = new EventEmitter<any>();
   @Output() uploadStarted = new EventEmitter<void>();
   @Output() uploadFinished = new EventEmitter<void>();
 
@@ -34,6 +39,7 @@ export class ImageSelectorComponent {
   ) {}
 
   onDragOver(event: DragEvent) {
+    if (this.disabled) return;
     event.preventDefault();
     event.stopPropagation();
     this.isDragging = true;
@@ -46,6 +52,7 @@ export class ImageSelectorComponent {
   }
 
   onDrop(event: DragEvent) {
+    if (this.disabled) return;
     event.preventDefault();
     event.stopPropagation();
     this.isDragging = false;
@@ -80,6 +87,7 @@ export class ImageSelectorComponent {
           this.pendingPreview = null;
           this.imageUrl = asset.url ?? undefined;
           this.imageUrlChange.emit(this.imageUrl);
+          this.assetSelected.emit(asset);
           this.uploadFinished.emit();
           this.cdr.detectChanges();
         },
@@ -96,6 +104,7 @@ export class ImageSelectorComponent {
   }
 
   openSelector() {
+    if (this.disabled) return;
     this.showSelector = true;
   }
 
@@ -106,13 +115,16 @@ export class ImageSelectorComponent {
   onAssetSelected(asset: any) {
     this.imageUrl = asset.url;
     this.imageUrlChange.emit(this.imageUrl);
+    this.assetSelected.emit(asset);
     this.closeSelector();
   }
 
   removeImage(event: MouseEvent) {
+    if (this.disabled) return;
     event.stopPropagation();
     this.imageUrl = undefined;
     this.imageUrlChange.emit(this.imageUrl);
+    this.assetSelected.emit(null);
     this.cdr.detectChanges();
   }
 }

@@ -13,19 +13,21 @@
     <!-- Full-Width Column Layout Section -->
     <div class="config-section">
       <div class="section-header" (click)="toggleSection('layout')">
-        <span class="expander-icon" [class.collapsed]="!sectionsExpanded.layout"
+        <span
+          class="expander-icon"
+          [class.collapsed]="!sectionsExpanded['layout']"
           >▼</span
         >
         <h1>{{ "UE_LABEL_COLUMNS" | translate }}</h1>
       </div>
-      <div class="section-content" *ngIf="sectionsExpanded.layout">
+      <div class="section-content" *ngIf="sectionsExpanded['layout']">
         <div class="panel layout-panel">
           <div class="panel-content column-layout-section">
             <app-column-preview
-              [columnSlots]="columnSlots"
-              [columnLayouts]="editingSettings.columnLayouts"
+              [columnSlots]="displayColumnSlots"
+              [columnLayouts]="editingSettings.columnLayouts || {}"
               [resizingColumnKey]="resizingColumnKey"
-              [columnVisibility]="editingSettings.columnVisibility"
+              [columnVisibility]="editingSettings.columnVisibility || {}"
             >
             </app-column-preview>
 
@@ -66,19 +68,301 @@
       </div>
     </div>
 
+    <!-- THEME CONTENT TEMPLATE -->
+    <ng-template #themeContent let-theme="theme">
+      <!-- Nested Flag Image Settings -->
+      <div class="config-section sub-section">
+        <div class="section-header" (click)="toggleSection('flags')">
+          <span
+            class="expander-icon"
+            [class.collapsed]="!sectionsExpanded['flags']"
+            >▼</span
+          >
+          <h1>{{ "UE_HEADER_FLAGS" | translate }}</h1>
+        </div>
+        <div class="section-content" *ngIf="sectionsExpanded['flags']">
+          <div class="panel flags-panel">
+            <div class="panel-content flags-grid">
+              <app-image-selector
+                [label]="'UE_LABEL_GREEN_FLAG' | translate"
+                [imageUrl]="getFlagUrl('flag.green', theme)"
+                (imageUrlChange)="captureState()"
+                [assetId]="theme.slots['flag.green']"
+                [assetType]="'image'"
+                [images]="getAssetForSlot('flag.green', theme)?.images"
+                (assetSelected)="
+                  onThemeSlotChanged(theme, 'flag.green', $event)
+                "
+                [assets]="assets"
+                [disabled]="theme.is_default"
+              >
+              </app-image-selector>
+              <app-image-selector
+                [label]="'UE_LABEL_YELLOW_FLAG' | translate"
+                [imageUrl]="getFlagUrl('flag.yellow', theme)"
+                (imageUrlChange)="captureState()"
+                [assetId]="theme.slots['flag.yellow']"
+                [assetType]="'image'"
+                [images]="getAssetForSlot('flag.yellow', theme)?.images"
+                (assetSelected)="
+                  onThemeSlotChanged(theme, 'flag.yellow', $event)
+                "
+                [assets]="assets"
+                [disabled]="theme.is_default"
+              >
+              </app-image-selector>
+              <app-image-selector
+                [label]="'UE_LABEL_RED_FLAG' | translate"
+                [imageUrl]="getFlagUrl('flag.red', theme)"
+                (imageUrlChange)="captureState()"
+                [assetId]="theme.slots['flag.red']"
+                [assetType]="'image'"
+                [images]="getAssetForSlot('flag.red', theme)?.images"
+                (assetSelected)="onThemeSlotChanged(theme, 'flag.red', $event)"
+                [assets]="assets"
+                [disabled]="theme.is_default"
+              >
+              </app-image-selector>
+              <app-image-selector
+                [label]="'UE_LABEL_WHITE_FLAG' | translate"
+                [imageUrl]="getFlagUrl('flag.white', theme)"
+                (imageUrlChange)="captureState()"
+                [assetId]="theme.slots['flag.white']"
+                [assetType]="'image'"
+                [images]="getAssetForSlot('flag.white', theme)?.images"
+                (assetSelected)="
+                  onThemeSlotChanged(theme, 'flag.white', $event)
+                "
+                [assets]="assets"
+                [disabled]="theme.is_default"
+              >
+              </app-image-selector>
+              <app-image-selector
+                [label]="'UE_LABEL_BLACK_FLAG' | translate"
+                [imageUrl]="getFlagUrl('flag.black', theme)"
+                (imageUrlChange)="captureState()"
+                [assetId]="theme.slots['flag.black']"
+                [assetType]="'image'"
+                [images]="getAssetForSlot('flag.black', theme)?.images"
+                (assetSelected)="
+                  onThemeSlotChanged(theme, 'flag.black', $event)
+                "
+                [assets]="assets"
+                [disabled]="theme.is_default"
+              >
+              </app-image-selector>
+              <app-image-selector
+                [label]="'UE_LABEL_CHECKERED_FLAG' | translate"
+                [imageUrl]="getFlagUrl('flag.checkered', theme)"
+                (imageUrlChange)="captureState()"
+                [assetId]="theme.slots['flag.checkered']"
+                [assetType]="'image'"
+                [images]="getAssetForSlot('flag.checkered', theme)?.images"
+                (assetSelected)="
+                  onThemeSlotChanged(theme, 'flag.checkered', $event)
+                "
+                [assets]="assets"
+                [disabled]="theme.is_default"
+              >
+              </app-image-selector>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nested Countdown Image Settings -->
+      <div class="config-section sub-section">
+        <div class="section-header" (click)="toggleSection('countdown')">
+          <span
+            class="expander-icon"
+            [class.collapsed]="!sectionsExpanded['countdown']"
+            >▼</span
+          >
+          <h1>{{ "UE_HEADER_COUNTDOWN" | translate }}</h1>
+        </div>
+        <div class="section-content" *ngIf="sectionsExpanded['countdown']">
+          <div class="panel countdown-panel">
+            <div class="panel-content countdown-grid">
+              <app-image-selector
+                [label]="'UE_LABEL_LAMP_RED_OFF' | translate"
+                [imageUrl]="getLampUrl('lamp.red.dim', theme)"
+                (imageUrlChange)="captureState()"
+                [assetId]="theme.slots['lamp.red.dim']"
+                [assetType]="'image'"
+                [images]="getAssetForSlot('lamp.red.dim', theme)?.images"
+                (assetSelected)="
+                  onThemeSlotChanged(theme, 'lamp.red.dim', $event)
+                "
+                [assets]="assets"
+                [disabled]="theme.is_default"
+              >
+              </app-image-selector>
+              <app-image-selector
+                [label]="'UE_LABEL_LAMP_RED_ON' | translate"
+                [imageUrl]="getLampUrl('lamp.red.on', theme)"
+                (imageUrlChange)="captureState()"
+                [assetId]="theme.slots['lamp.red.on']"
+                [assetType]="'image'"
+                [images]="getAssetForSlot('lamp.red.on', theme)?.images"
+                (assetSelected)="
+                  onThemeSlotChanged(theme, 'lamp.red.on', $event)
+                "
+                [assets]="assets"
+                [disabled]="theme.is_default"
+              >
+              </app-image-selector>
+              <app-image-selector
+                [label]="'UE_LABEL_LAMP_GREEN' | translate"
+                [imageUrl]="getLampUrl('lamp.green', theme)"
+                (imageUrlChange)="captureState()"
+                [assetId]="theme.slots['lamp.green']"
+                [assetType]="'image'"
+                [images]="getAssetForSlot('lamp.green', theme)?.images"
+                (assetSelected)="
+                  onThemeSlotChanged(theme, 'lamp.green', $event)
+                "
+                [assets]="assets"
+                [disabled]="theme.is_default"
+              >
+              </app-image-selector>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nested Fuel Gauge Image Settings -->
+      <div class="config-section sub-section">
+        <div class="section-header" (click)="toggleSection('fuelGauge')">
+          <span
+            class="expander-icon"
+            [class.collapsed]="!sectionsExpanded['fuelGauge']"
+            >▼</span
+          >
+          <h1>{{ "UE_HEADER_FUEL_GAUGE" | translate }}</h1>
+        </div>
+        <div class="section-content" *ngIf="sectionsExpanded['fuelGauge']">
+          <div class="panel fuel-gauge-panel">
+            <div class="panel-content single-selector">
+              <app-image-selector
+                [label]="'UE_HEADER_FUEL_GAUGE' | translate"
+                [imageUrl]="getFuelGaugeUrl(theme)"
+                (imageUrlChange)="captureState()"
+                [assetId]="theme.slots['gauge.fuel']"
+                [assetType]="'image_set'"
+                [images]="getAssetForSlot('gauge.fuel', theme)?.images"
+                (assetSelected)="
+                  onThemeSlotChanged(theme, 'gauge.fuel', $event)
+                "
+                [assets]="assets"
+                [disabled]="theme.is_default"
+              >
+              </app-image-selector>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- Themes Section -->
+    <div class="config-section">
+      <div class="section-header" (click)="toggleSection('themes')">
+        <span
+          class="expander-icon"
+          [class.collapsed]="!sectionsExpanded['themes']"
+          >▼</span
+        >
+        <h1>{{ "UE_HEADER_THEMES_ALL" | translate }}</h1>
+      </div>
+      <div class="section-content" *ngIf="sectionsExpanded['themes']">
+        <!-- Individual Theme Expanders -->
+        <div
+          *ngFor="let theme of displayThemes; trackBy: trackByThemeId"
+          class="config-section sub-section theme-sub-section"
+        >
+          <div
+            class="section-header"
+            (click)="toggleThemeSection(theme.entity_id)"
+          >
+            <span
+              class="expander-icon"
+              [class.collapsed]="!sectionsExpanded[theme.entity_id]"
+              >▼</span
+            >
+            <h1 *ngIf="theme.is_default">
+              {{ "UE_LABEL_DEFAULT_THEME" | translate }}
+            </h1>
+            <span class="default-badge" *ngIf="theme.is_default">
+              {{ "UE_BADGE_DEFAULT" | translate }}
+            </span>
+            <span class="readonly-badge" *ngIf="theme.is_default">
+              {{ "UE_BADGE_READONLY" | translate }}
+            </span>
+            <div
+              *ngIf="!theme.is_default"
+              class="theme-title-container"
+              [class.invalid]="isThemeNameInvalid(theme)"
+              (click)="$event.stopPropagation()"
+            >
+              <input
+                type="text"
+                [(ngModel)]="theme.name"
+                (change)="onThemeNameChanged(theme)"
+                class="theme-name-input"
+              />
+            </div>
+            <span
+              class="selected-badge"
+              *ngIf="theme.entity_id === editingSettings.activeThemeId"
+            >
+              {{ "UE_LABEL_SELECTED" | translate }}
+            </span>
+            <div
+              class="theme-toolbar-container"
+              (click)="$event.stopPropagation()"
+            >
+              <app-toolbar
+                [showActivate]="true"
+                [disabledActivate]="
+                  theme.entity_id === editingSettings.activeThemeId
+                "
+                (activate)="onThemeSelected(theme.entity_id)"
+                [showEdit]="false"
+                [showCopy]="true"
+                [showDelete]="!theme.is_default"
+                [showAdd]="!theme.is_default"
+                (copy)="onDuplicateTheme(theme)"
+                (delete)="onDeleteTheme(theme)"
+                (add)="createNewTheme()"
+                [showAnalytics]="false"
+              >
+              </app-toolbar>
+            </div>
+          </div>
+          <div
+            class="section-content"
+            *ngIf="sectionsExpanded[theme.entity_id]"
+          >
+            <ng-container
+              *ngTemplateOutlet="themeContent; context: { theme: theme }"
+            ></ng-container>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Settings Grid Section -->
-    <div class="config-row">
+    <div class="config-row single-column">
       <!-- Custom UI Settings -->
       <div class="config-section">
         <div class="section-header" (click)="toggleSection('config')">
           <span
             class="expander-icon"
-            [class.collapsed]="!sectionsExpanded.config"
+            [class.collapsed]="!sectionsExpanded['config']"
             >▼</span
           >
           <h1>{{ "UE_HEADER_CUSTOM_UI" | translate }}</h1>
         </div>
-        <div class="section-content" *ngIf="sectionsExpanded.config">
+        <div class="section-content" *ngIf="sectionsExpanded['config']">
           <div class="panel config-panel">
             <div class="panel-content">
               <div class="directory-selector">
@@ -111,8 +395,8 @@
                 <label>{{ "UE_LABEL_PAGE_TRANSITION" | translate }}</label>
                 <div class="select-container">
                   <select
-                    [(ngModel)]="editingSettings.pageTransition"
-                    (change)="captureState()"
+                    [ngModel]="editingSettings.pageTransition || 'slide'"
+                    (ngModelChange)="onPageTransitionChange($event)"
                   >
                     <option
                       *ngFor="let trans of availableTransitions"
@@ -123,66 +407,6 @@
                   </select>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Flag Image Settings -->
-      <div class="config-section">
-        <div class="section-header" (click)="toggleSection('flags')">
-          <span
-            class="expander-icon"
-            [class.collapsed]="!sectionsExpanded.flags"
-            >▼</span
-          >
-          <h1>{{ "UE_HEADER_FLAGS" | translate }}</h1>
-        </div>
-        <div class="section-content" *ngIf="sectionsExpanded.flags">
-          <div class="panel flags-panel">
-            <div class="panel-content flags-grid">
-              <app-image-selector
-                [label]="'UE_LABEL_GREEN_FLAG' | translate"
-                [(imageUrl)]="editingSettings.flagGreen"
-                (imageUrlChange)="captureState()"
-                [assets]="assets"
-              >
-              </app-image-selector>
-              <app-image-selector
-                [label]="'UE_LABEL_YELLOW_FLAG' | translate"
-                [(imageUrl)]="editingSettings.flagYellow"
-                (imageUrlChange)="captureState()"
-                [assets]="assets"
-              >
-              </app-image-selector>
-              <app-image-selector
-                [label]="'UE_LABEL_RED_FLAG' | translate"
-                [(imageUrl)]="editingSettings.flagRed"
-                (imageUrlChange)="captureState()"
-                [assets]="assets"
-              >
-              </app-image-selector>
-              <app-image-selector
-                [label]="'UE_LABEL_WHITE_FLAG' | translate"
-                [(imageUrl)]="editingSettings.flagWhite"
-                (imageUrlChange)="captureState()"
-                [assets]="assets"
-              >
-              </app-image-selector>
-              <app-image-selector
-                [label]="'UE_LABEL_BLACK_FLAG' | translate"
-                [(imageUrl)]="editingSettings.flagBlack"
-                (imageUrlChange)="captureState()"
-                [assets]="assets"
-              >
-              </app-image-selector>
-              <app-image-selector
-                [label]="'UE_LABEL_CHECKERED_FLAG' | translate"
-                [(imageUrl)]="editingSettings.flagCheckered"
-                (imageUrlChange)="captureState()"
-                [assets]="assets"
-              >
-              </app-image-selector>
             </div>
           </div>
         </div>
@@ -203,4 +427,25 @@
     (cancel)="onReorderCancel()"
   >
   </app-reorder-dialog>
+
+  <!-- Delete Theme Confirmation -->
+  <app-confirmation-modal
+    [visible]="showDeleteConfirm"
+    title="UE_DELETE_THEME_TITLE"
+    message="UE_DELETE_THEME_MESSAGE"
+    [messageParams]="{ name: themeToDelete?.name }"
+    (confirm)="onConfirmDeleteTheme()"
+    (cancel)="onCancelDeleteTheme()"
+  >
+  </app-confirmation-modal>
+
+  <!-- Discard Changes Confirmation -->
+  <app-confirmation-modal
+    [visible]="showDiscardConfirm"
+    title="UE_CONFIRM_DISCARD_TITLE"
+    message="UE_CONFIRM_DISCARD_MESSAGE"
+    (confirm)="onConfirmDiscard()"
+    (cancel)="onCancelDiscard()"
+  >
+  </app-confirmation-modal>
 </div>

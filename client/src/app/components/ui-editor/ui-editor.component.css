@@ -84,6 +84,43 @@
   letter-spacing: 1px;
 }
 
+.theme-title-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.theme-label {
+  font-size: 1.8rem;
+  color: #ffffff;
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
+.theme-name-input {
+  background: rgba(15, 23, 42, 0.3);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 4px;
+  padding: 4px 10px;
+  color: #fff;
+  font-size: 1.6rem;
+  font-family: inherit;
+  width: 600px;
+  transition: all 0.2s ease;
+}
+
+.theme-name-input:focus {
+  border-color: #38bdf8;
+  outline: none;
+  background: rgba(15, 23, 42, 0.5);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+}
+
+.theme-title-container.invalid .theme-name-input {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+}
+
 .expander-icon {
   font-size: 0.8rem;
   color: #38bdf8;
@@ -101,10 +138,58 @@
   padding: 0px 10px 10px 10px;
 }
 
+.sub-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  margin-left: 20px;
+}
+
+.sub-section:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.sub-section .section-header {
+  margin-bottom: 10px;
+  padding-right: 0;
+}
+
+.sub-section .section-header h1 {
+  font-size: 1.4rem;
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.sub-section .expander-icon {
+  font-size: 0.7rem;
+}
+ 
+.theme-sub-section {
+  margin-bottom: 15px;
+}
+
+.theme-sub-section .section-header h1,
+.theme-sub-section .theme-label {
+  font-size: 1.6rem;
+  color: #ffffff;
+  font-weight: 300;
+}
+
+.theme-sub-section .theme-name-input {
+  font-size: 1.4rem;
+  width: 500px;
+}
+
 .config-row {
   display: flex;
   gap: 40px;
   flex-wrap: wrap;
+}
+
+.config-row.single-column {
+  max-width: 800px;
 }
 
 .config-row .config-section {
@@ -168,6 +253,12 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(2, 1fr);
+  gap: 30px;
+}
+
+.countdown-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 30px;
 }
 
@@ -405,4 +496,165 @@
   color: #38bdf8;
   pointer-events: none;
   font-size: 20px;
+}
+
+/* Theme Section */
+.theme-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.theme-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.theme-selector label {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.theme-toolbar-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: auto;
+}
+
+.theme-status {
+  margin-left: auto;
+}
+
+.theme-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.theme-badge .material-icons {
+  font-size: 16px;
+}
+
+.btn-sm {
+  padding: 6px 14px;
+  font-size: 12px;
+}
+
+.btn-sm .material-icons {
+  font-size: 16px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.theme-info {
+  padding: 10px 0;
+}
+
+.theme-info-text {
+  font-size: 13px;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* "Managed by theme" badge in section headers */
+.managed-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 11px;
+  color: #a78bfa;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: auto;
+}
+
+.managed-badge .material-icons {
+  font-size: 14px;
+}
+
+.selected-badge,
+.default-badge,
+.readonly-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 10px;
+}
+
+.selected-badge {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: #4ade80;
+}
+
+.default-badge {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+}
+
+.readonly-badge {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #f59e0b;
+}
+
+/* Theme-managed (read-only) state for panels */
+.panel.theme-managed {
+  opacity: 0.5;
+  pointer-events: none;
+  position: relative;
+}
+
+.panel.theme-managed::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.3);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.single-selector {
+  display: flex;
+  justify-content: flex-start;
+  padding: 10px 0;
+}
+
+.fuel-gauge-panel {
+  max-width: 400px;
+}
+
+.theme-actions-container {
+  display: flex;
+  justify-content: flex-start;
+  padding: 20px 0 40px 0;
+  margin-top: 10px;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
 }

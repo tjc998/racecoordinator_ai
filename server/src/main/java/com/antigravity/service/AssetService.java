@@ -26,6 +26,7 @@ import org.bson.conversions.Bson;
 public class AssetService {
 
   private final String assetDir;
+  private final MongoDatabase database;
   private final MongoCollection<Document> collection;
 
   private static class DefaultAsset {
@@ -152,6 +153,7 @@ public class AssetService {
   }
 
   public AssetService(MongoDatabase database, String assetDir) {
+    this.database = database;
     this.collection = database.getCollection("assets");
     this.assetDir = assetDir;
     File directory = new File(assetDir);
@@ -181,6 +183,14 @@ public class AssetService {
       assets.add(documentToAsset(doc));
     }
     return assets;
+  }
+
+  public AssetMessage getAssetById(String id) {
+    Document doc = collection.find(Filters.eq("_id", id)).first();
+    if (doc == null) {
+      return null;
+    }
+    return documentToAsset(doc);
   }
 
   public AssetMessage saveAsset(String name, String type, byte[] data) throws IOException {
@@ -423,7 +433,7 @@ public class AssetService {
     for (DefaultAsset asset : DEFAULT_IMAGE_ASSETS) {
       try {
         byte[] data = readResource("/defaults/" + asset.filename);
-        saveAsset(asset.id, asset.displayName, "image", data);
+        saveAsset(asset.id, asset.filename, "image", data);
       } catch (IOException | NumberFormatException e) {
         System.err.println(
             "Failed to restore default asset " + asset.filename + ": " + e.getMessage());
@@ -434,7 +444,7 @@ public class AssetService {
       try {
         byte[] data = readResource("/defaults/" + asset.filename);
         // It's a fuel gauge, part of the set
-        String safeName = asset.displayName.replaceAll("[^a-zA-Z0-9.-]", "_");
+        String safeName = asset.filename.replaceAll("[^a-zA-Z0-9.-]", "_");
         String internalFilename = asset.id + "_" + safeName;
         Path path = Paths.get(assetDir, internalFilename);
         try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
@@ -506,7 +516,7 @@ public class AssetService {
       }
       try {
         byte[] data = readResource("/defaults/" + asset.filename);
-        saveAsset(asset.id, asset.displayName, "image", data);
+        saveAsset(asset.id, asset.filename, "image", data);
       } catch (IOException | NumberFormatException e) {
         System.err.println(
             "Failed to backfill default asset " + asset.filename + ": " + e.getMessage());
@@ -519,7 +529,7 @@ public class AssetService {
         try {
           byte[] data = readResource("/defaults/" + asset.filename);
           // It's a fuel gauge, part of the set
-          String safeName = asset.displayName.replaceAll("[^a-zA-Z0-9.-]", "_");
+          String safeName = asset.filename.replaceAll("[^a-zA-Z0-9.-]", "_");
           String internalFilename = asset.id + "_" + safeName;
           Path path = Paths.get(assetDir, internalFilename);
           try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
@@ -579,5 +589,50 @@ public class AssetService {
             "Failed to backfill default asset " + asset.filename + ": " + e.getMessage());
       }
     }
+
+    // Backfill default theme
+    backfillDefaultTheme();
+  }
+
+  /**
+   * Creates the "RaceCoordinator AI (default)" default theme if it doesn't already exist. This
+   * theme maps all built-in asset slots (flags, start lamps, fuel gauge) to their default asset
+   * IDs.
+   */
+  void backfillDefaultTheme() {
+    MongoCollection<Document> themes = database.getCollection("themes");
+    String themeId = "default_classic_rc_ai";
+
+    // Migration: Remove any legacy theme document.
+    themes.deleteOne(Filters.eq("entity_id", themeId));
+
+    if (themes.find(Filters.eq("entity_id", themeId)).first() != null) {
+      return; // Already exists with proper ObjectId
+    }
+
+    Document slots = new Document();
+    // Flags
+    slots.append("flag.green", "default_flag_green");
+    slots.append("flag.red", "default_flag_red");
+    slots.append("flag.yellow", "default_flag_yellow");
+    slots.append("flag.white", "default_flag_white");
+    slots.append("flag.checkered", "default_flag_checkered");
+    slots.append("flag.black", "default_flag_black");
+    // Start lamps
+    slots.append("lamp.red.on", "default_start_red_on");
+    slots.append("lamp.red.dim", "default_start_red_dim");
+    slots.append("lamp.green", "default_start_green");
+    // Fuel gauge image set
+    slots.append("gauge.fuel", "default_fuel-gauge-builtin");
+
+    Document theme =
+        new Document()
+            .append("entity_id", themeId)
+            .append("name", "RaceCoordinator AI (default)")
+            .append("is_default", true)
+            .append("slots", slots);
+
+    themes.insertOne(theme);
+    System.out.println("Default theme 'RaceCoordinator AI (default)' created.");
   }
 }

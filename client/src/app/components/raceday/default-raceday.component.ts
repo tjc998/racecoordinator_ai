@@ -27,6 +27,7 @@ import { Heat } from "src/app/race/heat";
 import { RaceService } from "src/app/services/race.service";
 import { FlagType, RaceFlagService } from "src/app/services/race-flag.service";
 import { SettingsService } from "src/app/services/settings.service";
+import { ThemeService } from "src/app/services/theme.service";
 import { TranslationService } from "src/app/services/translation.service";
 import { createTTSContext, playSound } from "src/app/utils/audio";
 
@@ -313,6 +314,7 @@ export class DefaultRacedayComponent
     private router: Router,
     private raceConnectionService: RaceConnectionService,
     private cdr: ChangeDetectorRef,
+    private themeService: ThemeService,
   ) {
     // Initial default columns, will be overwritten in ngOnInit
     this.columns = [];
@@ -1443,6 +1445,22 @@ export class DefaultRacedayComponent
   getCurrentFlagUrl(): string {
     const flagType = this.raceFlagService.getFlagType();
 
+    // 1. Theme slot resolution (highest priority)
+    const themeSlotMap: Record<string, string> = {
+      green: "flag.green",
+      red: "flag.red",
+      yellow: "flag.yellow",
+      white: "flag.white",
+      checkered: "flag.checkered",
+      green_yellow: "flag.green", // falls back to green slot
+    };
+    const slotKey = themeSlotMap[flagType];
+    if (slotKey) {
+      const themeUrl = this.resolveAssetUrlBySlot(slotKey);
+      if (themeUrl) return themeUrl;
+    }
+
+    // 2. Individual Settings override
     const settings = this.settingsService.getSettings();
 
     let url: string | undefined;
@@ -1462,7 +1480,7 @@ export class DefaultRacedayComponent
       return url;
     }
 
-    // Return built-in flag URLs as fallback
+    // 3. Built-in default asset (name-based lookup from assets list)
     const flagUrls: Record<FlagType, string> = {
       red: "/assets/flags/red.png",
       green: "/assets/flags/green.png",
@@ -1498,8 +1516,7 @@ export class DefaultRacedayComponent
       return finalUrl;
     }
 
-    // Ultimate fallback
-    // TODO(aufderheide): Remove this fallback and just and throw an error and/or do nothing
+    // 4. Ultimate fallback
     console.warn(
       `Flag resolution for ${flagType}: No asset found, using ultimate fallback.`,
     );
@@ -1845,11 +1862,36 @@ export class DefaultRacedayComponent
   }
 
   private findAssetById(assetId: string): any {
-    let asset = this.assets.find((a) => a.model?.entityId === assetId);
+    // If we're looking for the builtin fuel gauge, try to resolve it via theme or settings first
+    if (assetId === "fuel-gauge-builtin") {
+      const themeAssetId =
+        this.themeService.resolveAssetId("gauge.fuel") ||
+        this.themeService.resolveAssetId("fuel_gauge");
+
+      const settings = this.settingsService.getSettings();
+      const resolvedId = themeAssetId || settings.fuelGaugeImageSet;
+
+      if (resolvedId && resolvedId !== "default_fuel-gauge-builtin") {
+        const resolvedAsset = (this.assets || []).find(
+          (a) =>
+            a.model?.entityId === resolvedId ||
+            a.entity_id === resolvedId ||
+            a._id === resolvedId,
+        );
+        if (resolvedAsset) return resolvedAsset;
+      }
+    }
+
+    let asset = (this.assets || []).find(
+      (a) =>
+        a.model?.entityId === assetId ||
+        a.entity_id === assetId ||
+        a._id === assetId,
+    );
 
     // Robustness: fallback for builtin fuel gauge if ID doesn't match
     if (!asset && assetId === "fuel-gauge-builtin") {
-      asset = this.assets.find(
+      asset = (this.assets || []).find(
         (a) => a.type === "image_set" && a.name === "Fuel Gauge",
       );
     }
@@ -1884,6 +1926,7 @@ export class DefaultRacedayComponent
 
     if (this.isEmptyDriver(hd)) {
       // Hide some columns for empty lanes.  All others not in this list should show the default formatting for the colunn.
+      // TODO(aufderheide): Add these into a constant array to make things cleaner.
       if (
         baseKey === "seed" ||
         baseKey === "rankHeat" ||
@@ -2274,9 +2317,12 @@ export class DefaultRacedayComponent
     this.countdownLamps = [];
     for (let i = 0; i < this.countdownTotalLamps; i++) {
       const lampState = i < onCount ? "on" : "dim";
-      const url = this.getAssetUrl(
-        lampState === "on" ? "Start Lamp Red" : "Start Lamp Dim",
-      );
+      const slotKey = lampState === "on" ? "lamp.red.on" : "lamp.red.dim";
+      const url =
+        this.resolveAssetUrlBySlot(slotKey) ||
+        this.getAssetUrl(
+          lampState === "on" ? "Start Lamp Red" : "Start Lamp Dim",
+        );
       this.countdownLamps.push({
         url: url,
         state: lampState,
@@ -2288,7 +2334,9 @@ export class DefaultRacedayComponent
   }
 
   private setAllLampsGo() {
-    const url = this.getAssetUrl("Start Lamp Green");
+    const url =
+      this.resolveAssetUrlBySlot("lamp.green") ||
+      this.getAssetUrl("Start Lamp Green");
     this.countdownLamps = Array.from({ length: this.countdownTotalLamps }).map(
       () => ({
         url: url,
@@ -2301,6 +2349,26 @@ export class DefaultRacedayComponent
 
   private getAssetUrl(name: string): string {
     const asset = (this.assets || []).find((a) => a.name === name);
+    return asset ? this.getFullUrl(asset.url) : "";
+  }
+
+  /**
+   * Resolve an asset URL from a theme slot key.
+   * Looks up the theme's asset entity ID for the slot, then finds the
+   * matching asset in the loaded assets list to get its URL.
+   * Returns empty string if no theme is active or the slot/asset is not found.
+   */
+  private resolveAssetUrlBySlot(slotKey: string): string {
+    const assetId = this.themeService.resolveAssetId(slotKey);
+    if (!assetId) return "";
+
+    // Find the asset in the loaded assets list by entity ID
+    const asset = (this.assets || []).find(
+      (a) =>
+        a.model?.entityId === assetId ||
+        a.entity_id === assetId ||
+        a._id === assetId,
+    );
     return asset ? this.getFullUrl(asset.url) : "";
   }
 }

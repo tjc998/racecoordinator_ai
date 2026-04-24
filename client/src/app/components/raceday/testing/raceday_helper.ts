@@ -5,7 +5,10 @@ import { MOCK_DRIVERS } from "../../../testing/data/drivers_data";
 import { MOCK_HEATS } from "../../../testing/data/heats_data";
 import { MOCK_RACES } from "../../../testing/data/races_data";
 import { MOCK_TEAMS } from "../../../testing/data/teams_data";
-import { MOCK_TRACKS } from "../../../testing/data/tracks_data";
+import {
+  MOCK_TRACK_INSTANCES,
+  MOCK_TRACKS,
+} from "../../../testing/data/tracks_data";
 
 /**
  * Creates a comprehensive set of mocks for Raceday tests.
@@ -128,7 +131,10 @@ export function createRacedayMocks(overrides: any = {}) {
     }),
   );
 
-  const mockRaceWithTrack = { ...MOCK_RACES[0], track: MOCK_TRACKS[0] };
+  const mockRaceWithTrack = {
+    ...MOCK_RACES[0],
+    track: MOCK_TRACK_INSTANCES[0],
+  };
   mockRaceService.currentHeat$ = of(mockHeatsWithAudio[0]);
   mockRaceService.race$ = of(mockRaceWithTrack);
   mockRaceService.participants$ = participantsSubject.asObservable();
