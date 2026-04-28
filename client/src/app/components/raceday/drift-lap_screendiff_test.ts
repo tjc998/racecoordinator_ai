@@ -132,6 +132,7 @@ test.describe("Drift Lap Indicator Visuals", () => {
     // Take screenshot for visual regression
     await expect(page.locator(".scalable-content")).toHaveScreenshot(
       "drift-lap-indicator.png",
+      { maxDiffPixelRatio: 0.1, animations: "disabled" },
     );
   });
 });

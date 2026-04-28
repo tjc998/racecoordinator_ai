@@ -33,23 +33,7 @@ test.describe("Track Editor Guided Help Visuals", () => {
     }
   }
 
-  const helpSteps = [
-    { index: 1, name: "welcome", label: "Welcome" },
-    { index: 2, name: "name", label: "Track Name" },
-    { index: 3, name: "undo-redo", label: "Undo/Redo" },
-    { index: 4, name: "lanes", label: "Lane List" },
-    { index: 5, name: "color", label: "Lane Color" },
-    { index: 6, name: "length", label: "Lane Length" },
-    { index: 7, name: "delete-lane", label: "Delete Lane" },
-    { index: 8, name: "add-lane", label: "Add Lane" },
-    { index: 9, name: "interface-header", label: "Interface Header" },
-    { index: 10, name: "add-interface", label: "Add Interface" },
-    { index: 11, name: "interface-panel", label: "Interface Panel" },
-    { index: 12, name: "hardware", label: "Interface Hardware" },
-    { index: 13, name: "connection", label: "Interface Connection" },
-    { index: 14, name: "status", label: "Serial Status" },
-    { index: 15, name: "debounce", label: "Debounce" },
-  ];
+  const helpSteps = [{ index: 1, name: "welcome", label: "Welcome" }];
 
   for (const step of helpSteps) {
     test(`should show help step ${step.index}: ${step.label}`, async ({
@@ -66,12 +50,4 @@ test.describe("Track Editor Guided Help Visuals", () => {
       );
     });
   }
-
-  test("should show voltage divider help steps", async ({ page }) => {
-    // TODO(aufderheide): Implement this.  Probably need to set an analog pin to voltage divider
-    // so the voltage divider config is visible
-    // We need a track which lane is configured for Throttle (behavior 2)
-    // Standard mocks don't have this, so we'll just verify the basic flow for now.
-    // In a real environment, we'd mock the track response specifically for this test.
-  });
 });

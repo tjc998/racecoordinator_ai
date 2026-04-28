@@ -844,4 +844,135 @@ describe("ArduinoEditorComponent", () => {
       expect(component.isPinActive(true, 2)).toBeFalse();
     }));
   });
+
+  describe("LED Hardware Constraints", () => {
+    beforeEach(() => {
+      fixture = TestBed.createComponent(ArduinoEditorComponent);
+      component = fixture.componentInstance;
+      component.config = makeConfig();
+      component.lanes = [new Lane("l1", "#fff", "#ff0000", 10)];
+      fixture.detectChanges();
+    });
+
+    it("should restrict Uno LED string pins to D2-D3 and A0-A5", () => {
+      component.onHardwareTypeChange(0); // Uno
+      fixture.detectChanges();
+
+      // Digital 2 is valid
+      const digitalActions = component.getFilteredActions(true, 2);
+      expect(digitalActions.find((a) => a.value === "led_string")).toBeTruthy();
+
+      // Digital 4 is invalid
+      const digitalInvalid = component.getFilteredActions(true, 4);
+      expect(digitalInvalid.find((a) => a.value === "led_string")).toBeFalsy();
+
+      // Analog A5 is valid
+      const analogValid = component.getFilteredActions(false, 5);
+      expect(analogValid.find((a) => a.value === "led_string")).toBeTruthy();
+
+      // Analog A6 is invalid
+      const analogInvalid = component.getFilteredActions(false, 6);
+      expect(analogInvalid.find((a) => a.value === "led_string")).toBeFalsy();
+    });
+
+    it("should use correct default values for a new LED string", () => {
+      component.addLedString(10, 5); // Pin 5
+      const ls = component.config!.ledStrings[0];
+      expect(ls.brightness).toBe(32);
+      expect(ls.ledType).toBe(1); // WS2811
+      expect(ls.flagFlashRate).toBe(2);
+    });
+
+    it("should restrict Mega LED string pins to even D22-D52 and even A0-A14", () => {
+      component.onHardwareTypeChange(1); // Mega
+      fixture.detectChanges();
+
+      // Digital 22 is valid
+      const digitalValid = component.getFilteredActions(true, 22);
+      expect(digitalValid.find((a) => a.value === "led_string")).toBeTruthy();
+
+      // Digital 23 is invalid
+      const digitalInvalid1 = component.getFilteredActions(true, 23);
+      expect(digitalInvalid1.find((a) => a.value === "led_string")).toBeFalsy();
+
+      // Digital 54 is invalid
+      const digitalInvalid2 = component.getFilteredActions(true, 54);
+      expect(digitalInvalid2.find((a) => a.value === "led_string")).toBeFalsy();
+
+      // Analog A14 is valid
+      const analogValid = component.getFilteredActions(false, 14);
+      expect(analogValid.find((a) => a.value === "led_string")).toBeTruthy();
+
+      // Analog A13 is invalid
+      const analogInvalid = component.getFilteredActions(false, 13);
+      expect(analogInvalid.find((a) => a.value === "led_string")).toBeFalsy();
+    });
+
+    it("should limit Uno to 5 LED strings", () => {
+      component.onHardwareTypeChange(0); // Uno
+      fixture.detectChanges();
+
+      for (let i = 0; i < 5; i++) {
+        // use pin 0 to avoid collision
+        component.addLedString(10, 0);
+      }
+      expect(component.config!.ledStrings.length).toBe(5);
+
+      // Try 6th
+      component.addLedString(10, 0);
+      expect(component.config!.ledStrings.length).toBe(5); // Blocked
+    });
+
+    it("should limit Mega to 8 LED strings", () => {
+      component.onHardwareTypeChange(1); // Mega
+      fixture.detectChanges();
+
+      for (let i = 0; i < 8; i++) {
+        component.addLedString(10, 0);
+      }
+      expect(component.config!.ledStrings.length).toBe(8);
+
+      // Try 9th
+      component.addLedString(10, 0);
+      expect(component.config!.ledStrings.length).toBe(8); // Blocked
+    });
+
+    it("should restrict LED types for Uno to WS2811 and OTHER", () => {
+      component.onHardwareTypeChange(0); // Uno
+      fixture.detectChanges();
+
+      expect(component.ledTypes.length).toBe(2);
+      expect(component.ledTypes.map((t) => t.value)).toEqual(["1", "12"]);
+    });
+
+    it("should default unsupported LED types to WS2811 when switching to Uno", () => {
+      component.onHardwareTypeChange(1); // Start on Mega
+      component.addLedString(10, 0); // String 1
+      component.config!.ledStrings[0].ledType = 3; // WS2812B (Not supported on Uno)
+
+      component.addLedString(10, 0); // String 2
+      component.config!.ledStrings[1].ledType = 12; // OTHER (Supported on Uno)
+
+      component.onHardwareTypeChange(0); // Switch to Uno
+
+      // Unsupported WS2812B should become WS2811 (1)
+      expect(component.config!.ledStrings[0].ledType).toBe(1);
+      // Supported OTHER should remain OTHER (12)
+      expect(component.config!.ledStrings[1].ledType).toBe(12);
+    });
+
+    it("should support 5 LED types for Mega", () => {
+      component.onHardwareTypeChange(1); // Mega
+      fixture.detectChanges();
+
+      expect(component.ledTypes.length).toBe(5);
+      expect(component.ledTypes.map((t) => t.value)).toEqual([
+        "0",
+        "1",
+        "2",
+        "3",
+        "12",
+      ]);
+    });
+  });
 });

@@ -296,6 +296,15 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
     if (newType === 0) {
       // Uno
+      // Switch any unsupported LED types to WS2811 ("1")
+      if (this.config.ledStrings) {
+        this.config.ledStrings.forEach((ls) => {
+          if (!["1", "12"].includes(ls.ledType.toString())) {
+            ls.ledType = 1; // Default to WS2811
+          }
+        });
+      }
+
       // Reset digital pins D14-D59 (Uno only has 14 digital pins, 0-13)
       for (let i = 14; i < MAX_DIGITAL_PINS; i++) {
         this.config.digitalIds[i] = com.antigravity.PinBehavior.BEHAVIOR_UNUSED;
@@ -722,46 +731,13 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
         value: "3",
       },
       {
-        label: this.translationService.translate("AE_LED_TYPE_TM1803"),
-        value: "4",
-      },
-      {
-        label: this.translationService.translate("AE_LED_TYPE_TM1804"),
-        value: "5",
-      },
-      {
-        label: this.translationService.translate("AE_LED_TYPE_TM1809"),
-        value: "6",
-      },
-      {
-        label: this.translationService.translate("AE_LED_TYPE_APA104"),
-        value: "7",
-      },
-      {
-        label: this.translationService.translate("AE_LED_TYPE_UCS1903"),
-        value: "8",
-      },
-      {
-        label: this.translationService.translate("AE_LED_TYPE_UCS1903B"),
-        value: "9",
-      },
-      {
-        label: this.translationService.translate("AE_LED_TYPE_GW6205"),
-        value: "10",
-      },
-      {
-        label: this.translationService.translate("AE_LED_TYPE_GW6205_400"),
-        value: "11",
-      },
-      {
         label: this.translationService.translate("AE_LED_TYPE_OTHER"),
         value: "12",
       },
     ];
-
     if (this.config?.hardwareType === 0) {
-      // Uno/Nano - Only keep NEOPIXEL and OTHER to save Flash/RAM in the sketch
-      this.ledTypes = allTypes.filter((t) => ["0", "12"].includes(t.value));
+      // Uno/Nano - Only keep WS2811 and OTHER to save Flash/RAM in the sketch
+      this.ledTypes = allTypes.filter((t) => ["1", "12"].includes(t.value));
     } else {
       this.ledTypes = allTypes;
     }
@@ -798,6 +774,15 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       if (existing) return;
     }
 
+    // Enforce maximum LED strings per board to match Arduino sketch memory limits
+    const maxStrings = this.config.hardwareType === 0 ? 5 : 8;
+    if (this.config.ledStrings.length >= maxStrings) {
+      console.warn(
+        `Maximum number of LED strings (${maxStrings}) reached for this board.`,
+      );
+      return;
+    }
+
     const n = Number(numLeds);
     const newString: LedString = {
       pin: pin,
@@ -806,9 +791,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       ),
       numUsedLeds: 0,
       addressableLeds: n,
-      brightness: 255,
-      ledType: 0,
-      flagFlashRate: 5,
+      brightness: 32,
+      ledType: 1,
+      flagFlashRate: 2,
       ledLaneColorOverrides: this.lanes.map(
         (l) => l.background_color || "#ffffff",
       ),
@@ -1160,6 +1145,37 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       if (b.value === "" || b.value === "reserved") return 1;
       return a.label.localeCompare(b.label);
     });
+  }
+
+  getFilteredActions(isDigital: boolean, pin: number): PinAction[] {
+    const actions = isDigital ? this.digitalPinActions : this.analogPinActions;
+    if (!this.config) {
+      return actions;
+    }
+
+    let canLed = true;
+    if (this.config.hardwareType === 0) {
+      // Uno/Nano (hardwareType 0), only allow led_string on D2-D3 and ALL analog A0-A5
+      canLed = isDigital ? pin >= 2 && pin <= 3 : pin >= 0 && pin <= 5;
+    } else if (this.config.hardwareType === 1) {
+      // Mega (hardwareType 1), only allow led_string on EVEN digital pins D22-D52 and EVEN analog A0-A14
+      canLed = isDigital
+        ? pin >= 22 && pin <= 52 && pin % 2 === 0
+        : pin >= 0 && pin <= 15 && pin % 2 === 0;
+    }
+
+    if (canLed) {
+      return actions;
+    }
+
+    // If the pin currently HAS led_string assigned, we should keep it in the list
+    // so the user can see it and change it.
+    const currentAction = this.getPinAction(isDigital, pin);
+    if (currentAction === "led_string") {
+      return actions;
+    }
+
+    return actions.filter((a) => a.value !== "led_string");
   }
 
   private refreshLanes() {

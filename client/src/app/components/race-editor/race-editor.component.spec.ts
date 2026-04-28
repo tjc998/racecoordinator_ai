@@ -123,6 +123,15 @@ describe("RaceEditorComponent", () => {
     expect(component).toBeTruthy();
   });
 
+  it("should use transform scale for scaling", () => {
+    component.scale = 0.5;
+    fixture.detectChanges();
+    const container = fixture.nativeElement.querySelector(".page-container");
+    expect(container.style.zoom).toBeFalsy();
+    expect(container.style.transform).toContain("scale(0.5)");
+    expect(container.style.transform).toContain("translate(-50%, -50%)");
+  });
+
   it("should load race on init when ID is provided", fakeAsync(() => {
     dataService.getRaces.and.returnValue(of(MOCK_RACES));
     dataService.getTracks.and.returnValue(of(MOCK_TRACKS));

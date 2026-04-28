@@ -179,6 +179,15 @@ public class ArduinoProtocolTest {
     assertTrue("LED clear must happen BEFORE serial disconnect", lastWrite < lastDisconnect);
   }
 
+  @Test
+  public void testGetMaxBufferSize() {
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    assertEquals(
+        "Buffer size should be explicitly set to 128 for memory constraints",
+        128,
+        protocol.getMaxBufferSize());
+  }
+
   private static class TestableArduinoProtocol extends ArduinoProtocol {
 
     long mockedTime = 10000;
@@ -1541,20 +1550,13 @@ public class ArduinoProtocolTest {
     // Configure for Mega
     config.hardwareType = 1;
     protocol.updateConfig(config);
-    assertEquals("Mega buffer limit should be 512", 512, protocol.getMaxBufferSize());
+    assertEquals("Mega buffer limit should be 128", 128, protocol.getMaxBufferSize());
 
-    // Send 129 bytes - should succeed now
+    // Send 129 bytes - should be dropped
     serialConnection.allWrittenData.clear();
     protocol.writeData(msg129);
     assertEquals(
-        "129 byte message should be sent on Mega", 1, serialConnection.allWrittenData.size());
-
-    // Send 513 bytes - should be dropped
-    serialConnection.allWrittenData.clear();
-    byte[] msg513 = new byte[513];
-    protocol.writeData(msg513);
-    assertEquals(
-        "513 byte message should be dropped on Mega", 0, serialConnection.allWrittenData.size());
+        "129 byte message should be dropped on Mega", 0, serialConnection.allWrittenData.size());
   }
 
   @Test

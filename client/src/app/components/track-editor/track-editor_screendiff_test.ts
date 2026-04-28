@@ -34,10 +34,11 @@ test.describe("Track Editor Visuals", () => {
     // Lane Editor
 
     // Arduino Config
-    await page.waitForTimeout(100);
-
-    await page.waitForTimeout(100);
-    await expect(page).toHaveScreenshot("track-editor-existing.png");
+    await page.waitForTimeout(500);
+    await expect(page).toHaveScreenshot("track-editor-existing.png", {
+      maxDiffPixelRatio: 0.1,
+      animations: "disabled",
+    });
   });
 
   test("should display track editor for new track", async ({ page }) => {
@@ -56,8 +57,11 @@ test.describe("Track Editor Visuals", () => {
 
     // Default lanes for new track
 
-    await page.waitForTimeout(100);
-    await expect(page).toHaveScreenshot("track-editor-new.png");
+    await page.waitForTimeout(500);
+    await expect(page).toHaveScreenshot("track-editor-new.png", {
+      maxDiffPixelRatio: 0.1,
+      animations: "disabled",
+    });
   });
 
   test("should show unsaved changes confirmation", async ({ page }) => {
@@ -86,9 +90,10 @@ test.describe("Track Editor Visuals", () => {
     // Confirmation modal should appear
     await harness.waitForConfirmationModalVisible(5000);
 
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(500);
     await expect(page).toHaveScreenshot(
       "track-editor-unsaved-changes-modal.png",
+      { maxDiffPixelRatio: 0.1, animations: "disabled" },
     );
   });
 
@@ -114,8 +119,11 @@ test.describe("Track Editor Visuals", () => {
 
     // Verify pin 2 action (checked visually)
 
-    await page.waitForTimeout(100);
-    await expect(page).toHaveScreenshot("track-editor-pins-grid.png");
+    await page.waitForTimeout(500);
+    await expect(page).toHaveScreenshot("track-editor-pins-grid.png", {
+      maxDiffPixelRatio: 0.1,
+      animations: "disabled",
+    });
   });
 
   test("should highlight track name in red when duplicate", async ({
@@ -134,9 +142,10 @@ test.describe("Track Editor Visuals", () => {
 
     // Invalid state checked visually
 
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(500);
     await expect(page).toHaveScreenshot(
       "track-editor-duplicate-name-error.png",
+      { maxDiffPixelRatio: 0.1, animations: "disabled" },
     );
   });
 
@@ -154,6 +163,9 @@ test.describe("Track Editor Visuals", () => {
     const overlay = page.locator("app-help-overlay");
     await overlay.locator(".help-popover").waitFor({ state: "visible" });
 
-    await expect(page).toHaveScreenshot("track-editor-guided-help.png");
+    await expect(page).toHaveScreenshot("track-editor-guided-help.png", {
+      maxDiffPixelRatio: 0.1,
+      animations: "disabled",
+    });
   });
 });

@@ -712,8 +712,8 @@ public class ArduinoProtocol extends DefaultProtocol {
   }
 
   protected int getMaxBufferSize() {
-    // Mega (1) has a 512-byte buffer, Uno (0 or other) has a 128-byte buffer
-    return (config.hardwareType == 1) ? 512 : 128;
+    // Both Mega and Uno now use a 128-byte buffer to save RAM on the Mega
+    return 128;
   }
 
   // TODO(aufderheide): Make this private and mock the serialConnection instead

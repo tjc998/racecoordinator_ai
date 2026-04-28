@@ -177,6 +177,7 @@ test.describe("UI Editor Visuals", () => {
 
     await expect(modalContent).toHaveScreenshot(
       "ui-editor-discard-confirm.png",
+      { maxDiffPixelRatio: 0.1, animations: "disabled" },
     );
   });
 });

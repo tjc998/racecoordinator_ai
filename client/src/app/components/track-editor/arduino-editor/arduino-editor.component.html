@@ -211,7 +211,7 @@
                       (ngModelChange)="setPinAction(true, pin, $event)"
                     >
                       <option
-                        *ngFor="let action of digitalPinActions"
+                        *ngFor="let action of getFilteredActions(true, pin)"
                         [value]="action.value"
                       >
                         {{ action.label }}
@@ -252,7 +252,7 @@
                       (ngModelChange)="setPinAction(false, pin, $event)"
                     >
                       <option
-                        *ngFor="let action of analogPinActions"
+                        *ngFor="let action of getFilteredActions(false, pin)"
                         [value]="action.value"
                       >
                         {{ action.label }}

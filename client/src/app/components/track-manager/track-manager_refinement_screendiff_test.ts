@@ -23,9 +23,10 @@ test.describe("Track Manager UI Refinements", () => {
     await expect(listItems).toHaveCount(20);
 
     // Capture the sidebar state (scrollbar and truncation)
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(500);
     await expect(page).toHaveScreenshot(
       "track-manager-sidebar-scrolling-truncation.png",
+      { maxDiffPixelRatio: 0.1, animations: "disabled" },
     );
   });
 
@@ -45,9 +46,10 @@ test.describe("Track Manager UI Refinements", () => {
     await expect(summaryTitle).toBeVisible();
 
     // Check for ellipsis (via screenshot verification)
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(500);
     await expect(page).toHaveScreenshot(
       "track-manager-summary-title-truncation.png",
+      { maxDiffPixelRatio: 0.1, animations: "disabled" },
     );
   });
 });

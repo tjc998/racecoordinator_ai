@@ -118,17 +118,20 @@ byte timeResponse[] = {0x54, 0x00, 0x00, 0x00, 0x00, 0, term};
 byte inputChanged[] = {0x49, 0xFF, 0xFF, 0xFF, term};
 
 // Opcode count [pin byte1 byte2 byte3 byte4] term
-// Max 10 pins right now
+// Mega uses 8 analog pins (A0, A2, A4, A6, A8, A10, A12, A14), so 43 bytes is
+// enough (1 + 1 + 8*5 + 1)
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-byte analogData[] = {0x41, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, term};
+byte analogData[43] = {0x41, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, term};
 #else
 // Uno only has 6 analog pins, 33 bytes is enough
-byte analogData[33];
+byte analogData[33] = {0x41, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                       0x00, 0x00, 0x00, 0x00, 0x00, term};
 #endif
 
 // Unknown
@@ -174,11 +177,8 @@ boolean bReset = true;
 byte iNumWritePins = 0;
 
 // inBuffer will hold any requests made by RC i.e. power control
-#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-byte inBuffer[512];
-#else
+// Reduced to 128 for all boards to save RAM on Mega
 byte inBuffer[128];
-#endif
 int iReadCount = 0;
 boolean bRead = false;
 
@@ -207,9 +207,14 @@ unsigned long ulCurDebounceUs;
 #ifdef WITH_FAST_LED
 // RGB pixels
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-#define MAX_RGB_LED_STRINGS 32
+#define MAX_RGB_LED_STRINGS 8
 #else
-#define MAX_RGB_LED_STRINGS 6
+#define MAX_RGB_LED_STRINGS 5
+// Uno/Nano memory optimization:
+// The number of pins supporting LEDs is limited to save RAM and Flash.
+// Each pin used for LEDs consumes ~30-60 bytes of RAM for the controller.
+// By limiting to these pins, we save over 600 bytes of RAM.
+#define IS_LED_PIN(p) ((p) >= 2 && (p) <= 3)
 #endif
 
 typedef struct {
@@ -245,16 +250,15 @@ int allocateRgbSlotForPin(byte pin) {
   return -1;
 }
 
-// WITH_FAST_LED: user todo:
-// For the pins you plan to use, change the NEOPIXEL to the correct type
-// for your LEDs.
+// WITH_FAST_LED
+// User TODO:
 //
-// NOTE: This is a really old list, there may be new values possible.
+// If the led type you are using isn't supported in the arduino config pulldown,
+// set the pulldown to "Other" in the pulldown.  Then set the OTHER_LED_TYPE
+// below to the type you are using.
 //
-// NOTE: There are actually others that require a CLOCK pin that we could
-// support but as of right now I didn't bother.
-//
-// Here's all the types of leds FastLed supports.
+// Here's all the types of leds FastLed supports.  There may be others as this
+// list is pretty old.F
 //
 //  NEOPIXEL
 //  TM1803
@@ -269,19 +273,20 @@ int allocateRgbSlotForPin(byte pin) {
 //  GW6205
 //  GW6205_400
 
-// Change this if you have a different pixel type than what we support out of
-// the box. This is used if you select 'Other' in the Arduino Config Editor.
-#define OTHER_LED_TYPE WS2812B
+#define OTHER_LED_TYPE TM1809
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
-// Uno/Nano optimization: Only support NEOPIXEL and OTHER_LED_TYPE to save Flash
+// Uno/Nano memory optimization:
+// The UI allows selecting all LED types, but to save Flash memory, we map all
+// standard types to WS2812B. Only OTHER_LED_TYPE gets its own template
+// instantiation.
 #define ADD_LEDS_ON_PIN(PIN)                                                   \
   case PIN:                                                                    \
     if (ledType == 12)                                                         \
       return &FastLED.addLeds<OTHER_LED_TYPE, PIN>(leds, numLeds);             \
-    return &FastLED.addLeds<WS2812B, PIN>(leds, numLeds);
+    return &FastLED.addLeds<WS2811, PIN>(leds, numLeds);
 #else
-// Mega support for more types
+// Mega support for multiple distinct LED templates
 #define ADD_LEDS_ON_PIN(PIN)                                                   \
   case PIN:                                                                    \
     switch (ledType) {                                                         \
@@ -291,22 +296,6 @@ int allocateRgbSlotForPin(byte pin) {
       return &FastLED.addLeds<WS2812, PIN>(leds, numLeds);                     \
     case 3:                                                                    \
       return &FastLED.addLeds<WS2812B, PIN>(leds, numLeds);                    \
-    case 4:                                                                    \
-      return &FastLED.addLeds<TM1803, PIN>(leds, numLeds);                     \
-    case 5:                                                                    \
-      return &FastLED.addLeds<TM1804, PIN>(leds, numLeds);                     \
-    case 6:                                                                    \
-      return &FastLED.addLeds<TM1809, PIN>(leds, numLeds);                     \
-    case 7:                                                                    \
-      return &FastLED.addLeds<APA104, PIN>(leds, numLeds);                     \
-    case 8:                                                                    \
-      return &FastLED.addLeds<UCS1903, PIN>(leds, numLeds);                    \
-    case 9:                                                                    \
-      return &FastLED.addLeds<UCS1903B, PIN>(leds, numLeds);                   \
-    case 10:                                                                   \
-      return &FastLED.addLeds<GW6205, PIN>(leds, numLeds);                     \
-    case 11:                                                                   \
-      return &FastLED.addLeds<GW6205_400, PIN>(leds, numLeds);                 \
     case 12:                                                                   \
       return &FastLED.addLeds<OTHER_LED_TYPE, PIN>(leds, numLeds);             \
     default:                                                                   \
@@ -318,94 +307,58 @@ CLEDController *addFastLedController(int pin, CRGB *leds, int numLeds,
                                      byte ledType) {
   switch (pin) {
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
-    // Uno/Nano optimization: Skip pins 0, 1 (Serial) and 13 (LED_BUILTIN) to
-    // save Flash
+    // Uno/Nano optimization: Only support pins 2-9 for LEDs to save RAM/Flash
     ADD_LEDS_ON_PIN(2)
     ADD_LEDS_ON_PIN(3)
-    ADD_LEDS_ON_PIN(4)
-    ADD_LEDS_ON_PIN(5)
-    ADD_LEDS_ON_PIN(6)
-    ADD_LEDS_ON_PIN(7)
-    ADD_LEDS_ON_PIN(8)
-    ADD_LEDS_ON_PIN(9)
-    ADD_LEDS_ON_PIN(10)
-    ADD_LEDS_ON_PIN(11)
-    ADD_LEDS_ON_PIN(12)
-#else
-    ADD_LEDS_ON_PIN(0)
-    ADD_LEDS_ON_PIN(1)
-    ADD_LEDS_ON_PIN(2)
-    ADD_LEDS_ON_PIN(3)
-    ADD_LEDS_ON_PIN(4)
-    ADD_LEDS_ON_PIN(5)
-    ADD_LEDS_ON_PIN(6)
-    ADD_LEDS_ON_PIN(7)
-    ADD_LEDS_ON_PIN(8)
-    ADD_LEDS_ON_PIN(9)
-    ADD_LEDS_ON_PIN(10)
-    ADD_LEDS_ON_PIN(11)
-    ADD_LEDS_ON_PIN(12)
-    ADD_LEDS_ON_PIN(13)
-#endif
-#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-    ADD_LEDS_ON_PIN(14)
-    ADD_LEDS_ON_PIN(15)
-    ADD_LEDS_ON_PIN(16)
-    ADD_LEDS_ON_PIN(17)
-    ADD_LEDS_ON_PIN(18)
-    ADD_LEDS_ON_PIN(19)
-    ADD_LEDS_ON_PIN(20)
-    ADD_LEDS_ON_PIN(21)
+#elif defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+    // Mega optimization: Only support EVEN digital pins D22-D52 for LEDs
+    // This halves the number of controllers for this block to save more memory.
     ADD_LEDS_ON_PIN(22)
-    ADD_LEDS_ON_PIN(23)
     ADD_LEDS_ON_PIN(24)
-    ADD_LEDS_ON_PIN(25)
     ADD_LEDS_ON_PIN(26)
-    ADD_LEDS_ON_PIN(27)
     ADD_LEDS_ON_PIN(28)
-    ADD_LEDS_ON_PIN(29)
     ADD_LEDS_ON_PIN(30)
-    ADD_LEDS_ON_PIN(31)
     ADD_LEDS_ON_PIN(32)
-    ADD_LEDS_ON_PIN(33)
     ADD_LEDS_ON_PIN(34)
-    ADD_LEDS_ON_PIN(35)
     ADD_LEDS_ON_PIN(36)
-    ADD_LEDS_ON_PIN(37)
     ADD_LEDS_ON_PIN(38)
-    ADD_LEDS_ON_PIN(39)
     ADD_LEDS_ON_PIN(40)
-    ADD_LEDS_ON_PIN(41)
     ADD_LEDS_ON_PIN(42)
-    ADD_LEDS_ON_PIN(43)
     ADD_LEDS_ON_PIN(44)
-    ADD_LEDS_ON_PIN(45)
     ADD_LEDS_ON_PIN(46)
-    ADD_LEDS_ON_PIN(47)
     ADD_LEDS_ON_PIN(48)
-    ADD_LEDS_ON_PIN(49)
     ADD_LEDS_ON_PIN(50)
-    ADD_LEDS_ON_PIN(51)
     ADD_LEDS_ON_PIN(52)
-    ADD_LEDS_ON_PIN(53)
+#else
+    // Default for unknown boards
+    ADD_LEDS_ON_PIN(2)
+    ADD_LEDS_ON_PIN(3)
+    ADD_LEDS_ON_PIN(4)
+    ADD_LEDS_ON_PIN(5)
+    ADD_LEDS_ON_PIN(6)
+    ADD_LEDS_ON_PIN(7)
 #endif
+
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+    // Uno/Nano: Support even analog pins A0, A2, A4
     ADD_LEDS_ON_PIN(A0)
     ADD_LEDS_ON_PIN(A1)
     ADD_LEDS_ON_PIN(A2)
     ADD_LEDS_ON_PIN(A3)
     ADD_LEDS_ON_PIN(A4)
     ADD_LEDS_ON_PIN(A5)
-#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+#elif defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+    // Mega: Support even analog pins A0, A2, ..., A14
+    ADD_LEDS_ON_PIN(A0)
+    ADD_LEDS_ON_PIN(A2)
+    ADD_LEDS_ON_PIN(A4)
     ADD_LEDS_ON_PIN(A6)
-    ADD_LEDS_ON_PIN(A7)
     ADD_LEDS_ON_PIN(A8)
-    ADD_LEDS_ON_PIN(A9)
     ADD_LEDS_ON_PIN(A10)
-    ADD_LEDS_ON_PIN(A11)
     ADD_LEDS_ON_PIN(A12)
-    ADD_LEDS_ON_PIN(A13)
     ADD_LEDS_ON_PIN(A14)
-    ADD_LEDS_ON_PIN(A15)
+#else
+    ADD_LEDS_ON_PIN(A0)
 #endif
   default:
     return NULL;
@@ -572,7 +525,7 @@ void loop() {
     // the update.
     rgbLedUpdateTime = 0xffffffff;
     for (int i = 0; i < MAX_RGB_LED_STRINGS; i++) {
-      if (rgbLedUpdateString[i]) {
+      if (rgbLedUpdateString[i] && rgbLedControllers[i] != NULL) {
         rgbLedControllers[i]->showLeds(rgbLedBrightness[i]);
         rgbLedUpdateString[i] = false;
 
@@ -610,12 +563,12 @@ void loop() {
 
 #ifdef WITH_SERIAL_DEBUG
 // 5s
-long long lAnalogReadDelayUs = (5L * 1000L * 1000L);
+long lAnalogReadDelayUs = (5L * 1000L * 1000L);
 #else
 // 10ms
-long long lAnalogReadDelayUs = (10L * 1000L);
+long lAnalogReadDelayUs = (10L * 1000L);
 #endif
-long long lAnalogReadTimeUs = 0L;
+long lAnalogReadTimeUs = 0L;
 int iNumAnalogReadPins = 0;
 byte *pAnalogReadPins = NULL;
 
@@ -884,6 +837,14 @@ void processLedModeRequest() {
       rgbLedControllers[stringNum] =
           addFastLedController(pin, rgbLedStrings[stringNum].leds,
                                rgbLedStrings[stringNum].numLeds, ledType);
+      if (rgbLedControllers[stringNum] == NULL) {
+        SERIAL_PRINTLN(F("Error: Pin not supported for RGB LEDs"));
+        if (rgbLedStrings[stringNum].numLeds > 0) {
+          free(rgbLedStrings[stringNum].leds);
+        }
+        rgbLedStrings[stringNum].numLeds = 0;
+        rgbLedPins[stringNum] = 0;
+      }
     }
   } else {
     // numLeds == 0 means disable this pin

@@ -22,9 +22,9 @@ public class LedString {
   public LedString() {
     this.leds = new ArrayList<>();
     this.ledLaneColorOverrides = new ArrayList<>();
-    this.brightness = 255;
-    this.ledType = 0;
-    this.flagFlashRate = 5.0;
+    this.brightness = 32;
+    this.ledType = 1;
+    this.flagFlashRate = 2.0;
     this.pin = 0;
   }
 
