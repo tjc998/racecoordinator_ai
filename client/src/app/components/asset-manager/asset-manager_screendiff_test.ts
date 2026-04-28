@@ -7,6 +7,7 @@ test.describe("Asset Manager Visuals", () => {
   test.beforeEach(async ({ page }) => {
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
+    await TestSetupHelper.disableAnimations(page);
 
     // Hide connection overlay to prevent test flakiness
     await page.addStyleTag({

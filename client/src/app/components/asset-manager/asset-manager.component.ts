@@ -305,6 +305,10 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     if (this.previewInterval) {
       clearInterval(this.previewInterval);
     }
+    // Disable cycling in tests to ensure deterministic screendiffs
+    if ((window as any).isPlaywright) {
+      return;
+    }
     this.previewInterval = setInterval(() => {
       this.assets.forEach((asset) => {
         if (

@@ -67,6 +67,7 @@ export class TestSetupHelper {
     // Mock Client Version Override
     await page.addInitScript(() => {
       (window as any).CLIENT_VERSION_OVERRIDE = "TEST-CLIENT-VERSION";
+      (window as any).isPlaywright = true;
     });
 
     // Mock Server IP API
@@ -376,8 +377,13 @@ export class TestSetupHelper {
 
     // 3. Ensure fonts and layout have settled after text swap
     await page.evaluate(async () => {
-      // Explicitly load Rajdhani to ensure it's used in screenshots
-      await document.fonts.load("16px Rajdhani").catch(() => {});
+      // Explicitly load fonts used in UI to ensure they're ready for screenshots
+      await Promise.all([
+        document.fonts.load("16px Rajdhani"),
+        document.fonts.load("24px Rajdhani"),
+        document.fonts.load("700 16px Rajdhani"),
+        document.fonts.load("16px 'Material Icons'"),
+      ]).catch(() => {});
       return document.fonts.ready;
     });
 
