@@ -475,4 +475,26 @@ public class RacingTest {
     com.antigravity.proto.RaceFlag flag = racing.getFlagType(mockRace);
     assertTrue(flag == com.antigravity.proto.RaceFlag.GREEN);
   }
+
+  @Test
+  public void testEnter_TurnsOnMainPower() {
+    Racing racing = new Racing();
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    when(mockRace.getStatistics()).thenReturn(new RaceStatistics());
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatScoring()).thenReturn(new HeatScoring());
+
+    Heat mockHeat = mock(Heat.class);
+    when(mockRace.getCurrentHeat()).thenReturn(mockHeat);
+    when(mockHeat.getStatistics()).thenReturn(new RaceHeatStatistics());
+
+    HeatExecutionManager manager = new HeatExecutionManager(mockRace);
+    manager.initialize(2);
+    when(mockRace.getHeatExecutionManager()).thenReturn(manager);
+
+    racing.enter(mockRace);
+
+    verify(mockRace).setMainPower(true);
+  }
 }

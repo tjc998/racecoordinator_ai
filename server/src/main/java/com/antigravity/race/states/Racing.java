@@ -102,9 +102,7 @@ public class Racing implements IRaceState {
       race.getCurrentHeat().getStatistics().setStartMillis(System.currentTimeMillis());
     }
 
-    if (race.isDemoMode()) {
-      race.setMainPower(true);
-    }
+    race.setMainPower(true);
 
     HeatScoring scoring = race.getRaceModel().getHeatScoring();
     if (scoring != null && scoring.getFinishMethod() == FinishMethod.Timed) {
