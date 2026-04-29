@@ -300,7 +300,7 @@ int allocateRgbSlotForPin(byte pin) {
     case 12:                                                                   \
       return &FastLED.addLeds<OTHER_LED_TYPE, PIN, RGB>(leds, numLeds);        \
     default:                                                                   \
-      return &FastLED.addLeds<NEOPIXEL, PIN, RGB>(leds, numLeds);              \
+      return &FastLED.addLeds<NEOPIXEL, PIN>(leds, numLeds);                    \
     }
 #endif
 
