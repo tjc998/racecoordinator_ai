@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.models.AudioConfig;
 import com.antigravity.models.Theme;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
@@ -221,5 +222,32 @@ public class ThemeTaskHandlerTest {
 
     verify(handler).setStatus(any(), eq(409));
     verify(handler).setResult(any(), eq("Theme name already exists"));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testUpdateTheme_WithNoneAudioType_Success() {
+    String id = "theme_1";
+    Map<String, AudioConfig> audioSlots = new HashMap<>();
+    audioSlots.put("audio.countdown.5", new AudioConfig("none", null, null));
+
+    Theme updateRequest = new Theme("Theme 1", false, new HashMap<>(), audioSlots, id, null);
+    Theme existing = new Theme("Theme 1", false, new HashMap<>(), new HashMap<>(), id, null);
+
+    org.mockito.Mockito.doReturn(id).when(handler).getPathParam(any(), eq("id"));
+    org.mockito.Mockito.doReturn(updateRequest).when(handler).getBody(any(), eq(Theme.class));
+
+    FindIterable<Theme> findIterable = mock(FindIterable.class);
+    when(themeCollection.find(any(Bson.class))).thenReturn(findIterable);
+    // Uniqueness check (return null), then get existing (return existing)
+    when(findIterable.first()).thenReturn(null).thenReturn(existing);
+
+    handler.updateTheme(ctx);
+
+    ArgumentCaptor<Theme> captor = ArgumentCaptor.forClass(Theme.class);
+    verify(themeCollection).replaceOne(any(Bson.class), captor.capture());
+
+    AudioConfig config = captor.getValue().getAudioSlots().get("audio.countdown.5");
+    assertEquals("none", config.getType());
   }
 }

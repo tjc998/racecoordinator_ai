@@ -284,6 +284,8 @@ export class DefaultRacedayComponent
   }
 
   private previousTime: number = 0;
+  private playedSecondsLeft = new Set<number>();
+  private playedHalfway = false;
 
   // Exit Confirmation Modal State
   showExitConfirmation = false;
@@ -431,6 +433,10 @@ export class DefaultRacedayComponent
           if (time === 0) this.timeFormat = "1.0-0";
         }
 
+        if (this.raceState === com.antigravity.RaceState.RACING) {
+          this.checkAudioCallouts(time, this.previousTime);
+        }
+
         this.time = time;
         this.previousTime = time;
 
@@ -457,6 +463,7 @@ export class DefaultRacedayComponent
 
             if (
               isBestLap &&
+              driver.bestLapAudio.type !== "none" &&
               (driver.bestLapAudio.url ||
                 (driver.bestLapAudio.type === "tts" &&
                   driver.bestLapAudio.text))
@@ -469,8 +476,9 @@ export class DefaultRacedayComponent
                 ttsContext,
               );
             } else if (
-              driver.lapAudio.url ||
-              (driver.lapAudio.type === "tts" && driver.lapAudio.text)
+              driver.lapAudio.type !== "none" &&
+              (driver.lapAudio.url ||
+                (driver.lapAudio.type === "tts" && driver.lapAudio.text))
             ) {
               playSound(
                 driver.lapAudio.type,
@@ -2359,6 +2367,10 @@ export class DefaultRacedayComponent
       state === com.antigravity.RaceState.PAUSED
     ) {
       this.showCountdownOverlay = false;
+      if (state === com.antigravity.RaceState.NOT_STARTED) {
+        this.playedSecondsLeft.clear();
+        this.playedHalfway = false;
+      }
     }
 
     // Play yellow flag audio when transitioning from RACING to PAUSED
@@ -2460,9 +2472,45 @@ export class DefaultRacedayComponent
     }
   }
 
+  private checkAudioCallouts(currentTime: number, previousTime: number) {
+    const scoring = this.race?.heat_scoring;
+    if (!scoring || scoring.finishMethod !== FinishMethod.Timed) return;
+
+    const totalDuration = scoring.finishValue;
+    const thresholds = [300, 240, 180, 120, 60, 30, 25, 20, 15, 10, 5];
+
+    // Halfway logic
+    const halfwayThreshold = totalDuration / 2;
+    if (
+      previousTime > halfwayThreshold &&
+      currentTime <= halfwayThreshold &&
+      !this.playedHalfway
+    ) {
+      this.playThemedSound(THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY);
+      this.playedHalfway = true;
+    }
+
+    // Standard thresholds
+    for (const threshold of thresholds) {
+      if (
+        previousTime > threshold &&
+        currentTime <= threshold &&
+        !this.playedSecondsLeft.has(threshold)
+      ) {
+        // Rule: Don't play if it's the start time of the heat
+        if (Math.abs(threshold - totalDuration) < 0.1) continue;
+
+        const slotKey =
+          `AUDIO_SECONDS_LEFT_${threshold}` as keyof typeof THEME_SLOT_KEYS;
+        this.playThemedSound(THEME_SLOT_KEYS[slotKey]);
+        this.playedSecondsLeft.add(threshold);
+      }
+    }
+  }
+
   private playThemedSound(slotKey: string) {
     const config = this.themeService.resolveAudioConfig(slotKey);
-    if (config) {
+    if (config && config.type !== "none") {
       // Resolve URL if it's a preset
       let playableUrl = config.url;
       if (config.type === "preset" && playableUrl) {

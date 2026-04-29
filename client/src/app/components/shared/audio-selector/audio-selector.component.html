@@ -2,34 +2,65 @@
   <div class="audio-header">
     <label>{{ label }}</label>
     <div class="toggle-group" *ngIf="!readonly">
-      <span [class.active]="type === 'preset'" (click)="onTypeChange('preset')">{{ 'AS_OPTION_PRESET' | translate }}</span>
-      <span [class.active]="type === 'tts'" (click)="onTypeChange('tts')">{{ 'AS_OPTION_TTS' | translate }}</span>
+      <span
+        [class.active]="type === 'preset'"
+        (click)="onTypeChange('preset')"
+        >{{ "AS_OPTION_PRESET" | translate }}</span
+      >
+      <span [class.active]="type === 'tts'" (click)="onTypeChange('tts')">{{
+        "AS_OPTION_TTS" | translate
+      }}</span>
+      <span [class.active]="type === 'none'" (click)="onTypeChange('none')">{{
+        "AS_OPTION_NONE" | translate
+      }}</span>
     </div>
   </div>
 
   <!-- Regular Editing Mode -->
   <div class="audio-controls" *ngIf="!readonly && type === 'preset'">
-    <div class="dm-select trigger-div" (click)="openItemSelector()" (drop)="onDrop($event)" (dragover)="onDragOver($event)">
+    <div
+      class="dm-select trigger-div"
+      (click)="openItemSelector()"
+      (drop)="onDrop($event)"
+      (dragover)="onDragOver($event)"
+    >
       {{ selectedAssetName }}
     </div>
-    <button class="btn-play" (click)="play()">▶ {{ 'AS_BTN_PLAY' | translate }}</button>
+    <button class="btn-play" (click)="play()">
+      ▶ {{ "AS_BTN_PLAY" | translate }}
+    </button>
   </div>
 
   <div class="audio-controls" *ngIf="!readonly && type === 'tts'">
-    <input type="text" [ngModel]="text" (ngModelChange)="onTextChange($event)" class="dm-input"
-      [placeholder]="'AS_PLACEHOLDER_TEXT' | translate">
+    <input
+      type="text"
+      [ngModel]="text"
+      (ngModelChange)="onTextChange($event)"
+      class="dm-input"
+      [placeholder]="'AS_PLACEHOLDER_TEXT' | translate"
+    />
   </div>
 
   <!-- Readonly Mode -->
   <div class="audio-controls readonly-controls" *ngIf="readonly">
     <div class="dm-select readonly-text">
-      {{ type === 'preset' ? selectedAssetName : (text || '---') }}
+      {{ type === "preset" ? selectedAssetName : text || "---" }}
     </div>
-    <button class="btn-play" (click)="play()">▶ {{ 'AS_BTN_PLAY' | translate }}</button>
+    <button class="btn-play" (click)="play()">
+      ▶ {{ "AS_BTN_PLAY" | translate }}
+    </button>
   </div>
 
-  <app-item-selector [visible]="showItemSelector" [title]="'AS_TITLE_SELECT_SOUND' | translate" [items]="assets"
-    [itemType]="'sound'" [backButtonRoute]="backButtonRoute" [backButtonQueryParams]="backButtonQueryParams"
-    (select)="onAssetSelected($event)" (play)="onPlayPreview($event)" (close)="closeItemSelector()">
+  <app-item-selector
+    [visible]="showItemSelector"
+    [title]="'AS_TITLE_SELECT_SOUND' | translate"
+    [items]="assets"
+    [itemType]="'sound'"
+    [backButtonRoute]="backButtonRoute"
+    [backButtonQueryParams]="backButtonQueryParams"
+    (select)="onAssetSelected($event)"
+    (play)="onPlayPreview($event)"
+    (close)="closeItemSelector()"
+  >
   </app-item-selector>
 </div>

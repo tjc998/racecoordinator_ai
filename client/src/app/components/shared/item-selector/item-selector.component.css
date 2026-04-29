@@ -137,7 +137,7 @@
 
 .item-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 25px;
   width: 100%;
   box-sizing: border-box;
@@ -154,7 +154,6 @@
   flex-direction: column;
   align-items: center;
   position: relative;
-  overflow: hidden;
 }
 
 .item-card:hover {
@@ -176,6 +175,7 @@
   justify-content: center;
   align-items: center;
   border: 1px solid rgba(0, 255, 255, 0.1);
+  flex-shrink: 0;
 }
 
 .play-preview {
@@ -215,15 +215,15 @@
 
 .item-name {
   color: #fff;
-  font-size: 13px;
+  font-size: 12px;
   text-align: center;
   width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
   font-family: 'Orbitron', sans-serif;
   letter-spacing: 0.5px;
   opacity: 0.9;
+  line-height: 1.4;
+  margin-top: 4px;
 }
 .no-items {
   display: flex;

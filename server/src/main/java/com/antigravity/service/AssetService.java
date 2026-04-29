@@ -171,6 +171,64 @@ public class AssetService {
     DEFAULT_AUDIO_ASSETS.add(
         new DefaultAsset(
             "default_countdown_5", "audio/english/woman/w_countdown_5.wav", "Countdown 5"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_seconds_left_300",
+            "audio/english/woman/w_sl300.wav",
+            "Seconds Left -- 5 Minutes"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_seconds_left_240",
+            "audio/english/woman/w_sl240.wav",
+            "Seconds Left -- 4 Minutes"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_seconds_left_180",
+            "audio/english/woman/w_sl180.wav",
+            "Seconds Left -- 3 Minutes"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_seconds_left_120",
+            "audio/english/woman/w_sl120.wav",
+            "Seconds Left -- 2 Minutes"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_seconds_left_60",
+            "audio/english/woman/w_sl60.wav",
+            "Seconds Left -- 1 Minute"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_seconds_left_30",
+            "audio/english/woman/w_sl30.wav",
+            "Seconds Left -- 30 Seconds"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_seconds_left_25",
+            "audio/english/woman/w_sl25.wav",
+            "Seconds Left -- 25 Seconds"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_seconds_left_20",
+            "audio/english/woman/w_sl20.wav",
+            "Seconds Left -- 20 Seconds"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_seconds_left_15",
+            "audio/english/woman/w_sl15.wav",
+            "Seconds Left -- 15 Seconds"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_seconds_left_10",
+            "audio/english/woman/w_sl10.wav",
+            "Seconds Left -- 10 Seconds"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_seconds_left_5",
+            "audio/english/woman/w_sl5.wav",
+            "Seconds Left -- 5 Seconds"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_heat_half", "audio/english/woman/w_heat_half.wav", "Seconds Left -- Halfway"));
   }
 
   public AssetService(MongoDatabase database, String assetDir) {
@@ -532,7 +590,11 @@ public class AssetService {
     long fuelTotalSize = 0;
 
     for (DefaultAsset asset : DEFAULT_IMAGE_ASSETS) {
-      if (collection.find(Filters.eq("_id", asset.id)).first() != null) {
+      Document existing = collection.find(Filters.eq("_id", asset.id)).first();
+      if (existing != null) {
+        if (!asset.displayName.equals(existing.getString("name"))) {
+          collection.updateOne(Filters.eq("_id", asset.id), Updates.set("name", asset.displayName));
+        }
         continue;
       }
       try {
@@ -599,7 +661,11 @@ public class AssetService {
     }
 
     for (DefaultAsset asset : DEFAULT_AUDIO_ASSETS) {
-      if (collection.find(Filters.eq("_id", asset.id)).first() != null) {
+      Document existing = collection.find(Filters.eq("_id", asset.id)).first();
+      if (existing != null) {
+        if (!asset.displayName.equals(existing.getString("name"))) {
+          collection.updateOne(Filters.eq("_id", asset.id), Updates.set("name", asset.displayName));
+        }
         continue;
       }
       try {
@@ -712,6 +778,53 @@ public class AssetService {
         }
       }
 
+      // 7. Seconds Left backfill
+      String[] slKeys = {
+        "audio.seconds_left.300",
+        "audio.seconds_left.240",
+        "audio.seconds_left.180",
+        "audio.seconds_left.120",
+        "audio.seconds_left.60",
+        "audio.seconds_left.30",
+        "audio.seconds_left.25",
+        "audio.seconds_left.20",
+        "audio.seconds_left.15",
+        "audio.seconds_left.10",
+        "audio.seconds_left.5",
+        "audio.seconds_left.halfway"
+      };
+      String[] defaultSlAssets = {
+        "default_seconds_left_300",
+        "default_seconds_left_240",
+        "default_seconds_left_180",
+        "default_seconds_left_120",
+        "default_seconds_left_60",
+        "default_seconds_left_30",
+        "default_seconds_left_25",
+        "default_seconds_left_20",
+        "default_seconds_left_15",
+        "default_seconds_left_10",
+        "default_seconds_left_5",
+        "default_heat_half"
+      };
+
+      for (int i = 0; i < slKeys.length; i++) {
+        String key = slKeys[i];
+        String defaultAsset = defaultSlAssets[i];
+        if (!audioSlots.containsKey(key)) {
+          audioSlots.append(key, new Document("type", "preset").append("url", defaultAsset));
+          audioSlotsChanged = true;
+        }
+      }
+
+      // 8. Migration: Rename audio.heat.halfway to audio.seconds_left.halfway
+      if (audioSlots.containsKey("audio.heat.halfway")) {
+        Object val = audioSlots.get("audio.heat.halfway");
+        audioSlots.append("audio.seconds_left.halfway", val);
+        audioSlots.remove("audio.heat.halfway");
+        audioSlotsChanged = true;
+      }
+
       // 6. Save updates if anything changed
       if (audioSlotsChanged) {
         allUpdates.add(Updates.set("audio_slots", audioSlots));
@@ -771,6 +884,42 @@ public class AssetService {
         "audio.countdown.1", new Document("type", "preset").append("url", "default_countdown_1"));
     audioSlots.append(
         "audio.countdown.go", new Document("type", "preset").append("url", "default_countdown_go"));
+    audioSlots.append(
+        "audio.seconds_left.halfway",
+        new Document("type", "preset").append("url", "default_heat_half"));
+    audioSlots.append(
+        "audio.seconds_left.300",
+        new Document("type", "preset").append("url", "default_seconds_left_300"));
+    audioSlots.append(
+        "audio.seconds_left.240",
+        new Document("type", "preset").append("url", "default_seconds_left_240"));
+    audioSlots.append(
+        "audio.seconds_left.180",
+        new Document("type", "preset").append("url", "default_seconds_left_180"));
+    audioSlots.append(
+        "audio.seconds_left.120",
+        new Document("type", "preset").append("url", "default_seconds_left_120"));
+    audioSlots.append(
+        "audio.seconds_left.60",
+        new Document("type", "preset").append("url", "default_seconds_left_60"));
+    audioSlots.append(
+        "audio.seconds_left.30",
+        new Document("type", "preset").append("url", "default_seconds_left_30"));
+    audioSlots.append(
+        "audio.seconds_left.25",
+        new Document("type", "preset").append("url", "default_seconds_left_25"));
+    audioSlots.append(
+        "audio.seconds_left.20",
+        new Document("type", "preset").append("url", "default_seconds_left_20"));
+    audioSlots.append(
+        "audio.seconds_left.15",
+        new Document("type", "preset").append("url", "default_seconds_left_15"));
+    audioSlots.append(
+        "audio.seconds_left.10",
+        new Document("type", "preset").append("url", "default_seconds_left_10"));
+    audioSlots.append(
+        "audio.seconds_left.5",
+        new Document("type", "preset").append("url", "default_seconds_left_5"));
 
     Document theme =
         new Document()

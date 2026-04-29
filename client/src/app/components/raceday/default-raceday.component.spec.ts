@@ -2004,4 +2004,120 @@ describe("DefaultRacedayComponent", () => {
       );
     }));
   });
+
+  describe("Themed and Lap Audio - None Type Support", () => {
+    let mockAudioInstance: any;
+    let mockSpeechSynthesis: any;
+    let originalAudio: any;
+    let originalSpeechSynthesis: any;
+    let mockThemeService: any;
+
+    beforeEach(() => {
+      originalAudio = window.Audio;
+      originalSpeechSynthesis = window.speechSynthesis;
+
+      mockAudioInstance = jasmine.createSpyObj("Audio", ["play"]);
+      mockAudioInstance.play.and.returnValue(Promise.resolve());
+      (window as any).Audio = jasmine
+        .createSpy("Audio")
+        .and.returnValue(mockAudioInstance);
+
+      mockSpeechSynthesis = jasmine.createSpyObj("SpeechSynthesis", [
+        "cancel",
+        "speak",
+      ]);
+      Object.defineProperty(window, "speechSynthesis", {
+        value: mockSpeechSynthesis,
+        writable: true,
+        configurable: true,
+      });
+
+      mockThemeService = TestBed.inject(ThemeService);
+    });
+
+    afterEach(() => {
+      (window as any).Audio = originalAudio;
+      Object.defineProperty(window, "speechSynthesis", {
+        value: originalSpeechSynthesis,
+        writable: true,
+        configurable: true,
+      });
+    });
+
+    it("should NOT play audio when lap audio type is 'none'", () => {
+      fixture.detectChanges();
+      const mockHd = component["heat"]!.heatDrivers[0];
+      mockHd.driver.lapAudio = { type: "none", url: "test.mp3" };
+
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 5,
+        lapTime: 1.234,
+        bestLapTime: 1.0,
+      });
+
+      expect(window.Audio).not.toHaveBeenCalled();
+    });
+
+    it("should NOT play audio when themed audio type is 'none'", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "none",
+        url: "default_countdown_1",
+      });
+
+      fixture.detectChanges();
+      // Use the subject to trigger state change logic (setting overlay, etc)
+      raceStateSubject.next(com.antigravity.RaceState.STARTING);
+
+      // Trigger a countdown threshold
+      raceTimeSubject.next({ time: 1.0, autoStartRemaining: 1.0 });
+
+      expect(mockThemeService.resolveAudioConfig).toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_COUNTDOWN_1,
+      );
+      expect(window.Audio).not.toHaveBeenCalled();
+    });
+
+    it("should play themed audio at correct time thresholds for timed heats", () => {
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Timed,
+          finishValue: 300,
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = com.antigravity.RaceState.RACING;
+
+      // Initial time: 5 minutes (300s)
+      raceTimeSubject.next({ time: 300.0 });
+      expect(window.Audio).not.toHaveBeenCalled(); // No callout on start
+
+      // Crossing 4 minutes (240s)
+      raceTimeSubject.next({ time: 240.0 });
+      expect(mockThemeService.resolveAudioConfig).toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_240,
+      );
+
+      // Crossing halfway (150s for a 5 minute race)
+      raceTimeSubject.next({ time: 150.0 });
+      expect(mockThemeService.resolveAudioConfig).toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+      );
+
+      // Crossing 1 minute (60s)
+      raceTimeSubject.next({ time: 60.0 });
+      expect(mockThemeService.resolveAudioConfig).toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_60,
+      );
+    });
+  });
 });

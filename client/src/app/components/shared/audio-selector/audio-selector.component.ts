@@ -17,10 +17,10 @@ import { mockTTSContext, playSound } from "src/app/utils/audio";
 })
 export class AudioSelectorComponent {
   @Input() label: string = "Audio";
-  @Input() type: "preset" | "tts" | undefined = "preset";
+  @Input() type: "preset" | "tts" | "none" | undefined = "preset";
   @Input() readonly: boolean = false;
 
-  @Output() typeChange = new EventEmitter<"preset" | "tts">();
+  @Output() typeChange = new EventEmitter<"preset" | "tts" | "none">();
 
   @Input() url?: string;
   @Input() assetId?: string;
@@ -41,6 +41,11 @@ export class AudioSelectorComponent {
   showItemSelector = false;
 
   get selectedAssetName(): string {
+    if (this.type === "none") {
+      return this.translationService
+        ? this.translationService.translate("AS_OPTION_NONE")
+        : "None";
+    }
     const lookupValue = this.assetId || this.url;
     if (!lookupValue)
       return this.translationService
@@ -80,7 +85,7 @@ export class AudioSelectorComponent {
     private translationService: TranslationService,
   ) {}
 
-  onTypeChange(newType: "preset" | "tts" | undefined) {
+  onTypeChange(newType: "preset" | "tts" | "none" | undefined) {
     if (newType) {
       this.type = newType;
       this.typeChange.emit(this.type);
@@ -122,9 +127,10 @@ export class AudioSelectorComponent {
   }
 
   play() {
+    if (this.type === "none") return;
     const playContext = this.context || mockTTSContext();
     playSound(
-      this.type,
+      this.type as any,
       this.url,
       this.text,
       this.dataService.serverUrl,

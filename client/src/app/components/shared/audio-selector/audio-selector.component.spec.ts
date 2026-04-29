@@ -139,4 +139,16 @@ describe("AudioSelectorComponent", () => {
     expect(window.Audio).toHaveBeenCalled();
     expect(mockAudio.play).toHaveBeenCalled();
   });
+
+  it("should handle none type", () => {
+    spyOn(component.typeChange, "emit");
+    component.onTypeChange("none");
+    expect(component.type).toBe("none");
+    expect(component.typeChange.emit).toHaveBeenCalledWith("none");
+
+    // Test that play() doesn't do anything for none
+    spyOn(window, "Audio");
+    component.play();
+    expect(window.Audio).not.toHaveBeenCalled();
+  });
 });

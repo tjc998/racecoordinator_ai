@@ -6,7 +6,7 @@ option java_multiple_files = true;
 option java_outer_classname = "AudioConfigProto";
 
 message AudioConfig {
-  string type = 1; // "preset" or "tts"
+  string type = 1; // "preset", "tts", or "none"
   string url = 2;
   string text = 3;
 }

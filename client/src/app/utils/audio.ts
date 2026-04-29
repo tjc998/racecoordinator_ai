@@ -15,29 +15,30 @@ export interface TTSContext {
 }
 
 export function playSound(
-  type: 'preset' | 'tts' | undefined,
+  type: "preset" | "tts" | "none" | undefined,
   url: string | undefined,
   text: string | undefined,
   serverUrl: string,
-  data?: any
+  data?: any,
 ): void {
-  if (type === 'preset' && url) {
+  if (type === "none") return;
+  if (type === "preset" && url) {
     // Ensure absolute URL if it's relative
     let playableUrl = url;
-    if (url.startsWith('/')) {
+    if (url.startsWith("/")) {
       playableUrl = `${serverUrl}${url}`;
     }
-    console.log('Playing audio from URL:', playableUrl);
+    console.log("Playing audio from URL:", playableUrl);
     const audio = new Audio(playableUrl);
-    audio.play().catch(err => console.error('Error playing sound', err));
-  } else if (type === 'tts' && text) {
+    audio.play().catch((err) => console.error("Error playing sound", err));
+  } else if (type === "tts" && text) {
     let interpolatedText = text;
     if (data) {
       interpolatedText = interpolate(text, data);
     }
 
     if (!(window as any).SUPPRESS_AUDIO_LOGS) {
-      console.log('Playing TTS:', interpolatedText);
+      console.log("Playing TTS:", interpolatedText);
     }
     if (window.speechSynthesis) {
       // Cancel any current speech
@@ -45,23 +46,23 @@ export function playSound(
       const utterance = new SpeechSynthesisUtterance(interpolatedText);
       window.speechSynthesis.speak(utterance);
     } else {
-      console.warn('Text-to-speech not supported in this browser.');
+      console.warn("Text-to-speech not supported in this browser.");
     }
   } else {
-    console.log('No sound to play (missing type, url, or text)');
+    console.log("No sound to play (missing type, url, or text)");
   }
 }
 
 function interpolate(text: string, data: any): string {
   return text.replace(/\{([^}]+)\}/g, (match, path) => {
-    const parts = path.toLowerCase().split('.');
+    const parts = path.toLowerCase().split(".");
     let value = data;
     for (const part of parts) {
       if (value === undefined || value === null) break;
 
       // Case-insensitive property lookup
       const keys = Object.keys(value);
-      const key = keys.find(k => k.toLowerCase() === part);
+      const key = keys.find((k) => k.toLowerCase() === part);
       value = key ? value[key] : undefined;
     }
 
@@ -69,7 +70,7 @@ function interpolate(text: string, data: any): string {
       return match;
     }
 
-    if (typeof value === 'number') {
+    if (typeof value === "number") {
       // Format numbers to 3 decimal places if they have decimals
       return Number.isInteger(value) ? value.toString() : value.toFixed(3);
     }
@@ -78,7 +79,10 @@ function interpolate(text: string, data: any): string {
   });
 }
 
-export function createTTSContext(driver: TTSDriverData, driverData: TTSLapData): TTSContext {
+export function createTTSContext(
+  driver: TTSDriverData,
+  driverData: TTSLapData,
+): TTSContext {
   return {
     driver: {
       name: driver.name,
@@ -86,14 +90,19 @@ export function createTTSContext(driver: TTSDriverData, driverData: TTSLapData):
       lastLapTime: driverData.lastLapTime,
       bestLapTime: driverData.bestLapTime,
       averageLapTime: driverData.averageLapTime,
-      lapCount: driverData.lapCount
-    }
+      lapCount: driverData.lapCount,
+    },
   };
 }
 
 export function mockTTSContext(): TTSContext {
   return createTTSContext(
-    { name: 'Dave', nickname: 'Dave' },
-    { lastLapTime: 1.234, bestLapTime: 1.234, averageLapTime: 1.5, lapCount: 10 }
+    { name: "Dave", nickname: "Dave" },
+    {
+      lastLapTime: 1.234,
+      bestLapTime: 1.234,
+      averageLapTime: 1.5,
+      lapCount: 10,
+    },
   );
 }

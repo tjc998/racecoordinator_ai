@@ -5,7 +5,7 @@ import { Model } from "./model";
  * driver as it exists in the database.
  */
 export interface AudioConfig {
-  type: "preset" | "tts";
+  type: "preset" | "tts" | "none";
   url?: string;
   text?: string;
 }

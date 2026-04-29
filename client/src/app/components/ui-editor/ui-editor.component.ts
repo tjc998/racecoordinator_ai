@@ -105,6 +105,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     fuelGauge: false,
     audio: false,
     countdown_audio: false,
+    seconds_left_audio: false,
   };
 
   countdownAudioSlots = [
@@ -114,6 +115,23 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     { key: "audio.countdown.2", label: "UE_LABEL_COUNTDOWN_2" },
     { key: "audio.countdown.1", label: "UE_LABEL_COUNTDOWN_1" },
     { key: "audio.countdown.go", label: "UE_LABEL_COUNTDOWN_GO" },
+  ];
+  secondsLeftAudioSlots = [
+    { key: "audio.seconds_left.300", label: "UE_LABEL_SECONDS_LEFT_300" },
+    { key: "audio.seconds_left.240", label: "UE_LABEL_SECONDS_LEFT_240" },
+    { key: "audio.seconds_left.180", label: "UE_LABEL_SECONDS_LEFT_180" },
+    { key: "audio.seconds_left.120", label: "UE_LABEL_SECONDS_LEFT_120" },
+    { key: "audio.seconds_left.60", label: "UE_LABEL_SECONDS_LEFT_60" },
+    { key: "audio.seconds_left.30", label: "UE_LABEL_SECONDS_LEFT_30" },
+    { key: "audio.seconds_left.25", label: "UE_LABEL_SECONDS_LEFT_25" },
+    { key: "audio.seconds_left.20", label: "UE_LABEL_SECONDS_LEFT_20" },
+    { key: "audio.seconds_left.15", label: "UE_LABEL_SECONDS_LEFT_15" },
+    { key: "audio.seconds_left.10", label: "UE_LABEL_SECONDS_LEFT_10" },
+    { key: "audio.seconds_left.5", label: "UE_LABEL_SECONDS_LEFT_5" },
+    {
+      key: "audio.seconds_left.halfway",
+      label: "UE_LABEL_SECONDS_LEFT_HALFWAY",
+    },
   ];
 
   constructor(

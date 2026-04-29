@@ -265,8 +265,9 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     );
   }
 
-  private mapSoundType(type: string | undefined): "preset" | "tts" {
+  private mapSoundType(type: string | undefined): "preset" | "tts" | "none" {
     if (type === "tts") return "tts";
+    if (type === "none") return "none";
     return "preset";
   }
 

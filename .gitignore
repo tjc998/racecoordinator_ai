@@ -83,6 +83,7 @@ server/target_test/
 client/.npmrc
 server/gen-proto/
 client/node_modules_backup/
+server/racecoordinator.log
 
 # database folders as they move arounds <sigh>
 data_v2
