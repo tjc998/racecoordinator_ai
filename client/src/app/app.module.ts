@@ -3,6 +3,7 @@ import { NgModule } from "@angular/core";
 import { BrowserModule } from "@angular/platform-browser";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { AssetManagerComponent } from "src/app/components/asset-manager/asset-manager.component";
+import { AudioSetEditorComponent } from "src/app/components/asset-manager/audio-set-editor/audio-set-editor.component";
 import { ImageSetEditorComponent } from "src/app/components/asset-manager/image-set-editor/image-set-editor.component";
 import { DatabaseManagerComponent } from "src/app/components/database-manager/database-manager.component";
 import { DriverEditorComponent } from "src/app/components/driver-editor/driver-editor.component";
@@ -38,6 +39,7 @@ import { AppRoutingModule } from "./app-routing.module";
     DefaultRacedaySetupComponent,
     AssetManagerComponent,
     ImageSetEditorComponent,
+    AudioSetEditorComponent,
     DriverEditorComponent,
     DriverManagerComponent,
     TeamManagerComponent,

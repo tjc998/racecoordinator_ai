@@ -180,4 +180,14 @@ describe("AudioSelectorComponent", () => {
     component.play();
     expect(window.Audio).not.toHaveBeenCalled();
   });
+
+  it("should return selected asset name for audio set", () => {
+    component.type = "audio_set";
+    component.url = "set-123";
+    component.assets = [
+      { entity_id: "set-123", name: "My Cool Audio Set", type: "audio_set" },
+    ];
+
+    expect(component.selectedAssetName).toBe("My Cool Audio Set");
+  });
 });

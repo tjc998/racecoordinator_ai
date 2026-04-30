@@ -1,0 +1,332 @@
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  HostListener,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  Output,
+  SimpleChanges,
+} from "@angular/core";
+import { DataService } from "src/app/data.service";
+import { com } from "src/app/proto/message";
+import { TranslationService } from "src/app/services/translation.service";
+
+@Component({
+  selector: "app-audio-set-editor",
+  templateUrl: "./audio-set-editor.component.html",
+  styleUrls: ["./audio-set-editor.component.css"],
+  standalone: false,
+})
+export class AudioSetEditorComponent implements OnInit, OnChanges, OnDestroy {
+  @Input() visible = false;
+  @Input() assetId?: string;
+  @Input() initialName = "";
+  @Input() initialEntries: com.antigravity.ISaveAudioSetEntry[] = [];
+  @Input() allAudio: any[] = [];
+
+  @Output() close = new EventEmitter<void>();
+  @Output() saved = new EventEmitter<com.antigravity.IAssetMessage>();
+
+  id = "audio-set-editor-" + Math.random().toString(36).substr(2, 9);
+  name = "";
+  entries: com.antigravity.ISaveAudioSetEntry[] = [];
+  isSaving = false;
+  isDragging = false;
+  private dragCounter = 0;
+  private createdBlobUrls: Set<string> = new Set();
+
+  constructor(
+    private dataService: DataService,
+    private translationService: TranslationService,
+    private cdr: ChangeDetectorRef,
+  ) {}
+
+  ngOnInit() {
+    this.resetForm();
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes["visible"]) {
+      const wasVisible = changes["visible"].previousValue;
+      const isVisible = changes["visible"].currentValue;
+
+      if (isVisible && !wasVisible) {
+        console.log("AudioSetEditor: Opening modal, resetting form");
+        this.resetForm();
+        this.dragCounter = 0;
+        this.isDragging = false;
+        this.cdr.detectChanges();
+      } else if (!isVisible && wasVisible) {
+        this.cleanupBlobUrls();
+      }
+    }
+  }
+
+  ngOnDestroy() {
+    this.cleanupBlobUrls();
+  }
+
+  cleanupBlobUrls() {
+    this.createdBlobUrls.forEach((url) => URL.revokeObjectURL(url));
+    this.createdBlobUrls.clear();
+  }
+
+  resetForm() {
+    this.name = this.initialName || "";
+    if (this.initialEntries && this.initialEntries.length > 0) {
+      this.entries = this.initialEntries.map((e) => ({
+        timeSeconds: e.timeSeconds,
+        url: e.url,
+        name: e.name,
+        data: e.data,
+      }));
+    } else {
+      this.entries = [];
+    }
+  }
+
+  @HostListener("window:dragenter", ["$event"])
+  onDragEnter(event: DragEvent) {
+    if (!this.visible) return;
+    event.preventDefault();
+    this.dragCounter++;
+    this.isDragging = true;
+    this.cdr.detectChanges();
+  }
+
+  @HostListener("window:dragover", ["$event"])
+  onDragOver(event: DragEvent) {
+    if (!this.visible) return;
+    event.preventDefault();
+    this.isDragging = true;
+  }
+
+  @HostListener("window:dragleave", ["$event"])
+  onDragLeave(event: DragEvent) {
+    if (!this.visible) return;
+    event.preventDefault();
+    this.dragCounter--;
+    if (this.dragCounter <= 0) {
+      this.isDragging = false;
+      this.dragCounter = 0;
+    }
+    this.cdr.detectChanges();
+  }
+
+  @HostListener("window:drop", ["$event"])
+  onDrop(event: DragEvent) {
+    if (!this.visible) return;
+    console.log("AudioSetEditor: window:drop caught (bubbled)");
+    this.handleDropEvent(event);
+  }
+
+  onElementDragEnter(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.dragCounter++;
+    this.isDragging = true;
+    this.cdr.detectChanges();
+  }
+
+  onElementDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = true;
+    this.cdr.detectChanges();
+  }
+
+  onElementDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.dragCounter--;
+    if (this.dragCounter <= 0) {
+      this.isDragging = false;
+      this.dragCounter = 0;
+    }
+    this.cdr.detectChanges();
+  }
+
+  onElementDrop(event: DragEvent) {
+    console.log("AudioSetEditor: element:drop triggered");
+    event.preventDefault();
+    event.stopPropagation();
+    this.handleDropEvent(event);
+  }
+
+  private handleDropEvent(event: DragEvent) {
+    this.isDragging = false;
+    this.dragCounter = 0;
+    this.cdr.detectChanges();
+
+    if (event.dataTransfer) {
+      if (event.dataTransfer.files.length > 0) {
+        console.log(
+          `AudioSetEditor: Processing ${event.dataTransfer.files.length} files`,
+        );
+        this.handleFiles(event.dataTransfer.files);
+      } else {
+        const url = event.dataTransfer.getData("text/plain");
+        if (url && (url.startsWith("http") || url.startsWith("/assets/"))) {
+          console.log(`AudioSetEditor: Processing internal asset URL: ${url}`);
+          this.handleInternalDrop(url);
+        }
+      }
+    }
+  }
+
+  handleInternalDrop(url: string) {
+    let entryName = url.split("/").pop() || "New Entry";
+    if (entryName.includes("_")) {
+      entryName = entryName.split("_").slice(1).join("_");
+    }
+
+    this.entries.push({
+      timeSeconds: 0,
+      url: url,
+      name: entryName,
+      data: new Uint8Array(),
+    });
+    this.recalculateTimes();
+    this.cdr.detectChanges();
+  }
+
+  handleFiles(files: FileList) {
+    const fileArray = Array.from(files).filter(
+      (f) =>
+        f.type.startsWith("audio/") ||
+        f.name.endsWith(".mp3") ||
+        f.name.endsWith(".wav"),
+    );
+    if (fileArray.length === 0) {
+      console.warn("AudioSetEditor: No audio files found in drop");
+      return;
+    }
+
+    fileArray.sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, {
+        numeric: true,
+        sensitivity: "base",
+      }),
+    );
+
+    const newEntries: com.antigravity.ISaveAudioSetEntry[] = new Array(
+      fileArray.length,
+    );
+    let processedCount = 0;
+
+    fileArray.forEach((file, index) => {
+      // Try to find a match in existing assets
+      const existingAsset = this.allAudio.find((a) => a.name === file.name);
+
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        const bytes = new Uint8Array(e.target.result);
+
+        let previewUrl = "";
+        if (!existingAsset) {
+          const blob = new Blob([bytes], { type: file.type || "audio/wav" });
+          previewUrl = URL.createObjectURL(blob);
+          this.createdBlobUrls.add(previewUrl);
+        }
+
+        newEntries[index] = {
+          timeSeconds: 0,
+          url: existingAsset ? existingAsset.url : previewUrl,
+          name: file.name,
+          data: existingAsset ? new Uint8Array() : bytes,
+        };
+        processedCount++;
+        if (processedCount === fileArray.length) {
+          this.addDroppedEntries(newEntries);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  addDroppedEntries(newEntries: com.antigravity.ISaveAudioSetEntry[]) {
+    console.log(`AudioSetEditor: Adding ${newEntries.length} entries to list`);
+    this.entries = [...this.entries, ...newEntries];
+    this.recalculateTimes();
+    this.cdr.detectChanges();
+  }
+
+  recalculateTimes() {
+    if (this.entries.length === 0) return;
+
+    const extractNumber = (name: string): number | null => {
+      // Strip extension before matching digits to avoid picking up '3' from '.mp3'
+      const baseName = name.replace(/\.[^/.]+$/, "");
+      const matches = baseName.match(/\d+/g);
+      if (matches && matches.length > 0) {
+        return parseInt(matches[matches.length - 1], 10);
+      }
+      return null;
+    };
+
+    this.entries.forEach((entry) => {
+      const num = extractNumber(entry.name || "");
+      if (num !== null) {
+        entry.timeSeconds = num;
+      }
+    });
+
+    // Sort by time descending
+    this.entries.sort((a, b) => (b.timeSeconds || 0) - (a.timeSeconds || 0));
+    this.cdr.detectChanges();
+  }
+
+  addEntry() {
+    this.entries.push({
+      timeSeconds: 0,
+      url: "",
+      name: "",
+      data: new Uint8Array(),
+    });
+    this.cdr.detectChanges();
+  }
+
+  removeEntry(index: number) {
+    this.entries.splice(index, 1);
+    this.cdr.detectChanges();
+  }
+
+  onCancel() {
+    this.close.emit();
+  }
+
+  onSave() {
+    if (!this.name || this.entries.length === 0) {
+      alert(
+        this.translationService.translate("AM_AUDIO_SET_EDITOR_ERR_REQUIRED"),
+      );
+      return;
+    }
+
+    this.isSaving = true;
+
+    // Sanitize entries to remove blob URLs before sending to server
+    const sanitizedEntries = this.entries.map((e) => ({
+      ...e,
+      url: e.url?.startsWith("blob:") ? "" : e.url,
+    }));
+
+    this.dataService
+      .saveAudioSet(this.name, sanitizedEntries, this.assetId)
+      .subscribe({
+        next: (asset) => {
+          this.isSaving = false;
+          this.saved.emit(asset);
+          this.close.emit();
+        },
+        error: (err) => {
+          this.isSaving = false;
+          console.error("Failed to save audio set", err);
+          alert("Error: " + err.message);
+        },
+      });
+  }
+}

@@ -366,6 +366,14 @@
                 [(ngModel)]="theme.name"
                 (change)="onThemeNameChanged(theme)"
                 class="theme-name-input"
+                autocomplete="one-time-code"
+                data-dashlane-ignore="true"
+                data-lpignore="true"
+                data-form-type="other"
+                spellcheck="false"
+                autocorrect="off"
+                autocapitalize="off"
+                name="theme-name-ignore"
               />
             </div>
             <span

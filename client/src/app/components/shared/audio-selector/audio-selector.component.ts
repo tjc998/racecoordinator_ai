@@ -29,6 +29,7 @@ export class AudioSelectorComponent {
   @Output() urlChange = new EventEmitter<string>();
 
   @Input() assetId?: string;
+  @Input() fallbackName?: string | null;
 
   @Input() text?: string;
   @Output() textChange = new EventEmitter<string>();
@@ -58,10 +59,12 @@ export class AudioSelectorComponent {
         : "None";
     }
     const lookupValue = this.assetId || this.url;
-    if (!lookupValue)
+    if (!lookupValue) {
+      if (this.fallbackName) return this.fallbackName;
       return this.translationService
         ? this.translationService.translate("AS_SELECT_SOUND")
         : "Select Sound...";
+    }
 
     const normalize = (u: string) => {
       if (!u) return "";
@@ -84,9 +87,10 @@ export class AudioSelectorComponent {
 
     return asset
       ? asset.name
-      : this.translationService
-        ? this.translationService.translate("AS_UNKNOWN_ASSET")
-        : "Unknown Asset";
+      : this.fallbackName ||
+          (this.translationService
+            ? this.translationService.translate("AS_UNKNOWN_ASSET")
+            : "Unknown Asset");
   }
 
   constructor(

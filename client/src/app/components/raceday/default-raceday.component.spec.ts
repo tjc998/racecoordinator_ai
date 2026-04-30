@@ -2201,4 +2201,82 @@ describe("DefaultRacedayComponent", () => {
       );
     });
   });
+
+  describe("Audio Sets", () => {
+    let mockThemeService: any;
+
+    beforeEach(() => {
+      mockThemeService = TestBed.inject(ThemeService);
+      component["assets"] = [
+        {
+          entity_id: "audio-set-1",
+          type: "audio_set",
+          audioEntries: [
+            { timeSeconds: 0, url: "/assets/go.mp3" },
+            { timeSeconds: 3, url: "/assets/3.mp3" },
+            { timeSeconds: 30, url: "/assets/30_seconds.mp3" },
+          ],
+        },
+      ];
+    });
+
+    it("should play sound from audio set for countdown", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "audio-set-1",
+      });
+
+      // Trigger countdown for 3 seconds
+      (component as any).playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, 3);
+
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching("/assets/3.mp3"),
+      );
+    });
+
+    it("should play sound from audio set for GO (0 seconds)", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "audio-set-1",
+      });
+
+      (component as any).playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, 0);
+
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching("/assets/go.mp3"),
+      );
+    });
+
+    it("should play sound from audio set for time callouts", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "audio-set-1",
+      });
+
+      component["race"] = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Timed,
+          finishValue: 600,
+        },
+      } as any;
+
+      (component as any).checkAudioCallouts(29.9, 30.1); // Transition across 30s
+
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching("/assets/30_seconds.mp3"),
+      );
+    });
+
+    it("should not play if entry for time is not found", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "audio-set-1",
+      });
+
+      (component as any).playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, 99);
+
+      expect(window.Audio).not.toHaveBeenCalled();
+    });
+  });
 });

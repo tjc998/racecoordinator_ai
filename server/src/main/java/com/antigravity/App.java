@@ -341,6 +341,7 @@ public class App {
                   config -> {
                     config.addStaticFiles(staticFilePath, Location.EXTERNAL);
                     config.enableCorsForAllOrigins();
+                    config.maxRequestSize = 250_000_000L; // 250MB
 
                     ObjectMapper mapper = new ObjectMapper();
                     SimpleModule module = new SimpleModule();

@@ -65,6 +65,20 @@
           <div class="breakdown-item">
             <div class="breakdown-label">
               <img
+                src="assets/images/am_icon_image.png"
+                alt="ImgSet"
+                class="mini-icon icon-cyan"
+                style="opacity: 0.5"
+              />
+              <span>{{
+                "AM_IMAGE_SETS_LABEL" | translate: { count: imageSetCount }
+              }}</span>
+            </div>
+          </div>
+
+          <div class="breakdown-item">
+            <div class="breakdown-label">
+              <img
                 src="assets/images/am_icon_audio_wave.png"
                 alt="Snd"
                 class="mini-icon icon-cyan"
@@ -78,6 +92,20 @@
                 class="fill sound-fill"
                 [style.width.%]="soundUsagePercent"
               ></div>
+            </div>
+          </div>
+
+          <div class="breakdown-item">
+            <div class="breakdown-label">
+              <img
+                src="assets/images/am_icon_audio_wave.png"
+                alt="SndSet"
+                class="mini-icon icon-cyan"
+                style="opacity: 0.5"
+              />
+              <span>{{
+                "AM_AUDIO_SETS_LABEL" | translate: { count: audioSetCount }
+              }}</span>
             </div>
           </div>
         </div>
@@ -129,6 +157,13 @@
         >
           {{ "AM_BTN_NEW_IMAGE_SET" | translate }}
         </button>
+        <button
+          class="btn-new-set"
+          (click)="openNewAudioSetEditor()"
+          [disabled]="isUploading"
+        >
+          {{ "AM_BTN_NEW_AUDIO_SET" | translate }}
+        </button>
       </div>
     </div>
 
@@ -174,6 +209,13 @@
             >
               {{ "AM_FILTER_SOUNDS" | translate }}
             </div>
+            <div
+              class="tab"
+              [class.active]="filterType === 'audio_set'"
+              (click)="setFilterType('audio_set')"
+            >
+              {{ "AM_FILTER_AUDIO_SETS" | translate }}
+            </div>
           </div>
         </div>
       </div>
@@ -185,6 +227,14 @@
           class="filter-input"
           [placeholder]="'AM_FILTER_PLACEHOLDER' | translate"
           [(ngModel)]="filterName"
+          autocomplete="one-time-code"
+          data-dashlane-ignore="true"
+          data-lpignore="true"
+          data-form-type="other"
+          spellcheck="false"
+          autocorrect="off"
+          autocapitalize="off"
+          name="filter-ignore-field"
         />
       </div>
 
@@ -234,6 +284,14 @@
                 [(ngModel)]="asset.name"
                 (keyup.enter)="saveName(asset.id, asset.name)"
                 autoFocus
+                autocomplete="one-time-code"
+                data-dashlane-ignore="true"
+                data-lpignore="true"
+                data-form-type="other"
+                spellcheck="false"
+                autocorrect="off"
+                autocapitalize="off"
+                name="rename-ignore-field"
               />
               <div class="edit-actions">
                 <button
@@ -270,7 +328,9 @@
                     selectedAssets.length <= 1 &&
                       (asset.type === 'image_set'
                         ? openEditImageSetEditor(asset)
-                        : startEditing(asset.id))
+                        : asset.type === 'audio_set'
+                          ? openEditAudioSetEditor(asset)
+                          : startEditing(asset.id))
                   "
                   title="Edit"
                 />
@@ -307,6 +367,17 @@
     (saved)="onImageSetSaved($event)"
   >
   </app-image-set-editor>
+
+  <app-audio-set-editor
+    [visible]="showAudioSetEditor"
+    [assetId]="editingAudioAssetId"
+    [initialName]="editingAudioAssetName"
+    [initialEntries]="editingAudioAssetEntries"
+    [allAudio]="allAudio"
+    (close)="showAudioSetEditor = false"
+    (saved)="onAudioSetSaved($event)"
+  >
+  </app-audio-set-editor>
 
   <app-confirmation-modal
     [visible]="showDeleteConfirm"

@@ -26,6 +26,7 @@ export interface AssetView {
   editMode?: boolean;
   selected?: boolean;
   images?: com.antigravity.IImageSetEntry[];
+  audioEntries?: com.antigravity.IAudioSetEntry[];
   currentPreviewIndex?: number;
 }
 
@@ -53,6 +54,12 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   editingAssetId?: string;
   editingAssetName: string = "";
   editingAssetEntries: com.antigravity.ISaveImageSetEntry[] = [];
+
+  // Audio Set Editor
+  showAudioSetEditor: boolean = false;
+  editingAudioAssetId?: string;
+  editingAudioAssetName: string = "";
+  editingAudioAssetEntries: com.antigravity.ISaveAudioSetEntry[] = [];
   lastSelectedIndex: number = -1;
 
   // Delete Confirmation
@@ -176,6 +183,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
               editMode: false,
               selected: false,
               images: a.images || [],
+              audioEntries: a.audioEntries || [],
               currentPreviewIndex: 0,
             };
           });
@@ -226,6 +234,10 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
 
   get allImages(): AssetView[] {
     return this.assets.filter((a) => a.type === "image");
+  }
+
+  get allAudio(): AssetView[] {
+    return this.assets.filter((a) => a.type === "sound");
   }
 
   get totalSize(): string {
@@ -291,11 +303,27 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   }
 
   get imageCount(): number {
-    return this.assets.filter((a) => a.type === "image").length;
+    const singleImages = this.assets.filter((a) => a.type === "image").length;
+    const setImages = this.assets
+      .filter((a) => a.type === "image_set")
+      .reduce((sum, a) => sum + (a.images?.length || 0), 0);
+    return singleImages + setImages;
   }
 
   get soundCount(): number {
-    return this.assets.filter((a) => a.type === "sound").length;
+    const singleSounds = this.assets.filter((a) => a.type === "sound").length;
+    const setSounds = this.assets
+      .filter((a) => a.type === "audio_set")
+      .reduce((sum, a) => sum + (a.audioEntries?.length || 0), 0);
+    return singleSounds + setSounds;
+  }
+
+  get imageSetCount(): number {
+    return this.assets.filter((a) => a.type === "image_set").length;
+  }
+
+  get audioSetCount(): number {
+    return this.assets.filter((a) => a.type === "audio_set").length;
   }
 
   setFilterType(type: "all" | "image" | "sound" | "image_set" | "audio_set") {
@@ -490,6 +518,8 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
       const asset = selected[0];
       if (asset.type === "image_set") {
         this.openEditImageSetEditor(asset);
+      } else if (asset.type === "audio_set") {
+        this.openEditAudioSetEditor(asset);
       } else {
         this.startEditing(asset.id);
       }
@@ -583,6 +613,30 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   }
 
   onImageSetSaved(asset: com.antigravity.IAssetMessage) {
+    this.loadAssets();
+  }
+
+  openNewAudioSetEditor() {
+    this.editingAudioAssetId = undefined;
+    this.editingAudioAssetName = "";
+    this.editingAudioAssetEntries = [];
+    this.showAudioSetEditor = true;
+  }
+
+  openEditAudioSetEditor(asset: AssetView) {
+    this.editingAudioAssetId = asset.id;
+    this.editingAudioAssetName = asset.name;
+    this.editingAudioAssetEntries = (asset.audioEntries || []).map((entry) => ({
+      timeSeconds: entry.timeSeconds,
+      url: entry.url,
+      name: entry.name,
+      data: new Uint8Array(),
+    }));
+    this.showAudioSetEditor = true;
+    this.cdr.detectChanges();
+  }
+
+  onAudioSetSaved(asset: com.antigravity.IAssetMessage) {
     this.loadAssets();
   }
 
