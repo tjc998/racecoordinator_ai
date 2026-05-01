@@ -97,7 +97,7 @@ public class DatabaseService {
     initialDrivers.add(
         createDriver(
             "Abby",
-            "Fart Goblin",
+            "Bank Farter",
             helmetAssets,
             1,
             lapAudio,
