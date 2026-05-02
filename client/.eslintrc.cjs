@@ -48,8 +48,10 @@ module.exports = {
             "vars": "all",
             "args": "after-used",
             "ignoreRestSiblings": true,
-            "argsIgnorePattern": "^_",
-            "varsIgnorePattern": "^_"
+            "argsIgnorePattern": "^(_.*|e)$",
+            "varsIgnorePattern": "^(_.*|e)$",
+            "caughtErrors": "all",
+            "caughtErrorsIgnorePattern": "^(_.*|e)$"
           }
         ],
         "no-restricted-syntax": [
@@ -62,7 +64,9 @@ module.exports = {
             "selector": "ImportEqualsDeclaration[moduleReference.type='QualifiedName']",
             "message": "Use standard ES6 imports (import { ... } from '...') instead of namespace aliases (import X = Y.X)."
           }
-        ]
+        ],
+        "@angular-eslint/prefer-inject": "off",
+        "@angular-eslint/prefer-standalone": "off"
       },
       "plugins": [
         "@typescript-eslint",
@@ -82,7 +86,8 @@ module.exports = {
         "@angular-eslint/template/interactive-supports-focus": "off",
         "@angular-eslint/template/label-has-associated-control": "off",
         "@angular-eslint/template/eqeqeq": "off",
-        "@angular-eslint/template/alt-text": "off"
+        "@angular-eslint/template/alt-text": "off",
+        "@angular-eslint/template/prefer-control-flow": "off"
       }
     },
     {
