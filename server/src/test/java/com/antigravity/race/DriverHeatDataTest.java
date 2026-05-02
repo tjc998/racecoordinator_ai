@@ -1,0 +1,55 @@
+package com.antigravity.race;
+
+import static org.junit.Assert.assertEquals;
+
+import com.antigravity.models.Driver;
+import org.junit.Test;
+
+public class DriverHeatDataTest {
+
+  @Test
+  public void testAdjustedLapCountWithFractions() {
+    Driver driverModel = new Driver("Test", "Test");
+    RaceParticipant driver = new RaceParticipant(driverModel);
+    DriverHeatData dhd = new DriverHeatData(driver);
+
+    // Mock 5 laps
+    for (int i = 0; i < 5; i++) {
+      dhd.addLap(10.0, false);
+    }
+
+    dhd.setPenaltyLaps(-1.0);
+    dhd.setUserLaps(0.25);
+    dhd.setAutoCalculatedLaps(0.5);
+
+    // 5 - 1.0 + 0.25 + 0.5 = 4.75
+    assertEquals(4.75, dhd.getAdjustedLapCount(), 0.001);
+  }
+
+  @Test
+  public void testAverageLapTimeCalculationWithAdjustments() {
+    Driver driverModel = new Driver("Test", "Test");
+    RaceParticipant driver = new RaceParticipant(driverModel);
+    DriverHeatData dhd = new DriverHeatData(driver);
+
+    // 5 laps of 10 seconds each
+    for (int i = 0; i < 5; i++) {
+      dhd.addLap(10.0, false);
+    }
+
+    // Add significant adjustments that would change the average if they were included
+    dhd.setPenaltyLaps(5.0);
+    dhd.setUserLaps(10.0);
+    dhd.setAutoCalculatedLaps(15.0);
+
+    // Adjusted lap count is now 5 + 5 + 10 + 15 = 35
+    assertEquals(35.0, dhd.getAdjustedLapCount(), 0.001);
+
+    // Average lap time should STILL be 10.0 (sum of 50.0 / 5 laps)
+    // If it used adjusted count, it would be 50.0 / 35 = ~1.42
+    assertEquals(10.0, dhd.getAverageLapTime(), 0.001);
+
+    // Total time should also be based on actual laps: 50.0
+    assertEquals(50.0, dhd.getTotalTime(), 0.001);
+  }
+}

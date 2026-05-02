@@ -8,7 +8,7 @@ import {
   PipeTransform,
 } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { of } from "rxjs";
+import {} from "rxjs";
 
 import { ColumnVisibility, Settings } from "../../../models/settings";
 import { TranslationService } from "../../../services/translation.service";

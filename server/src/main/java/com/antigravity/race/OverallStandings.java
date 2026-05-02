@@ -39,13 +39,13 @@ public class OverallStandings {
           driverHeats.getOrDefault(driver.getStableId(), new ArrayList<>());
       List<DriverHeatData> scoringHeats = getScoringHeats(myHeats);
 
-      int totalLaps = 0;
+      double totalLaps = 0.0;
       double totalTime = 0.0;
       double bestLap = Double.MAX_VALUE;
 
       List<Double> allScoringLaps = new ArrayList<>();
       for (DriverHeatData dhd : scoringHeats) {
-        totalLaps += dhd.getLapCount();
+        totalLaps += dhd.getAdjustedLapCount();
         totalTime += dhd.getTotalTime();
 
         if (dhd.getBestLapTime() > 0 && dhd.getBestLapTime() < bestLap) {
@@ -146,7 +146,7 @@ public class OverallStandings {
       switch (heatScoring.getHeatRanking()) {
         case LAP_COUNT:
           // More laps = better
-          comparator = Comparator.comparingInt(DriverHeatData::getLapCount).reversed();
+          comparator = Comparator.comparingDouble(DriverHeatData::getAdjustedLapCount).reversed();
           break;
         case FASTEST_LAP:
           // Lower time = better
@@ -187,7 +187,7 @@ public class OverallStandings {
     } else {
       // Default to Lap Count
       comparator =
-          Comparator.comparingInt(DriverHeatData::getLapCount)
+          Comparator.comparingDouble(DriverHeatData::getAdjustedLapCount)
               .reversed()
               .thenComparingDouble(DriverHeatData::getTotalTime);
     }
@@ -212,7 +212,7 @@ public class OverallStandings {
     if (overallScoring != null && overallScoring.getRankingMethod() != null) {
       switch (overallScoring.getRankingMethod()) {
         case LAP_COUNT:
-          comparator = Comparator.comparingInt(RaceParticipant::getTotalLaps).reversed();
+          comparator = Comparator.comparingDouble(RaceParticipant::getTotalLaps).reversed();
           break;
         case FASTEST_LAP:
           comparator =
@@ -231,7 +231,7 @@ public class OverallStandings {
           comparator = (a, b) -> 0;
       }
     } else {
-      comparator = Comparator.comparingInt(RaceParticipant::getTotalLaps).reversed();
+      comparator = Comparator.comparingDouble(RaceParticipant::getTotalLaps).reversed();
     }
 
     return Comparator.<RaceParticipant, Boolean>comparing(

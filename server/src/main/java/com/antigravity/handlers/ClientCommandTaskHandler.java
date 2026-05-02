@@ -29,6 +29,7 @@ import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.IProtocol;
 import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.TestInterfaceListener;
+import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.arduino.ArduinoProtocol;
 import com.antigravity.protocols.interfaces.SerialConnection;
 import com.antigravity.race.ClientSubscriptionManager;
@@ -92,6 +93,7 @@ public class ClientCommandTaskHandler {
     app.post("/api/set-interface-rgb-led-state", this::setInterfaceRgbLedState);
     app.post("/api/close-interface", this::closeInterface);
     app.post("/api/races/current-heat/drivers/{lane}/actual-driver", this::changeActualDriver);
+    app.post("/api/races/current-heat/drivers/{lane}/user-laps", this::updateUserLaps);
     app.post("/api/races/current-heat/drivers/{fromLane}/change-lane/{toLane}", this::changeLane);
     app.get("/api/serial-ports", this::getSerialPorts);
     app.get("/api/races/current/export-csv", this::exportRaceCsv);
@@ -297,8 +299,8 @@ public class ClientCommandTaskHandler {
         DatabaseService.getInstance()
             .getTrack(databaseContext.getDatabase(), raceModel.getTrackEntityId());
 
-    com.antigravity.race.Race runtimeRace =
-        new com.antigravity.race.Race.Builder()
+    com.antigravity.race.Race runtimeRace = // fqn-collision
+        new com.antigravity.race.Race.Builder() // fqn-collision
             .model(raceModel)
             .drivers(participants)
             .track(raceTrack)
@@ -318,7 +320,7 @@ public class ClientCommandTaskHandler {
     System.out.println("Initialized race: " + runtimeRace.getRaceModel().getName());
     AnalyticsService.getInstance().trackRaceStart(runtimeRace);
 
-    // com.antigravity.models.Track track = race.getTrack();
+    // Track track = race.getTrack();
 
     RaceData raceDataSnapshot = runtimeRace.createSnapshot();
     runtimeRace.broadcast(raceDataSnapshot);
@@ -329,7 +331,8 @@ public class ClientCommandTaskHandler {
 
   private void startRace(Context ctx) {
     try {
-      com.antigravity.race.Race race = ClientSubscriptionManager.getInstance().getRace();
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
       if (race == null) {
         ctx.status(404).result("No active race found");
         return;
@@ -360,7 +363,8 @@ public class ClientCommandTaskHandler {
 
   private void pauseRace(Context ctx) {
     try {
-      com.antigravity.race.Race race = ClientSubscriptionManager.getInstance().getRace();
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
       if (race == null) {
         ctx.status(404).result("No active race found");
         return;
@@ -389,7 +393,8 @@ public class ClientCommandTaskHandler {
 
   void abortTimers(Context ctx) {
     try {
-      com.antigravity.race.Race race = ClientSubscriptionManager.getInstance().getRace();
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
       if (race == null) {
         ctx.status(404).result("No active race found");
         return;
@@ -416,7 +421,8 @@ public class ClientCommandTaskHandler {
 
   private void nextHeat(Context ctx) {
     try {
-      com.antigravity.race.Race race = ClientSubscriptionManager.getInstance().getRace();
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
       if (race == null) {
         ctx.status(404).result("No active race found");
         return;
@@ -446,7 +452,8 @@ public class ClientCommandTaskHandler {
 
   private void restartHeat(Context ctx) {
     try {
-      com.antigravity.race.Race race = ClientSubscriptionManager.getInstance().getRace();
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
       if (race == null) {
         ctx.status(404).result("No active race found");
         return;
@@ -476,7 +483,8 @@ public class ClientCommandTaskHandler {
 
   private void skipHeat(Context ctx) {
     try {
-      com.antigravity.race.Race race = ClientSubscriptionManager.getInstance().getRace();
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
       if (race == null) {
         ctx.status(404).result("No active race found");
         return;
@@ -506,7 +514,8 @@ public class ClientCommandTaskHandler {
 
   private void deferHeat(Context ctx) {
     try {
-      com.antigravity.race.Race race = ClientSubscriptionManager.getInstance().getRace();
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
       if (race == null) {
         ctx.status(404).result("No active race found");
         return;
@@ -533,8 +542,7 @@ public class ClientCommandTaskHandler {
     try {
       UpdateInterfaceConfigRequest request =
           UpdateInterfaceConfigRequest.parseFrom(ctx.bodyAsBytes());
-      com.antigravity.protocols.arduino.ArduinoConfig config =
-          ArduinoConfigConverter.fromProto(request.getConfig());
+      ArduinoConfig config = ArduinoConfigConverter.fromProto(request.getConfig());
       int interfaceIndex = request.getInterfaceIndex();
 
       ProtocolDelegate current = ClientSubscriptionManager.getInstance().getProtocol();
@@ -582,11 +590,11 @@ public class ClientCommandTaskHandler {
       InitializeInterfaceRequest request = InitializeInterfaceRequest.parseFrom(ctx.bodyAsBytes());
 
       List<IProtocol> protocols = new ArrayList<>();
-      List<com.antigravity.proto.ArduinoConfig> configsList = request.getConfigsList();
+      List<com.antigravity.proto.ArduinoConfig> configsList = // fqn-collision
+          request.getConfigsList();
       for (int i = 0; i < configsList.size(); i++) {
-        com.antigravity.proto.ArduinoConfig protoConfig = configsList.get(i);
-        com.antigravity.protocols.arduino.ArduinoConfig config =
-            ArduinoConfigConverter.fromProto(protoConfig);
+        com.antigravity.proto.ArduinoConfig protoConfig = configsList.get(i); // fqn-collision
+        ArduinoConfig config = ArduinoConfigConverter.fromProto(protoConfig);
         ArduinoProtocol arduino = new ArduinoProtocol(config, request.getLaneCount(), null);
         arduino.setInterfaceIndex(i);
         arduino.setListener(new TestInterfaceListener());
@@ -629,7 +637,8 @@ public class ClientCommandTaskHandler {
       int fromLane = Integer.parseInt(ctx.pathParam("fromLane"));
       int toLane = Integer.parseInt(ctx.pathParam("toLane"));
 
-      com.antigravity.race.Race race = ClientSubscriptionManager.getInstance().getRace();
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
       if (race == null) {
         ctx.status(404).result("No active race found");
         return;
@@ -778,7 +787,8 @@ public class ClientCommandTaskHandler {
       Map<String, String> body = ctx.bodyAsClass(HashMap.class);
       String driverId = body.get("driverId");
 
-      com.antigravity.race.Race race = ClientSubscriptionManager.getInstance().getRace();
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
       if (race == null) {
         ctx.status(404).result("No active race found");
         return;
@@ -825,9 +835,53 @@ public class ClientCommandTaskHandler {
     }
   }
 
+  @SuppressWarnings("unchecked")
+  void updateUserLaps(Context ctx) {
+    try {
+      updateUserLaps(ctx, getPathParamMap(ctx), getBody(ctx));
+    } catch (Exception e) {
+      ctx.status(500).result("Error: " + e.getMessage());
+    }
+  }
+
+  void updateUserLaps(Context ctx, Map<String, String> pathParams, Map<String, Object> body) {
+    try {
+      int lane = Integer.parseInt(pathParams.get("lane"));
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
+      if (race == null) {
+        ctx.status(404).result("No active race found");
+        return;
+      }
+
+      List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
+      if (lane >= 0 && lane < drivers.size()) {
+        DriverHeatData dhd = drivers.get(lane);
+        if (body.containsKey("userLaps")) {
+          double value = ((Number) body.get("userLaps")).doubleValue();
+          dhd.setUserLaps(value);
+
+          // Recalculate standings because laps changed
+          race.getCurrentHeat().initializeStandings(race.getRaceModel().getHeatScoring());
+          race.updateAndBroadcastOverallStandings();
+          race.broadcast(race.createSnapshot());
+
+          ctx.status(200).json(Map.of("adjustedLapCount", dhd.getAdjustedLapCount()));
+        } else {
+          ctx.status(400).result("Missing userLaps in body");
+        }
+      } else {
+        ctx.status(400).result("Invalid lane index: " + lane);
+      }
+    } catch (Exception e) {
+      ctx.status(500).result("Error: " + e.getMessage());
+    }
+  }
+
   private void exportRaceCsv(Context ctx) {
     try {
-      com.antigravity.race.Race race = ClientSubscriptionManager.getInstance().getRace();
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
       if (race == null) {
         ctx.status(404).result("No active race found");
         return;
@@ -854,7 +908,8 @@ public class ClientCommandTaskHandler {
 
   void saveRace(Context ctx) {
     try {
-      com.antigravity.race.Race race = ClientSubscriptionManager.getInstance().getRace();
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
       if (race == null) {
         ctx.status(404).result("No active race found");
         return;
@@ -977,8 +1032,8 @@ public class ClientCommandTaskHandler {
       }
 
       // Recreate Race
-      com.antigravity.race.Race race =
-          new com.antigravity.race.Race.Builder()
+      com.antigravity.race.Race race = // fqn-collision
+          new com.antigravity.race.Race.Builder() // fqn-collision
               .model(saveData.getModel())
               .drivers(saveData.getDrivers())
               .track(trackToUse)
@@ -1105,5 +1160,13 @@ public class ClientCommandTaskHandler {
         });
     mapper.registerModule(module);
     return mapper;
+  }
+
+  Map<String, String> getPathParamMap(Context ctx) {
+    return ctx.pathParamMap();
+  }
+
+  Map<String, Object> getBody(Context ctx) {
+    return ctx.bodyAsClass(HashMap.class);
   }
 }

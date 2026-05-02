@@ -1,11 +1,13 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { ArduinoConfig } from "src/app/models/track";
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
-import { com } from "src/app/proto/message";
+
 import { TranslationService } from "src/app/services/translation.service";
 import { TranslationServiceMock } from "src/app/testing/translation-service.mock";
 
 import { ArduinoSummaryComponent } from "./arduino-summary.component";
+
+import { PinBehavior } from "src/app/proto/antigravity";
 
 describe("ArduinoSummaryComponent", () => {
   let component: ArduinoSummaryComponent;
@@ -63,14 +65,14 @@ describe("ArduinoSummaryComponent", () => {
 
     it("should count configured pins excluding unused and reserved", () => {
       const digitalIds = [
-        com.antigravity.PinBehavior.BEHAVIOR_UNUSED, // 0
-        com.antigravity.PinBehavior.BEHAVIOR_RESERVED, // 1
-        com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON, // 2 (Counted)
+        PinBehavior.BEHAVIOR_UNUSED, // 0
+        PinBehavior.BEHAVIOR_RESERVED, // 1
+        PinBehavior.BEHAVIOR_CALL_BUTTON, // 2 (Counted)
         -1, // Not counted
         1000, // Counted
       ];
       const analogIds = [
-        com.antigravity.PinBehavior.BEHAVIOR_UNUSED, // 0
+        PinBehavior.BEHAVIOR_UNUSED, // 0
         2000, // Counted
       ];
 
@@ -86,7 +88,7 @@ describe("ArduinoSummaryComponent", () => {
 
   describe("hasBehavior", () => {
     it("should detect laps", () => {
-      const digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_LAP_BASE]; // 1000
+      const digitalIds = [PinBehavior.BEHAVIOR_LAP_BASE]; // 1000
       const config: Partial<ArduinoConfig> = {
         digitalIds,
         lapPinPitBehavior: 3,
@@ -96,7 +98,7 @@ describe("ArduinoSummaryComponent", () => {
     });
 
     it("should detect segments", () => {
-      const digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE]; // 2000
+      const digitalIds = [PinBehavior.BEHAVIOR_SEGMENT_BASE]; // 2000
       const config: Partial<ArduinoConfig> = {
         digitalIds,
         lapPinPitBehavior: 3,
@@ -106,24 +108,24 @@ describe("ArduinoSummaryComponent", () => {
     });
 
     it("should detect call buttons", () => {
-      let digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON]; // 2
+      let digitalIds = [PinBehavior.BEHAVIOR_CALL_BUTTON]; // 2
       let config: Partial<ArduinoConfig> = { digitalIds, lapPinPitBehavior: 3 };
       component.config = config as ArduinoConfig;
       expect(component.hasBehavior("call")).toBeTrue();
 
-      digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE]; // 3000
+      digitalIds = [PinBehavior.BEHAVIOR_CALL_BUTTON_BASE]; // 3000
       config = { digitalIds };
       component.config = config as ArduinoConfig;
       expect(component.hasBehavior("call")).toBeTrue();
     });
 
     it("should detect relays", () => {
-      let digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_RELAY]; // 3
+      let digitalIds = [PinBehavior.BEHAVIOR_RELAY]; // 3
       let config: Partial<ArduinoConfig> = { digitalIds, lapPinPitBehavior: 3 };
       component.config = config as ArduinoConfig;
       expect(component.hasBehavior("relay")).toBeTrue();
 
-      digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE]; // 4000
+      digitalIds = [PinBehavior.BEHAVIOR_RELAY_BASE]; // 4000
       config = { digitalIds };
       component.config = config as ArduinoConfig;
       expect(component.hasBehavior("relay")).toBeTrue();

@@ -17,6 +17,7 @@
     "src/**/*.mock.ts",
     "src/**/*.harness.ts",
     "src/**/*.e2e.ts",
+    "src/**/*_helper.ts",
     "src/**/*.d.ts",
     "playwright.config.ts"
   ]

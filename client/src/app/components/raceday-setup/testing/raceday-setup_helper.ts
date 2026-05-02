@@ -1,10 +1,11 @@
 import { BehaviorSubject, of } from "rxjs";
 
-import { com } from "../../../proto/message";
 import { MOCK_DRIVERS } from "../../../testing/data/drivers_data";
 import { MOCK_RACES } from "../../../testing/data/races_data";
-import { createDefaultSettings } from "../../../testing/data/settings_data";
+import { createDefaultSettings as _createDefaultSettings } from "../../../testing/data/settings_data";
 import { MOCK_TEAMS } from "../../../testing/data/teams_data";
+
+import { InitializeRaceResponse, RaceFlag } from "src/app/proto/antigravity";
 
 export const MOCK_AUTOSAVE_RACES = ["autosave_r1.json", "autosave_r2.json"];
 
@@ -36,9 +37,9 @@ export function createRacedaySetupDataServiceMock(overrides: any = {}) {
   mock.deleteSavedRace.and.returnValue(of("OK"));
   mock.toggleServerAnalytics.and.returnValue(of("OK"));
   mock.initializeRace.and.returnValue(
-    of(com.antigravity.InitializeRaceResponse.create({ success: true })),
+    of(InitializeRaceResponse.create({ success: true })),
   );
-  mock.getRaceFlag.and.returnValue(of(com.antigravity.RaceFlag.RED));
+  mock.getRaceFlag.and.returnValue(of(RaceFlag.RED));
 
   return Object.assign(mock, overrides);
 }

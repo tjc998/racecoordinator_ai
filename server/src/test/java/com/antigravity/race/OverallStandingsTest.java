@@ -78,8 +78,8 @@ public class OverallStandingsTest {
 
     assertEquals(1, p1.getRank());
     assertEquals(2, p2.getRank());
-    assertEquals(10, p1.getTotalLaps());
-    assertEquals(9, p2.getTotalLaps());
+    assertEquals(10.0, p1.getTotalLaps(), 0.001);
+    assertEquals(9.0, p2.getTotalLaps(), 0.001);
   }
 
   @Test
@@ -109,7 +109,7 @@ public class OverallStandingsTest {
     // 220.
     os.recalculate(drivers, heats);
 
-    assertEquals(22, p1.getTotalLaps());
+    assertEquals(22.0, p1.getTotalLaps(), 0.001);
     assertEquals(220.0, p1.getTotalTime(), 0.001);
   }
 
@@ -238,5 +238,37 @@ public class OverallStandingsTest {
     // Verify sorting order in the list (Empty should be at the bottom)
     assertEquals(p1, drivers.get(0));
     assertEquals(p2, drivers.get(1));
+  }
+
+  @Test
+  public void testFractionalOverallStandings() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallStandings os = new OverallStandings(heatScoring, overallScoring);
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    List<RaceParticipant> drivers = new ArrayList<>();
+    drivers.add(p1);
+
+    List<Heat> heats = new ArrayList<>();
+    RaceParticipant dummy = createDriver("Dummy", "dummy");
+
+    // Heat 1: 10.25 laps
+    Heat h1 = createHeat(1, p1, 10, 100.0, dummy, 0, 0);
+    h1.getDrivers().get(0).setUserLaps(0.25);
+    heats.add(h1);
+
+    // Heat 2: 5.5 laps
+    Heat h2 = createHeat(2, p1, 5, 50.0, dummy, 0, 0);
+    h2.getDrivers().get(0).setUserLaps(0.5);
+    heats.add(h2);
+
+    // Total should be 10.25 + 5.5 = 15.75
+    os.recalculate(drivers, heats);
+
+    assertEquals(15.75, p1.getTotalLaps(), 0.001);
   }
 }

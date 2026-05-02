@@ -209,7 +209,7 @@ describe("AudioSelectorComponent", () => {
     component.url = "set-1";
 
     const audioSpy = (window.Audio as unknown as jasmine.Spy).and.callFake(
-      function (url: string) {
+      function (_url: string) {
         // Simulate sound ending after a short delay
         setTimeout(() => {
           if (mockAudioInstance.onended) mockAudioInstance.onended();

@@ -27,6 +27,12 @@ export class DriverHeatData {
   private _reactionTime: number = 0;
   private _gapLeader: number = 0;
   private _gapPosition: number = 0;
+  public penaltyLaps: number = 0;
+  public userLaps: number = 0;
+  public autoCalculatedLaps: number = 0;
+  private _adjustedLapCount: number = 0;
+  public isRefueling: boolean = false;
+  public currentLocation: number = -1;
 
   constructor(
     objectId: string,
@@ -57,6 +63,12 @@ export class DriverHeatData {
     this._gapLeader = 0;
     this._gapPosition = 0;
     this._currentLapSegments = [];
+    this.penaltyLaps = 0;
+    this.userLaps = 0;
+    this.autoCalculatedLaps = 0;
+    this._adjustedLapCount = 0;
+    this.isRefueling = false;
+    this.currentLocation = -1;
   }
 
   addLapTime(
@@ -65,10 +77,12 @@ export class DriverHeatData {
     averageLapTime: number,
     medianLapTime: number,
     bestLapTime: number,
+    adjustedLapCount: number,
     driverId?: string,
     isDrift?: boolean,
   ): void {
     const lapIndex = lapNumber - 1;
+    this._adjustedLapCount = adjustedLapCount;
 
     // Fill missing laps with 0
     while (this.laps.length < lapIndex) {
@@ -131,7 +145,23 @@ export class DriverHeatData {
   }
 
   get lapCount(): number {
-    return this.laps.length;
+    if (this._adjustedLapCount > 0) {
+      return this._adjustedLapCount;
+    }
+    return (
+      this.laps.length +
+      this.penaltyLaps +
+      this.userLaps +
+      this.autoCalculatedLaps
+    );
+  }
+
+  get adjustedLapCount(): number {
+    return this._adjustedLapCount;
+  }
+
+  set adjustedLapCount(value: number) {
+    this._adjustedLapCount = value;
   }
 
   get totalTime(): number {

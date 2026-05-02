@@ -28,7 +28,7 @@ test.describe("UI Editor Visuals", () => {
     await page.locator(".ue-container").waitFor({ state: "visible" });
 
     const editor = page.locator(".ue-container");
-    const harness = new UIEditorHarnessE2e(editor);
+    const _harness = new UIEditorHarnessE2e(editor);
 
     // Wait for the UI editor container to be visible
     await editor.waitFor({ state: "visible" });
@@ -93,7 +93,7 @@ test.describe("UI Editor Visuals", () => {
 
     await harness.clickReorderColumns();
 
-    const dialog = await harness.getReorderDialogHarness();
+    const _dialog = await harness.getReorderDialogHarness();
 
     // Wait for reorder modal to be visible
     await page
@@ -126,7 +126,7 @@ test.describe("UI Editor Visuals", () => {
       .locator(".reorder-modal")
       .waitFor({ state: "visible", timeout: 10000 });
 
-    const values = await dialog.getAvailableValues();
+    const _values = await dialog.getAvailableValues();
     // Values checked visually
 
     await expect(page.locator(".reorder-modal")).toHaveScreenshot(

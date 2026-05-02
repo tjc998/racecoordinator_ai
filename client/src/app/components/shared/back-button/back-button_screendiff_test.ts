@@ -22,7 +22,7 @@ test.describe("Back Button Visuals", () => {
     // Verify Back Button is visible
     const backButtonHost = page.locator("app-back-button");
     await backButtonHost.waitFor({ state: "visible" });
-    const harness = new BackButtonHarnessE2e(backButtonHost);
+    const _harness = new BackButtonHarnessE2e(backButtonHost);
 
     // Label text checked visually
 

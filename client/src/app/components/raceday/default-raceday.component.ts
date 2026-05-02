@@ -1,4 +1,4 @@
-import { CdkDragDrop, moveItemInArray } from "@angular/cdk/drag-drop";
+import { CdkDragDrop } from "@angular/cdk/drag-drop";
 import {
   ChangeDetectorRef,
   Component,
@@ -8,7 +8,7 @@ import {
   OnInit,
 } from "@angular/core";
 import { Router } from "@angular/router";
-import { Observable, of, Subject, Subscription } from "rxjs";
+import { Observable, Subject, Subscription } from "rxjs";
 import { DriverConverter } from "src/app/converters/driver.converter";
 import { HeatConverter } from "src/app/converters/heat.converter";
 import { LaneConverter } from "src/app/converters/lane.converter";
@@ -16,14 +16,13 @@ import { RaceConverter } from "src/app/converters/race.converter";
 import { TrackConverter } from "src/app/converters/track.converter";
 import { DataService } from "src/app/data.service";
 import { CanComponentDeactivate } from "src/app/guards/raceday.guard";
-import { AudioConfig, Driver } from "src/app/models/driver";
+import { Driver } from "src/app/models/driver";
 import { FinishMethod, HeatScoring } from "src/app/models/heat_scoring";
 import { Race } from "src/app/models/race";
 import { RaceParticipant } from "src/app/models/race_participant";
 import { ColumnVisibility, Settings } from "src/app/models/settings";
 import { THEME_SLOT_KEYS } from "src/app/models/theme";
 import { Track } from "src/app/models/track";
-import { com } from "src/app/proto/message";
 import { DriverHeatData } from "src/app/race/driver_heat_data";
 import { Heat } from "src/app/race/heat";
 import { RaceService } from "src/app/services/race.service";
@@ -32,12 +31,12 @@ import { SettingsService } from "src/app/services/settings.service";
 import { ThemeService } from "src/app/services/theme.service";
 import { TranslationService } from "src/app/services/translation.service";
 import { createTTSContext, playSound } from "src/app/utils/audio";
+import { RaceConnectionService } from "src/app/services/race-connection.service";
+import { RaceState } from "src/app/proto/antigravity";
 
 import { ColumnDefinition } from "./column_definition";
 import { AnchorPoint } from "./column_definition";
 
-import InterfaceStatus = com.antigravity.InterfaceStatus;
-import { RaceConnectionService } from "src/app/services/race-connection.service";
 /**
  * The raceday component is the main component for the raceday screen.
  */
@@ -67,6 +66,7 @@ export class DefaultRacedayComponent
   protected timeFormat: string = "1.0-0";
   protected autoStartRemaining: number = 0;
   protected autoAdvanceRemaining: number = 0;
+  protected readonly LAP_ADJUSTMENT_AMOUNT = 0.25;
   protected sortedHeatDrivers: DriverHeatData[] = [];
   protected driverVisualPositions = new Map<number, number>();
   protected allDrivers: any[] = [];
@@ -164,8 +164,7 @@ export class DefaultRacedayComponent
   protected get formattedTime(): string {
     const s = this.raceState;
     if (
-      (s === com.antigravity.RaceState.NOT_STARTED ||
-        s === com.antigravity.RaceState.UNKNOWN_STATE) &&
+      (s === RaceState.NOT_STARTED || s === RaceState.UNKNOWN_STATE) &&
       this.autoStartRemaining <= 0 &&
       this.autoAdvanceRemaining <= 0
     ) {
@@ -300,16 +299,6 @@ export class DefaultRacedayComponent
   ackModalMessage = "";
   ackModalButtonText = "ACK_MODAL_BTN_OK";
 
-  private disconnectedTimeout: any;
-  private noStatusWatchdog: any;
-  private lastInterfaceStatus: InterfaceStatus | number = -1;
-  private hasInitiallyConnected = false;
-  // TODO(aufderheide): Test hooks like this have no business in production code.
-  // Test hook for watchdogs
-  private get WATCHDOG_TIMEOUT(): number {
-    return (window as any).WATCHDOG_TIMEOUT || 5000;
-  }
-
   constructor(
     private el: ElementRef,
     private translationService: TranslationService,
@@ -330,15 +319,12 @@ export class DefaultRacedayComponent
   protected isInterfaceConnected: boolean = false;
   protected draggingLane: number | null = null;
   protected isDragging: boolean = false;
-  protected raceState: com.antigravity.RaceState =
-    com.antigravity.RaceState.UNKNOWN_STATE;
+  protected raceState: RaceState = RaceState.UNKNOWN_STATE;
   protected assets: any[] = [];
   protected hasRacedInCurrentHeat: boolean = false;
   protected highlightedDrivers: Set<string> = new Set();
   private carLocations = new Map<number, number>();
 
-  private driversLoaded = false;
-  private pendingUpdate: com.antigravity.IRace | null = null;
   private dropdownIconCache = new Map<string, string>();
   private deactivateSubject = new Subject<boolean>();
 
@@ -357,7 +343,7 @@ export class DefaultRacedayComponent
         this.assets = assets || [];
         this.loadColumns(); // Refresh column definitions to pick up asset names and update formatters
         if (!this.isDestroyed) {
-          this.cdr.detectChanges();
+          this.cdr.markForCheck();
         }
       }),
     );
@@ -367,7 +353,7 @@ export class DefaultRacedayComponent
         this.participants = participants || [];
         this.updateLeaderboardEntries();
         if (!this.isDestroyed) {
-          this.cdr.detectChanges();
+          this.cdr.markForCheck();
         }
       }),
     );
@@ -376,7 +362,7 @@ export class DefaultRacedayComponent
       this.dataService.getDrivers().subscribe((drivers) => {
         this.allDrivers = drivers || [];
         if (!this.isDestroyed) {
-          this.cdr.detectChanges();
+          this.cdr.markForCheck();
         }
       }),
     );
@@ -433,7 +419,7 @@ export class DefaultRacedayComponent
           if (time === 0) this.timeFormat = "1.0-0";
         }
 
-        if (this.raceState === com.antigravity.RaceState.RACING) {
+        if (this.raceState === RaceState.RACING) {
           this.checkAudioCallouts(time, this.previousTime);
         }
 
@@ -441,7 +427,7 @@ export class DefaultRacedayComponent
         this.previousTime = time;
 
         if (!this.isDestroyed) {
-          this.cdr.detectChanges();
+          this.cdr.markForCheck();
         }
       }),
     );
@@ -454,7 +440,7 @@ export class DefaultRacedayComponent
           );
           if (driverData) {
             if (!this.isDestroyed) {
-              this.cdr.detectChanges();
+              this.cdr.markForCheck();
             }
 
             const driver = driverData.driver;
@@ -510,12 +496,12 @@ export class DefaultRacedayComponent
             if (settings.highlightRowOnLap) {
               this.highlightedDrivers.add(lap.objectId!);
               if (!this.isDestroyed) {
-                this.cdr.detectChanges();
+                this.cdr.markForCheck();
               }
               const timer = setTimeout(() => {
                 this.highlightedDrivers.delete(lap.objectId!);
                 if (!this.isDestroyed) {
-                  this.cdr.detectChanges();
+                  this.cdr.markForCheck();
                 }
               }, 400);
               this.subscriptions.push(
@@ -538,23 +524,23 @@ export class DefaultRacedayComponent
           carData.location !== undefined
         ) {
           this.carLocations.set(carData.lane, carData.location);
-          this.cdr.detectChanges();
+          this.cdr.markForCheck();
         }
       }),
     );
 
     this.subscriptions.push(
-      this.raceConnectionService.segments$.subscribe((segment) => {
+      this.raceConnectionService.segments$.subscribe((_segment) => {
         if (!this.isDestroyed) {
-          this.cdr.detectChanges();
+          this.cdr.markForCheck();
         }
       }),
     );
 
     this.subscriptions.push(
-      this.raceConnectionService.reactionTimes$.subscribe((rt) => {
+      this.raceConnectionService.reactionTimes$.subscribe((_rt) => {
         if (!this.isDestroyed) {
-          this.cdr.detectChanges();
+          this.cdr.markForCheck();
         }
       }),
     );
@@ -573,10 +559,10 @@ export class DefaultRacedayComponent
     );
 
     this.subscriptions.push(
-      this.raceConnectionService.interfaceEvents$.subscribe((event) => {
+      this.raceConnectionService.interfaceEvents$.subscribe((_event) => {
         this.isInterfaceConnected =
           this.raceConnectionService.isInterfaceConnected;
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       }),
     );
 
@@ -653,16 +639,16 @@ export class DefaultRacedayComponent
           }
 
           if (!this.isDestroyed) {
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
           }
         }
       }),
     );
 
     this.subscriptions.push(
-      this.raceConnectionService.raceFlag$.subscribe((flag) => {
+      this.raceConnectionService.raceFlag$.subscribe((_flag) => {
         if (!this.isDestroyed) {
-          this.cdr.detectChanges();
+          this.cdr.markForCheck();
         }
       }),
     );
@@ -692,7 +678,7 @@ export class DefaultRacedayComponent
     this.ackModalTitle = titleKey;
     this.ackModalMessage = messageKey;
     this.showAckModal = true;
-    this.cdr.detectChanges();
+    this.cdr.markForCheck();
   }
 
   onAcknowledgeModal() {
@@ -715,7 +701,7 @@ export class DefaultRacedayComponent
     this.exitConfirmText = "RD_CONFIRM_EXIT_BTN_LEAVE";
     this.exitCancelText = "RD_CONFIRM_EXIT_BTN_STAY";
     this.showExitConfirmation = true;
-    this.cdr.detectChanges();
+    this.cdr.markForCheck();
     return this.deactivateSubject.asObservable();
   }
 
@@ -772,7 +758,7 @@ export class DefaultRacedayComponent
   protected get canSwapLanes(): boolean {
     if (this.isSingleHeatSolo) return true;
     if (this.isSingleHeat) {
-      return this.raceState === com.antigravity.RaceState.NOT_STARTED;
+      return this.raceState === RaceState.NOT_STARTED;
     }
     return false;
   }
@@ -857,12 +843,11 @@ export class DefaultRacedayComponent
 
       // If we're already in a starting state, re-sync the countdown lamps now that we have duration
       if (
-        this.raceState === com.antigravity.RaceState.STARTING ||
-        this.raceState === com.antigravity.RaceState.PAUSED
+        this.raceState === RaceState.STARTING ||
+        this.raceState === RaceState.PAUSED
       ) {
         const duration =
-          this.isRestarting ||
-          this.raceState === com.antigravity.RaceState.PAUSED
+          this.isRestarting || this.raceState === RaceState.PAUSED
             ? race.restart_time
             : race.start_time;
         this.countdownTotalLamps = Math.ceil(duration || 5.0);
@@ -907,7 +892,7 @@ export class DefaultRacedayComponent
       }
 
       this.sortHeatDrivers();
-      this.cdr.detectChanges();
+      this.cdr.markForCheck();
     } else {
       // No heats available
     }
@@ -999,7 +984,7 @@ export class DefaultRacedayComponent
   // Helper method to get column text Y position
   getColumnTextY(
     columnIndex: number,
-    hasTeam: boolean = false,
+    _hasTeam: boolean = false,
     anchor?: any,
   ): number {
     const rowHeight = this.getRowHeight();
@@ -1279,7 +1264,7 @@ export class DefaultRacedayComponent
   activeMenu: string | null = null;
 
   @HostListener("window:unload", ["$event"])
-  onUnload($event: any) {
+  onUnload(_event: any) {
     if (this.leaderBoardWindow) {
       this.leaderBoardWindow.close();
       this.leaderBoardWindow = null;
@@ -1316,13 +1301,13 @@ export class DefaultRacedayComponent
           this.translationService.translate("RD_SAVE_SUCCESS");
         this.ackModalMessage = response;
         this.showAckModal = true;
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.ackModalTitle = this.translationService.translate("RD_SAVE_ERROR");
         this.ackModalMessage = err.error || err.message;
         this.showAckModal = true;
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       },
     });
   }
@@ -1388,7 +1373,7 @@ export class DefaultRacedayComponent
       }
 
       const s = this.raceState;
-      const RS = com.antigravity.RaceState;
+      const RS = RaceState;
 
       // If an auto-timer is active, space bar should pause/cancel it
       if (this.autoStartRemaining > 0 || this.autoAdvanceRemaining > 0) {
@@ -1477,7 +1462,7 @@ export class DefaultRacedayComponent
   }
 
   public get isSaveDisabled(): boolean {
-    return this.raceState === com.antigravity.RaceState.RACING;
+    return this.raceState === RaceState.RACING;
   }
 
   // Menu State Helpers
@@ -1489,10 +1474,10 @@ export class DefaultRacedayComponent
     const s = this.raceState;
     return (
       !this.isInterfaceConnected ||
-      s === com.antigravity.RaceState.STARTING ||
-      s === com.antigravity.RaceState.RACING ||
-      s === com.antigravity.RaceState.HEAT_OVER ||
-      s === com.antigravity.RaceState.RACE_OVER
+      s === RaceState.STARTING ||
+      s === RaceState.RACING ||
+      s === RaceState.HEAT_OVER ||
+      s === RaceState.RACE_OVER
     );
   }
 
@@ -1501,7 +1486,7 @@ export class DefaultRacedayComponent
     // Enabled in STARTING? User didn't say disabled. Usually can pause countdown.
     // Enabled in RACING.
     const s = this.raceState; // Shortcut
-    const RS = com.antigravity.RaceState;
+    const RS = RaceState;
 
     const isAutoTimerActive =
       this.autoStartRemaining > 0 || this.autoAdvanceRemaining > 0;
@@ -1521,7 +1506,7 @@ export class DefaultRacedayComponent
   }
 
   public get isNextHeatDisabled(): boolean {
-    return this.raceState !== com.antigravity.RaceState.HEAT_OVER;
+    return this.raceState !== RaceState.HEAT_OVER;
   }
 
   isDriverFinished(
@@ -1578,7 +1563,7 @@ export class DefaultRacedayComponent
     }
 
     // 3. Built-in default asset (name-based lookup from assets list)
-    const flagUrls: Record<FlagType, string> = {
+    const _flagUrls: Record<FlagType, string> = {
       red: "/assets/flags/red.png",
       green: "/assets/flags/green.png",
       yellow: "/assets/flags/yellow.png",
@@ -1641,13 +1626,12 @@ export class DefaultRacedayComponent
     // Disabled in Starting, Racing.
     // "Heat Over: Everything... disabled".
     const s = this.raceState;
-    const RS = com.antigravity.RaceState;
     return (
-      s === RS.STARTING ||
-      s === RS.RACING ||
-      s === RS.NOT_STARTED ||
-      s === RS.HEAT_OVER ||
-      s === RS.RACE_OVER
+      s === RaceState.STARTING ||
+      s === RaceState.RACING ||
+      s === RaceState.NOT_STARTED ||
+      s === RaceState.HEAT_OVER ||
+      s === RaceState.RACE_OVER
     );
   }
 
@@ -1655,27 +1639,25 @@ export class DefaultRacedayComponent
     // Disabled in Starting, Racing.
     // "Heat Over: Everything... disabled".
     const s = this.raceState;
-    const RS = com.antigravity.RaceState;
-    return s !== RS.NOT_STARTED;
+    return s !== RaceState.NOT_STARTED;
   }
 
   public get isSkipHeatDisabled(): boolean {
     const s = this.raceState;
-    const RS = com.antigravity.RaceState;
     return (
-      s === RS.STARTING ||
-      s === RS.RACING ||
-      s === RS.HEAT_OVER ||
-      s === RS.RACE_OVER
+      s === RaceState.STARTING ||
+      s === RaceState.RACING ||
+      s === RaceState.HEAT_OVER ||
+      s === RaceState.RACE_OVER
     );
   }
 
   public get isSkipRaceDisabled(): boolean {
     const s = this.raceState;
     return (
-      s === com.antigravity.RaceState.STARTING ||
-      s === com.antigravity.RaceState.RACING ||
-      s === com.antigravity.RaceState.RACE_OVER
+      s === RaceState.STARTING ||
+      s === RaceState.RACING ||
+      s === RaceState.RACE_OVER
     );
   }
 
@@ -1811,7 +1793,7 @@ export class DefaultRacedayComponent
         const renderer = (
           v: any,
           hd: DriverHeatData,
-          col: ColumnDefinition,
+          _col: ColumnDefinition,
         ) => {
           return this.getSelectedImageFromSet(asset, v, hd);
         };
@@ -2049,7 +2031,10 @@ export class DefaultRacedayComponent
         (value === 0 && hd.reactionTime === 0)
       )
         return "--";
-      return value.toString();
+      if (value % 1 === 0) {
+        return value.toString();
+      }
+      return value.toFixed(2).replace(/\.?0+$/, "");
     } else if (baseKey === "driver.name") {
       if (this.isEmptyDriver(hd)) {
         return this.translationService.translate("RD_EMPTY_LANE");
@@ -2222,7 +2207,7 @@ export class DefaultRacedayComponent
     return labels[baseKey] ?? "UNKNOWN";
   }
 
-  protected trackByIndex(index: number, item: any): number {
+  protected trackByIndex(index: number, _item: any): number {
     return index;
   }
 
@@ -2304,8 +2289,8 @@ export class DefaultRacedayComponent
       return false;
     }
     if (
-      this.raceState !== com.antigravity.RaceState.RACING &&
-      this.raceState !== com.antigravity.RaceState.STARTING
+      this.raceState !== RaceState.RACING &&
+      this.raceState !== RaceState.STARTING
     ) {
       return false;
     }
@@ -2365,7 +2350,11 @@ export class DefaultRacedayComponent
     return `(${hLabel}: ${heatLaps} ${lLabel} / ${formatTime(heatTime)}, ${tLabel}: ${overallLaps} ${lLabel} / ${formatTime(overallTime)})`;
   }
 
-  private handleRaceStateChange(state: com.antigravity.RaceState) {
+  private handleRaceStateChange(state: RaceState) {
+    if (state === this.raceState) {
+      return;
+    }
+
     const previousState = this.raceState;
     console.log(
       "RacedayComponent: State changed from",
@@ -2377,17 +2366,17 @@ export class DefaultRacedayComponent
 
     // Reset overlay if we enter a state that shouldn't show it
     if (
-      state === com.antigravity.RaceState.NOT_STARTED ||
-      state === com.antigravity.RaceState.UNKNOWN_STATE ||
-      state === com.antigravity.RaceState.HEAT_OVER ||
-      state === com.antigravity.RaceState.RACE_OVER ||
-      state === com.antigravity.RaceState.PAUSED
+      state === RaceState.NOT_STARTED ||
+      state === RaceState.UNKNOWN_STATE ||
+      state === RaceState.HEAT_OVER ||
+      state === RaceState.RACE_OVER ||
+      state === RaceState.PAUSED
     ) {
       this.showCountdownOverlay = false;
       if (
-        state === com.antigravity.RaceState.NOT_STARTED ||
-        state === com.antigravity.RaceState.HEAT_OVER ||
-        state === com.antigravity.RaceState.RACE_OVER
+        state === RaceState.NOT_STARTED ||
+        state === RaceState.HEAT_OVER ||
+        state === RaceState.RACE_OVER
       ) {
         this.playedSecondsLeft.clear();
         this.playedHalfway = false;
@@ -2395,22 +2384,19 @@ export class DefaultRacedayComponent
     }
 
     // Play yellow flag audio when transitioning from RACING to PAUSED
-    if (
-      state === com.antigravity.RaceState.PAUSED &&
-      previousState === com.antigravity.RaceState.RACING
-    ) {
+    if (state === RaceState.PAUSED && previousState === RaceState.RACING) {
       this.playThemedSound(THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG);
     }
 
     // Show overlay for STARTING or RESTARTING
-    if (state === com.antigravity.RaceState.STARTING) {
+    if (state === RaceState.STARTING) {
       this.showCountdownOverlay = true;
       this.lastPlayedCountdownSecond = -1;
 
       // Determine if this is a restart from a paused state
-      if (previousState === com.antigravity.RaceState.PAUSED) {
+      if (previousState === RaceState.PAUSED) {
         this.isRestarting = true;
-      } else if (previousState !== com.antigravity.RaceState.STARTING) {
+      } else if (previousState !== RaceState.STARTING) {
         this.isRestarting = false;
       }
 
@@ -2425,20 +2411,22 @@ export class DefaultRacedayComponent
     }
 
     // If RACING state came, set all lamps to green
-    if (state === com.antigravity.RaceState.RACING) {
+    if (state === RaceState.RACING) {
       this.isRestarting = false;
       this.setAllLampsGo();
-      this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, 0);
+      if (previousState !== RaceState.UNKNOWN_STATE) {
+        this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, 0);
+      }
       // Hide overlay after 1 second of green lamps
       setTimeout(() => {
-        if (this.raceState === com.antigravity.RaceState.RACING) {
+        if (this.raceState === RaceState.RACING) {
           this.showCountdownOverlay = false;
         }
       }, 1000);
     }
 
     if (!this.isDestroyed) {
-      this.cdr.detectChanges();
+      this.cdr.markForCheck();
     }
   }
 
@@ -2447,7 +2435,7 @@ export class DefaultRacedayComponent
 
     // If we've reached RACING state, but the overlay hasn't hidden yet,
     // ensure we stay in the "GO!" state with all green lamps.
-    if (this.raceState === com.antigravity.RaceState.RACING) {
+    if (this.raceState === RaceState.RACING) {
       this.setAllLampsGo();
       return;
     }
@@ -2515,6 +2503,31 @@ export class DefaultRacedayComponent
         this.dataService.serverUrl,
       );
     }
+  }
+
+  onCellClick(hd: DriverHeatData, col: ColumnDefinition, event: MouseEvent) {
+    if (col.propertyName === "lapCount") {
+      const amount = event.shiftKey
+        ? -this.LAP_ADJUSTMENT_AMOUNT
+        : this.LAP_ADJUSTMENT_AMOUNT;
+      this.updateUserLaps(hd, amount);
+    }
+  }
+
+  private updateUserLaps(hd: DriverHeatData, amount: number) {
+    const newUserLaps = (hd.userLaps || 0) + amount;
+    this.dataService.updateUserLaps(hd.laneIndex, newUserLaps).subscribe(
+      (response) => {
+        // The server will broadcast the update, but we can also update locally for immediate feedback
+        if (response && response.adjustedLapCount !== undefined) {
+          hd.adjustedLapCount = response.adjustedLapCount;
+          this.cdr.markForCheck();
+        }
+      },
+      (error) => {
+        console.error("Error updating user laps:", error);
+      },
+    );
   }
 
   private checkAudioCallouts(currentTime: number, previousTime: number) {

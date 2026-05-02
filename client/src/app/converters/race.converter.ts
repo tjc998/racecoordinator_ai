@@ -13,12 +13,13 @@ import {
 import { Race } from "src/app/models/race";
 import { TeamOptions } from "src/app/models/team_options";
 import { Track } from "src/app/models/track";
-import { com } from "src/app/proto/message";
 
 import { AnalogFuelOptionsConverter } from "./analog_fuel_options.converter";
 import { ConverterCache } from "./converter_cache";
 import { DigitalFuelOptionsConverter } from "./digital_fuel_options.converter";
 import { TrackConverter } from "./track.converter";
+
+import { IRaceModel } from "src/app/proto/antigravity";
 
 export class RaceConverter {
   private static cache = new ConverterCache<Race>();
@@ -27,12 +28,12 @@ export class RaceConverter {
     this.cache.clear();
   }
 
-  static fromProto(proto: com.antigravity.IRaceModel): Race {
+  static fromProto(proto: IRaceModel): Race {
     if (!proto) {
       return new Race(
         "",
         "Unknown Race",
-        new Track("", "Unknown Track", [], false, []),
+        new Track("", "Unknown Track", 100, [], false, []),
         "RoundRobin",
         new HeatScoring(),
         new OverallScoring(),

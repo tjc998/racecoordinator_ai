@@ -109,4 +109,65 @@ public class CsvExporterTest {
         csv.contains("#Segment 1, Segment 2, Segment 3"));
     assertTrue("Csv output should render current segment values list", csv.contains("1.5,1.8,2.0"));
   }
+
+  @Test
+  public void testExport_WithFractionalLaps() {
+    Race mockRace = mock(Race.class);
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    Track mockTrack = mock(Track.class);
+
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockModel.getName()).thenReturn("Fractional Race");
+    when(mockTrack.getName()).thenReturn("Mock Track");
+
+    Heat mockHeat = mock(Heat.class);
+    List<Heat> heats = Collections.singletonList(mockHeat);
+    when(mockRace.getHeats()).thenReturn(heats);
+    when(mockHeat.getHeatNumber()).thenReturn(1);
+
+    DriverHeatData dhd = mock(DriverHeatData.class);
+    List<DriverHeatData> drivers = Collections.singletonList(dhd);
+    when(mockHeat.getDrivers()).thenReturn(drivers);
+
+    RaceParticipant mockPart = mock(RaceParticipant.class);
+    Driver mockDriver = mock(Driver.class);
+    when(dhd.getDriver()).thenReturn(mockPart);
+    when(mockPart.getDriver()).thenReturn(mockDriver);
+    when(mockDriver.getName()).thenReturn("Driver 1");
+
+    when(dhd.getLapCount()).thenReturn(10);
+    when(dhd.getPenaltyLaps()).thenReturn(-1.5);
+    when(dhd.getUserLaps()).thenReturn(0.25);
+    when(dhd.getAutoCalculatedLaps()).thenReturn(0.5);
+    when(dhd.getAdjustedLapCount()).thenReturn(9.25);
+
+    // Setup RecordData (nested structure) to avoid NPE
+    RecordEntry emptyEntry =
+        RecordEntry.newBuilder().setValue(0).setHolderName("").setHolderNickname("").build();
+    OverallRecords overall =
+        OverallRecords.newBuilder()
+            .setFastestLap(emptyEntry)
+            .setHighestScore(emptyEntry)
+            .addAllLaneFastestLap(Collections.nCopies(4, emptyEntry))
+            .addAllLaneHighestScore(Collections.nCopies(4, emptyEntry))
+            .build();
+    CurrentRecords current =
+        CurrentRecords.newBuilder()
+            .setFastestLap(emptyEntry)
+            .setHighestScore(emptyEntry)
+            .setHeatFastestLap(emptyEntry)
+            .addAllLaneFastestLap(Collections.nCopies(4, emptyEntry))
+            .addAllLaneHighestScore(Collections.nCopies(4, emptyEntry))
+            .build();
+    RecordData recordData = RecordData.newBuilder().setOverall(overall).setCurrent(current).build();
+    when(mockRace.getRecordData()).thenReturn(recordData);
+
+    String csv = CsvExporter.export(mockRace);
+
+    assertTrue("CSV should contain penalty laps", csv.contains(",-1.5,"));
+    assertTrue("CSV should contain user laps", csv.contains(",0.25,"));
+    assertTrue("CSV should contain auto calculated laps", csv.contains(",0.5,"));
+    assertTrue("CSV should contain adjusted laps", csv.contains(",9.25"));
+  }
 }

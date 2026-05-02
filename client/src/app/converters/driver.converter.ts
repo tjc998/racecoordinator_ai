@@ -1,7 +1,8 @@
 import { Driver, EMPTY_DRIVER_ID } from "src/app/models/driver";
-import { com } from "src/app/proto/message";
 
 import { ConverterCache } from "./converter_cache";
+
+import { IDriverModel } from "src/app/proto/antigravity";
 
 export class DriverConverter {
   private static cache = new ConverterCache<Driver>();
@@ -25,7 +26,7 @@ export class DriverConverter {
     );
   }
 
-  static fromProto(proto: com.antigravity.IDriverModel): Driver {
+  static fromProto(proto: IDriverModel): Driver {
     if (!proto) {
       return this.getEmptyDriver();
     }

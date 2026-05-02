@@ -22,7 +22,7 @@ import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 import {
   MOCK_TRACK_INSTANCES,
-  MOCK_TRACKS,
+  MOCK_TRACKS as _MOCK_TRACKS,
 } from "src/app/testing/data/tracks_data";
 import {
   mockAnalyticsService,
@@ -96,7 +96,7 @@ describe("TrackEditorComponent", () => {
   let fixture: ComponentFixture<TrackEditorComponent>;
   let dataService: any;
   let router: any;
-  let activatedRoute: any;
+  let _activatedRoute: any;
 
   beforeEach(async () => {
     mockTranslationService.translate.and.callFake((key: string) => key);
@@ -165,7 +165,7 @@ describe("TrackEditorComponent", () => {
     component = fixture.componentInstance;
     dataService = TestBed.inject(DataService);
     router = TestBed.inject(Router);
-    activatedRoute = TestBed.inject(ActivatedRoute);
+    _activatedRoute = TestBed.inject(ActivatedRoute);
 
     component.editingTrack = JSON.parse(
       JSON.stringify(MOCK_TRACK_INSTANCES[0]),

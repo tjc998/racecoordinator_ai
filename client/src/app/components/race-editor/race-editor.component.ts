@@ -296,6 +296,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
             new Track(
               t.entity_id,
               t.name,
+              t.num_track_sections || 100,
               t.lanes || [],
               t.has_digital_fuel ?? false,
               t.arduino_configs,
@@ -941,7 +942,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     if (!this.editingRace?.digital_fuel_options) return 1;
     const usageRate =
       Number(this.editingRace.digital_fuel_options.usage_rate) || 0;
-    const usageType = this.editingRace.digital_fuel_options.usage_type;
+    const _usageType = this.editingRace.digital_fuel_options.usage_type;
     return usageRate <= 0 ? 1 : usageRate;
   }
 
@@ -1017,7 +1018,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     // Let's find a reasonable max X (Time to Empty).
     // Usage at 100% throttle is usageRate. So min time is Capacity/UsageRate.
     // Usage at 10% throttle is much less.
-    const minTime = capacity / (usageRate || 1);
+    const _minTime = capacity / (usageRate || 1);
     const maxTime =
       capacity / (getDigitalFuelUsage(usageType, usageRate, 10) || 0.001);
     const safeMaxTime =

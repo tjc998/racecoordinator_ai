@@ -52,7 +52,7 @@ test.describe("Raceday Visuals for Sorting", () => {
     );
 
     const container = page.locator(".dashboard-wrapper");
-    const harness = new DefaultRacedayHarnessE2e(container);
+    const _harness = new DefaultRacedayHarnessE2e(container);
 
     await expect(page.locator(".scalable-content")).toBeVisible();
 

@@ -11,7 +11,7 @@ import { AnalyticsService } from "src/app/analytics.service";
 import { SharedModule } from "src/app/components/shared/shared.module";
 import { DataService } from "src/app/data.service";
 import { Settings } from "src/app/models/settings";
-import { com } from "src/app/proto/message";
+
 import {
   ConnectionMonitorService,
   ConnectionState,
@@ -22,6 +22,8 @@ import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 
 import { RacedaySetupComponent } from "./raceday-setup.component";
+
+import { RaceFlag } from "src/app/proto/antigravity";
 
 describe("RacedaySetupComponent", () => {
   let component: RacedaySetupComponent;
@@ -97,9 +99,7 @@ describe("RacedaySetupComponent", () => {
     mockDataService.getDrivers.and.returnValue(of([]));
     mockDataService.getServerVersion.and.returnValue(of("0.0.0"));
     mockDataService.getServerIp.and.returnValue(of("192.168.1.100"));
-    mockDataService.getRaceFlag.and.returnValue(
-      of(com.antigravity.RaceFlag.RED),
-    );
+    mockDataService.getRaceFlag.and.returnValue(of(RaceFlag.RED));
     mockSettingsService.getSettings.and.returnValue(new Settings());
     mockTranslationService.getTranslationsLoaded.and.returnValue(of(true));
     mockTranslationService.translate.and.callFake((key: string) => key);

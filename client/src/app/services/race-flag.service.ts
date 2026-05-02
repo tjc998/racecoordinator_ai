@@ -1,8 +1,9 @@
 import { Injectable, OnDestroy } from "@angular/core";
 import { Subscription } from "rxjs";
-import { com } from "src/app/proto/message";
 
 import { RaceConnectionService } from "./race-connection.service";
+
+import { RaceFlag } from "src/app/proto/antigravity";
 
 export type FlagType =
   | "red"
@@ -16,8 +17,7 @@ export type FlagType =
   providedIn: "root",
 })
 export class RaceFlagService implements OnDestroy {
-  private currentFlag: com.antigravity.RaceFlag =
-    com.antigravity.RaceFlag.UNKNOWN_FLAG;
+  private currentFlag: RaceFlag = RaceFlag.UNKNOWN_FLAG;
   private subscription: Subscription;
 
   constructor(private raceConnectionService: RaceConnectionService) {
@@ -38,7 +38,7 @@ export class RaceFlagService implements OnDestroy {
    * Get the current flag type based on the server-provided flag.
    */
   getFlagType(): FlagType {
-    const RF = com.antigravity.RaceFlag;
+    const RF = RaceFlag;
     switch (this.currentFlag) {
       case RF.GREEN:
         return "green";

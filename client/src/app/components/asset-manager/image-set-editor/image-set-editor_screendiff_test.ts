@@ -35,7 +35,7 @@ test.describe("Image Set Editor Visuals", () => {
     await page.getByRole("button", { name: "New Image Set" }).click();
 
     const modalHost = page.locator("app-image-set-editor");
-    const harness = new ImageSetEditorHarnessE2e(modalHost);
+    const _harness = new ImageSetEditorHarnessE2e(modalHost);
 
     await expect(modalHost.locator(".modal-content")).toBeVisible();
     // Title checked visually
@@ -81,7 +81,7 @@ test.describe("Image Set Editor Visuals", () => {
       .click();
 
     const modalHost = page.locator("app-image-set-editor");
-    const harness = new ImageSetEditorHarnessE2e(modalHost);
+    const _harness = new ImageSetEditorHarnessE2e(modalHost);
 
     await expect(modalHost.locator(".modal-content")).toBeVisible();
     // Title checked visually

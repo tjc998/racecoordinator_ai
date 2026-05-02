@@ -6,13 +6,15 @@ import { of } from "rxjs";
 import { Subject } from "rxjs";
 import { DataService } from "src/app/data.service";
 import { FinishMethod } from "src/app/models/heat_scoring";
-import { com } from "src/app/proto/message";
+
 import { RaceService } from "src/app/services/race.service";
 import { RaceConnectionService } from "src/app/services/race-connection.service";
 import { RaceFlagService } from "src/app/services/race-flag.service";
 import { TranslationService } from "src/app/services/translation.service";
 
 import { DriverStationComponent } from "./driver-station.component";
+
+import { RaceFlag, RaceState } from "src/app/proto/antigravity";
 
 @Pipe({
   name: "translate",
@@ -48,9 +50,7 @@ describe("DriverStationComponent", () => {
     mockDataService.getLaps.and.returnValue(of(null));
     mockDataService.getCarData.and.returnValue(of({}));
     mockDataService.getStandingsUpdate.and.returnValue(of({}));
-    mockDataService.getRaceFlag.and.returnValue(
-      of(com.antigravity.RaceFlag.RED),
-    );
+    mockDataService.getRaceFlag.and.returnValue(of(RaceFlag.RED));
     mockDataService.serverUrl = "http://localhost";
 
     mockRaceService = jasmine.createSpyObj("RaceService", [
@@ -99,10 +99,8 @@ describe("DriverStationComponent", () => {
     mockRaceConnectionService.standingsUpdate$ = new Subject<any>();
     mockRaceConnectionService.interfaceEvents$ = of({});
     mockRaceConnectionService.interfaceAlert$ = of({});
-    mockRaceConnectionService.raceState$ = of(
-      com.antigravity.RaceState.UNKNOWN_STATE,
-    );
-    mockRaceConnectionService.raceFlag$ = of(com.antigravity.RaceFlag.RED);
+    mockRaceConnectionService.raceState$ = of(RaceState.UNKNOWN_STATE);
+    mockRaceConnectionService.raceFlag$ = of(RaceFlag.RED);
 
     const mockRaceFlagService = jasmine.createSpyObj("RaceFlagService", [
       "getFlagType",
@@ -224,15 +222,15 @@ describe("DriverStationComponent", () => {
   });
 
   it("should handle raceFlag$ emissions without error", () => {
-    const raceFlagSubject = new Subject<com.antigravity.RaceFlag>();
+    const raceFlagSubject = new Subject<RaceFlag>();
     mockRaceConnectionService.raceFlag$ = raceFlagSubject;
 
     fixture.detectChanges();
 
     // Emit a new flag value - should not throw error
-    raceFlagSubject.next(com.antigravity.RaceFlag.CHECKERED);
-    raceFlagSubject.next(com.antigravity.RaceFlag.GREEN);
-    raceFlagSubject.next(com.antigravity.RaceFlag.RED);
+    raceFlagSubject.next(RaceFlag.CHECKERED);
+    raceFlagSubject.next(RaceFlag.GREEN);
+    raceFlagSubject.next(RaceFlag.RED);
 
     // Test passes if no error is thrown
     expect(true).toBe(true);

@@ -1,7 +1,6 @@
 package com.antigravity.converters;
 
 import com.antigravity.models.Team;
-import com.antigravity.proto.Model;
 import com.antigravity.proto.TeamModel;
 import java.util.Set;
 
@@ -13,24 +12,26 @@ public class TeamConverter {
     }
     String key = "Team_" + team.getObjectId();
     if (sentObjectIds != null && sentObjectIds.contains(key)) {
-      return TeamModel.newBuilder()
+      return com.antigravity.proto.TeamModel.newBuilder() // fqn-collision
           .setModel(
-              Model.newBuilder()
-                  .setEntityId(team.getEntityId() != null ? team.getEntityId() : "")
-                  .build())
+              (com.antigravity.proto.Model) // fqn-collision
+                  com.antigravity.proto.Model.newBuilder() // fqn-collision
+                      .setEntityId(team.getEntityId() != null ? team.getEntityId() : "")
+                      .build()) // fqn-collision
           .build();
     } else {
       if (sentObjectIds != null) {
         sentObjectIds.add(key);
       }
-      return TeamModel.newBuilder()
+      return com.antigravity.proto.TeamModel.newBuilder() // fqn-collision
           .setName(team.getName())
           .setAvatarUrl(team.getAvatarUrl() != null ? team.getAvatarUrl() : "")
           .addAllDriverIds(team.getDriverIds())
           .setModel(
-              Model.newBuilder()
-                  .setEntityId(team.getEntityId() != null ? team.getEntityId() : "")
-                  .build())
+              (com.antigravity.proto.Model) // fqn-collision
+                  com.antigravity.proto.Model.newBuilder() // fqn-collision
+                      .setEntityId(team.getEntityId() != null ? team.getEntityId() : "")
+                      .build()) // fqn-collision
           .build();
     }
   }

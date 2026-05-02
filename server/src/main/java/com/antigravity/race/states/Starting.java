@@ -1,6 +1,7 @@
 package com.antigravity.race.states;
 
 import com.antigravity.proto.RaceFlag;
+import com.antigravity.proto.RaceState;
 import com.antigravity.protocols.CarData;
 import com.antigravity.race.Race;
 import java.util.concurrent.Executors;
@@ -62,10 +63,7 @@ public class Starting implements IRaceState {
               race.setAutoStartRemaining(displayTime);
               race.broadcastTime();
               race.setHeatProgress(0.0);
-              race.setRaceState(
-                  com.antigravity.proto.RaceState.STARTING,
-                  getFlagType(race),
-                  (double) displayTime);
+              race.setRaceState(RaceState.STARTING, getFlagType(race), (double) displayTime);
 
               if (countdown > 0) {
                 countdown--;

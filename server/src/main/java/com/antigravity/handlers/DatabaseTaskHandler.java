@@ -472,7 +472,13 @@ public class DatabaseTaskHandler {
           || "new".equals(track.getEntityId())) {
         String nextId = getNextSequence("tracks");
         track =
-            new Track(track.getName(), track.getLanes(), track.getArduinoConfigs(), nextId, null);
+            new Track(
+                track.getName(),
+                track.getNumTrackSections(),
+                track.getLanes(),
+                track.getArduinoConfigs(),
+                nextId,
+                null);
       }
       col.insertOne(track);
       ctx.status(201).json(track);
@@ -499,7 +505,12 @@ public class DatabaseTaskHandler {
 
       track =
           new Track(
-              track.getName(), track.getLanes(), track.getArduinoConfigs(), id, track.getId());
+              track.getName(),
+              track.getNumTrackSections(),
+              track.getLanes(),
+              track.getArduinoConfigs(),
+              id,
+              track.getId());
 
       System.out.println("DEBUG: updateTrack for " + id);
       if (track.getArduinoConfigs() != null && !track.getArduinoConfigs().isEmpty()) {
@@ -767,8 +778,8 @@ public class DatabaseTaskHandler {
     }
 
     // Create a temporary Race object for heat building
-    com.antigravity.race.Race tempRace =
-        new com.antigravity.race.Race.Builder()
+    com.antigravity.race.Race tempRace = // fqn-collision
+        new com.antigravity.race.Race.Builder() // fqn-collision
             .model(race)
             .drivers(mockDrivers)
             .track(track)
@@ -885,8 +896,8 @@ public class DatabaseTaskHandler {
     }
 
     // Create a temporary Race object for heat building
-    com.antigravity.race.Race tempRace =
-        new com.antigravity.race.Race.Builder()
+    com.antigravity.race.Race tempRace = // fqn-collision
+        new com.antigravity.race.Race.Builder() // fqn-collision
             .model(tempRaceConfig)
             .drivers(mockDrivers)
             .track(track)
@@ -1001,8 +1012,8 @@ public class DatabaseTaskHandler {
         return;
       }
 
-      com.antigravity.race.Race tempRace =
-          new com.antigravity.race.Race.Builder()
+      com.antigravity.race.Race tempRace = // fqn-collision
+          new com.antigravity.race.Race.Builder() // fqn-collision
               .model(history.getModel())
               .track(history.getTrack())
               .drivers(history.getDrivers())

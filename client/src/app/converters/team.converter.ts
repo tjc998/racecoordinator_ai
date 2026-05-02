@@ -1,7 +1,8 @@
 import { Team } from "src/app/models/team";
-import { com } from "src/app/proto/message";
 
 import { ConverterCache } from "./converter_cache";
+
+import { ITeamModel } from "src/app/proto/antigravity";
 
 export class TeamConverter {
   private static cache = new ConverterCache<Team>();
@@ -14,7 +15,7 @@ export class TeamConverter {
     return this.cache.get(id);
   }
 
-  static fromProto(proto: com.antigravity.ITeamModel): Team {
+  static fromProto(proto: ITeamModel): Team {
     const objectId = proto.model?.entityId;
 
     // Is Reference if name is falsey (undefined, null, empty string)
@@ -22,10 +23,10 @@ export class TeamConverter {
 
     return this.cache.process(objectId, isReference, () => {
       return new Team(
-        objectId || '',
-        proto.name || '',
+        objectId || "",
+        proto.name || "",
         proto.avatarUrl || undefined,
-        proto.driverIds || []
+        proto.driverIds || [],
       );
     });
   }

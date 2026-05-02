@@ -1,9 +1,14 @@
 package com.antigravity.race.states;
 
+import com.antigravity.models.FuelOptions;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.HeatScoring.AllowFinish;
 import com.antigravity.models.HeatScoring.FinishMethod;
+import com.antigravity.proto.Lap;
+import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceFlag;
+import com.antigravity.proto.StandingsUpdate;
+import com.antigravity.protocols.CarData;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.HeatExecutionManager;
 import com.antigravity.race.Race;
@@ -42,7 +47,8 @@ public class Racing implements IRaceState {
     if (heatDrivers == null) return RaceFlag.GREEN;
 
     // Checkered flag if any driver has finished (and race allows finishing)
-    if (scoring.getAllowFinish() != AllowFinish.None) {
+    if (scoring.getAllowFinish() != AllowFinish.None
+        && scoring.getAllowFinish() != AllowFinish.NoneAutoSegments) {
       // For timed races, show checkered flag immediately when counter reaches 0
       if (scoring.getFinishMethod() == FinishMethod.Timed && race.getRaceTime() <= 0) {
         return RaceFlag.CHECKERED;
@@ -187,7 +193,8 @@ public class Racing implements IRaceState {
                 if (isTimed) {
                   if (race.getRaceTime() <= 0) {
                     race.resetRaceTime();
-                    if (allowFinish == AllowFinish.None) {
+                    if (allowFinish == AllowFinish.None
+                        || allowFinish == AllowFinish.NoneAutoSegments) {
                       allFinished = true;
                     } else {
                       // Timed race with Allow Finish: Heat ends when everyone has crossed the line
@@ -200,7 +207,8 @@ public class Racing implements IRaceState {
                 } else {
                   // Lap based
                   long limit = scoring.getFinishValue();
-                  if (allowFinish == AllowFinish.None) {
+                  if (allowFinish == AllowFinish.None
+                      || allowFinish == AllowFinish.NoneAutoSegments) {
                     for (DriverHeatData driver : race.getCurrentHeat().getDrivers()) {
                       if (driver.getLapCount() >= limit) {
                         allFinished = true;
@@ -252,6 +260,15 @@ public class Racing implements IRaceState {
               race.broadcastTime();
 
               if (allFinished) {
+                if (allowFinish == AllowFinish.NoneAutoSegments) {
+                  calculateAutoSegments();
+                  StandingsUpdate update =
+                      race.getCurrentHeat().getHeatStandings().updateStandings();
+                  if (update != null) {
+                    race.broadcast(RaceData.newBuilder().setStandingsUpdate(update).build());
+                  }
+                  race.updateAndBroadcastOverallStandings();
+                }
                 if (race.isLastHeat()) {
                   race.changeState(new RaceOver());
                 } else {
@@ -335,7 +352,7 @@ public class Racing implements IRaceState {
   }
 
   @Override
-  public void onCarData(com.antigravity.protocols.CarData carData) {
+  public void onCarData(CarData carData) {
     executionManager.handlePitDetection(carData);
     if (executionManager.isDigitalFuelEnabled()) {
       executionManager.handleDigitalFuelCarData(carData);
@@ -343,8 +360,8 @@ public class Racing implements IRaceState {
 
     int lane = carData.getLane();
     // Broadcast the CarData to clients
-    com.antigravity.proto.CarData.Builder dataBuilder =
-        com.antigravity.proto.CarData.newBuilder()
+    com.antigravity.proto.CarData.Builder dataBuilder = // fqn-collision
+        com.antigravity.proto.CarData.newBuilder() // fqn-collision
             .setLane(carData.getLane())
             .setControllerThrottlePct(carData.getControllerThrottlePCT())
             .setCarThrottlePct(carData.getCarThrottlePCT())
@@ -364,9 +381,8 @@ public class Racing implements IRaceState {
       }
     }
 
-    com.antigravity.proto.CarData protoCarData = dataBuilder.build();
-    com.antigravity.proto.RaceData raceDataMsg =
-        com.antigravity.proto.RaceData.newBuilder().setCarData(protoCarData).build();
+    com.antigravity.proto.CarData protoCarData = dataBuilder.build(); // fqn-collision
+    RaceData raceDataMsg = RaceData.newBuilder().setCarData(protoCarData).build();
 
     race.broadcast(raceDataMsg);
 
@@ -377,7 +393,7 @@ public class Racing implements IRaceState {
     if (previousFuelLevels == null) {
       return;
     }
-    com.antigravity.models.FuelOptions fuelOptions = null;
+    FuelOptions fuelOptions = null;
     if (executionManager.isAnalogFuelEnabled()) {
       fuelOptions = race.getRaceModel().getFuelOptions();
     } else if (executionManager.isDigitalFuelEnabled()) {
@@ -404,5 +420,56 @@ public class Racing implements IRaceState {
   public void onCallbutton(Race race, int lane) {
     logger.info("Racing.onCallbutton() called. Pausing race.");
     pause(race);
+  }
+
+  void calculateAutoSegments() {
+    if (race == null || race.getCurrentHeat() == null) return;
+
+    HeatScoring scoring = race.getRaceModel().getHeatScoring();
+    if (scoring == null) return;
+
+    boolean isLapBased = scoring.getFinishMethod() == FinishMethod.Lap;
+    long limit = scoring.getFinishValue();
+    double[] times = executionManager.getTimeSinceLastLap();
+    List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
+
+    for (int i = 0; i < drivers.size(); i++) {
+      DriverHeatData dhd = drivers.get(i);
+      if (dhd == null) continue;
+
+      // Lap based race: the driver that got to the lap limit ending the heat should get 0 auto
+      // segments
+      if (isLapBased && dhd.getLapCount() >= limit) {
+        dhd.setAutoCalculatedLaps(0.0);
+      } else {
+        double median = dhd.getMedianLapTime();
+        if (median <= 0) {
+          dhd.setAutoCalculatedLaps(0.0);
+        } else {
+          double time = (times != null && i < times.length) ? times[i] : 0.0;
+          double segments = time / median;
+          if (segments >= 1.0) {
+            segments = 0.99;
+          }
+          dhd.setAutoCalculatedLaps(segments);
+        }
+      }
+
+      // Broadcast Lap update so client sees the new adjusted lap count
+      Lap lapMsg =
+          Lap.newBuilder()
+              .setObjectId(dhd.getObjectId())
+              .setLapTime(dhd.getLastLapTime())
+              .setLapNumber(dhd.getLapCount())
+              .setAverageLapTime(dhd.getAverageLapTime())
+              .setMedianLapTime(dhd.getMedianLapTime())
+              .setBestLapTime(dhd.getBestLapTime())
+              .setDriverId(dhd.getActualDriver() != null ? dhd.getActualDriver().getEntityId() : "")
+              .setFuelLevel(dhd.getDriver().getFuelLevel())
+              .setAdjustedLapCount(dhd.getAdjustedLapCount())
+              .build();
+
+      race.broadcast(RaceData.newBuilder().setLap(lapMsg).build());
+    }
   }
 }

@@ -19,7 +19,7 @@ test.describe("Editor Title Visuals", () => {
     );
     await page.locator(".page-container").waitFor();
 
-    const titleHarness = new EditorTitleHarnessE2e(
+    const _titleHarness = new EditorTitleHarnessE2e(
       page.locator("app-editor-title"),
     );
     await expect(page.locator("app-editor-title")).toBeVisible();
@@ -39,7 +39,7 @@ test.describe("Editor Title Visuals", () => {
     // Wait for content that appears in track editor
     await page.locator(".page-container").waitFor();
 
-    const titleHarness = new EditorTitleHarnessE2e(
+    const _titleHarness = new EditorTitleHarnessE2e(
       page.locator("app-editor-title"),
     );
     await expect(page.locator("app-editor-title")).toBeVisible();

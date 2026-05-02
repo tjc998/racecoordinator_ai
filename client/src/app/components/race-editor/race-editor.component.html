@@ -290,16 +290,44 @@
                     <option value="AVERAGE_LAP_TIME">Average Lap Time</option>
                   </select>
                 </div>
-
-                <div class="config-section">
-                  <label>{{ "RE_FINISH_METHOD" | translate }}</label>
-                  <select
-                    [(ngModel)]="editingRace.heat_scoring.finish_method"
-                    (ngModelChange)="captureState()"
+                <div class="config-row">
+                  <div
+                    class="config-section"
+                    *ngIf="editingRace.heat_scoring.finish_method === 'Lap'"
                   >
-                    <option value="Lap">Lap</option>
-                    <option value="Timed">Timed</option>
-                  </select>
+                    <label>{{ "RE_LAP_COUNT" | translate }}</label>
+                    <input
+                      type="number"
+                      [(ngModel)]="editingRace.heat_scoring.finish_value"
+                      (ngModelChange)="captureState()"
+                      min="1"
+                      max="999"
+                    />
+                  </div>
+                  <div
+                    class="config-section"
+                    *ngIf="editingRace.heat_scoring.finish_method === 'Timed'"
+                  >
+                    <label>{{ "RE_TIME_SECONDS" | translate }}</label>
+                    <input
+                      type="number"
+                      [(ngModel)]="editingRace.heat_scoring.finish_value"
+                      (ngModelChange)="captureState()"
+                      min="1"
+                      max="3600"
+                    />
+                  </div>
+
+                  <div class="config-section">
+                    <label>{{ "RE_FINISH_METHOD" | translate }}</label>
+                    <select
+                      [(ngModel)]="editingRace.heat_scoring.finish_method"
+                      (ngModelChange)="captureState()"
+                    >
+                      <option value="Lap">Lap</option>
+                      <option value="Timed">Timed</option>
+                    </select>
+                  </div>
                 </div>
                 <div class="config-section">
                   <label>{{ "RE_ALLOW_FINISH" | translate }}</label>
@@ -314,35 +342,10 @@
                     <option value="SingleLap">
                       {{ "RE_AF_SINGLE_LAP" | translate }}
                     </option>
+                    <option value="NoneAutoSegments">
+                      {{ "RE_AF_NONE_AUTO_SEGMENTS" | translate }}
+                    </option>
                   </select>
-                </div>
-
-                <div
-                  class="config-section"
-                  *ngIf="editingRace.heat_scoring.finish_method === 'Lap'"
-                >
-                  <label>{{ "RE_LAP_COUNT" | translate }}</label>
-                  <input
-                    type="number"
-                    [(ngModel)]="editingRace.heat_scoring.finish_value"
-                    (ngModelChange)="captureState()"
-                    min="1"
-                    max="999"
-                  />
-                </div>
-
-                <div
-                  class="config-section"
-                  *ngIf="editingRace.heat_scoring.finish_method === 'Timed'"
-                >
-                  <label>{{ "RE_TIME_SECONDS" | translate }}</label>
-                  <input
-                    type="number"
-                    [(ngModel)]="editingRace.heat_scoring.finish_value"
-                    (ngModelChange)="captureState()"
-                    min="1"
-                    max="3600"
-                  />
                 </div>
               </div>
 

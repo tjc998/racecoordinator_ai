@@ -5,13 +5,15 @@ import { DataService } from "src/app/data.service";
 import { FinishMethod } from "src/app/models/heat_scoring";
 import { Race } from "src/app/models/race";
 import { Track } from "src/app/models/track";
-import { com } from "src/app/proto/message";
+
 import { DriverHeatData } from "src/app/race/driver_heat_data";
 import { Heat } from "src/app/race/heat";
 import { RaceService } from "src/app/services/race.service";
 import { RaceConnectionService } from "src/app/services/race-connection.service";
 import { RaceFlagService } from "src/app/services/race-flag.service";
 import { createTTSContext, playSound } from "src/app/utils/audio";
+
+import { RaceState } from "src/app/proto/antigravity";
 
 @Component({
   selector: "app-driver-station",
@@ -30,8 +32,7 @@ export class DriverStationComponent implements OnInit, OnDestroy {
   protected time: number = 0;
   protected standingsPosition: number = 0;
   protected overallPosition: number = 0;
-  protected raceState: com.antigravity.RaceState =
-    com.antigravity.RaceState.UNKNOWN_STATE;
+  protected raceState: RaceState = RaceState.UNKNOWN_STATE;
   protected hasRacedInCurrentHeat: boolean = false;
 
   constructor(
@@ -116,7 +117,7 @@ export class DriverStationComponent implements OnInit, OnDestroy {
       this.raceConnectionService.raceState$.subscribe((state) => {
         if (state) {
           this.raceState = state;
-          if (state === com.antigravity.RaceState.RACING) {
+          if (state === RaceState.RACING) {
             this.hasRacedInCurrentHeat = true;
           }
           this.cdr.detectChanges();
@@ -125,7 +126,7 @@ export class DriverStationComponent implements OnInit, OnDestroy {
     );
 
     this.subscriptions.push(
-      this.raceConnectionService.carData$.subscribe((carData) => {
+      this.raceConnectionService.carData$.subscribe((_carData) => {
         this.cdr.detectChanges();
       }),
     );

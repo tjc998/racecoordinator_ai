@@ -24,7 +24,7 @@ test.describe("Asset Manager Visuals", () => {
     await page.locator(".active-db-name").waitFor({ state: "visible" });
 
     const container = page.locator(".am-container");
-    const harness = new AssetManagerHarnessE2e(container);
+    const _harness = new AssetManagerHarnessE2e(container);
 
     // Wait for the asset list to appear
     await expect(page.locator(".asset-grid")).toBeVisible();

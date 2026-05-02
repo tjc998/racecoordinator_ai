@@ -27,7 +27,7 @@ export class DynamicComponentService {
     baseClass: Type<any>,
     html: string,
     css: string,
-    tsCode: string,
+    _tsCode: string,
   ): Type<any> {
     // If tsCode is provided, we nominally support transpiling it,
     // but without a sophisticated loader, we can't easily inject user logic

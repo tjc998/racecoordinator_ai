@@ -33,7 +33,7 @@ test.describe("Reorder Dialog Visuals", () => {
   test("should display reorder dialog with default columns", async ({
     page,
   }) => {
-    const dialog = await openDialog(page);
+    const _dialog = await openDialog(page);
 
     await expect(page.locator(".reorder-modal")).toHaveScreenshot(
       "reorder-dialog-default.png",
@@ -41,7 +41,7 @@ test.describe("Reorder Dialog Visuals", () => {
   });
 
   test("should show preview correctly in reorder dialog", async ({ page }) => {
-    const dialog = await openDialog(page);
+    const _dialog = await openDialog(page);
 
     await expect(page.locator(".reorder-modal .preview-panel")).toBeVisible();
 
@@ -65,9 +65,9 @@ test.describe("Reorder Dialog Visuals", () => {
       localStorage.setItem(key, JSON.stringify(settings));
     });
 
-    const dialog = await openDialog(page);
+    const _dialog = await openDialog(page);
 
-    const selectors = page.locator(".reorder-modal select.visibility-select");
+    const _selectors = page.locator(".reorder-modal select.visibility-select");
     // Selector count checked visually
 
     await expect(page.locator(".reorder-modal")).toHaveScreenshot(

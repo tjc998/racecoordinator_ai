@@ -1,18 +1,16 @@
 import { expect, test } from "@playwright/test";
-import { com } from "src/app/proto/message";
+
 import { TestSetupHelper } from "src/app/testing/test-setup_helper";
 
 import { AcknowledgementModalHarnessE2e } from "./testing/acknowledgement-modal.harness.e2e";
 
-import InterfaceStatus = com.antigravity.InterfaceStatus;
+import { InterfaceEvent, InterfaceStatus } from "src/app/proto/antigravity";
 
 test.describe("Acknowledgement Modal Visuals", () => {
   // Helper to dispatch an InterfaceEvent to all interface-data sockets
   const sendInterfaceEvent = async (page: any, status: any) => {
-    const event = com.antigravity.InterfaceEvent.create({ status: { status } });
-    const data = Array.from(
-      com.antigravity.InterfaceEvent.encode(event).finish(),
-    );
+    const event = InterfaceEvent.create({ status: { status } });
+    const data = Array.from(InterfaceEvent.encode(event).finish());
     await page.evaluate((data: any) => {
       // @ts-ignore
       const sockets = (window.allMockSockets || []).filter(

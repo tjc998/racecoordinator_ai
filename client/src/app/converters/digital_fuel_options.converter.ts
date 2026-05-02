@@ -1,11 +1,10 @@
 import { DigitalFuelOptions } from "src/app/models/digital_fuel_options";
 import { FuelUsageType } from "src/app/models/fuel_options";
-import { com } from "src/app/proto/message";
+
+import { IDigitalFuelOptions } from "src/app/proto/antigravity";
 
 export class DigitalFuelOptionsConverter {
-  static fromProto(
-    proto?: com.antigravity.IDigitalFuelOptions | null,
-  ): DigitalFuelOptions {
+  static fromProto(proto?: IDigitalFuelOptions | null): DigitalFuelOptions {
     if (!proto) {
       return new DigitalFuelOptions();
     }

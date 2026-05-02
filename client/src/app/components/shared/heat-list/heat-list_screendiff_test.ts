@@ -70,7 +70,7 @@ test.describe("Heat List Visuals", () => {
 
     // Wait for Heat List to be visible
     const heatListHost = page.locator(HeatListHarnessBase.hostSelector);
-    const harness = new HeatListHarnessE2e(heatListHost);
+    const _harness = new HeatListHarnessE2e(heatListHost);
 
     await expect(
       heatListHost.locator(HeatListHarnessBase.selectors.heatItem).first(),

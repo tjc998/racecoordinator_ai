@@ -17,7 +17,7 @@ test.describe("Team Manager Visuals", () => {
     );
 
     const container = page.locator(".page-container");
-    const harness = new TeamManagerHarnessE2e(container);
+    const _harness = new TeamManagerHarnessE2e(container);
 
     await page.locator(".sidebar-list").waitFor();
     await page.locator(".detail-panel").waitFor();

@@ -7,7 +7,7 @@ import {
   OnInit,
 } from "@angular/core";
 import { DataService } from "src/app/data.service";
-import { com } from "src/app/proto/message";
+import {} from "src/app/proto/message";
 
 @Component({
   selector: "app-asset-preview",

@@ -14,6 +14,7 @@ export const MAX_ANALOG_PINS = 16;
 export class Track implements Model {
   readonly entity_id: string;
   readonly name: string;
+  readonly num_track_sections: number;
   readonly lanes: Lane[];
   readonly has_digital_fuel: boolean;
   readonly arduino_configs: ArduinoConfig[];
@@ -21,12 +22,14 @@ export class Track implements Model {
   constructor(
     entity_id: string,
     name: string,
+    num_track_sections: number = 100,
     lanes: Lane[],
     has_digital_fuel: boolean = false,
     arduino_configs?: ArduinoConfig[],
   ) {
     this.entity_id = entity_id;
     this.name = name;
+    this.num_track_sections = num_track_sections;
     this.lanes = lanes;
     this.has_digital_fuel = has_digital_fuel;
     this.arduino_configs = arduino_configs || [];

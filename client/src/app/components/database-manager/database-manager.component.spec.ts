@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, CUSTOM_ELEMENTS_SCHEMA } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { of, throwError } from "rxjs";
 import { DataService } from "src/app/data.service";
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
@@ -13,14 +13,18 @@ import {
   mockTranslationService,
   resetMocks,
 } from "src/app/testing/unit-test-mocks";
+import { HarnessLoader } from "@angular/cdk/testing";
+import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 
 import { DatabaseManagerComponent } from "./database-manager.component";
 
 describe("DatabaseManagerComponent", () => {
   let component: DatabaseManagerComponent;
   let fixture: ComponentFixture<DatabaseManagerComponent>;
+  let _loader: HarnessLoader;
   let dataService: any;
-  let router: any;
+  let _router: any;
+  let _activatedRoute: any;
 
   beforeEach(async () => {
     mockTranslationService.translate.and.callFake((key: string) => key);
@@ -76,6 +80,10 @@ describe("DatabaseManagerComponent", () => {
       providers: [
         { provide: DataService, useValue: mockDataService },
         { provide: Router, useValue: mockRouter },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: { get: () => null } } },
+        },
         { provide: TranslationService, useValue: mockTranslationService },
         ChangeDetectorRef,
       ],
@@ -89,9 +97,11 @@ describe("DatabaseManagerComponent", () => {
 
   beforeEach(() => {
     fixture = TestBed.createComponent(DatabaseManagerComponent);
+    _loader = TestbedHarnessEnvironment.loader(fixture);
     component = fixture.componentInstance;
     dataService = TestBed.inject(DataService);
-    router = TestBed.inject(Router);
+    _router = TestBed.inject(Router);
+    _activatedRoute = TestBed.inject(ActivatedRoute);
     fixture.detectChanges();
   });
 

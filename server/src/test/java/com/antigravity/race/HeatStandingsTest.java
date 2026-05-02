@@ -334,4 +334,73 @@ public class HeatStandingsTest {
       }
     }
   }
+
+  @Test
+  public void testFractionalLapRanking() {
+    RaceParticipant p1 = createDriver("p1");
+    RaceParticipant p2 = createDriver("p2");
+
+    DriverHeatData d1 = new DriverHeatData(p1);
+    d1.addLap(10.0, false); // 1 lap
+    d1.setUserLaps(0.25); // 1.25 laps
+
+    DriverHeatData d2 = new DriverHeatData(p2);
+    d2.addLap(10.0, false); // 1 lap
+    d2.setUserLaps(0.5); // 1.5 laps
+
+    List<DriverHeatData> data = new ArrayList<>();
+    data.add(d1);
+    data.add(d2);
+
+    HeatStandings standings =
+        new HeatStandings(
+            data,
+            new HeatScoring(
+                FinishMethod.Lap,
+                0,
+                HeatRanking.LAP_COUNT,
+                HeatRankingTiebreaker.FASTEST_LAP_TIME));
+    List<String> results = standings.getStandings();
+
+    // d2 has more laps (1.5) than d1 (1.25)
+    assertEquals(d2.getObjectId(), results.get(0));
+    assertEquals(d1.getObjectId(), results.get(1));
+  }
+
+  @Test
+  public void testGapsWithAutoAndUserLaps() {
+    RaceParticipant p1 = createDriver("p1");
+    RaceParticipant p2 = createDriver("p2");
+
+    // d1: 1 lap + 0.5 user = 1.5 laps. Avg lap 10s.
+    DriverHeatData d1 = new DriverHeatData(p1);
+    d1.addLap(10.0, false);
+    d1.setUserLaps(0.5);
+
+    // d2: 1 lap + 0.25 auto = 1.25 laps. Avg lap 10s.
+    DriverHeatData d2 = new DriverHeatData(p2);
+    d2.addLap(10.0, false);
+    d2.setAutoCalculatedLaps(0.25);
+
+    List<DriverHeatData> data = new ArrayList<>();
+    data.add(d1);
+    data.add(d2);
+
+    HeatStandings standings =
+        new HeatStandings(
+            data,
+            new HeatScoring(
+                FinishMethod.Lap,
+                0,
+                HeatRanking.LAP_COUNT,
+                HeatRankingTiebreaker.FASTEST_LAP_TIME));
+    standings.getStandings();
+
+    // d1 is leader (1.5 laps)
+    // d2 is behind (1.25 laps)
+    // Diff is 0.25 laps.
+    // Gap calculation: avgLapTime * lapDiff = 10 * 0.25 = 2.5s
+    assertEquals(2.5, d2.getGapLeader(), 0.001);
+    assertEquals(2.5, d2.getGapPosition(), 0.001);
+  }
 }

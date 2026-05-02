@@ -37,7 +37,7 @@ test.describe("Confirmation Modal Visuals", () => {
 
     // Wait for confirmation modal
     const modal = page.locator("app-confirmation-modal");
-    const harness = new ConfirmationModalHarnessE2e(modal);
+    const _harness = new ConfirmationModalHarnessE2e(modal);
 
     // Wait for confirmation modal
     await modal.locator(".modal-content").waitFor({ state: "visible" });

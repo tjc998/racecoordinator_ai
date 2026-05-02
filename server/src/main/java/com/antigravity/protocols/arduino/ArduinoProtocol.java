@@ -562,14 +562,6 @@ public class ArduinoProtocol extends DefaultProtocol {
   }
 
   private void onHeartbeat(long timeInUse, byte isReset) {
-    // Heartbeats are frequent, so maybe use debug? But user asked for logs when
-    // data
-    // received.
-    // Keeping as info for now based on request, but might be noisy.
-    // Actually, "recieves data that it understands as a messg" implies meaningful
-    // messages.
-    // Heartbeat is frequent, let's use DEBUG to avoid flooding logs, unless it's a
-    // reset/mismatch.
     logger.debug("Received Heartbeat - Time: {}us, Reset: {}", timeInUse, isReset);
 
     if (isReset == hwReset) {
@@ -585,8 +577,6 @@ public class ArduinoProtocol extends DefaultProtocol {
 
   private void onVersion(int major, int minor, int patch, int build) {
     if (!versionVerified) {
-      // Note: Not checking build number as it changes frequently and indicates
-      // backwards compatibility with previous versions.
       if (major == 2 && minor == 1 && patch == 0) {
         versionVerified = true;
         logger.info("Version verified - {}.{}.{}.{}", major, minor, patch, build);
@@ -688,8 +678,6 @@ public class ArduinoProtocol extends DefaultProtocol {
   }
 
   private void sendDebounce() {
-    // private byte[] DEBOUNCE_COMMAND = { 0x64, 0x0, 0x0, 0x0, 0x0, 0x3B }; // d
-    // Hms Hus Lms Lus ;
     byte[] message = new byte[6];
     message[0] = 0x64; // 'd'
     message[1] = (byte) (config.debounceUs / 1000); // Hms
@@ -710,10 +698,6 @@ public class ArduinoProtocol extends DefaultProtocol {
 
   protected boolean isSerialOpen() {
     return serialConnection != null && serialConnection.isOpen();
-  }
-
-  protected ArduinoConfig getConfig() {
-    return config;
   }
 
   protected int getMaxBufferSize() {
@@ -915,10 +899,6 @@ public class ArduinoProtocol extends DefaultProtocol {
 
       logger.info("[{}] Handling Lap - Lane: {}, Time: {}", getLogTime(), laneIndex, time);
       if (listener != null) {
-        // Important, send the segment time first so that if this lap finishes the
-        // drivers race the segment is still counted.
-        // Important, send the segment time first so that if this lap finishes the
-        // drivers race the segment is still counted.
         if (config.useLapsForSegments) {
           onSegmentCounter(laneIndex, state, interfaceId);
         }
@@ -1281,45 +1261,12 @@ public class ArduinoProtocol extends DefaultProtocol {
     ledHelper.setRefueling(laneIndex, isRefueling);
   }
 
-  /**
-   * Translates internal software pin IDs (0-53 digital, 1000-1015 analog) to physical Arduino pin
-   * bytes based on the board type.
-   */
-  private int getPhysicalPin(int interfaceId) {
-    boolean isAnalog = interfaceId >= 1000;
-    int index = isAnalog ? interfaceId - 1000 : interfaceId;
-    boolean isMega = config.hardwareType == 1;
-
-    if (isAnalog) {
-      // Mega: A0 are pins 54-69
-      // Uno:  A0 are pins 14-19
-      return isMega ? 54 + index : 14 + index;
-    }
-    return index;
-  }
-
-  private int[] parseColor(String hex) {
-    if (hex == null || hex.isEmpty()) {
-      return new int[] {0, 0, 0};
-    }
-    if (hex.startsWith("#")) {
-      hex = hex.substring(1);
-    }
-    try {
-      if (hex.length() == 6) {
-        int r = Integer.parseInt(hex.substring(0, 2), 16);
-        int g = Integer.parseInt(hex.substring(2, 4), 16);
-        int b = Integer.parseInt(hex.substring(4, 6), 16);
-        return new int[] {r, g, b};
-      }
-    } catch (NumberFormatException e) {
-      logger.error("Failed to parse color hex: {}", hex, e);
-    }
-    return new int[] {0, 0, 0};
-  }
-
   public boolean isOpen() {
     return versionVerified;
+  }
+
+  public ArduinoConfig getConfig() {
+    return config;
   }
 
   @Override

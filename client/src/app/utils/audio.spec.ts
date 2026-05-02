@@ -1,10 +1,10 @@
 import { createTTSContext, mockTTSContext, playSound } from "./audio";
 
 describe("playSound Utility", () => {
-  let originalAudio: any;
+  let _originalAudio: any;
   let mockAudioInstance: any;
   let mockSpeechSynthesis: any;
-  let originalSpeechSynthesis: any;
+  let _originalSpeechSynthesis: any;
 
   const SERVER_URL = "http://localhost:8080";
 

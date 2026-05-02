@@ -17,7 +17,7 @@ test.describe("Track Manager Visuals", () => {
     );
 
     const managerHost = page.locator("app-track-manager");
-    const harness = new TrackManagerHarnessE2e(managerHost);
+    const _harness = new TrackManagerHarnessE2e(managerHost);
 
     // Wait for the main elements to be visible
     await expect(managerHost).toBeVisible();

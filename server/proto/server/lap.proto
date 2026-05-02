@@ -16,4 +16,5 @@ message Lap {
   string driver_id = 8;
   double fuel_level = 9;
   bool is_drift = 10;
+  double adjusted_lap_count = 11;
 }

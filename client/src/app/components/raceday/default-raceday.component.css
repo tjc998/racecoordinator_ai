@@ -465,6 +465,7 @@
   color: #fff;
   font-weight: bold;
   font-size: 24px;
+  user-select: none;
 }
 
 .table-body {
@@ -505,6 +506,7 @@
   color: #fff;
   position: relative;
   overflow: hidden;
+  user-select: none;
 }
 
 /* Anchor Alignment Classes */

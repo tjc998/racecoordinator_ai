@@ -6,7 +6,7 @@ import java.lang.reflect.Constructor;
 public class ConstructorCheck {
 
   public static void main(String[] args) {
-    System.out.println("Constructors for com.antigravity.race.Race:");
+    System.out.println("Constructors for " + Race.class.getName() + ":"); // fqn-collision
     for (Constructor<?> c : Race.class.getConstructors()) {
       System.out.print("  " + c.getParameterCount() + " args: ");
       for (Class<?> p : c.getParameterTypes()) {

@@ -56,7 +56,7 @@ export class AppComponent implements OnInit {
       console.log("AppComponent: ThemeService initialized");
     });
 
-    this.dataService.getRaceUpdate().subscribe((update) => {
+    this.dataService.getRaceUpdate().subscribe((_update) => {
       console.log("AppComponent: Received Race Update");
       // Removed forced navigation to /raceday to allow other components to handle updates
     });

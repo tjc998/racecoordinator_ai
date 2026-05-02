@@ -52,18 +52,4 @@ public class Team extends Model {
   public List<String> getDriverIds() {
     return new ArrayList<>(driverIds);
   }
-
-  public TeamModel toProto() {
-    com.antigravity.proto.Model modelProto =
-        com.antigravity.proto.Model.newBuilder()
-            .setEntityId(getEntityId() != null ? getEntityId() : "")
-            .build();
-
-    return TeamModel.newBuilder()
-        .setModel(modelProto)
-        .setName(name)
-        .setAvatarUrl(avatarUrl != null ? avatarUrl : "")
-        .addAllDriverIds(driverIds)
-        .build();
-  }
 }

@@ -8,6 +8,7 @@ import com.antigravity.models.AnalogFuelOptions;
 import com.antigravity.models.Driver;
 import com.antigravity.models.FuelOptions;
 import com.antigravity.models.GlobalStatistics;
+import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.Lane;
 import com.antigravity.models.Track;
 import com.antigravity.proto.CallbuttonEvent;
@@ -24,6 +25,8 @@ import com.antigravity.proto.RaceTime;
 import com.antigravity.proto.RecordData;
 import com.antigravity.proto.RecordEntry;
 import com.antigravity.protocols.CarData;
+import com.antigravity.protocols.IProtocol;
+import com.antigravity.protocols.PartialTime;
 import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.ProtocolListener;
 import com.antigravity.protocols.arduino.ArduinoConfig;
@@ -49,7 +52,7 @@ public class Race implements ProtocolListener {
   private static final Logger logger = LoggerFactory.getLogger(Race.class);
 
   // Data based on the race model configuration
-  private final com.antigravity.models.Race model;
+  private final com.antigravity.models.Race model; // fqn-collision
   private final Track track;
   private final List<RaceParticipant> drivers;
   private List<Heat> heats;
@@ -337,7 +340,7 @@ public class Race implements ProtocolListener {
   }
 
   public static class Builder {
-    private com.antigravity.models.Race model;
+    private com.antigravity.models.Race model; // fqn-collision
     private List<RaceParticipant> drivers;
     private Track track;
     private boolean isDemoMode = false;
@@ -351,7 +354,7 @@ public class Race implements ProtocolListener {
     private String stateClassName = null;
     private RaceStatistics statistics;
 
-    public Builder model(com.antigravity.models.Race model) {
+    public Builder model(com.antigravity.models.Race model) { // fqn-collision
       this.model = model;
       return this;
     }
@@ -494,7 +497,7 @@ public class Race implements ProtocolListener {
 
   private void createProtocols(boolean isDemoMode) {
     this.isDemoMode = isDemoMode;
-    List<com.antigravity.protocols.IProtocol> protocols_list = new ArrayList<>();
+    List<IProtocol> protocols_list = new ArrayList<>();
     if (isDemoMode) {
       AnalogFuelOptions fuelOptions = this.model.getFuelOptions();
       boolean isFuelRace = fuelOptions != null && fuelOptions.isEnabled();
@@ -528,7 +531,7 @@ public class Race implements ProtocolListener {
     this.protocols.setListener(this);
   }
 
-  public com.antigravity.models.Race getRaceModel() {
+  public com.antigravity.models.Race getRaceModel() { // fqn-collision
     return model;
   }
 
@@ -602,7 +605,7 @@ public class Race implements ProtocolListener {
     this.broadcast(raceDataMsg);
   }
 
-  public void broadcastFlag(com.antigravity.proto.RaceFlag flag) {
+  public void broadcastFlag(RaceFlag flag) {
     RaceData raceDataMsg = RaceData.newBuilder().setFlag(flag).build();
     this.broadcast(raceDataMsg);
     if (protocols != null) {
@@ -758,7 +761,7 @@ public class Race implements ProtocolListener {
     protocols.startTimer();
   }
 
-  public List<com.antigravity.protocols.PartialTime> stopProtocols() {
+  public List<PartialTime> stopProtocols() {
     return protocols.stopTimer();
   }
 
@@ -786,10 +789,7 @@ public class Race implements ProtocolListener {
     }
   }
 
-  public void setRaceState(
-      com.antigravity.proto.RaceState state,
-      com.antigravity.proto.RaceFlag flag,
-      double countdown) {
+  public void setRaceState(RaceState state, RaceFlag flag, double countdown) {
     if (protocols != null) {
       protocols.setRaceState(state, flag, countdown);
     }
@@ -883,8 +883,8 @@ public class Race implements ProtocolListener {
         sentObjectIds.add(HeatConverter.PARTICIPANT_PREFIX + p.getObjectId());
       }
 
-      com.antigravity.proto.Race raceProto =
-          com.antigravity.proto.Race.newBuilder()
+      com.antigravity.proto.Race raceProto = // fqn-collision
+          com.antigravity.proto.Race.newBuilder() // fqn-collision
               .setCurrentHeat(HeatConverter.toProto(currentHeat, sentObjectIds))
               .build();
 
@@ -903,7 +903,7 @@ public class Race implements ProtocolListener {
     overallStandings.recalculate(this.drivers, this.heats);
 
     // Broadcast updates
-    List<com.antigravity.proto.RaceParticipant> participants = new ArrayList<>();
+    List<com.antigravity.proto.RaceParticipant> participants = new ArrayList<>(); // fqn-collision
     Set<String> sentObjectIds = new HashSet<>();
     for (RaceParticipant driver : this.drivers) {
       if (driver.getDriver() != Driver.EMPTY_DRIVER) {
@@ -924,14 +924,13 @@ public class Race implements ProtocolListener {
   }
 
   public synchronized void changeLane(int fromLane, int toLane) {
-    com.antigravity.models.HeatRotationType rotationType = model.getHeatRotationType();
-    if (rotationType != com.antigravity.models.HeatRotationType.SingleHeatSolo
-        && rotationType != com.antigravity.models.HeatRotationType.SingleHeat) {
+    HeatRotationType rotationType = model.getHeatRotationType();
+    if (rotationType != HeatRotationType.SingleHeatSolo
+        && rotationType != HeatRotationType.SingleHeat) {
       return;
     }
 
-    if (rotationType == com.antigravity.models.HeatRotationType.SingleHeat
-        && !(state instanceof NotStarted)) {
+    if (rotationType == HeatRotationType.SingleHeat && !(state instanceof NotStarted)) {
       return;
     }
 
@@ -1283,14 +1282,12 @@ public class Race implements ProtocolListener {
   // the race object while we're creating the snapshot.
   public synchronized RaceData createSnapshot() {
     Set<String> sentObjectIds = new HashSet<>();
-    com.antigravity.proto.Race raceUpdate = RaceConverter.toProto(this, sentObjectIds);
+    com.antigravity.proto.Race pUpdate = // fqn-collision
+        RaceConverter.toProto(this, sentObjectIds);
 
     // Update state and flag correctly from current state
-    raceUpdate =
-        raceUpdate.toBuilder()
-            .setState(getProtoState(state))
-            .setFlag(state.getFlagType(this))
-            .build();
+    pUpdate =
+        pUpdate.toBuilder().setState(getProtoState(state)).setFlag(state.getFlagType(this)).build();
 
     RecordData recordData = getRecordData();
     System.out.println(
@@ -1300,7 +1297,16 @@ public class Race implements ProtocolListener {
             + recordData.getOverall().getFastestLap().getHolderNickname()
             + ")");
 
-    return RaceData.newBuilder().setRace(raceUpdate).setRecordData(recordData).build();
+    return com.antigravity.proto.RaceData.newBuilder() // fqn-collision
+        .setRace(pUpdate)
+        .setRaceTime(
+            com.antigravity.proto.RaceTime.newBuilder() // fqn-collision
+                .setTime(accumulatedRaceTime)
+                .setAutoStartRemaining(autoStartRemaining)
+                .setAutoAdvanceRemaining(autoAdvanceRemaining)
+                .build())
+        .setRecordData(recordData)
+        .build();
   }
 
   public void moveToNextHeat() {

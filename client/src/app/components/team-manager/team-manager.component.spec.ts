@@ -1,18 +1,17 @@
-import { HarnessLoader } from "@angular/cdk/testing";
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { ChangeDetectorRef } from "@angular/core";
 import {
   ComponentFixture,
-  fakeAsync,
+  fakeAsync as _fakeAsync,
   TestBed,
-  tick,
+  tick as _tick,
 } from "@angular/core/testing";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
 import { AnalyticsService } from "src/app/analytics.service";
 import { SharedModule } from "src/app/components/shared/shared.module";
 import { DataService } from "src/app/data.service";
-import { Driver } from "src/app/models/driver";
+import {} from "src/app/models/driver";
 import { Team } from "src/app/models/team";
 import { AvatarUrlPipe } from "src/app/pipes/avatar-url.pipe";
 import {
@@ -22,10 +21,10 @@ import {
 import { HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
-import { MOCK_DRIVERS } from "src/app/testing/data/drivers_data";
+import {} from "src/app/testing/data/drivers_data";
 import {
   MOCK_TEAM_INSTANCES,
-  MOCK_TEAMS,
+  MOCK_TEAMS as _MOCK_TEAMS,
 } from "src/app/testing/data/teams_data";
 import {
   mockAnalyticsService,
@@ -44,7 +43,6 @@ describe("TeamManagerComponent", () => {
   let fixture: ComponentFixture<TeamManagerComponent>;
   let dataService: any;
   let connectionStateSubject: BehaviorSubject<ConnectionState>;
-  let loader: HarnessLoader;
   let harness: TeamManagerHarness;
   let mockConnectionMonitor: jasmine.SpyObj<ConnectionMonitorService>;
   let mockActivatedRoute: any;
@@ -263,11 +261,11 @@ describe("TeamManagerComponent", () => {
 
       const filteredTeams = component.filteredTeams;
 
-      expect(filteredTeams.map(t => t.name)).toEqual([
+      expect(filteredTeams.map((t) => t.name)).toEqual([
         "Team 1",
-        "Team 2", 
+        "Team 2",
         "Team 10",
-        "Team 20"
+        "Team 20",
       ]);
     });
 
@@ -284,12 +282,12 @@ describe("TeamManagerComponent", () => {
 
       const filteredTeams = component.filteredTeams;
 
-      expect(filteredTeams.map(t => t.name)).toEqual([
+      expect(filteredTeams.map((t) => t.name)).toEqual([
         "Team 1",
-        "Team 2", 
+        "Team 2",
         "Team 10",
         "Team 20",
-        "Test Team"
+        "Test Team",
       ]);
     });
 
@@ -303,11 +301,11 @@ describe("TeamManagerComponent", () => {
 
       const filteredTeams = component.filteredTeams;
 
-      expect(filteredTeams.map(t => t.name)).toEqual([
+      expect(filteredTeams.map((t) => t.name)).toEqual([
         "",
         "",
         "Team 2",
-        "Team 10"
+        "Team 10",
       ]);
     });
 
@@ -321,11 +319,11 @@ describe("TeamManagerComponent", () => {
 
       const filteredTeams = component.filteredTeams;
 
-      expect(filteredTeams.map(t => t.name)).toEqual([
+      expect(filteredTeams.map((t) => t.name)).toEqual([
         "Team A1",
         "Team A2",
         "Team A10",
-        "Team B1"
+        "Team B1",
       ]);
     });
   });

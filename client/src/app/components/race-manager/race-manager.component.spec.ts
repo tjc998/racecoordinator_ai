@@ -15,7 +15,7 @@ import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 import {
   MOCK_RACE_INSTANCES,
-  MOCK_RACES,
+  MOCK_RACES as _MOCK_RACES,
 } from "src/app/testing/data/races_data";
 import {
   MOCK_TRACK_INSTANCES,
@@ -35,8 +35,8 @@ import { createRaceManagerDataServiceMock } from "./testing/race-manager_helper"
 describe("RaceManagerComponent", () => {
   let component: RaceManagerComponent;
   let dataService: any;
-  let router: any;
-  let activatedRoute: any;
+  let _router: any;
+  let _activatedRoute: any;
 
   beforeEach(() => {
     mockTranslationService.translate.and.callFake((key: string) => key);
@@ -83,8 +83,8 @@ describe("RaceManagerComponent", () => {
     const fixture = TestBed.createComponent(RaceManagerComponent);
     component = fixture.componentInstance;
     dataService = TestBed.inject(DataService);
-    router = TestBed.inject(Router);
-    activatedRoute = TestBed.inject(ActivatedRoute);
+    _router = TestBed.inject(Router);
+    _activatedRoute = TestBed.inject(ActivatedRoute);
 
     // Standardize races as class instances for all tests
     component.races = JSON.parse(JSON.stringify(MOCK_RACE_INSTANCES)).map(
@@ -242,11 +242,11 @@ describe("RaceManagerComponent", () => {
 
       const filteredRaces = component.filteredRaces;
 
-      expect(filteredRaces.map(r => r.name)).toEqual([
+      expect(filteredRaces.map((r) => r.name)).toEqual([
         "Race 1",
-        "Race 2", 
+        "Race 2",
         "Race 10",
-        "Race 20"
+        "Race 20",
       ]);
     });
 
@@ -263,12 +263,12 @@ describe("RaceManagerComponent", () => {
 
       const filteredRaces = component.filteredRaces;
 
-      expect(filteredRaces.map(r => r.name)).toEqual([
+      expect(filteredRaces.map((r) => r.name)).toEqual([
         "Race 1",
-        "Race 2", 
+        "Race 2",
         "Race 10",
         "Race 20",
-        "Test Race"
+        "Test Race",
       ]);
     });
 
@@ -283,11 +283,11 @@ describe("RaceManagerComponent", () => {
       const filteredRaces = component.filteredRaces;
 
       // Empty strings come first, then named items in natural order
-      expect(filteredRaces.map(r => r.name || "")).toEqual([
+      expect(filteredRaces.map((r) => r.name || "")).toEqual([
         "",
         "",
         "Race 2",
-        "Race 10"
+        "Race 10",
       ]);
     });
   });

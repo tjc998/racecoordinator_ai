@@ -44,10 +44,10 @@ import { MOCK_ASSETS } from "src/app/testing/data/assets_data";
 describe("AssetManagerComponent", () => {
   let component: AssetManagerComponent;
   let fixture: ComponentFixture<AssetManagerComponent>;
-  let dataService: any;
+  let _dataService: any;
   let connectionStateSubject: BehaviorSubject<ConnectionState>;
   let mockConnectionMonitor: jasmine.SpyObj<ConnectionMonitorService>;
-  let mockHelpService: jasmine.SpyObj<HelpService>;
+  let _mockHelpService: jasmine.SpyObj<HelpService>;
   const mockActivatedRoute = { queryParams: of({ help: "false" }) };
 
   beforeEach(async () => {
@@ -98,7 +98,7 @@ describe("AssetManagerComponent", () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(AssetManagerComponent);
     component = fixture.componentInstance;
-    dataService = TestBed.inject(DataService);
+    _dataService = TestBed.inject(DataService);
 
     // Default mock returns
     mockDataService.listAssets.and.returnValue(of(MOCK_ASSETS));

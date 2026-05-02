@@ -1,7 +1,9 @@
 // Force refresh for unit tests
-import { Race } from "../models/race";
-import { com } from "../proto/message";
+import {} from "../models/race";
+
 import { RaceConverter } from "./race.converter";
+
+import { IRaceModel } from "src/app/proto/antigravity";
 
 describe("RaceConverter", () => {
   beforeEach(() => {
@@ -9,7 +11,7 @@ describe("RaceConverter", () => {
   });
 
   it("should map fuel options from proto", () => {
-    const mockProto: com.antigravity.IRaceModel = {
+    const mockProto: IRaceModel = {
       model: { entityId: "r1" },
       name: "Test Race",
       track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
@@ -26,7 +28,7 @@ describe("RaceConverter", () => {
   });
 
   it("should handle missing fuel options", () => {
-    const mockProto: com.antigravity.IRaceModel = {
+    const mockProto: IRaceModel = {
       model: { entityId: "r2" },
       name: "Test Race",
       track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
@@ -38,7 +40,7 @@ describe("RaceConverter", () => {
   });
 
   it("should map drift time from proto", () => {
-    const mockProto: com.antigravity.IRaceModel = {
+    const mockProto: IRaceModel = {
       model: { entityId: "r3" },
       name: "Test Race",
       track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
@@ -50,7 +52,7 @@ describe("RaceConverter", () => {
   });
 
   it("should fallback to 0.5 drift time if missing in proto", () => {
-    const mockProto: com.antigravity.IRaceModel = {
+    const mockProto: IRaceModel = {
       model: { entityId: "r4" },
       name: "Test Race",
       track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
@@ -61,7 +63,7 @@ describe("RaceConverter", () => {
   });
 
   it("should map heat rotation type from enum in proto", () => {
-    const mockProto: com.antigravity.IRaceModel = {
+    const mockProto: IRaceModel = {
       model: { entityId: "r5" },
       name: "Test Race",
       track: { model: { entityId: "t1" }, name: "Track", lanes: [] },

@@ -100,7 +100,7 @@ public class HeatStandings {
                               .orElse(null);
                       return (d != null ? d.getDriver().getDriver().getName() : "unknown")
                           + "("
-                          + (d != null ? d.getLapCount() : 0)
+                          + (d != null ? d.getAdjustedLapCount() : 0)
                           + " laps)";
                     })
                 .collect(Collectors.joining(", ")));
@@ -140,13 +140,14 @@ public class HeatStandings {
   }
 
   private double calculateGapForLapCount(DriverHeatData leadDriver, DriverHeatData curDriver) {
-    if (leadDriver.getLapCount() == curDriver.getLapCount()) {
+    if (leadDriver.getAdjustedLapCount() == curDriver.getAdjustedLapCount()) {
       return curDriver.getTotalTime() - leadDriver.getTotalTime();
     } else if (curDriver.getLapCount() == 0) {
       return leadDriver.getTotalTime();
     } else {
       double avgLapTime = curDriver.getAverageLapTime();
-      double lapDiff = (double) leadDriver.getLapCount() - (double) curDriver.getLapCount();
+      double lapDiff =
+          (double) leadDriver.getAdjustedLapCount() - (double) curDriver.getAdjustedLapCount();
       if (avgLapTime < leadDriver.getAverageLapTime()) {
         return avgLapTime * lapDiff;
       } else {
@@ -162,7 +163,7 @@ public class HeatStandings {
     switch (sortType) {
       case LAP_COUNT:
         comparator =
-            Comparator.comparingInt(DriverHeatData::getLapCount)
+            Comparator.comparingDouble(DriverHeatData::getAdjustedLapCount)
                 .reversed()
                 .thenComparing(Comparator.comparingDouble(DriverHeatData::getTotalTime));
         break;

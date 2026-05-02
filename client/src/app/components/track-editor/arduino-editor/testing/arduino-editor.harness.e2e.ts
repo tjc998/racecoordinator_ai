@@ -122,7 +122,7 @@ export class ArduinoEditorHarnessE2e implements ArduinoEditorHarnessBase {
     return "";
   }
 
-  async isVoltageLinked(lane: number): Promise<boolean> {
+  async isVoltageLinked(_lane: number): Promise<boolean> {
     const icon = this.voltageSection
       .locator(this.base.selectors.linkIcon)
       .first();
@@ -130,7 +130,7 @@ export class ArduinoEditorHarnessE2e implements ArduinoEditorHarnessBase {
     return classes ? classes.includes("linked") : false;
   }
 
-  async clickVoltageLink(lane: number): Promise<void> {
+  async clickVoltageLink(_lane: number): Promise<void> {
     const icon = this.voltageSection
       .locator(this.base.selectors.linkIcon)
       .first();

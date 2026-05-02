@@ -1,9 +1,10 @@
 import { RaceParticipant } from "src/app/models/race_participant";
-import { com } from "src/app/proto/message";
 
 import { ConverterCache } from "./converter_cache";
 import { DriverConverter } from "./driver.converter";
 import { TeamConverter } from "./team.converter";
+
+import { IRaceParticipant } from "src/app/proto/antigravity";
 
 export class RaceParticipantConverter {
   private static cache = new ConverterCache<RaceParticipant>();
@@ -12,7 +13,7 @@ export class RaceParticipantConverter {
     this.cache.clear();
   }
 
-  static fromProto(proto: com.antigravity.IRaceParticipant): RaceParticipant {
+  static fromProto(proto: IRaceParticipant): RaceParticipant {
     const id = proto.objectId || "";
 
     const cached = this.cache.get(id);

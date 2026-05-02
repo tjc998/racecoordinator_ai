@@ -25,7 +25,7 @@ test.describe("Driver Editor Visuals", () => {
     await page.locator(".page-container").waitFor();
 
     const container = page.locator(".page-container");
-    const harness = new DriverEditorHarnessE2e(container);
+    const _harness = new DriverEditorHarnessE2e(container);
 
     // Driver name checked visually
 

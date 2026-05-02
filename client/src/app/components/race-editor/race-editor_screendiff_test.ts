@@ -70,7 +70,7 @@ test.describe("Race Editor Visuals", () => {
       "en",
       page.goto("/race-editor?id=r1&driverCount=4"),
     );
-    const harness = new RaceEditorHarnessE2e(page.locator("body"));
+    const _harness = new RaceEditorHarnessE2e(page.locator("body"));
 
     // Verify Editor Form is attached
     await page.waitForTimeout(200);

@@ -16,11 +16,13 @@ import {
   MAX_DIGITAL_PINS,
 } from "src/app/models/track";
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
-import { com } from "src/app/proto/message";
+
 import { TranslationService } from "src/app/services/translation.service";
 import { TranslationServiceMock } from "src/app/testing/translation-service.mock";
 
 import { ArduinoEditorComponent } from "./arduino-editor.component";
+
+import { PinBehavior, RgbLedBehavior } from "src/app/proto/antigravity";
 
 // BEHAVIOR_VOLTAGE_LEVEL_BASE = 7000
 const VOLTAGE_BASE = 7000;
@@ -34,27 +36,27 @@ class MockDataService {
   getInterfaceEvents() {
     return this.interfaceEvents$.asObservable();
   }
-  initializeInterface(config: any, lanes: number) {
+  initializeInterface(_config: any, _lanes: number) {
     return of({ success: true });
   }
-  updateInterfaceConfig(config: any, interfaceIndex: number) {
+  updateInterfaceConfig(_config: any, _interfaceIndex: number) {
     return of({ success: true });
   }
   closeInterface() {
     return of({ success: true });
   }
   setInterfacePinState(
-    pin: number,
-    isDigital: boolean,
-    state: boolean,
-    interfaceIndex: number,
+    _pin: number,
+    _isDigital: boolean,
+    _state: boolean,
+    _interfaceIndex: number,
   ) {
     return of({ success: true });
   }
   setInterfaceRgbLedState(
-    stringIndex: number,
-    leds: any[],
-    interfaceIndex: number,
+    _stringIndex: number,
+    _leds: any[],
+    _interfaceIndex: number,
   ) {
     return of({ success: true });
   }
@@ -73,14 +75,10 @@ describe("ArduinoEditorComponent", () => {
       baudRate: 115200,
       debounceUs: 1000,
       hardwareType: 0,
-      digitalIds: new Array(MAX_DIGITAL_PINS).fill(
-        com.antigravity.PinBehavior.BEHAVIOR_UNUSED,
-      ),
+      digitalIds: new Array(MAX_DIGITAL_PINS).fill(PinBehavior.BEHAVIOR_UNUSED),
       analogIds:
         analogIds ??
-        new Array(MAX_ANALOG_PINS).fill(
-          com.antigravity.PinBehavior.BEHAVIOR_UNUSED,
-        ),
+        new Array(MAX_ANALOG_PINS).fill(PinBehavior.BEHAVIOR_UNUSED),
       normallyClosedLaneSensors: false,
       normallyClosedRelays: true,
       globalInvertLights: 0,
@@ -228,8 +226,7 @@ describe("ArduinoEditorComponent", () => {
 
   it("should update ledLaneColorOverrides for existing ledStrings when lanes change", () => {
     // Add an LED string
-    const rgbBehavior = (com.antigravity.PinBehavior as any)
-      .BEHAVIOR_LED_RGB_STRING;
+    const rgbBehavior = (PinBehavior as any).BEHAVIOR_LED_RGB_STRING;
     component.setPinBehavior(true, 5, rgbBehavior.toString());
     const ls = component.config!.ledStrings[0];
     expect(ls.ledLaneColorOverrides.length).toBe(2);
@@ -249,8 +246,7 @@ describe("ArduinoEditorComponent", () => {
   });
 
   it("should heal empty color overrides when lanes change", () => {
-    const rgbBehavior = (com.antigravity.PinBehavior as any)
-      .BEHAVIOR_LED_RGB_STRING;
+    const rgbBehavior = (PinBehavior as any).BEHAVIOR_LED_RGB_STRING;
     component.setPinBehavior(true, 5, rgbBehavior.toString());
     const ls = component.config!.ledStrings[0];
 
@@ -265,8 +261,7 @@ describe("ArduinoEditorComponent", () => {
   });
 
   it("should remove color overrides when lanes are removed", () => {
-    const rgbBehavior = (com.antigravity.PinBehavior as any)
-      .BEHAVIOR_LED_RGB_STRING;
+    const rgbBehavior = (PinBehavior as any).BEHAVIOR_LED_RGB_STRING;
     component.setPinBehavior(true, 5, rgbBehavior.toString());
     const ls = component.config!.ledStrings[0];
     expect(ls.ledLaneColorOverrides.length).toBe(2);
@@ -279,14 +274,12 @@ describe("ArduinoEditorComponent", () => {
   });
 
   it("should reset lane-based LED behaviors to unused when exceeding lane count", () => {
-    const rgbBehavior = (com.antigravity.PinBehavior as any)
-      .BEHAVIOR_LED_RGB_STRING;
+    const rgbBehavior = (PinBehavior as any).BEHAVIOR_LED_RGB_STRING;
     component.setPinBehavior(true, 5, rgbBehavior.toString());
     const ls = component.config!.ledStrings[0];
 
     // Map LED 0 to Lane 6 behavior (5000 + 5)
-    ls.leds[0] =
-      com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE + 5;
+    ls.leds[0] = RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE + 5;
 
     // Trigger refresh with only 2 lanes
     component.lanes = [
@@ -296,9 +289,7 @@ describe("ArduinoEditorComponent", () => {
     fixture.detectChanges();
 
     // Behavior 5005 should be reset to UNUSED because lane 5 doesn't exist
-    expect(ls.leds[0]).toBe(
-      com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED,
-    );
+    expect(ls.leds[0]).toBe(RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED);
   });
 
   it("should find lanes with voltage pins", () => {
@@ -608,9 +599,8 @@ describe("ArduinoEditorComponent", () => {
 
     it("should add a new LedString when a pin is assigned BEHAVIOR_LED_RGB_STRING", () => {
       const pinIndex = 5;
-      const rgbBehavior = (com.antigravity.PinBehavior as any)
-        .BEHAVIOR_LED_RGB_STRING;
-      const unusedBehavior = com.antigravity.PinBehavior.BEHAVIOR_UNUSED;
+      const rgbBehavior = (PinBehavior as any).BEHAVIOR_LED_RGB_STRING;
+      const _unusedBehavior = PinBehavior.BEHAVIOR_UNUSED;
 
       expect(component.config!.ledStrings.length).toBe(0);
 
@@ -622,9 +612,8 @@ describe("ArduinoEditorComponent", () => {
 
     it("should remove the LedString when a pin is unassigned from BEHAVIOR_LED_RGB_STRING", () => {
       const pinIndex = 5;
-      const rgbBehavior = (com.antigravity.PinBehavior as any)
-        .BEHAVIOR_LED_RGB_STRING;
-      const unusedBehavior = com.antigravity.PinBehavior.BEHAVIOR_UNUSED;
+      const rgbBehavior = (PinBehavior as any).BEHAVIOR_LED_RGB_STRING;
+      const unusedBehavior = PinBehavior.BEHAVIOR_UNUSED;
 
       // 1. Add it
       component.setPinBehavior(true, pinIndex, rgbBehavior.toString());
@@ -638,9 +627,8 @@ describe("ArduinoEditorComponent", () => {
     it("should remove only the specific LedString matching the pin", () => {
       const pinIndex5 = 5;
       const pinIndex6 = 6;
-      const rgbBehavior = (com.antigravity.PinBehavior as any)
-        .BEHAVIOR_LED_RGB_STRING;
-      const unusedBehavior = com.antigravity.PinBehavior.BEHAVIOR_UNUSED;
+      const rgbBehavior = (PinBehavior as any).BEHAVIOR_LED_RGB_STRING;
+      const unusedBehavior = PinBehavior.BEHAVIOR_UNUSED;
 
       component.setPinBehavior(true, pinIndex5, rgbBehavior.toString());
       component.setPinBehavior(true, pinIndex6, rgbBehavior.toString());
@@ -665,19 +653,16 @@ describe("ArduinoEditorComponent", () => {
 
       // Add an LED string with behavior for Lane 4 (index 3)
       const pinIndex = 5;
-      const rgbBehavior = (com.antigravity.PinBehavior as any)
-        .BEHAVIOR_LED_RGB_STRING;
+      const rgbBehavior = (PinBehavior as any).BEHAVIOR_LED_RGB_STRING;
       component.setPinBehavior(true, pinIndex, rgbBehavior.toString());
       const ls = component.config!.ledStrings[0];
 
       // Set first LED to Heat Leader Lane 4
-      const heatLeaderBase =
-        com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE;
+      const heatLeaderBase = RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE;
       ls.leds[0] = heatLeaderBase + 3;
 
       // Set second LED to Fuel Level Lane 4
-      const fuelLevelBase =
-        com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE;
+      const fuelLevelBase = RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE;
       ls.leds[1] = fuelLevelBase + 3;
 
       // Delete lane 4 (now only 3 lanes)
@@ -689,12 +674,8 @@ describe("ArduinoEditorComponent", () => {
       fixture.detectChanges();
 
       // Verify behaviors are reset to UNUSED
-      expect(ls.leds[0]).toBe(
-        com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED,
-      );
-      expect(ls.leds[1]).toBe(
-        com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED,
-      );
+      expect(ls.leds[0]).toBe(RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED);
+      expect(ls.leds[1]).toBe(RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED);
     });
   });
 
@@ -709,9 +690,8 @@ describe("ArduinoEditorComponent", () => {
       ];
 
       // Add two strings
-      const rgbBehavior = (com.antigravity.PinBehavior as any)
-        .BEHAVIOR_LED_RGB_STRING;
-      const unused = com.antigravity.PinBehavior.BEHAVIOR_UNUSED;
+      const rgbBehavior = (PinBehavior as any).BEHAVIOR_LED_RGB_STRING;
+      const _unused = PinBehavior.BEHAVIOR_UNUSED;
       component.setPinBehavior(true, 5, rgbBehavior.toString());
       component.setPinBehavior(true, 6, rgbBehavior.toString());
 

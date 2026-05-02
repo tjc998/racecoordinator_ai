@@ -15,4 +15,5 @@ message TrackModel {
   repeated LaneModel lanes = 3;
   bool has_digital_fuel = 4;
   repeated ArduinoConfig arduino_configs = 5;
+  int32 num_track_sections = 6;
 }

@@ -24,7 +24,7 @@ test.describe("Driver Station Visuals", () => {
 
     const container = page.locator("app-driver-station");
     // harness variable defined but not strictly used for validation directly as per instructions
-    const harness = new DriverStationHarnessE2e(container);
+    const _harness = new DriverStationHarnessE2e(container);
 
     // Wait for the view container to render
     await expect(page.locator(".driver-station-container")).toBeVisible();

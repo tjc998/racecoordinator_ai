@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from "@angular/core";
 import { DataService } from "src/app/data.service";
-import { com } from "src/app/proto/message";
+
+import { IAssetMessage } from "src/app/proto/antigravity";
 
 export interface AssetPickerData {
   currentAssetId?: string;
@@ -20,8 +21,8 @@ export class AssetPickerComponent implements OnInit {
 
   @Output() close = new EventEmitter<string | null>();
 
-  assets: com.antigravity.IAssetMessage[] = [];
-  filteredAssets: com.antigravity.IAssetMessage[] = [];
+  assets: IAssetMessage[] = [];
+  filteredAssets: IAssetMessage[] = [];
   isLoading: boolean = true;
   searchQuery: string = "";
   selectedAssetId: string | null = null;
@@ -65,7 +66,7 @@ export class AssetPickerComponent implements OnInit {
     }
   }
 
-  selectAsset(asset: com.antigravity.IAssetMessage) {
+  selectAsset(asset: IAssetMessage) {
     this.selectedAssetId = asset.model?.entityId || null;
   }
 
@@ -79,7 +80,7 @@ export class AssetPickerComponent implements OnInit {
     this.close.emit(null);
   }
 
-  getAssetUrl(asset: com.antigravity.IAssetMessage): string {
+  getAssetUrl(asset: IAssetMessage): string {
     if (asset.type === "IMAGE_SET") {
       // For image sets, we might want to show the first image as preview
       return asset.images && asset.images.length > 0

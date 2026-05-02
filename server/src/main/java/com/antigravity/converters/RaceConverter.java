@@ -7,44 +7,51 @@ import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.TeamOptions;
 import com.antigravity.models.Track;
-import com.antigravity.proto.FuelUsageType;
-import com.antigravity.proto.Model;
-import com.antigravity.proto.RaceModel;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class RaceConverter {
 
-  public static RaceModel toProto(Race race, Track track, Set<String> sentObjectIds) {
+  public static com.antigravity.proto.RaceModel toProto( // fqn-collision
+      Race race, Track track, Set<String> sentObjectIds) { // fqn-collision
     String key = "Race_" + race.getObjectId();
     if (sentObjectIds.contains(key)) {
-      return RaceModel.newBuilder()
-          .setModel(Model.newBuilder().setEntityId(race.getObjectId()).build())
+      return com.antigravity.proto.RaceModel.newBuilder() // fqn-collision
+          .setModel(
+              (com.antigravity.proto.Model) // fqn-collision
+                  com.antigravity.proto.Model.newBuilder() // fqn-collision
+                      .setEntityId(race.getObjectId())
+                      .build()) // fqn-collision
           .build();
     } else {
       sentObjectIds.add(key);
-      RaceModel.Builder builder =
-          RaceModel.newBuilder()
-              .setModel(Model.newBuilder().setEntityId(race.getObjectId()).build())
+      com.antigravity.proto.RaceModel.Builder builder = // fqn-collision
+          com.antigravity.proto.RaceModel.newBuilder() // fqn-collision
+              .setModel(
+                  (com.antigravity.proto.Model) // fqn-collision
+                      com.antigravity.proto.Model.newBuilder() // fqn-collision
+                          .setEntityId(race.getObjectId())
+                          .build()) // fqn-collision
               .setName(race.getName())
               .setTrack(TrackConverter.toProto(track, sentObjectIds));
 
       if (race.getHeatScoring() != null) {
         HeatScoring scoring = race.getHeatScoring();
         builder.setHeatScoring(
-            com.antigravity.proto.HeatScoring.newBuilder()
+            com.antigravity.proto.HeatScoring.newBuilder() // fqn-collision
                 .setFinishMethod(
-                    com.antigravity.proto.HeatScoring.FinishMethod.valueOf(
-                        scoring.getFinishMethod().name()))
+                    com.antigravity.proto.HeatScoring.FinishMethod // fqn-collision
+                        .valueOf(scoring.getFinishMethod().name()))
                 .setFinishValue(scoring.getFinishValue())
                 .setHeatRanking(
-                    com.antigravity.proto.HeatScoring.HeatRanking.valueOf(
-                        "HR_" + scoring.getHeatRanking().name()))
+                    com.antigravity.proto.HeatScoring.HeatRanking // fqn-collision
+                        .valueOf("HR_" + scoring.getHeatRanking().name()))
                 .setHeatRankingTiebreaker(
-                    com.antigravity.proto.HeatScoring.HeatRankingTiebreaker.valueOf(
-                        "HRT_" + scoring.getHeatRankingTiebreaker().name()))
+                    com.antigravity.proto.HeatScoring.HeatRankingTiebreaker // fqn-collision
+                        .valueOf("HRT_" + scoring.getHeatRankingTiebreaker().name()))
                 .setAllowFinish(
-                    com.antigravity.proto.HeatScoring.AllowFinish.valueOf(
+                    com.antigravity.proto.HeatScoring.AllowFinish // fqn-collision
+                        .valueOf(
                         "AF_"
                             + (scoring.getAllowFinish() != null
                                 ? scoring
@@ -59,14 +66,14 @@ public class RaceConverter {
       if (race.getOverallScoring() != null) {
         OverallScoring scoring = race.getOverallScoring();
         builder.setOverallScoring(
-            com.antigravity.proto.OverallScoring.newBuilder()
+            com.antigravity.proto.OverallScoring.newBuilder() // fqn-collision
                 .setDroppedHeats(scoring.getDroppedHeats())
                 .setRankingMethod(
-                    com.antigravity.proto.OverallScoring.OverallRanking.valueOf(
-                        "OR_" + scoring.getRankingMethod().name()))
+                    com.antigravity.proto.OverallScoring.OverallRanking // fqn-collision
+                        .valueOf("OR_" + scoring.getRankingMethod().name()))
                 .setTiebreaker(
-                    com.antigravity.proto.OverallScoring.OverallRankingTiebreaker.valueOf(
-                        "ORT_" + scoring.getTiebreaker().name()))
+                    com.antigravity.proto.OverallScoring.OverallRankingTiebreaker // fqn-collision
+                        .valueOf("ORT_" + scoring.getTiebreaker().name()))
                 .build());
       }
 
@@ -75,12 +82,14 @@ public class RaceConverter {
       if (race.getFuelOptions() != null) {
         AnalogFuelOptions fuel = race.getFuelOptions();
         builder.setFuelOptions(
-            com.antigravity.proto.AnalogFuelOptions.newBuilder()
+            com.antigravity.proto.AnalogFuelOptions.newBuilder() // fqn-collision
                 .setEnabled(fuel.isEnabled())
                 .setResetFuelAtHeatStart(fuel.isResetFuelAtHeatStart())
                 .setEndHeatOnOutOfFuel(fuel.isEndHeatOnOutOfFuel())
                 .setCapacity(fuel.getCapacity())
-                .setUsageType(FuelUsageType.valueOf(fuel.getUsageType().name()))
+                .setUsageType(
+                    com.antigravity.proto.FuelUsageType.valueOf( // fqn-collision
+                        fuel.getUsageType().name())) // fqn-collision
                 .setUsageRate(fuel.getUsageRate())
                 .setStartLevel(fuel.getStartLevel())
                 .setRefuelRate(fuel.getRefuelRate())
@@ -92,12 +101,14 @@ public class RaceConverter {
       if (race.getDigitalFuelOptions() != null) {
         DigitalFuelOptions fuel = race.getDigitalFuelOptions();
         builder.setDigitalFuelOptions(
-            com.antigravity.proto.DigitalFuelOptions.newBuilder()
+            com.antigravity.proto.DigitalFuelOptions.newBuilder() // fqn-collision
                 .setEnabled(fuel.isEnabled())
                 .setResetFuelAtHeatStart(fuel.isResetFuelAtHeatStart())
                 .setEndHeatOnOutOfFuel(fuel.isEndHeatOnOutOfFuel())
                 .setCapacity(fuel.getCapacity())
-                .setUsageType(FuelUsageType.valueOf(fuel.getUsageType().name()))
+                .setUsageType(
+                    com.antigravity.proto.FuelUsageType.valueOf( // fqn-collision
+                        fuel.getUsageType().name())) // fqn-collision
                 .setUsageRate(fuel.getUsageRate())
                 .setStartLevel(fuel.getStartLevel())
                 .setRefuelRate(fuel.getRefuelRate())
@@ -107,7 +118,7 @@ public class RaceConverter {
       if (race.getTeamOptions() != null) {
         TeamOptions options = race.getTeamOptions();
         builder.setTeamOptions(
-            com.antigravity.proto.TeamOptions.newBuilder()
+            com.antigravity.proto.TeamOptions.newBuilder() // fqn-collision
                 .setHeatLapLimit(options.getHeatLapLimit())
                 .setHeatTimeLimit(options.getHeatTimeLimit())
                 .setOverallLapLimit(options.getOverallLapLimit())
@@ -127,16 +138,17 @@ public class RaceConverter {
       if (race.getHeatRotationType() != null) {
         String rotationName =
             race.getHeatRotationType().name().replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase();
-        builder.setHeatRotationType(com.antigravity.proto.HeatRotationType.valueOf(rotationName));
+        builder.setHeatRotationType(
+            com.antigravity.proto.HeatRotationType.valueOf(rotationName)); // fqn-collision
       }
       builder.setSoloLaneIndex(race.getSoloLaneIndex());
       return builder.build();
     }
   }
 
-  public static com.antigravity.proto.Race toProto(
-      com.antigravity.race.Race race, Set<String> sentObjectIds) {
-    return com.antigravity.proto.Race.newBuilder()
+  public static com.antigravity.proto.Race toProto( // fqn-collision
+      com.antigravity.race.Race race, Set<String> sentObjectIds) { // fqn-collision
+    return com.antigravity.proto.Race.newBuilder() // fqn-collision
         .setRace(toProto(race.getRaceModel(), race.getTrack(), sentObjectIds))
         .addAllDrivers(
             race.getDrivers().stream()

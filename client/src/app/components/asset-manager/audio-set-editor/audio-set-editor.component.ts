@@ -11,8 +11,10 @@ import {
   SimpleChanges,
 } from "@angular/core";
 import { DataService } from "src/app/data.service";
-import { com } from "src/app/proto/message";
+
 import { TranslationService } from "src/app/services/translation.service";
+
+import { IAssetMessage, ISaveAudioSetEntry } from "src/app/proto/antigravity";
 
 @Component({
   selector: "app-audio-set-editor",
@@ -24,15 +26,15 @@ export class AudioSetEditorComponent implements OnInit, OnChanges, OnDestroy {
   @Input() visible = false;
   @Input() assetId?: string;
   @Input() initialName = "";
-  @Input() initialEntries: com.antigravity.ISaveAudioSetEntry[] = [];
+  @Input() initialEntries: ISaveAudioSetEntry[] = [];
   @Input() allAudio: any[] = [];
 
   @Output() close = new EventEmitter<void>();
-  @Output() saved = new EventEmitter<com.antigravity.IAssetMessage>();
+  @Output() saved = new EventEmitter<IAssetMessage>();
 
   id = "audio-set-editor-" + Math.random().toString(36).substr(2, 9);
   name = "";
-  entries: com.antigravity.ISaveAudioSetEntry[] = [];
+  entries: ISaveAudioSetEntry[] = [];
   isSaving = false;
   isDragging = false;
   private dragCounter = 0;
@@ -212,9 +214,7 @@ export class AudioSetEditorComponent implements OnInit, OnChanges, OnDestroy {
       }),
     );
 
-    const newEntries: com.antigravity.ISaveAudioSetEntry[] = new Array(
-      fileArray.length,
-    );
+    const newEntries: ISaveAudioSetEntry[] = new Array(fileArray.length);
     let processedCount = 0;
 
     fileArray.forEach((file, index) => {
@@ -247,7 +247,7 @@ export class AudioSetEditorComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
-  addDroppedEntries(newEntries: com.antigravity.ISaveAudioSetEntry[]) {
+  addDroppedEntries(newEntries: ISaveAudioSetEntry[]) {
     console.log(`AudioSetEditor: Adding ${newEntries.length} entries to list`);
     this.entries = [...this.entries, ...newEntries];
     this.recalculateTimes();

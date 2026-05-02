@@ -1,49 +1,54 @@
 import { BehaviorSubject, of, Subject } from "rxjs";
 
-import { com } from "../../../proto/message";
 import { MOCK_DRIVERS } from "../../../testing/data/drivers_data";
 import { MOCK_HEATS } from "../../../testing/data/heats_data";
 import { MOCK_RACES } from "../../../testing/data/races_data";
-import { MOCK_TEAMS } from "../../../testing/data/teams_data";
+import { MOCK_TEAMS as _MOCK_TEAMS } from "../../../testing/data/teams_data";
+import {
+  ICarData,
+  IInterfaceEvent,
+  ILap,
+  IRaceTime,
+  IReactionTime,
+  IRecordData,
+  ISegment,
+  IStandingsUpdate,
+  InterfaceStatus,
+  RaceFlag,
+  RaceState,
+} from "src/app/proto/antigravity";
+
 import {
   MOCK_TRACK_INSTANCES,
-  MOCK_TRACKS,
+  MOCK_TRACKS as _MOCK_TRACKS,
 } from "../../../testing/data/tracks_data";
 
 /**
  * Creates a comprehensive set of mocks for Raceday tests.
  */
 export function createRacedayMocks(overrides: any = {}) {
-  const interfaceEventsSubject = new Subject<com.antigravity.IInterfaceEvent>();
+  const interfaceEventsSubject = new Subject<IInterfaceEvent>();
   const interfaceAlertSubject = new Subject<{
     titleKey: string;
     messageKey: string;
   }>();
-  const raceTimeSubject = new BehaviorSubject<com.antigravity.IRaceTime>({
+  const raceTimeSubject = new BehaviorSubject<IRaceTime>({
     time: 0,
   });
-  const lapsSubject = new Subject<com.antigravity.ILap>();
-  const raceStateSubject = new BehaviorSubject<com.antigravity.RaceState>(
-    com.antigravity.RaceState.UNKNOWN_STATE,
+  const lapsSubject = new Subject<ILap>();
+  const raceStateSubject = new BehaviorSubject<RaceState>(
+    RaceState.UNKNOWN_STATE,
   );
-  const standingsUpdateSubject =
-    new Subject<com.antigravity.IStandingsUpdate>();
+  const standingsUpdateSubject = new Subject<IStandingsUpdate>();
   const participantsSubject = new Subject<any[]>();
-  const recordDataSubject =
-    new BehaviorSubject<com.antigravity.IRecordData | null>(null);
-  const segmentSubject = new BehaviorSubject<com.antigravity.ISegment | null>(
-    null,
+  const recordDataSubject = new BehaviorSubject<IRecordData | null>(null);
+  const segmentSubject = new BehaviorSubject<ISegment | null>(null);
+  const reactionTimeSubject = new BehaviorSubject<IReactionTime | null>(null);
+  const carDataSubject = new BehaviorSubject<ICarData>({});
+  const raceFlagSubject = new BehaviorSubject<RaceFlag>(RaceFlag.RED);
+  const interfaceStatusSubject = new BehaviorSubject<InterfaceStatus>(
+    InterfaceStatus.DISCONNECTED,
   );
-  const reactionTimeSubject =
-    new BehaviorSubject<com.antigravity.IReactionTime | null>(null);
-  const carDataSubject = new BehaviorSubject<com.antigravity.ICarData>({});
-  const raceFlagSubject = new BehaviorSubject<com.antigravity.RaceFlag>(
-    com.antigravity.RaceFlag.RED,
-  );
-  const interfaceStatusSubject =
-    new BehaviorSubject<com.antigravity.InterfaceStatus>(
-      com.antigravity.InterfaceStatus.DISCONNECTED,
-    );
 
   const mockDataService = jasmine.createSpyObj("DataService", [
     "updateRaceSubscription",
@@ -67,9 +72,10 @@ export function createRacedayMocks(overrides: any = {}) {
     "abortTimers",
     "changeLane",
     "getAssetUrl",
+    "updateUserLaps",
   ]);
   mockDataService.listAssets.and.returnValue(of([]));
-  mockDataService.getRaceFlag.and.returnValue(of(com.antigravity.RaceFlag.RED));
+  mockDataService.getRaceFlag.and.returnValue(of(RaceFlag.RED));
   mockDataService.getThemes.and.returnValue(of([]));
   mockDataService.getDrivers.and.callFake(() =>
     of(

@@ -42,7 +42,7 @@ test.describe("Arduino Editor Component Visuals", () => {
     );
 
     const editor = page.locator("app-arduino-editor");
-    const harness = new ArduinoEditorHarnessE2e(editor);
+    const _harness = new ArduinoEditorHarnessE2e(editor);
 
     await expect(editor).toBeVisible();
 
@@ -111,7 +111,7 @@ test.describe("Arduino Editor Component Visuals", () => {
     );
 
     const editor = page.locator("app-arduino-editor");
-    const harness = new ArduinoEditorHarnessE2e(editor);
+    const _harness = new ArduinoEditorHarnessE2e(editor);
 
     await expect(editor).toBeVisible();
 
@@ -263,7 +263,7 @@ test.describe("Arduino Editor Section Expander States", () => {
 
   test("should show all sections expanded by default", async ({ page }) => {
     const editor = await openEditor(page);
-    const harness = new ArduinoEditorHarnessE2e(editor);
+    const _harness = new ArduinoEditorHarnessE2e(editor);
 
     // Section expansion checked visually
 

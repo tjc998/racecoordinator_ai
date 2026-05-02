@@ -146,7 +146,7 @@ test.describe("Raceday Setup Functional - en", () => {
 
   test("Quick start cards", async ({ page }) => {
     const container = page.locator(".setup-container");
-    const harness = new DefaultRacedaySetupHarnessE2e(container);
+    const _harness = new DefaultRacedaySetupHarnessE2e(container);
 
     await expect(page).toHaveScreenshot(`quick-start-cards-en.png`, {
       maxDiffPixelRatio: 0.05,

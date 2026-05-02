@@ -1,5 +1,6 @@
 package com.antigravity.race.states;
 
+import com.antigravity.models.HeatScoring;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.protocols.CarData;
 import com.antigravity.race.ClientSubscriptionManager;
@@ -13,8 +14,7 @@ public class RaceOver implements IRaceState {
   public RaceFlag getFlagType(Race race) {
     // Show checkered flag at the end of the last heat when finish is not allowed
     if (race.isLastHeat()
-        && race.getRaceModel().getHeatScoring().getAllowFinish()
-            == com.antigravity.models.HeatScoring.AllowFinish.None) {
+        && race.getRaceModel().getHeatScoring().getAllowFinish() == HeatScoring.AllowFinish.None) {
       return RaceFlag.CHECKERED;
     }
     return RaceFlag.RED;

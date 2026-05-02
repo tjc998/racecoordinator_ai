@@ -21,11 +21,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class HeatExecutionManager {
-  private static final Logger logger = LoggerFactory.getLogger(HeatExecutionManager.class);
 
   private Race race;
 
@@ -34,6 +31,7 @@ public class HeatExecutionManager {
   private double[] refuelDelayRemaining;
   private boolean[] isRefueling;
   private double[] accumulatedRefuelTime;
+  private double[] timeSinceLastLap;
 
   public HeatExecutionManager(Race race) {
     this.race = race;
@@ -48,15 +46,24 @@ public class HeatExecutionManager {
     this.refuelDelayRemaining = new double[laneCount];
     this.isRefueling = new boolean[laneCount];
     this.accumulatedRefuelTime = new double[laneCount];
+    this.timeSinceLastLap = new double[laneCount];
     for (int i = 0; i < laneCount; i++) {
       this.refuelDelayRemaining[i] = -1.0;
       this.isRefueling[i] = false;
       this.accumulatedRefuelTime[i] = 0.0;
+      this.timeSinceLastLap[i] = 0.0;
     }
   }
 
   public void processTicker(float delta) {
     handleRefueling(delta);
+    if (timeSinceLastLap != null) {
+      for (int i = 0; i < timeSinceLastLap.length; i++) {
+        if (!finishedLanes.contains(i)) {
+          timeSinceLastLap[i] += delta;
+        }
+      }
+    }
   }
 
   /**
@@ -93,6 +100,7 @@ public class HeatExecutionManager {
     }
 
     if (handleReactionTime(driverData, lapTime, lane, interfaceId)) {
+      timeSinceLastLap[lane] = 0.0;
       return false;
     }
 
@@ -117,6 +125,10 @@ public class HeatExecutionManager {
       lapCounted = handleLapTime(driverData, finalLapTime, lane, interfaceId, isDrift);
     } else {
       lapCounted = handleLapTime(driverData, lapTime, lane, interfaceId, isDrift);
+    }
+
+    if (lapCounted) {
+      timeSinceLastLap[lane] = 0.0;
     }
 
     // Check for finish condition immediately after a lap if requested
@@ -251,6 +263,7 @@ public class HeatExecutionManager {
         }
       }
 
+      driverData.setRefueling(isRefueling[i]);
       if (isRefueling[i]) {
         double currentFuel = participant.getFuelLevel();
         double capacity = fuelOptions.getCapacity();
@@ -309,15 +322,22 @@ public class HeatExecutionManager {
     isRefueling[from] = isRefueling[to];
     isRefueling[to] = tempRefueling;
 
+    race.getCurrentHeat().getDrivers().get(from).setRefueling(isRefueling[from]);
+    race.getCurrentHeat().getDrivers().get(to).setRefueling(isRefueling[to]);
+
     double tempAccumulated = accumulatedRefuelTime[from];
     accumulatedRefuelTime[from] = accumulatedRefuelTime[to];
     accumulatedRefuelTime[to] = tempAccumulated;
+
+    double tempTimeSinceLastLap = timeSinceLastLap[from];
+    timeSinceLastLap[from] = timeSinceLastLap[to];
+    timeSinceLastLap[to] = tempTimeSinceLastLap;
 
     System.out.println(
         "HeatExecutionManager: Swapped transient lane state for lanes " + from + " and " + to);
   }
 
-  public void handlePitDetection(com.antigravity.protocols.CarData carData) {
+  public void handlePitDetection(com.antigravity.protocols.CarData carData) { // fqn-collision
     FuelOptions fuelOptions = null;
     if (isAnalogFuelEnabled()) {
       fuelOptions = this.race.getRaceModel().getFuelOptions();
@@ -344,6 +364,7 @@ public class HeatExecutionManager {
     }
 
     CarLocation loc = carData.getLocation();
+    driverData.setCurrentLocation(loc);
     boolean inPit =
         loc == CarLocation.PitRow
             || (loc.getValue() >= CarLocation.PitBayBase.getValue()
@@ -362,12 +383,13 @@ public class HeatExecutionManager {
       // Left pit or cannot refuel
       if (isRefueling[lane] || refuelDelayRemaining[lane] >= 0) {
         isRefueling[lane] = false;
+        driverData.setRefueling(false);
         refuelDelayRemaining[lane] = -1.0;
       }
     }
   }
 
-  public void handleDigitalFuelCarData(com.antigravity.protocols.CarData carData) {
+  public void handleDigitalFuelCarData(com.antigravity.protocols.CarData carData) { // fqn-collision
     int lane = carData.getLane();
     if (lane < 0 || lane >= race.getCurrentHeat().getDrivers().size()) {
       return;
@@ -637,6 +659,7 @@ public class HeatExecutionManager {
                     : "")
             .setFuelLevel(driverData.getDriver().getFuelLevel())
             .setIsDrift(isDrift)
+            .setAdjustedLapCount(driverData.getAdjustedLapCount())
             .build();
 
     RaceData lapDataMsg = RaceData.newBuilder().setLap(lapMsg).build();
@@ -761,5 +784,9 @@ public class HeatExecutionManager {
 
   public double[] getAccumulatedRefuelTime() {
     return accumulatedRefuelTime;
+  }
+
+  public double[] getTimeSinceLastLap() {
+    return timeSinceLastLap;
   }
 }

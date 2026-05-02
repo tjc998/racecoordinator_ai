@@ -1,63 +1,63 @@
-import { com } from 'src/app/proto/message';
+import { DriverConverter } from "./driver.converter";
+import { RaceParticipantConverter } from "./race_participant.converter";
+import { TeamConverter } from "./team.converter";
 
-import { DriverConverter } from './driver.converter';
-import { RaceParticipantConverter } from './race_participant.converter';
-import { TeamConverter } from './team.converter';
+import { IRaceParticipant } from "src/app/proto/antigravity";
 
-describe('RaceParticipantConverter', () => {
+describe("RaceParticipantConverter", () => {
   beforeEach(() => {
     RaceParticipantConverter.clearCache();
     DriverConverter.clearCache();
     TeamConverter.clearCache();
   });
 
-  it('should convert proto with team to RaceParticipant', () => {
-    const proto: com.antigravity.IRaceParticipant = {
-      objectId: 'p1',
+  it("should convert proto with team to RaceParticipant", () => {
+    const proto: IRaceParticipant = {
+      objectId: "p1",
       driver: {
-        model: { entityId: 'd1' },
-        name: 'Alice'
+        model: { entityId: "d1" },
+        name: "Alice",
       },
       team: {
-        model: { entityId: 't1' },
-        name: 'Team Alpha'
-      }
+        model: { entityId: "t1" },
+        name: "Team Alpha",
+      },
     };
 
     const participant = RaceParticipantConverter.fromProto(proto);
-    expect(participant.objectId).toBe('p1');
-    expect(participant.driver.name).toBe('Alice');
+    expect(participant.objectId).toBe("p1");
+    expect(participant.driver.name).toBe("Alice");
     expect(participant.team).toBeDefined();
-    expect(participant.team?.name).toBe('Team Alpha');
+    expect(participant.team?.name).toBe("Team Alpha");
   });
 
-  it('should handle absence of team', () => {
-    const proto: com.antigravity.IRaceParticipant = {
-      objectId: 'p1',
+  it("should handle absence of team", () => {
+    const proto: IRaceParticipant = {
+      objectId: "p1",
       driver: {
-        model: { entityId: 'd1' },
-        name: 'Alice'
-      }
+        model: { entityId: "d1" },
+        name: "Alice",
+      },
     };
 
     const participant = RaceParticipantConverter.fromProto(proto);
     expect(participant.team).toBeUndefined();
   });
 
-  it('should update existing participant in place', () => {
-    const proto1: com.antigravity.IRaceParticipant = {
-      objectId: 'p1',
-      driver: { model: { entityId: 'd1' }, name: 'Alice' },
-      fuelLevel: 100
+  it("should update existing participant in place", () => {
+    const proto1: IRaceParticipant = {
+      objectId: "p1",
+      driver: { model: { entityId: "d1" }, name: "Alice" },
+      fuelLevel: 100,
     };
 
     const p1 = RaceParticipantConverter.fromProto(proto1);
     expect(p1.fuelLevel).toBe(100);
 
-    const proto2: com.antigravity.IRaceParticipant = {
-      objectId: 'p1',
-      driver: { model: { entityId: 'd1' }, name: 'Alice' },
-      fuelLevel: 80
+    const proto2: IRaceParticipant = {
+      objectId: "p1",
+      driver: { model: { entityId: "d1" }, name: "Alice" },
+      fuelLevel: 80,
     };
 
     const p2 = RaceParticipantConverter.fromProto(proto2);

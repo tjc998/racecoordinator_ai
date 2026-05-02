@@ -23,7 +23,7 @@ public class GlobalStatistics {
 
   @BsonProperty("total_laps")
   @JsonProperty("total_laps")
-  private int totalLaps;
+  private double totalLaps;
 
   @BsonProperty("total_race_time_ms")
   @JsonProperty("total_race_time_ms")
@@ -145,7 +145,7 @@ public class GlobalStatistics {
       @BsonId @JsonProperty("_id") ObjectId id,
       @BsonProperty("race_entity_id") @JsonProperty("race_entity_id") String raceEntityId,
       @BsonProperty("total_races") @JsonProperty("total_races") int totalRaces,
-      @BsonProperty("total_laps") @JsonProperty("total_laps") int totalLaps,
+      @BsonProperty("total_laps") @JsonProperty("total_laps") double totalLaps,
       @BsonProperty("total_race_time_ms") @JsonProperty("total_race_time_ms") long totalRaceTimeMs,
       @BsonProperty("fastest_lap_time") @JsonProperty("fastest_lap_time") double fastestLapTime,
       @BsonProperty("fastest_lap_driver_name") @JsonProperty("fastest_lap_driver_name")
@@ -258,15 +258,15 @@ public class GlobalStatistics {
     this.totalRaces++;
   }
 
-  public int getTotalLaps() {
+  public double getTotalLaps() {
     return totalLaps;
   }
 
-  public void setTotalLaps(int totalLaps) {
+  public void setTotalLaps(double totalLaps) {
     this.totalLaps = totalLaps;
   }
 
-  public void addLaps(int laps) {
+  public void addLaps(double laps) {
     this.totalLaps += laps;
   }
 

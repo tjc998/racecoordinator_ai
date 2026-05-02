@@ -20,6 +20,7 @@ import org.bson.types.ObjectId;
 public class Track extends Model {
 
   private final String name;
+  private final int numTrackSections;
   private final List<Lane> lanes;
   private final List<ArduinoConfig> arduinoConfigs;
 
@@ -27,6 +28,8 @@ public class Track extends Model {
   @JsonCreator
   public Track(
       @BsonProperty("name") @JsonProperty("name") String name,
+      @BsonProperty("num_track_sections") @JsonProperty("num_track_sections")
+          Integer numTrackSections,
       @BsonProperty("lanes") @JsonProperty("lanes") List<Lane> lanes,
       @BsonProperty("arduino_configs") @JsonProperty("arduino_configs")
           List<ArduinoConfig> arduinoConfigs,
@@ -34,6 +37,7 @@ public class Track extends Model {
       @BsonId @JsonProperty("_id") ObjectId id) {
     super(id, entityId);
     this.name = name;
+    this.numTrackSections = numTrackSections != null ? numTrackSections : 100;
     this.lanes = lanes != null ? Collections.unmodifiableList(lanes) : Collections.emptyList();
     this.arduinoConfigs =
         arduinoConfigs != null
@@ -42,16 +46,31 @@ public class Track extends Model {
   }
 
   public Track(String name, List<Lane> lanes, String entityId, ObjectId id) {
-    this(name, lanes, null, entityId, id);
+    this(name, 100, lanes, null, entityId, id);
+  }
+
+  public Track(
+      String name,
+      List<Lane> lanes,
+      List<ArduinoConfig> arduinoConfigs,
+      String entityId,
+      ObjectId id) {
+    this(name, 100, lanes, arduinoConfigs, entityId, id);
   }
 
   // Legacy constructor or convenience
   public Track(String name, List<Lane> lanes) {
-    this(name, lanes, null, null, null);
+    this(name, 100, lanes, null, null, null);
   }
 
   public String getName() {
     return name;
+  }
+
+  @JsonProperty("num_track_sections")
+  @BsonProperty("num_track_sections")
+  public int getNumTrackSections() {
+    return numTrackSections;
   }
 
   @JsonProperty("has_digital_fuel")
@@ -158,7 +177,13 @@ public class Track extends Model {
       syncedConfigs.add(syncedConfig);
     }
 
-    return new Track(this.name, this.lanes, syncedConfigs, this.getEntityId(), this.getId());
+    return new Track(
+        this.name,
+        this.numTrackSections,
+        this.lanes,
+        syncedConfigs,
+        this.getEntityId(),
+        this.getId());
   }
 
   private int getLaneIndexFromRgbBehavior(int flavor) {

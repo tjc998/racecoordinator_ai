@@ -32,6 +32,7 @@ import com.antigravity.models.Track;
 import com.antigravity.proto.InitializeRaceRequest;
 import com.antigravity.proto.InitializeRaceResponse;
 import com.antigravity.race.ClientSubscriptionManager;
+import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.RaceSaveData;
 import com.antigravity.race.states.NotStarted;
@@ -690,6 +691,37 @@ public class ClientCommandTaskHandlerTest {
     assertEquals(2, response.getTeamNamesCount());
     assertTrue(response.getTeamNamesList().contains("Team A"));
     assertTrue(response.getTeamNamesList().contains("Team B"));
+  }
+
+  @Test
+  public void testUpdateUserLaps_Success() throws Exception {
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    com.antigravity.race.Heat mockHeat = mock(com.antigravity.race.Heat.class);
+    DriverHeatData mockDhd = mock(DriverHeatData.class);
+    com.antigravity.models.Race mockRaceModel = mock(com.antigravity.models.Race.class);
+
+    when(mockRace.getCurrentHeat()).thenReturn(mockHeat);
+    when(mockHeat.getDrivers()).thenReturn(Arrays.asList(mockDhd));
+    when(mockDhd.getAdjustedLapCount()).thenReturn(5.25);
+    when(mockRace.getRaceModel()).thenReturn(mockRaceModel);
+
+    ClientSubscriptionManager.getInstance().setRace(mockRace);
+
+    HttpServletRequest req = mock(HttpServletRequest.class);
+    HttpServletResponse res = mock(HttpServletResponse.class);
+    Context ctx = new Context(req, res, new HashMap<>());
+
+    Map<String, String> pathParams = new HashMap<>();
+    pathParams.put("lane", "0");
+    Map<String, Object> body = new HashMap<>();
+    body.put("userLaps", 1.25);
+
+    handler.updateUserLaps(ctx, pathParams, body);
+
+    verify(mockDhd).setUserLaps(1.25);
+    verify(mockHeat).initializeStandings(any());
+    verify(mockRace).updateAndBroadcastOverallStandings();
+    verify(res).setStatus(200);
   }
 
   private void deleteDirectory(File directory) {

@@ -1,11 +1,10 @@
 import { AnalogFuelOptions } from "src/app/models/analog_fuel_options";
 import { FuelUsageType } from "src/app/models/fuel_options";
-import { com } from "src/app/proto/message";
+
+import { IAnalogFuelOptions } from "src/app/proto/antigravity";
 
 export class AnalogFuelOptionsConverter {
-  static fromProto(
-    proto?: com.antigravity.IAnalogFuelOptions | null,
-  ): AnalogFuelOptions {
+  static fromProto(proto?: IAnalogFuelOptions | null): AnalogFuelOptions {
     if (!proto) {
       return new AnalogFuelOptions();
     }

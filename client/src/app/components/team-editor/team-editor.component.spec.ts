@@ -13,7 +13,7 @@ import {
   fakeAsync,
   flush,
   TestBed,
-  tick,
+  tick as _tick,
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
@@ -28,11 +28,11 @@ import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 import {
   MOCK_DRIVER_INSTANCES,
-  MOCK_DRIVERS,
+  MOCK_DRIVERS as _MOCK_DRIVERS,
 } from "src/app/testing/data/drivers_data";
 import {
   MOCK_TEAM_INSTANCES,
-  MOCK_TEAMS,
+  MOCK_TEAMS as _MOCK_TEAMS,
 } from "src/app/testing/data/teams_data";
 import {
   mockAnalyticsService,
@@ -134,7 +134,7 @@ describe("TeamEditorComponent", () => {
   let router: any;
   let mockConnectionMonitor: any;
   let mockActivatedRoute: any;
-  let activatedRoute: any;
+  let _activatedRoute: any;
 
   beforeEach(async () => {
     mockTranslationService.translate.and.callFake((key: string) => key);
@@ -200,7 +200,7 @@ describe("TeamEditorComponent", () => {
     component = fixture.componentInstance;
     dataService = TestBed.inject(DataService);
     router = TestBed.inject(Router);
-    activatedRoute = TestBed.inject(ActivatedRoute);
+    _activatedRoute = TestBed.inject(ActivatedRoute);
 
     // Use deep copies of mock data AND set prototypes
     component.editingTeam = JSON.parse(JSON.stringify(MOCK_TEAM_INSTANCES[0]));

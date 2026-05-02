@@ -10,8 +10,10 @@ import {
   SimpleChanges,
 } from "@angular/core";
 import { DataService } from "src/app/data.service";
-import { com } from "src/app/proto/message";
+
 import { TranslationService } from "src/app/services/translation.service";
+
+import { IAssetMessage, ISaveImageSetEntry } from "src/app/proto/antigravity";
 
 @Component({
   selector: "app-image-set-editor",
@@ -23,15 +25,15 @@ export class ImageSetEditorComponent implements OnInit, OnChanges {
   @Input() visible = false;
   @Input() assetId?: string;
   @Input() initialName = "";
-  @Input() initialEntries: com.antigravity.ISaveImageSetEntry[] = [];
+  @Input() initialEntries: ISaveImageSetEntry[] = [];
   @Input() allImages: any[] = [];
 
   @Output() close = new EventEmitter<void>();
-  @Output() saved = new EventEmitter<com.antigravity.IAssetMessage>();
+  @Output() saved = new EventEmitter<IAssetMessage>();
 
   id = "image-set-editor-" + Math.random().toString(36).substr(2, 9);
   name = "";
-  entries: com.antigravity.ISaveImageSetEntry[] = [];
+  entries: ISaveImageSetEntry[] = [];
   isSaving = false;
   isDragging = false;
   private dragCounter = 0;
@@ -202,9 +204,7 @@ export class ImageSetEditorComponent implements OnInit, OnChanges {
       }),
     );
 
-    const newEntries: com.antigravity.ISaveImageSetEntry[] = new Array(
-      fileArray.length,
-    );
+    const newEntries: ISaveImageSetEntry[] = new Array(fileArray.length);
     let processedCount = 0;
 
     fileArray.forEach((file, index) => {
@@ -232,7 +232,7 @@ export class ImageSetEditorComponent implements OnInit, OnChanges {
     });
   }
 
-  addDroppedEntries(newEntries: com.antigravity.ISaveImageSetEntry[]) {
+  addDroppedEntries(newEntries: ISaveImageSetEntry[]) {
     console.log(`ImageSetEditor: Adding ${newEntries.length} entries to list`);
     // Add new entries to existing list
     this.entries = [...this.entries, ...newEntries];

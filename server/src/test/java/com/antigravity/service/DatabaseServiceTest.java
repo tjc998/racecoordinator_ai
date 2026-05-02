@@ -118,7 +118,7 @@ public class DatabaseServiceTest {
     assertEquals(1, updatedStats.getTotalRaces());
     assertEquals(
         10550L, updatedStats.getTotalRaceTimeMs(), 1000L); // Allow some drift for processing time
-    assertEquals(2, updatedStats.getTotalLaps()); // Participant p1 had 2 laps
+    assertEquals(2.0, updatedStats.getTotalLaps(), 0.001); // Participant p1 had 2 laps
   }
 
   @Test

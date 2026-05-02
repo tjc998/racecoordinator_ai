@@ -1,8 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { com } from "src/app/proto/message";
+
 import { TestSetupHelper } from "src/app/testing/test-setup_helper";
 
 import { DefaultRacedayHarnessE2e } from "./testing/default-raceday.harness.e2e";
+
+import { RaceData } from "src/app/proto/antigravity";
 
 test.describe("Raceday Visuals for Fuel", () => {
   test.beforeEach(async ({ page }) => {
@@ -64,7 +66,7 @@ test.describe("Raceday Visuals for Fuel", () => {
     );
 
     const container = page.locator(".dashboard-wrapper");
-    const harness = new DefaultRacedayHarnessE2e(container);
+    const _harness = new DefaultRacedayHarnessE2e(container);
 
     await expect(page.locator(".scalable-content")).toBeVisible();
 
@@ -247,7 +249,7 @@ test.describe("Raceday Visuals for Fuel", () => {
     await page.locator(".table-row").first().waitFor({ state: "visible" });
     await page.waitForTimeout(500);
 
-    const avatarHref = await harness.getDriverAvatarHref(0);
+    const _avatarHref = await harness.getDriverAvatarHref(0);
     // Avatar href checked visually
 
     await expect(page).toHaveScreenshot("raceday-driver-avatars.png", {
@@ -263,7 +265,7 @@ test.describe("Raceday Visuals for Fuel", () => {
     );
 
     const container = page.locator(".dashboard-wrapper");
-    const harness = new DefaultRacedayHarnessE2e(container);
+    const _harness = new DefaultRacedayHarnessE2e(container);
 
     const raceData = {
       race: {
@@ -636,7 +638,7 @@ test.describe("Raceday Visuals for Fuel", () => {
     };
 
     // Inject allDrivers mock with multiple drivers setup so getTeammates returns something listable!
-    const buffer = com.antigravity.RaceData.encode(raceData as any).finish();
+    const buffer = RaceData.encode(raceData as any).finish();
     const dataArray = Array.from(buffer);
     await page.addInitScript((data) => {
       // @ts-ignore

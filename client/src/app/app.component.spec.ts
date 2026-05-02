@@ -3,13 +3,14 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { NoopAnimationsModule } from "@angular/platform-browser/animations";
 import { ChildrenOutletContexts, NavigationEnd, Router } from "@angular/router";
 import { of, Subject } from "rxjs";
-import { com } from "src/app/proto/message";
 
 import { AnalyticsService } from "./analytics.service";
 import { AppComponent } from "./app.component";
 import { DataService } from "./data.service";
 import { NavigationService } from "./services/navigation.service";
 import { SettingsService } from "./services/settings.service";
+
+import { RaceFlag } from "src/app/proto/antigravity";
 
 describe("AppComponent", () => {
   let fixture: ComponentFixture<AppComponent>;
@@ -40,9 +41,7 @@ describe("AppComponent", () => {
     mockDataService.getServerVersion.and.returnValue(of("TEST-SERVER-VERSION"));
     mockDataService.connectToRaceDataSocket.and.stub();
     mockDataService.getRaceUpdate.and.returnValue(of({}));
-    mockDataService.getRaceFlag.and.returnValue(
-      of(com.antigravity.RaceFlag.RED),
-    );
+    mockDataService.getRaceFlag.and.returnValue(of(RaceFlag.RED));
 
     mockAnalyticsService = jasmine.createSpyObj("AnalyticsService", [
       "initTracking",

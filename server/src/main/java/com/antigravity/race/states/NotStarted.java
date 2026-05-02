@@ -162,8 +162,8 @@ public class NotStarted implements IRaceState {
 
     // Broadcast partial update
     Set<String> sentObjectIds = new HashSet<>();
-    com.antigravity.proto.Race raceUpdate =
-        com.antigravity.proto.Race.newBuilder()
+    com.antigravity.proto.Race raceUpdate = // fqn-collision
+        com.antigravity.proto.Race.newBuilder() // fqn-collision
             .addAllHeats(
                 heats.stream()
                     .map(h -> HeatConverter.toProto(h, sentObjectIds))
@@ -233,8 +233,8 @@ public class NotStarted implements IRaceState {
 
       int lane = carData.getLane();
       // Broadcast the CarData to clients
-      com.antigravity.proto.CarData.Builder dataBuilder =
-          com.antigravity.proto.CarData.newBuilder()
+      com.antigravity.proto.CarData.Builder dataBuilder = // fqn-collision
+          com.antigravity.proto.CarData.newBuilder() // fqn-collision
               .setLane(carData.getLane())
               .setControllerThrottlePct(carData.getControllerThrottlePCT())
               .setCarThrottlePct(carData.getCarThrottlePCT())
@@ -254,7 +254,7 @@ public class NotStarted implements IRaceState {
         }
       }
 
-      com.antigravity.proto.CarData protoCarData = dataBuilder.build();
+      com.antigravity.proto.CarData protoCarData = dataBuilder.build(); // fqn-collision
       RaceData raceDataMsg = RaceData.newBuilder().setCarData(protoCarData).build();
 
       race.broadcast(raceDataMsg);
@@ -313,7 +313,7 @@ public class NotStarted implements IRaceState {
                           "NotStarted: Warmup ended. Turning off power and resetting heat.");
                       race.setMainPower(false);
                       race.resetCurrentHeat();
-                      race.broadcastFlag(com.antigravity.proto.RaceFlag.RED);
+                      race.broadcastFlag(RaceFlag.RED);
                     }
                   }
                 }

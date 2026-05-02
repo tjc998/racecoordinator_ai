@@ -1,8 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { com } from "src/app/proto/message";
+
 import { TestSetupHelper } from "src/app/testing/test-setup_helper";
 
-import { DefaultRacedayHarnessE2e } from "./testing/default-raceday.harness.e2e";
+import {} from "./testing/default-raceday.harness.e2e";
+
+import { RaceData } from "src/app/proto/antigravity";
 
 test.describe("Drift Lap Indicator Visuals", () => {
   test.beforeEach(async ({ page }) => {
@@ -40,7 +42,7 @@ test.describe("Drift Lap Indicator Visuals", () => {
       page.goto("/default-raceday"),
     );
 
-    const raceData = com.antigravity.RaceData.create({
+    const raceData = RaceData.create({
       race: {
         race: {
           model: { entityId: "r1" },

@@ -45,6 +45,21 @@
         />
       </div>
 
+      <div id="num-track-sections-section" class="editor-section">
+        <label>{{ "TE_NUM_TRACK_SECTIONS" | translate }}</label>
+        <input
+          id="num-track-sections-input"
+          type="number"
+          [(ngModel)]="numTrackSections"
+          (focus)="onInputFocus()"
+          (blur)="onInputBlur()"
+          (ngModelChange)="onInputChange()"
+          autocomplete="off"
+          name="numTrackSectionsInput"
+          min="1"
+        />
+      </div>
+
       <div class="sections-wrapper">
         <div id="lane-editor-section" class="config-section">
           <div class="section-header" (click)="toggleSection('lanes')">

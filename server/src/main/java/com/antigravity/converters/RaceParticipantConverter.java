@@ -8,7 +8,8 @@ import java.util.Set;
 public class RaceParticipantConverter {
 
   public static RaceParticipant toProto(
-      com.antigravity.race.RaceParticipant participant, Set<String> sentObjectIds) {
+      com.antigravity.race.RaceParticipant participant, // fqn-collision
+      Set<String> sentObjectIds) {
     if (participant == null) {
       return null;
     }

@@ -27,7 +27,8 @@ public class HeatScoring {
   public enum AllowFinish {
     None,
     Allow,
-    SingleLap
+    SingleLap,
+    NoneAutoSegments
   }
 
   @BsonProperty("finish_method")
@@ -51,10 +52,10 @@ public class HeatScoring {
   private final AllowFinish allowFinish;
 
   public HeatScoring() {
-    this.finishMethod = FinishMethod.Timed;
+    this.finishMethod = FinishMethod.Lap;
     this.finishValue = 15;
     this.heatRanking = HeatRanking.LAP_COUNT;
-    this.heatRankingTiebreaker = HeatRankingTiebreaker.FASTEST_LAP_TIME;
+    this.heatRankingTiebreaker = HeatRankingTiebreaker.AVERAGE_LAP_TIME;
     this.allowFinish = AllowFinish.None;
   }
 

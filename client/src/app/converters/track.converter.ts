@@ -1,9 +1,10 @@
 import { Track } from "src/app/models/track";
-import { com } from "src/app/proto/message";
 
 import { ArduinoConfigConverter } from "./arduino_config.converter";
 import { ConverterCache } from "./converter_cache";
 import { LaneConverter } from "./lane.converter";
+
+import { ITrackModel } from "src/app/proto/antigravity";
 
 export class TrackConverter {
   private static cache = new ConverterCache<Track>();
@@ -12,9 +13,9 @@ export class TrackConverter {
     this.cache.clear();
   }
 
-  static fromProto(proto: com.antigravity.ITrackModel): Track {
+  static fromProto(proto: ITrackModel): Track {
     if (!proto) {
-      return new Track("", "Unknown Track", [], false, []);
+      return new Track("", "Unknown Track", 100, [], false, []);
     }
     const objectId = proto.model?.entityId || "";
     const isReference =
@@ -36,6 +37,7 @@ export class TrackConverter {
         return new Track(
           objectId,
           proto.name || "Unknown Track",
+          proto.numTrackSections || 100,
           lanes,
           proto.hasDigitalFuel ?? false,
           (proto.arduinoConfigs || []).map((ac) =>

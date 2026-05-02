@@ -78,7 +78,7 @@ export class ArduinoEditorHarness
     if (index >= 0) {
       // In component harness we can't easily query optional per index without re-fetching everything
       // But since we can just check if any content exists
-      const contents = await this.getSectionContents();
+      const _contents = await this.getSectionContents();
       // It's tricky to map sections to contents, since section may or may not have content.
       // The easiest fix for this harness is to check the parent's expanded class if it exists.
       // But actually, we can just grab the section and see if it has that child.
@@ -128,7 +128,7 @@ export class ArduinoEditorHarness
     return "";
   }
 
-  async isVoltageLinked(lane: number): Promise<boolean> {
+  async isVoltageLinked(_lane: number): Promise<boolean> {
     const icon = await this.getVoltageLinkIcon();
     if (icon) {
       return await icon.hasClass("linked");
@@ -136,7 +136,7 @@ export class ArduinoEditorHarness
     return false;
   }
 
-  async clickVoltageLink(lane: number): Promise<void> {
+  async clickVoltageLink(_lane: number): Promise<void> {
     const icon = await this.getVoltageLinkIcon();
     if (icon) {
       await icon.click();

@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
-import { com } from "src/app/proto/message";
+
 import { TestSetupHelper } from "src/app/testing/test-setup_helper";
+
+import { RaceData } from "src/app/proto/antigravity";
 
 test.describe("Heat Results Visuals", () => {
   test.beforeEach(async ({ page }) => {
@@ -58,7 +60,7 @@ test.describe("Heat Results Visuals", () => {
     };
 
     // Encode and inject over init-state buffer delivery
-    const buffer = com.antigravity.RaceData.encode(mockData).finish();
+    const buffer = RaceData.encode(mockData).finish();
     const dataArray = Array.from(buffer);
     await page.addInitScript((data) => {
       // @ts-ignore

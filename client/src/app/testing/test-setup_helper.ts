@@ -1,11 +1,19 @@
 import { Page } from "@playwright/test";
 
-import { com } from "../proto/message";
-import { MOCK_ASSETS } from "./data/assets_data";
+import {} from "./data/assets_data";
 import { MOCK_DRIVERS } from "./data/drivers_data";
 import { MOCK_RACES } from "./data/races_data";
 import { MOCK_TEAMS } from "./data/teams_data";
 import { MOCK_FACTORY_SETTINGS, MOCK_TRACKS } from "./data/tracks_data";
+
+import {
+  IRaceTime,
+  InitializeInterfaceResponse,
+  ListAssetsResponse,
+  RaceData,
+  RaceState,
+  UpdateInterfaceConfigResponse,
+} from "src/app/proto/antigravity";
 
 export interface SetupOptions {
   skipIntro?: boolean;
@@ -361,7 +369,7 @@ export class TestSetupHelper {
 
   static async waitForLocalization(
     page: Page,
-    lang: string = "en",
+    _lang: string = "en",
     action?: Promise<any>,
   ) {
     // 1. Perform the action (e.g. goto)
@@ -484,11 +492,10 @@ export class TestSetupHelper {
 
     // Mock interface initialization and updates to avoid browser errors
     await page.route("**/api/initialize-interface", async (route) => {
-      const response = com.antigravity.InitializeInterfaceResponse.create({
+      const response = InitializeInterfaceResponse.create({
         success: true,
       });
-      const buffer =
-        com.antigravity.InitializeInterfaceResponse.encode(response).finish();
+      const buffer = InitializeInterfaceResponse.encode(response).finish();
       await route.fulfill({
         status: 200,
         contentType: "application/octet-stream",
@@ -497,11 +504,10 @@ export class TestSetupHelper {
     });
 
     await page.route("**/api/update-interface-config", async (route) => {
-      const response = com.antigravity.UpdateInterfaceConfigResponse.create({
+      const response = UpdateInterfaceConfigResponse.create({
         success: true,
       });
-      const buffer =
-        com.antigravity.UpdateInterfaceConfigResponse.encode(response).finish();
+      const buffer = UpdateInterfaceConfigResponse.encode(response).finish();
       await route.fulfill({
         status: 200,
         contentType: "application/octet-stream",
@@ -679,9 +685,8 @@ export class TestSetupHelper {
           },
         ];
 
-        const response = com.antigravity.ListAssetsResponse.create({ assets });
-        const buffer =
-          com.antigravity.ListAssetsResponse.encode(response).finish();
+        const response = ListAssetsResponse.create({ assets });
+        const buffer = ListAssetsResponse.encode(response).finish();
 
         await route.fulfill({
           status: 200,
@@ -893,7 +898,7 @@ export class TestSetupHelper {
   }
 
   static async setupRaceWebSocketMocks(page: Page) {
-    const raceData = com.antigravity.RaceData.create({
+    const raceData = RaceData.create({
       race: {
         // IRace
         race: {
@@ -960,11 +965,11 @@ export class TestSetupHelper {
       },
     });
 
-    const buffer = com.antigravity.RaceData.encode(raceData).finish();
+    const buffer = RaceData.encode(raceData).finish();
     const dataArray = Array.from(buffer);
 
     await page.addInitScript((data) => {
-      window.mockRaceDataBuffer = new Uint8Array(data).buffer;
+      window.mockRaceDataBuffer = new Uint8Array(data as number[]).buffer;
       // Also broadcast it to any already open sockets
       if (window.allMockSockets) {
         const raceSockets = window.allMockSockets.filter((s: any) =>
@@ -982,10 +987,10 @@ export class TestSetupHelper {
   }
 
   static async mockRaceData(page: Page, data: any) {
-    const buffer = com.antigravity.RaceData.encode(data).finish();
+    const buffer = RaceData.encode(data).finish();
     const dataArray = Array.from(buffer);
     await page.evaluate((bufferArray) => {
-      const buffer = new Uint8Array(bufferArray).buffer;
+      const buffer = new Uint8Array(bufferArray as number[]).buffer;
       // Broadcast to mock sockets
       // @ts-ignore
       if (window.allMockSockets) {
@@ -1002,12 +1007,12 @@ export class TestSetupHelper {
     }, dataArray);
   }
 
-  static async sendRaceState(page: Page, raceState: com.antigravity.RaceState) {
+  static async sendRaceState(page: Page, raceState: RaceState) {
     const raceData = { raceState };
-    const buffer = com.antigravity.RaceData.encode(raceData).finish();
+    const buffer = RaceData.encode(raceData).finish();
     const dataArray = Array.from(buffer);
     await page.evaluate((bufferArray) => {
-      const buffer = new Uint8Array(bufferArray).buffer;
+      const buffer = new Uint8Array(bufferArray as number[]).buffer;
       // @ts-ignore
       if (window.allMockSockets) {
         // @ts-ignore
@@ -1023,12 +1028,12 @@ export class TestSetupHelper {
     }, dataArray);
   }
 
-  static async sendRaceTime(page: Page, raceTime: com.antigravity.IRaceTime) {
+  static async sendRaceTime(page: Page, raceTime: IRaceTime) {
     const raceData = { raceTime };
-    const buffer = com.antigravity.RaceData.encode(raceData).finish();
+    const buffer = RaceData.encode(raceData).finish();
     const dataArray = Array.from(buffer);
     await page.evaluate((bufferArray) => {
-      const buffer = new Uint8Array(bufferArray).buffer;
+      const buffer = new Uint8Array(bufferArray as number[]).buffer;
       // @ts-ignore
       if (window.allMockSockets) {
         // @ts-ignore
@@ -1170,13 +1175,13 @@ export class TestSetupHelper {
       };
 
       const mockTransaction = {
-        objectStore: (name: string) => mockStore,
+        objectStore: (_name: string) => mockStore,
       };
 
       const mockDB = {
         objectStoreNames: { contains: () => true },
         createObjectStore: () => mockStore,
-        transaction: (stores: any, mode: any) => mockTransaction,
+        transaction: (_stores: any, _mode: any) => mockTransaction,
       };
 
       const mockOpenRequest: any = {
@@ -1190,7 +1195,7 @@ export class TestSetupHelper {
       try {
         Object.defineProperty(window, "indexedDB", {
           value: {
-            open: (name: string, version: number) => {
+            open: (_name: string, _version: number) => {
               setTimeout(() => {
                 if (mockOpenRequest.onsuccess) {
                   mockOpenRequest.onsuccess({ target: mockOpenRequest });
@@ -1204,7 +1209,7 @@ export class TestSetupHelper {
       } catch (e) {
         // Fallback
         (window as any).indexedDB = {
-          open: (name: string, version: number) => {
+          open: (_name: string, _version: number) => {
             setTimeout(() => {
               if (mockOpenRequest.onsuccess) {
                 mockOpenRequest.onsuccess({ target: mockOpenRequest });

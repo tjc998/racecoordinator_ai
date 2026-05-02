@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
 import { AnalyticsService } from "src/app/analytics.service";
 import { DataService } from "src/app/data.service";
-import { Settings } from "src/app/models/settings";
+import {} from "src/app/models/settings";
 import { Track } from "src/app/models/track";
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 import { HelpService } from "src/app/services/help.service";
@@ -12,7 +12,7 @@ import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 import {
   MOCK_TRACK_INSTANCES,
-  MOCK_TRACKS,
+  MOCK_TRACKS as _MOCK_TRACKS,
 } from "src/app/testing/data/tracks_data";
 import {
   mockAnalyticsService,
@@ -52,10 +52,10 @@ describe("TrackManagerComponent", () => {
     const mockActivatedRoute = {
       snapshot: {
         queryParamMap: {
-          get: (key: string): string | null => null,
+          get: (_key: string): string | null => null,
         },
       },
-      queryParamMap: of({ get: (key: string) => null }),
+      queryParamMap: of({ get: (_key: string) => null }),
       queryParams: of({ help: "false" }),
     };
 
@@ -194,7 +194,7 @@ describe("TrackManagerComponent", () => {
 
   it("should handle extremely long track names without logic errors", () => {
     const longName = "A".repeat(500);
-    const mockTrack = new Track("t-long", longName, [], false, []);
+    const mockTrack = new Track("t-long", longName, 100, [], false, []);
 
     component.tracks = [mockTrack];
     component.selectTrack(mockTrack);

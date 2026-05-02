@@ -11,7 +11,8 @@ public class HeatConverter {
 
   public static final String PARTICIPANT_PREFIX = "Participant_";
 
-  public static Heat toProto(com.antigravity.race.Heat heat, Set<String> sentObjectIds) {
+  public static Heat toProto(
+      com.antigravity.race.Heat heat, Set<String> sentObjectIds) { // fqn-collision
     return Heat.newBuilder()
         .setObjectId(heat.getObjectId())
         .addAllHeatDrivers(
@@ -24,7 +25,7 @@ public class HeatConverter {
   }
 
   public static DriverHeatData toProto(
-      com.antigravity.race.DriverHeatData data, Set<String> sentObjectIds) {
+      com.antigravity.race.DriverHeatData data, Set<String> sentObjectIds) { // fqn-collision
     return DriverHeatData.newBuilder()
         .setObjectId(data.getObjectId())
         .setDriver(RaceParticipantConverter.toProto(data.getDriver(), sentObjectIds))
@@ -38,6 +39,7 @@ public class HeatConverter {
                 : DriverModel.getDefaultInstance())
         .setGapLeader(data.getGapLeader())
         .setGapPosition(data.getGapPosition())
+        .addAllSegments(data.getSegments())
         .addAllLaps(
             data.getLaps().stream()
                 .map(
@@ -48,6 +50,20 @@ public class HeatConverter {
                             .setIsDrift(l.isDrift())
                             .build())
                 .collect(Collectors.toList()))
+        .setPenaltyLaps(data.getPenaltyLaps())
+        .setUserLaps(data.getUserLaps())
+        .setAutoCalculatedLaps(data.getAutoCalculatedLaps())
+        .setAdjustedLapCount(data.getAdjustedLapCount())
+        .setAverageLapTime(data.getAverageLapTime())
+        .setMedianLapTime(data.getMedianLapTime())
+        .setBestLapTime(data.getBestLapTime())
+        .setReactionTime(data.getReactionTime())
+        .setGapLeader(data.getGapLeader())
+        .setGapPosition(data.getGapPosition())
+        .setIsRefueling(data.isRefueling())
+        .setCurrentLocation(
+            data.getCurrentLocation() != null ? data.getCurrentLocation().getValue() : -1)
+        .setInitialFuelLevel(data.getInitialFuelLevel())
         .build();
   }
 }

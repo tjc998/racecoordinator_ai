@@ -24,7 +24,8 @@ import {
   MAX_DIGITAL_PINS,
   Track,
 } from "src/app/models/track";
-import { com } from "src/app/proto/message";
+import {} from "src/app/proto/message";
+import { PinBehavior, RgbLedBehavior } from "src/app/proto/antigravity";
 import { GuideStep, HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
@@ -40,6 +41,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   private isDestroyed = false;
   private subscriptions: Subscription[] = [];
   trackName: string = "";
+  numTrackSections: number = 100;
   lanes: Lane[] = [];
   editingTrack?: Track;
   arduinoConfigs: ArduinoConfig[] = [];
@@ -90,6 +92,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
           this.editingTrack = t;
           if (this.editingTrack) {
             this.trackName = this.editingTrack.name;
+            this.numTrackSections = this.editingTrack.num_track_sections;
             this.lanes = [...this.editingTrack.lanes];
 
             // Restore Arduino Configs
@@ -234,6 +237,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
                   this.editingTrack = new Track(
                     "new",
                     this.translationService.translate("TM_DEFAULT_TRACK_NAME"),
+                    factoryTrack.num_track_sections || 100,
                     factoryTrack.lanes.map(
                       (l: any) =>
                         new Lane(
@@ -254,6 +258,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
                   this.editingTrack = new Track(
                     "new",
                     "",
+                    100,
                     [
                       new Lane(this.generateId(), "#ef4444", "black", 100),
                       new Lane(this.generateId(), "#ffffff", "black", 100),
@@ -320,13 +325,15 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       }
 
       this.trackName = this.editingTrack.name;
+      this.numTrackSections = this.editingTrack.num_track_sections;
       this.lanes = [...this.editingTrack.lanes];
 
       // Now initialize tracking with a fully populated model
       this.undoManager.initialize(this.editingTrack);
     } else {
-      this.editingTrack = new Track("new", "", [], false);
+      this.editingTrack = new Track("new", "", 100, [], false);
       this.trackName = "";
+      this.numTrackSections = 100;
       this.lanes = [];
       this.arduinoConfigs = [];
       this.undoManager.initialize(this.editingTrack);
@@ -383,6 +390,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     return new Track(
       track.entity_id,
       track.name,
+      track.num_track_sections,
       lanesCopy,
       track.has_digital_fuel,
       arduinoCopy,
@@ -391,7 +399,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   private createSnapshot(): Track {
     if (!this.editingTrack) {
-      return new Track("new", "", [], false);
+      return new Track("new", "", 100, [], false);
     }
     const configs = this.arduinoConfigs
       ? JSON.parse(JSON.stringify(this.arduinoConfigs))
@@ -399,6 +407,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     return new Track(
       this.editingTrack.entity_id,
       this.trackName,
+      this.numTrackSections,
       this.lanes.map(
         (l) =>
           new Lane(
@@ -414,7 +423,10 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   }
 
   private areTracksEqual(t1: Track, t2: Track): boolean {
-    if (t1.name !== t2.name) {
+    if (
+      t1.name !== t2.name ||
+      t1.num_track_sections !== t2.num_track_sections
+    ) {
       return false;
     }
     if (t1.lanes.length !== t2.lanes.length) {
@@ -572,6 +584,16 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
         position: "bottom",
       },
       {
+        selector: "#num-track-sections-section",
+        title: this.translationService.translate(
+          "TE_HELP_NUM_TRACK_SECTIONS_TITLE",
+        ),
+        content: this.translationService.translate(
+          "TE_HELP_NUM_TRACK_SECTIONS_CONTENT",
+        ),
+        position: "bottom",
+      },
+      {
         selector: "#lane-editor-section",
         title: this.translationService.translate("TE_HELP_LANES_TITLE"),
         content: this.translationService.translate("TE_HELP_LANES_CONTENT"),
@@ -714,40 +736,40 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
           const val = ids[i];
           // TODO(aufderheide): Remove the absolute paths here and replace with imports
           if (
-            val === com.antigravity.PinBehavior.BEHAVIOR_UNUSED ||
-            val === com.antigravity.PinBehavior.BEHAVIOR_RESERVED ||
-            val === com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON ||
-            val === com.antigravity.PinBehavior.BEHAVIOR_RELAY
+            val === PinBehavior.BEHAVIOR_UNUSED ||
+            val === PinBehavior.BEHAVIOR_RESERVED ||
+            val === PinBehavior.BEHAVIOR_CALL_BUTTON ||
+            val === PinBehavior.BEHAVIOR_RELAY
           ) {
             continue;
           }
 
           let base = -1;
           if (
-            val >= com.antigravity.PinBehavior.BEHAVIOR_LAP_BASE &&
-            val < com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE
+            val >= PinBehavior.BEHAVIOR_LAP_BASE &&
+            val < PinBehavior.BEHAVIOR_SEGMENT_BASE
           ) {
-            base = com.antigravity.PinBehavior.BEHAVIOR_LAP_BASE;
+            base = PinBehavior.BEHAVIOR_LAP_BASE;
           } else if (
-            val >= com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE &&
-            val < com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE
+            val >= PinBehavior.BEHAVIOR_SEGMENT_BASE &&
+            val < PinBehavior.BEHAVIOR_CALL_BUTTON_BASE
           ) {
-            base = com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE;
+            base = PinBehavior.BEHAVIOR_SEGMENT_BASE;
           } else if (
-            val >= com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE &&
-            val < com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE
+            val >= PinBehavior.BEHAVIOR_CALL_BUTTON_BASE &&
+            val < PinBehavior.BEHAVIOR_RELAY_BASE
           ) {
-            base = com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE;
+            base = PinBehavior.BEHAVIOR_CALL_BUTTON_BASE;
           } else if (
-            val >= com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE &&
-            val < com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE + 1000
+            val >= PinBehavior.BEHAVIOR_RELAY_BASE &&
+            val < PinBehavior.BEHAVIOR_RELAY_BASE + 1000
           ) {
-            base = com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE;
+            base = PinBehavior.BEHAVIOR_RELAY_BASE;
           } else if (
-            val >= com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE &&
-            val < com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000
+            val >= PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE &&
+            val < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000
           ) {
-            base = com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE;
+            base = PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE;
           }
 
           if (base !== -1) {
@@ -804,13 +826,11 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
           if (ls.leds) {
             ls.leds = ls.leds.map((val) => {
               const bases = [
-                com.antigravity.RgbLedBehavior
-                  .RGB_LED_BEHAVIOR_HEAT_LEADER_BASE,
-                com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE,
-                com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE,
-                com.antigravity.RgbLedBehavior
-                  .RGB_LED_BEHAVIOR_LAP_INDICATOR_BASE,
-                com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_SENSOR_BASE,
+                RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE,
+                RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE,
+                RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE,
+                RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_INDICATOR_BASE,
+                RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_SENSOR_BASE,
               ];
               const base = bases.find((b) => val >= b && val < b + 1000);
               if (base !== undefined) {
@@ -845,46 +865,46 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
         for (let i = 0; i < ids.length; i++) {
           const val = ids[i];
           if (
-            val === com.antigravity.PinBehavior.BEHAVIOR_UNUSED ||
-            val === com.antigravity.PinBehavior.BEHAVIOR_RESERVED ||
-            val === com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON ||
-            val === com.antigravity.PinBehavior.BEHAVIOR_RELAY
+            val === PinBehavior.BEHAVIOR_UNUSED ||
+            val === PinBehavior.BEHAVIOR_RESERVED ||
+            val === PinBehavior.BEHAVIOR_CALL_BUTTON ||
+            val === PinBehavior.BEHAVIOR_RELAY
           ) {
             continue;
           }
 
           let base = -1;
           if (
-            val >= com.antigravity.PinBehavior.BEHAVIOR_LAP_BASE &&
-            val < com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE
+            val >= PinBehavior.BEHAVIOR_LAP_BASE &&
+            val < PinBehavior.BEHAVIOR_SEGMENT_BASE
           ) {
-            base = com.antigravity.PinBehavior.BEHAVIOR_LAP_BASE;
+            base = PinBehavior.BEHAVIOR_LAP_BASE;
           } else if (
-            val >= com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE &&
-            val < com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE
+            val >= PinBehavior.BEHAVIOR_SEGMENT_BASE &&
+            val < PinBehavior.BEHAVIOR_CALL_BUTTON_BASE
           ) {
-            base = com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE;
+            base = PinBehavior.BEHAVIOR_SEGMENT_BASE;
           } else if (
-            val >= com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE &&
-            val < com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE
+            val >= PinBehavior.BEHAVIOR_CALL_BUTTON_BASE &&
+            val < PinBehavior.BEHAVIOR_RELAY_BASE
           ) {
-            base = com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE;
+            base = PinBehavior.BEHAVIOR_CALL_BUTTON_BASE;
           } else if (
-            val >= com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE &&
-            val < com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE + 1000
+            val >= PinBehavior.BEHAVIOR_RELAY_BASE &&
+            val < PinBehavior.BEHAVIOR_RELAY_BASE + 1000
           ) {
-            base = com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE;
+            base = PinBehavior.BEHAVIOR_RELAY_BASE;
           } else if (
-            val >= com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE &&
-            val < com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000
+            val >= PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE &&
+            val < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000
           ) {
-            base = com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE;
+            base = PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE;
           }
 
           if (base !== -1) {
             const lane = val - base;
             if (lane === deletedLaneIndex) {
-              ids[i] = com.antigravity.PinBehavior.BEHAVIOR_UNUSED;
+              ids[i] = PinBehavior.BEHAVIOR_UNUSED;
             } else if (lane > deletedLaneIndex) {
               ids[i] = val - 1;
             }
@@ -923,19 +943,17 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
           if (ls.leds) {
             ls.leds = ls.leds.map((val) => {
               const bases = [
-                com.antigravity.RgbLedBehavior
-                  .RGB_LED_BEHAVIOR_HEAT_LEADER_BASE,
-                com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE,
-                com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE,
-                com.antigravity.RgbLedBehavior
-                  .RGB_LED_BEHAVIOR_LAP_INDICATOR_BASE,
-                com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_SENSOR_BASE,
+                RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE,
+                RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE,
+                RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE,
+                RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_INDICATOR_BASE,
+                RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_SENSOR_BASE,
               ];
               const base = bases.find((b) => val >= b && val < b + 1000);
               if (base !== undefined) {
                 const lane = val - base;
                 if (lane === deletedLaneIndex) {
-                  return com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED;
+                  return RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED;
                 } else if (lane > deletedLaneIndex) {
                   return val - 1;
                 }
@@ -1037,12 +1055,8 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       usePitsAsLaps: false,
       useLapsForSegments: true,
       hardwareType: 0, // 0 = Uno, 1 = Mega
-      digitalIds: new Array(MAX_DIGITAL_PINS).fill(
-        com.antigravity.PinBehavior.BEHAVIOR_UNUSED,
-      ),
-      analogIds: new Array(MAX_ANALOG_PINS).fill(
-        com.antigravity.PinBehavior.BEHAVIOR_UNUSED,
-      ),
+      digitalIds: new Array(MAX_DIGITAL_PINS).fill(PinBehavior.BEHAVIOR_UNUSED),
+      analogIds: new Array(MAX_ANALOG_PINS).fill(PinBehavior.BEHAVIOR_UNUSED),
       ledStrings: [],
       lapPinPitBehavior: 3,
     });
@@ -1054,7 +1068,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     this.initializeInterfaces();
   }
 
-  trackByArduinoConfig(index: number, config: any): number {
+  trackByArduinoConfig(index: number, _config: any): number {
     return index;
   }
 
@@ -1074,7 +1088,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   }
 
   private generateUniqueName(baseName: string): string {
-    let name = baseName;
+    let _name = baseName;
     let counter = 1;
 
     // We always want to append at least _1 if we are saving as new to avoid collision with self
@@ -1144,6 +1158,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
           this.editingTrack = new Track(
             result.entity_id,
             result.name,
+            result.num_track_sections ?? 100,
             result.lanes,
             result.has_digital_fuel ?? false,
             result.arduino_configs,

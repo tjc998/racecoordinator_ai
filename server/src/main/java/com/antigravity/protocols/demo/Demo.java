@@ -2,6 +2,8 @@ package com.antigravity.protocols.demo;
 
 import com.antigravity.proto.DemoPinId;
 import com.antigravity.proto.InterfaceStatus;
+import com.antigravity.proto.RaceFlag;
+import com.antigravity.proto.RaceState;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.DefaultProtocol;
@@ -122,11 +124,8 @@ public class Demo extends DefaultProtocol {
   }
 
   @Override
-  public void setRaceState(
-      com.antigravity.proto.RaceState state,
-      com.antigravity.proto.RaceFlag flag,
-      double countdown) {
-    if (state == com.antigravity.proto.RaceState.NOT_STARTED) {
+  public void setRaceState(RaceState state, RaceFlag flag, double countdown) {
+    if (state == RaceState.NOT_STARTED) {
       for (LaneState laneState : laneStates) {
         laneState.reset();
       }

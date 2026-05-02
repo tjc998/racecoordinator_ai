@@ -1,24 +1,31 @@
 import { fakeAsync, flush, TestBed, tick } from "@angular/core/testing";
 import { of, Subject } from "rxjs";
 import { DataService } from "src/app/data.service";
-import { com } from "src/app/proto/message";
 
 import { RaceService } from "./race.service";
 import { RaceConnectionService } from "./race-connection.service";
+
+import {
+  IInterfaceEvent,
+  ILap,
+  InterfaceStatus,
+  RaceFlag,
+  RaceState,
+} from "src/app/proto/antigravity";
 
 describe("RaceConnectionService", () => {
   let service: RaceConnectionService;
   let mockDataService: any;
   let mockRaceService: any;
 
-  let interfaceEventsSubject: Subject<com.antigravity.IInterfaceEvent>;
+  let interfaceEventsSubject: Subject<IInterfaceEvent>;
   let raceUpdateSubject: Subject<any>;
-  let lapsSubject: Subject<com.antigravity.ILap>;
+  let lapsSubject: Subject<ILap>;
 
   beforeEach(() => {
-    interfaceEventsSubject = new Subject<com.antigravity.IInterfaceEvent>();
+    interfaceEventsSubject = new Subject<IInterfaceEvent>();
     raceUpdateSubject = new Subject<any>();
-    lapsSubject = new Subject<com.antigravity.ILap>();
+    lapsSubject = new Subject<ILap>();
 
     mockDataService = jasmine.createSpyObj("DataService", [
       "getInterfaceEvents",
@@ -52,13 +59,9 @@ describe("RaceConnectionService", () => {
     mockDataService.getOverallStandingsUpdate.and.returnValue(of({}));
     mockDataService.getReactionTimes.and.returnValue(of({}));
     mockDataService.getSegments.and.returnValue(of(null));
-    mockDataService.getRaceState.and.returnValue(
-      of(com.antigravity.RaceState.NOT_STARTED),
-    );
+    mockDataService.getRaceState.and.returnValue(of(RaceState.NOT_STARTED));
     mockDataService.getDrivers.and.returnValue(of([]));
-    mockDataService.getRaceFlag.and.returnValue(
-      of(com.antigravity.RaceFlag.RED),
-    );
+    mockDataService.getRaceFlag.and.returnValue(of(RaceFlag.RED));
     mockDataService.getRecordData.and.returnValue(of(null));
 
     mockRaceService = jasmine.createSpyObj("RaceService", [
@@ -142,7 +145,7 @@ describe("RaceConnectionService", () => {
       // First connection should be silent (suppress CONNECTED alert)
       // but it clears the previous error
       interfaceEventsSubject.next({
-        status: { status: com.antigravity.InterfaceStatus.CONNECTED },
+        status: { status: InterfaceStatus.CONNECTED },
       });
 
       // The previous alert remains in emittedAlert because we didn't emit a new one
@@ -162,20 +165,20 @@ describe("RaceConnectionService", () => {
 
       // First connection - silent
       interfaceEventsSubject.next({
-        status: { status: com.antigravity.InterfaceStatus.CONNECTED },
+        status: { status: InterfaceStatus.CONNECTED },
       });
       expect(emittedAlert).toBeNull();
 
       // Disconnect
       interfaceEventsSubject.next({
-        status: { status: com.antigravity.InterfaceStatus.DISCONNECTED },
+        status: { status: InterfaceStatus.DISCONNECTED },
       });
       tick(5000);
       expect(emittedAlert.titleKey).toBe("ACK_MODAL_TITLE_DISCONNECTED");
 
       // Reconnect - should show alert now because hasInitiallyConnected is true
       interfaceEventsSubject.next({
-        status: { status: com.antigravity.InterfaceStatus.CONNECTED },
+        status: { status: InterfaceStatus.CONNECTED },
       });
       expect(emittedAlert.titleKey).toBe("ACK_MODAL_TITLE_CONNECTED");
 
@@ -192,7 +195,7 @@ describe("RaceConnectionService", () => {
       // --- SESSION 1 ---
       service.connect();
       interfaceEventsSubject.next({
-        status: { status: com.antigravity.InterfaceStatus.CONNECTED },
+        status: { status: InterfaceStatus.CONNECTED },
       });
       expect(emittedAlert).toBeNull(); // Silent first connect
       service.disconnect();
@@ -204,7 +207,7 @@ describe("RaceConnectionService", () => {
 
       // First connection of second session should also be silent
       interfaceEventsSubject.next({
-        status: { status: com.antigravity.InterfaceStatus.CONNECTED },
+        status: { status: InterfaceStatus.CONNECTED },
       });
       expect(emittedAlert).toBeNull();
 
@@ -220,12 +223,12 @@ describe("RaceConnectionService", () => {
 
       service.connect();
       interfaceEventsSubject.next({
-        status: { status: com.antigravity.InterfaceStatus.CONNECTED },
+        status: { status: InterfaceStatus.CONNECTED },
       });
       emittedAlert = null;
 
       interfaceEventsSubject.next({
-        status: { status: com.antigravity.InterfaceStatus.DISCONNECTED },
+        status: { status: InterfaceStatus.DISCONNECTED },
       });
 
       tick(2000);
@@ -241,7 +244,7 @@ describe("RaceConnectionService", () => {
 
   describe("Data Stream Forwarding", () => {
     it("should pipe laps to laps$", (done) => {
-      const lapData: com.antigravity.ILap = { objectId: "d1", lapTime: 1.234 };
+      const lapData: ILap = { objectId: "d1", lapTime: 1.234 };
       service.connect();
 
       service.laps$.subscribe((lap) => {
@@ -255,7 +258,7 @@ describe("RaceConnectionService", () => {
     });
 
     it("should pipe flags to raceFlag$", (done) => {
-      const mockFlagSubject = new Subject<com.antigravity.RaceFlag>();
+      const mockFlagSubject = new Subject<RaceFlag>();
       mockDataService.getRaceFlag.and.returnValue(
         mockFlagSubject.asObservable(),
       );
@@ -263,13 +266,13 @@ describe("RaceConnectionService", () => {
       service.connect();
 
       service.raceFlag$.subscribe((flag) => {
-        if (flag === com.antigravity.RaceFlag.GREEN) {
-          expect(flag).toBe(com.antigravity.RaceFlag.GREEN);
+        if (flag === RaceFlag.GREEN) {
+          expect(flag).toBe(RaceFlag.GREEN);
           done();
         }
       });
 
-      mockFlagSubject.next(com.antigravity.RaceFlag.GREEN);
+      mockFlagSubject.next(RaceFlag.GREEN);
     });
   });
 });

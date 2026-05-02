@@ -4,7 +4,6 @@ import {
   ComponentFixture,
   discardPeriodicTasks,
   fakeAsync,
-  flush,
   TestBed,
   tick,
 } from "@angular/core/testing";

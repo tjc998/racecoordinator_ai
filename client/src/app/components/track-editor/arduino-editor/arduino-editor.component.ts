@@ -1,4 +1,4 @@
-import { CdkDragDrop, moveItemInArray } from "@angular/cdk/drag-drop";
+import {} from "@angular/cdk/drag-drop";
 import {
   ChangeDetectorRef,
   Component,
@@ -18,8 +18,10 @@ import {
   MAX_ANALOG_PINS,
   MAX_DIGITAL_PINS,
 } from "src/app/models/track";
-import { com } from "src/app/proto/message";
+
 import { TranslationService } from "src/app/services/translation.service";
+
+import { PinBehavior, RgbLedBehavior } from "src/app/proto/antigravity";
 
 interface PinAction {
   label: string;
@@ -190,11 +192,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
                   if (isDigital && i < 2) continue; // Skip D0, D1
                   const behavior = this.getPinBehavior(isDigital, i);
                   if (
+                    behavior === PinBehavior.BEHAVIOR_CALL_BUTTON ||
                     behavior ===
-                      com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON ||
-                    behavior ===
-                      com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE +
-                        (lane ?? 0)
+                      PinBehavior.BEHAVIOR_CALL_BUTTON_BASE + (lane ?? 0)
                   ) {
                     this.triggerPinActivity(isDigital ? i : i + 1000);
                   }
@@ -310,11 +310,11 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
       // Reset digital pins D14-D59 (Uno only has 14 digital pins, 0-13)
       for (let i = 14; i < MAX_DIGITAL_PINS; i++) {
-        this.config.digitalIds[i] = com.antigravity.PinBehavior.BEHAVIOR_UNUSED;
+        this.config.digitalIds[i] = PinBehavior.BEHAVIOR_UNUSED;
       }
       // Reset analog pins A6-A15 (Uno only has 6 analog pins, 0-5)
       for (let i = 6; i < MAX_ANALOG_PINS; i++) {
-        this.config.analogIds[i] = com.antigravity.PinBehavior.BEHAVIOR_UNUSED;
+        this.config.analogIds[i] = PinBehavior.BEHAVIOR_UNUSED;
       }
     }
 
@@ -470,7 +470,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
   isPinActive(isDigital: boolean, pin: number): boolean {
     const key = isDigital ? `D${pin}` : `A${pin}`;
-    const behavior = this.getPinBehavior(isDigital, pin);
+    const _behavior = this.getPinBehavior(isDigital, pin);
 
     // If it's a relay or call button (outputs/latched-like), we might want to show state differently
     // For now, if we have a local override state, use it.
@@ -493,9 +493,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     // Check if it is a Write pin (Relay)
     // BEHAVIOR_RELAY = 3; BEHAVIOR_RELAY_BASE = 4000;
     const isRelay =
-      behavior === com.antigravity.PinBehavior.BEHAVIOR_RELAY ||
-      (behavior >= com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE &&
-        behavior < com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE + 1000);
+      behavior === PinBehavior.BEHAVIOR_RELAY ||
+      (behavior >= PinBehavior.BEHAVIOR_RELAY_BASE &&
+        behavior < PinBehavior.BEHAVIOR_RELAY_BASE + 1000);
 
     if (isRelay) {
       const key = isDigital ? `D${pin}` : `A${pin}`;
@@ -530,101 +530,97 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
   getPinAction(isDigital: boolean, pinIndex: number): string {
     const val = this.getPinBehavior(isDigital, pinIndex);
-    if (val === com.antigravity.PinBehavior.BEHAVIOR_UNUSED || val === -1)
-      return "";
-    if (val === com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON)
-      return "master_call";
-    if (val === com.antigravity.PinBehavior.BEHAVIOR_RELAY)
-      return "master_relay";
+    if (val === PinBehavior.BEHAVIOR_UNUSED || val === -1) return "";
+    if (val === PinBehavior.BEHAVIOR_CALL_BUTTON) return "master_call";
+    if (val === PinBehavior.BEHAVIOR_RELAY) return "master_relay";
 
     if (
-      val >= com.antigravity.PinBehavior.BEHAVIOR_LAP_BASE &&
-      val < com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE
+      val >= PinBehavior.BEHAVIOR_LAP_BASE &&
+      val < PinBehavior.BEHAVIOR_SEGMENT_BASE
     )
-      return `lap_${val - com.antigravity.PinBehavior.BEHAVIOR_LAP_BASE}`;
+      return `lap_${val - PinBehavior.BEHAVIOR_LAP_BASE}`;
 
     if (
-      val >= com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE &&
-      val < com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE
+      val >= PinBehavior.BEHAVIOR_SEGMENT_BASE &&
+      val < PinBehavior.BEHAVIOR_CALL_BUTTON_BASE
     )
-      return `segment_${val - com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE}`;
+      return `segment_${val - PinBehavior.BEHAVIOR_SEGMENT_BASE}`;
 
     if (
-      val >= com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE &&
-      val < com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE
+      val >= PinBehavior.BEHAVIOR_CALL_BUTTON_BASE &&
+      val < PinBehavior.BEHAVIOR_RELAY_BASE
     )
-      return `call_${val - com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE}`;
+      return `call_${val - PinBehavior.BEHAVIOR_CALL_BUTTON_BASE}`;
 
     if (
-      val >= com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE &&
-      val < com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE + 1000
+      val >= PinBehavior.BEHAVIOR_RELAY_BASE &&
+      val < PinBehavior.BEHAVIOR_RELAY_BASE + 1000
     )
-      return `relay_${val - com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE}`;
+      return `relay_${val - PinBehavior.BEHAVIOR_RELAY_BASE}`;
 
     if (
-      val >= com.antigravity.PinBehavior.BEHAVIOR_PIT_IN_BASE &&
-      val < com.antigravity.PinBehavior.BEHAVIOR_PIT_OUT_BASE
+      val >= PinBehavior.BEHAVIOR_PIT_IN_BASE &&
+      val < PinBehavior.BEHAVIOR_PIT_OUT_BASE
     )
-      return `pitin_${val - com.antigravity.PinBehavior.BEHAVIOR_PIT_IN_BASE}`;
+      return `pitin_${val - PinBehavior.BEHAVIOR_PIT_IN_BASE}`;
 
     if (
-      val >= com.antigravity.PinBehavior.BEHAVIOR_PIT_OUT_BASE &&
-      val < com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE
+      val >= PinBehavior.BEHAVIOR_PIT_OUT_BASE &&
+      val < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE
     )
-      return `pitout_${val - com.antigravity.PinBehavior.BEHAVIOR_PIT_OUT_BASE}`;
+      return `pitout_${val - PinBehavior.BEHAVIOR_PIT_OUT_BASE}`;
 
     if (
-      val >= com.antigravity.PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE &&
-      val < com.antigravity.PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE + 1000
+      val >= PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE &&
+      val < PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE + 1000
     )
-      return `pitinout_${val - com.antigravity.PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE}`;
+      return `pitinout_${val - PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE}`;
 
-    if (val === com.antigravity.PinBehavior.BEHAVIOR_RESERVED)
-      return "reserved";
+    if (val === PinBehavior.BEHAVIOR_RESERVED) return "reserved";
 
     if (
-      val >= com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE &&
-      val < com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000
+      val >= PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE &&
+      val < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000
     )
-      return `voltage_${val - com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE}`;
+      return `voltage_${val - PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE}`;
 
-    if (val === (com.antigravity.PinBehavior as any).BEHAVIOR_LED_RGB_STRING)
+    if (val === (PinBehavior as any).BEHAVIOR_LED_RGB_STRING)
       return "led_string";
 
     return "";
   }
 
   setPinAction(isDigital: boolean, pinIndex: number, action: string) {
-    let val = com.antigravity.PinBehavior.BEHAVIOR_UNUSED;
+    let val = PinBehavior.BEHAVIOR_UNUSED;
     if (action === "master_call") {
-      val = com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON;
+      val = PinBehavior.BEHAVIOR_CALL_BUTTON;
     } else if (action === "master_relay") {
-      val = com.antigravity.PinBehavior.BEHAVIOR_RELAY;
+      val = PinBehavior.BEHAVIOR_RELAY;
     } else if (action.startsWith("lap_")) {
       const laneIndex = parseInt(action.split("_")[1], 10);
-      val = com.antigravity.PinBehavior.BEHAVIOR_LAP_BASE + laneIndex;
+      val = PinBehavior.BEHAVIOR_LAP_BASE + laneIndex;
     } else if (action.startsWith("segment_")) {
       const laneIndex = parseInt(action.split("_")[1], 10);
-      val = com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE + laneIndex;
+      val = PinBehavior.BEHAVIOR_SEGMENT_BASE + laneIndex;
     } else if (action.startsWith("call_")) {
       const laneIndex = parseInt(action.split("_")[1], 10);
-      val = com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE + laneIndex;
+      val = PinBehavior.BEHAVIOR_CALL_BUTTON_BASE + laneIndex;
     } else if (action.startsWith("relay_")) {
       const laneIndex = parseInt(action.split("_")[1], 10);
-      val = com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE + laneIndex;
+      val = PinBehavior.BEHAVIOR_RELAY_BASE + laneIndex;
     } else if (action === "reserved") {
-      val = com.antigravity.PinBehavior.BEHAVIOR_RESERVED;
+      val = PinBehavior.BEHAVIOR_RESERVED;
     } else if (action.startsWith("voltage_")) {
       const laneIndex = parseInt(action.split("_")[1], 10);
-      val = com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + laneIndex;
+      val = PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + laneIndex;
     } else if (action.startsWith("pitin_")) {
       const laneIndex = parseInt(action.split("_")[1], 10);
-      val = com.antigravity.PinBehavior.BEHAVIOR_PIT_IN_BASE + laneIndex;
+      val = PinBehavior.BEHAVIOR_PIT_IN_BASE + laneIndex;
     } else if (action.startsWith("pitout_")) {
       const laneIndex = parseInt(action.split("_")[1], 10);
-      val = com.antigravity.PinBehavior.BEHAVIOR_PIT_OUT_BASE + laneIndex;
+      val = PinBehavior.BEHAVIOR_PIT_OUT_BASE + laneIndex;
     } else if (action === "led_string") {
-      val = (com.antigravity.PinBehavior as any).BEHAVIOR_LED_RGB_STRING;
+      val = (PinBehavior as any).BEHAVIOR_LED_RGB_STRING;
     }
 
     this.setPinBehavior(isDigital, pinIndex, val.toString());
@@ -639,8 +635,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     if (!this.config) return;
 
     const actualPin = isDigital ? pinIndex : pinIndex + 1000;
-    const LED_BEHAVIOR = (com.antigravity.PinBehavior as any)
-      .BEHAVIOR_LED_RGB_STRING;
+    const LED_BEHAVIOR = (PinBehavior as any).BEHAVIOR_LED_RGB_STRING;
 
     // If changing FROM LedRGBString, remove the string
     if (oldVal === LED_BEHAVIOR) {
@@ -659,16 +654,16 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     // Add Unused first
     behaviors.push({
       label: this.translationService.translate("AE_PIN_UNUSED"),
-      value: com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED.toString(),
+      value: RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED.toString(),
     });
 
     const otherBehaviors: PinAction[] = [];
     // Map all RgbLedBehavior except UNUSED
-    Object.keys(com.antigravity.RgbLedBehavior).forEach((key) => {
-      const val = (com.antigravity.RgbLedBehavior as any)[key];
+    Object.keys(RgbLedBehavior).forEach((key) => {
+      const val = (RgbLedBehavior as any)[key];
       if (
         typeof val === "number" &&
-        val !== com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED
+        val !== RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED
       ) {
         if (key === "RGB_LED_BEHAVIOR_RACE_STATE_BASE") {
           for (let i = 1; i <= 5; i++) {
@@ -818,9 +813,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     const n = Number(numLeds);
     const newString: LedString = {
       pin: pin,
-      leds: new Array(n).fill(
-        com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED,
-      ),
+      leds: new Array(n).fill(RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED),
       numUsedLeds: 0,
       addressableLeds: n,
       brightness: 32,
@@ -871,7 +864,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     if (pin !== 0) {
       const isDigital = pin < 1000;
       const pinIndex = isDigital ? pin : pin - 1000;
-      const unused = com.antigravity.PinBehavior.BEHAVIOR_UNUSED;
+      const unused = PinBehavior.BEHAVIOR_UNUSED;
       if (isDigital) {
         this.config.digitalIds[pinIndex] = unused;
       } else {
@@ -966,7 +959,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     if (count > currentLength) {
       // Growing: fill with UNUSED
       const extra = new Array(count - currentLength).fill(
-        com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED,
+        RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED,
       );
       ls.leds = [...ls.leds, ...extra];
     } else if (count < currentLength) {
@@ -986,7 +979,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     // We want addressableLeds to represent the total physical count for the Arduino.
     ls.addressableLeds = ls.leds.length;
     ls.leds.forEach((b) => {
-      if (b !== com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED) {
+      if (b !== RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED) {
         ls.numUsedLeds++;
       }
     });
@@ -1275,7 +1268,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
             const laneIdx = this.getLaneIndexFromRgbBehavior(behavior);
             if (laneIdx !== -1 && laneIdx >= laneCount) {
               changed = true;
-              return com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED;
+              return RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED;
             }
             return behavior;
           });
@@ -1289,7 +1282,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       for (let i = 0; i < ids.length; i++) {
         const laneIdx = this.getLaneIndexFromPinBehavior(ids[i]);
         if (laneIdx !== -1 && laneIdx >= laneCount) {
-          ids[i] = com.antigravity.PinBehavior.BEHAVIOR_UNUSED;
+          ids[i] = PinBehavior.BEHAVIOR_UNUSED;
           changed = true;
         }
       }
@@ -1316,11 +1309,11 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
   private getLaneIndexFromRgbBehavior(behavior: number): number {
     const bases = [
-      com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE,
-      com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE,
-      com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE,
-      com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_INDICATOR_BASE,
-      com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_SENSOR_BASE,
+      RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE,
+      RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE,
+      RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE,
+      RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_INDICATOR_BASE,
+      RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_SENSOR_BASE,
     ];
 
     for (const base of bases) {
@@ -1333,14 +1326,14 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
   private getLaneIndexFromPinBehavior(behavior: number): number {
     const bases = [
-      com.antigravity.PinBehavior.BEHAVIOR_LAP_BASE,
-      com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE,
-      com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE,
-      com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE,
-      com.antigravity.PinBehavior.BEHAVIOR_PIT_IN_BASE,
-      com.antigravity.PinBehavior.BEHAVIOR_PIT_OUT_BASE,
-      com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE,
-      com.antigravity.PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE,
+      PinBehavior.BEHAVIOR_LAP_BASE,
+      PinBehavior.BEHAVIOR_SEGMENT_BASE,
+      PinBehavior.BEHAVIOR_CALL_BUTTON_BASE,
+      PinBehavior.BEHAVIOR_RELAY_BASE,
+      PinBehavior.BEHAVIOR_PIT_IN_BASE,
+      PinBehavior.BEHAVIOR_PIT_OUT_BASE,
+      PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE,
+      PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE,
     ];
 
     for (const base of bases) {
@@ -1363,13 +1356,10 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       const behavior = analogIds[i];
       if (
         behavior !== undefined &&
-        behavior >= com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE &&
-        behavior <
-          com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000
+        behavior >= PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE &&
+        behavior < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000
       ) {
-        lanes.add(
-          behavior - com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE,
-        );
+        lanes.add(behavior - PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE);
       }
     }
     return Array.from(lanes).sort((a, b) => a - b);
@@ -1381,8 +1371,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     const analogCount = isMega ? 16 : 6;
     const analogIds = this.config.analogIds || [];
 
-    const targetBehavior =
-      com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + lane;
+    const targetBehavior = PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + lane;
     for (let i = 0; i < analogCount; i++) {
       if (analogIds[i] === targetBehavior) {
         return this.liveVoltages[i] ?? 0;
@@ -1406,13 +1395,10 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       const behavior = analogIds[pin];
       if (
         behavior !== undefined &&
-        behavior >= com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE &&
-        behavior <
-          com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000
+        behavior >= PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE &&
+        behavior < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000
       ) {
-        return (
-          behavior - com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE
-        );
+        return behavior - PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE;
       }
     }
     return -1;

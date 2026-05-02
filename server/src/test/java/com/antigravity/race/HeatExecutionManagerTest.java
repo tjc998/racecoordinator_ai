@@ -514,4 +514,28 @@ public class HeatExecutionManagerTest {
     assertFalse("Lap for actual empty driver should be rejected", emptyLapResult);
     assertEquals(0, emptyDriverData.getLapCount());
   }
+
+  @Test
+  public void testTimeSinceLastLap() {
+    executionManager.initialize(2);
+
+    // Initial time is 0
+    assertEquals(0.0, executionManager.getTimeSinceLastLap()[0], 0.001);
+
+    // Process ticker 5s
+    executionManager.processTicker(5.0f);
+    assertEquals(5.0, executionManager.getTimeSinceLastLap()[0], 0.001);
+
+    // Record lap resets time
+    executionManager.onLap(0, 1.0, 1, false, true, false); // Reaction
+    assertEquals(0.0, executionManager.getTimeSinceLastLap()[0], 0.001);
+
+    // Process ticker 2s
+    executionManager.processTicker(2.0f);
+    assertEquals(2.0, executionManager.getTimeSinceLastLap()[0], 0.001);
+
+    // Another lap resets time
+    executionManager.onLap(0, 10.0, 1, false, true, false); // Lap 1
+    assertEquals(0.0, executionManager.getTimeSinceLastLap()[0], 0.001);
+  }
 }

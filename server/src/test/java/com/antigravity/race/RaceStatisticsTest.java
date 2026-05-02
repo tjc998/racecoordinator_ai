@@ -299,7 +299,7 @@ public class RaceStatisticsTest {
     race.onLap(0, 2.0, 0, 0);
 
     // 4. Verify RecordData reflects effective time
-    assertEquals("Lap count should be 1", 1, p.getTotalLaps());
+    assertEquals("Lap count should be 1", 1.0, p.getTotalLaps(), 0.001);
     assertEquals("Lane Best Lap should be 2.5", 2.5, p.getBestLapTime(), 0.001);
 
     com.antigravity.proto.RecordData records = race.getRecordData();
@@ -327,7 +327,7 @@ public class RaceStatisticsTest {
             .findFirst()
             .orElse(p);
 
-    assertEquals("Lap count should be 2", 2, p.getTotalLaps());
+    assertEquals("Lap count should be 2", 2.0, p.getTotalLaps(), 0.001);
     assertEquals("Lane Best Lap should be 1.8", 1.8, p.getBestLapTime(), 0.001);
 
     records = race.getRecordData();

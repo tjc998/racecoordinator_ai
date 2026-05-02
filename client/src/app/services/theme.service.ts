@@ -2,7 +2,7 @@ import { Injectable } from "@angular/core";
 import { firstValueFrom } from "rxjs";
 import { DataService } from "src/app/data.service";
 import { AudioConfig } from "src/app/models/driver";
-import { Settings } from "src/app/models/settings";
+import {} from "src/app/models/settings";
 import { Theme } from "src/app/models/theme";
 import { SettingsService } from "src/app/services/settings.service";
 

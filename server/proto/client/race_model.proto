@@ -30,6 +30,7 @@ message HeatScoring {
     AF_NONE = 0;
     AF_ALLOW = 1;
     AF_SINGLE_LAP = 2;
+    AF_NONE_AUTO_SEGMENTS = 3;
   }
 
   FinishMethod finish_method = 1;

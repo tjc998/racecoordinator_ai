@@ -10,22 +10,22 @@ import {
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
-import { BehaviorSubject, of } from "rxjs";
+import { BehaviorSubject as _BehaviorSubject, of } from "rxjs";
 import { AnalyticsService } from "src/app/analytics.service";
 import { HelpOverlayComponent } from "src/app/components/shared/help-overlay/help-overlay.component";
 import { DataService } from "src/app/data.service";
-import { Settings } from "src/app/models/settings";
+import { Settings as _Settings } from "src/app/models/settings";
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
-import { com } from "src/app/proto/message";
+
 import { FileSystemService } from "src/app/services/file-system.service";
 import { HelpService } from "src/app/services/help.service";
 import { RaceService } from "src/app/services/race.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
-import { MOCK_DRIVERS } from "src/app/testing/data/drivers_data";
-import { MOCK_RACES } from "src/app/testing/data/races_data";
+import { MOCK_DRIVERS as _MOCK_DRIVERS } from "src/app/testing/data/drivers_data";
+import { MOCK_RACES as _MOCK_RACES } from "src/app/testing/data/races_data";
 import { createDefaultSettings } from "src/app/testing/data/settings_data";
-import { MOCK_TEAMS } from "src/app/testing/data/teams_data";
+import { MOCK_TEAMS as _MOCK_TEAMS } from "src/app/testing/data/teams_data";
 import {
   mockAnalyticsService,
   mockRouter,
@@ -33,13 +33,14 @@ import {
   mockTranslationService,
   resetMocks,
 } from "src/app/testing/unit-test-mocks";
+import { InitializeRaceResponse, Race } from "src/app/proto/antigravity";
 
 import { DefaultRacedaySetupComponent } from "./default-raceday-setup.component";
 import { DefaultRacedaySetupHarness } from "./testing/default-raceday-setup.harness";
 import {
   createRacedaySetupDataServiceMock,
   createRacedaySetupHelpServiceMock,
-  MOCK_AUTOSAVE_RACES,
+  MOCK_AUTOSAVE_RACES as _MOCK_AUTOSAVE_RACES,
 } from "./testing/raceday-setup_helper";
 
 @Component({
@@ -265,7 +266,7 @@ describe("DefaultRacedaySetupComponent", () => {
     // Must have participants to start a race
     component.selectedParticipants = [component.unselectedParticipants[0]];
 
-    const response = com.antigravity.InitializeRaceResponse.fromObject({
+    const response = InitializeRaceResponse.fromObject({
       success: true,
     });
     mockDataService.getSavedRaces.and.returnValue(of([])); // no autosave
@@ -286,7 +287,7 @@ describe("DefaultRacedaySetupComponent", () => {
   it("should start race normally without autosave file", fakeAsync(() => {
     component.selectedRace = component.races[0];
     component.selectedParticipants = [component.unselectedParticipants[0]];
-    const response = com.antigravity.InitializeRaceResponse.fromObject({
+    const response = InitializeRaceResponse.fromObject({
       success: true,
     });
     mockDataService.initializeRace.and.returnValue(of(response));
@@ -304,9 +305,7 @@ describe("DefaultRacedaySetupComponent", () => {
     component.selectedRace = component.races.find((r) => r.entity_id === "r1");
     component.selectedParticipants = [component.unselectedParticipants[0]];
     mockDataService.getSavedRaces.and.returnValue(of(["autosave_r1.json"]));
-    mockDataService.loadRace.and.returnValue(
-      of(com.antigravity.Race.fromObject({})),
-    );
+    mockDataService.loadRace.and.returnValue(of(Race.fromObject({})));
 
     component.startRace(false);
     tick();
@@ -329,7 +328,7 @@ describe("DefaultRacedaySetupComponent", () => {
 
     mockDataService.getSavedRaces.and.returnValue(of(["autosave_r1.json"]));
     mockDataService.deleteSavedRace.and.returnValue(of("OK"));
-    const response = com.antigravity.InitializeRaceResponse.fromObject({
+    const response = InitializeRaceResponse.fromObject({
       success: true,
     });
     mockDataService.initializeRace.and.returnValue(of(response));
@@ -354,7 +353,7 @@ describe("DefaultRacedaySetupComponent", () => {
   it("should start demo race", fakeAsync(() => {
     component.selectedRace = component.races[0];
     component.selectedParticipants = [component.unselectedParticipants[0]];
-    const response = com.antigravity.InitializeRaceResponse.fromObject({
+    const response = InitializeRaceResponse.fromObject({
       success: true,
     });
     mockDataService.getSavedRaces.and.returnValue(of([])); // Bypass auto-save prompt
@@ -406,7 +405,7 @@ describe("DefaultRacedaySetupComponent", () => {
       { entity_id: "d2", name: "D2" } as any,
       { entity_id: "d3", name: "D3" } as any,
     ];
-    const initialOrder = component.selectedParticipants
+    const _initialOrder = component.selectedParticipants
       .map((p) => p.entity_id)
       .join(",");
 
@@ -487,9 +486,9 @@ describe("DefaultRacedaySetupComponent", () => {
       configurable: true,
     });
 
-    let actionCalled = false;
+    let _actionCalled = false;
     component["updateListWithRefresh"](() => {
-      actionCalled = true;
+      _actionCalled = true;
       mockElement.scrollTop = 0;
     });
 

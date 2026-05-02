@@ -84,7 +84,7 @@ test.describe("Raceday Visuals for Empty Lanes", () => {
     });
 
     const container = page.locator(".dashboard-wrapper");
-    const harness = new DefaultRacedayHarnessE2e(container);
+    const _harness = new DefaultRacedayHarnessE2e(container);
 
     // Wait for the main content area to ensure page is loaded
     await page.locator(".scalable-content").waitFor({ state: "visible" });
@@ -198,7 +198,7 @@ test.describe("Raceday Visuals for Empty Lanes", () => {
     });
 
     const container = page.locator(".dashboard-wrapper");
-    const harness = new DefaultRacedayHarnessE2e(container);
+    const _harness = new DefaultRacedayHarnessE2e(container);
 
     const raceData = {
       race: {

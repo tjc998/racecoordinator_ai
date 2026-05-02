@@ -29,8 +29,8 @@ public class Common {
         sentObjectIds.add(HeatConverter.PARTICIPANT_PREFIX + p.getObjectId());
       }
 
-      com.antigravity.proto.Race raceProto =
-          com.antigravity.proto.Race.newBuilder()
+      com.antigravity.proto.Race raceProto = // fqn-collision
+          com.antigravity.proto.Race.newBuilder() // fqn-collision
               .setCurrentHeat(HeatConverter.toProto(race.getCurrentHeat(), sentObjectIds))
               .build();
 

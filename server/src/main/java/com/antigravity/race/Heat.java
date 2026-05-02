@@ -12,13 +12,10 @@ public class Heat extends ServerToClientObject {
   private RaceHeatStatistics statistics = new RaceHeatStatistics();
   @org.bson.codecs.pojo.annotations.BsonIgnore private HeatStandings heatStandings;
 
-  private HeatScoring scoring;
-
   public Heat(int heatNumber, List<DriverHeatData> drivers, HeatScoring scoring) {
     super();
     this.heatNumber = heatNumber;
     this.drivers = drivers != null ? drivers : new ArrayList<>();
-    this.scoring = scoring;
     if (this.drivers != null) {
       HeatScoring safeScoring = scoring != null ? scoring : new HeatScoring();
       this.heatStandings = new HeatStandings(this.drivers, safeScoring);

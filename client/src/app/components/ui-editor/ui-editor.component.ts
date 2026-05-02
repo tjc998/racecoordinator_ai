@@ -862,7 +862,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
   }
 
-  async onThemeNameChanged(theme: Theme) {
+  async onThemeNameChanged(_theme: Theme) {
     this.captureState();
   }
 

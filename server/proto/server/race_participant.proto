@@ -12,7 +12,7 @@ message RaceParticipant {
   string object_id = 1;
   DriverModel driver = 2;
   int32 rank = 3;
-  int32 total_laps = 4;
+  double total_laps = 4;
   double total_time = 5;
   double best_lap_time = 6;
   double average_lap_time = 7;

@@ -12,7 +12,7 @@ public class RaceParticipant extends ServerToClientObject {
   private boolean isTeamParticipant;
 
   private int rank;
-  private int totalLaps;
+  private double totalLaps;
   private double totalTime;
   private double bestLapTime;
   private double averageLapTime;
@@ -116,11 +116,11 @@ public class RaceParticipant extends ServerToClientObject {
     this.rank = rank;
   }
 
-  public int getTotalLaps() {
+  public double getTotalLaps() {
     return totalLaps;
   }
 
-  public void setTotalLaps(int totalLaps) {
+  public void setTotalLaps(double totalLaps) {
     this.totalLaps = totalLaps;
   }
 

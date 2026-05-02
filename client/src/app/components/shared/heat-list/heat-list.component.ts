@@ -40,7 +40,7 @@ export class HeatListComponent implements OnChanges {
     return lane.laneNumber || index;
   }
 
-  onDrop(event: CdkDragDrop<any[]>, heat: any) {
+  onDrop(event: CdkDragDrop<any[]>, _heat: any) {
     if (!this.canDragLanes) return;
     // We only care about the target lane index
     const targetLaneIndex = event.currentIndex;

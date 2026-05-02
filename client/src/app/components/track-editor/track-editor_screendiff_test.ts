@@ -25,7 +25,7 @@ test.describe("Track Editor Visuals", () => {
     );
 
     const editor = page.locator("app-track-editor");
-    const harness = new TrackEditorHarnessE2e(editor);
+    const _harness = new TrackEditorHarnessE2e(editor);
 
     await expect(editor).toBeVisible();
 
@@ -49,7 +49,7 @@ test.describe("Track Editor Visuals", () => {
     );
 
     const editor = page.locator("app-track-editor");
-    const harness = new TrackEditorHarnessE2e(editor);
+    const _harness = new TrackEditorHarnessE2e(editor);
 
     await expect(editor).toBeVisible();
 

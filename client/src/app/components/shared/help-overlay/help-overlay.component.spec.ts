@@ -3,7 +3,6 @@ import { ChangeDetectorRef } from "@angular/core";
 import {
   ComponentFixture,
   fakeAsync,
-  flush,
   TestBed,
   tick,
 } from "@angular/core/testing";

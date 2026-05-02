@@ -1,5 +1,5 @@
 import { Driver } from "src/app/models/driver";
-import { com } from "src/app/proto/message";
+
 import { DriverHeatData } from "src/app/race/driver_heat_data";
 import { Heat } from "src/app/race/heat";
 import { RaceParticipant } from "src/app/race/race_participant";
@@ -7,6 +7,8 @@ import { RaceParticipant } from "src/app/race/race_participant";
 import { ConverterCache } from "./converter_cache";
 import { DriverConverter } from "./driver.converter";
 import { RaceParticipantConverter } from "./race_participant.converter";
+
+import { IHeat } from "src/app/proto/antigravity";
 
 export class HeatConverter {
   private static participantCache = new Map<string, RaceParticipant>();
@@ -17,10 +19,7 @@ export class HeatConverter {
     this.heatCache.clear();
   }
 
-  static fromProto(
-    proto: com.antigravity.IHeat,
-    heatNumber: number = -1,
-  ): Heat {
+  static fromProto(proto: IHeat, heatNumber: number = -1): Heat {
     // console.log('HeatConverter: Processing heat proto:', proto);
     const objectId = proto.objectId;
     // Is Reference if heatDrivers is empty/undefined
@@ -57,6 +56,18 @@ export class HeatConverter {
             );
             hd.gapLeader = dProto.gapLeader || 0;
             hd.gapPosition = dProto.gapPosition || 0;
+            hd.penaltyLaps = dProto.penaltyLaps || 0;
+            hd.userLaps = dProto.userLaps || 0;
+            hd.autoCalculatedLaps = dProto.autoCalculatedLaps || 0;
+            hd.adjustedLapCount = dProto.adjustedLapCount || 0;
+            hd.reactionTime = dProto.reactionTime || 0;
+            hd.isRefueling = !!dProto.isRefueling;
+            hd.currentLocation = dProto.currentLocation ?? -1;
+            if (dProto.segments) {
+              dProto.segments.forEach((seg, i) => {
+                hd.addSegmentTime(i, seg);
+              });
+            }
 
             if (dProto.laps) {
               dProto.laps.forEach((lap: any, i) => {
@@ -73,7 +84,16 @@ export class HeatConverter {
                     ? !!(lap.isDrift ?? lap.is_drift)
                     : false;
 
-                hd.addLapTime(i + 1, time, 0, 0, 0, driverId, isDrift);
+                hd.addLapTime(
+                  i + 1,
+                  time,
+                  dProto.averageLapTime || 0,
+                  dProto.medianLapTime || 0,
+                  dProto.bestLapTime || 0,
+                  dProto.adjustedLapCount || 0,
+                  driverId,
+                  isDrift,
+                );
               });
             }
 

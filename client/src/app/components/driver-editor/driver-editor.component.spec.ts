@@ -111,7 +111,7 @@ class MockHelpOverlayComponent {
 import { Pipe, PipeTransform } from "@angular/core";
 import {
   MOCK_DRIVER_INSTANCES,
-  MOCK_DRIVERS,
+  MOCK_DRIVERS as _MOCK_DRIVERS,
 } from "src/app/testing/data/drivers_data";
 import {
   mockAnalyticsService,

@@ -1,6 +1,8 @@
 import { of } from "rxjs";
 
-import { createDefaultSettings } from "../../../testing/data/settings_data";
+import { createDefaultSettings as _createDefaultSettings } from "../../../testing/data/settings_data";
+import { RaceState as _RaceState } from "src/app/proto/antigravity";
+
 import {
   MOCK_FACTORY_SETTINGS,
   MOCK_TRACK_INSTANCES,
@@ -37,7 +39,7 @@ export function createTrackManagerDataServiceMock(overrides: any = {}) {
     of(JSON.parse(JSON.stringify(MOCK_FACTORY_SETTINGS))),
   );
   mock.getInterfaceEvents.and.returnValue(of({}));
-  mock.getRaceState.and.returnValue(of(0)); // com.antigravity.RaceState.NOT_STARTED
+  mock.getRaceState.and.returnValue(of(0)); // RaceState.NOT_STARTED
   mock.closeInterface.and.returnValue(of({ success: true }));
   mock.initializeInterface.and.returnValue(of({ success: true }));
 

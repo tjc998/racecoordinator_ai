@@ -1,12 +1,12 @@
-import { Injectable } from '@angular/core';
+import { Injectable } from "@angular/core";
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class FileSystemService {
-  private readonly DB_NAME = 'race-coordinator-fs';
-  private readonly STORE_NAME = 'handles';
-  private readonly HANDLE_KEY = 'raceday-setup-dir';
+  private readonly DB_NAME = "race-coordinator-fs";
+  private readonly STORE_NAME = "handles";
+  private readonly HANDLE_KEY = "raceday-setup-dir";
   private dbPromise: Promise<IDBDatabase>;
 
   constructor() {
@@ -18,8 +18,8 @@ export class FileSystemService {
       const request = indexedDB.open(this.DB_NAME, 1);
 
       request.onerror = (event) => {
-        console.error('IndexedDB error:', event);
-        reject('IndexedDB failed to open');
+        console.error("IndexedDB error:", event);
+        reject("IndexedDB failed to open");
       };
 
       request.onsuccess = (event) => {
@@ -41,7 +41,7 @@ export class FileSystemService {
       const db = await this.dbPromise;
 
       await new Promise<void>((resolve, reject) => {
-        const transaction = db.transaction([this.STORE_NAME], 'readwrite');
+        const transaction = db.transaction([this.STORE_NAME], "readwrite");
         const store = transaction.objectStore(this.STORE_NAME);
         const request = store.put(handle, this.HANDLE_KEY);
 
@@ -51,7 +51,7 @@ export class FileSystemService {
 
       return true;
     } catch (err) {
-      console.error('Error selecting folder:', err);
+      console.error("Error selecting folder:", err);
       return false;
     }
   }
@@ -59,7 +59,7 @@ export class FileSystemService {
   async clearCustomFolder(): Promise<void> {
     const db = await this.dbPromise;
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.STORE_NAME], 'readwrite');
+      const transaction = db.transaction([this.STORE_NAME], "readwrite");
       const store = transaction.objectStore(this.STORE_NAME);
       const request = store.delete(this.HANDLE_KEY);
 
@@ -68,11 +68,13 @@ export class FileSystemService {
     });
   }
 
-  async getCustomDirectoryHandle(): Promise<FileSystemDirectoryHandle | undefined> {
+  async getCustomDirectoryHandle(): Promise<
+    FileSystemDirectoryHandle | undefined
+  > {
     const db = await this.dbPromise;
 
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.STORE_NAME], 'readonly');
+    return new Promise((resolve, _reject) => {
+      const transaction = db.transaction([this.STORE_NAME], "readonly");
       const store = transaction.objectStore(this.STORE_NAME);
       const request = store.get(this.HANDLE_KEY);
 
@@ -97,7 +99,7 @@ export class FileSystemService {
 
     try {
       // Check for required files
-      await handle.getFileHandle('raceday-setup.component.html');
+      await handle.getFileHandle("raceday-setup.component.html");
       return true;
     } catch {
       return false;
@@ -106,25 +108,28 @@ export class FileSystemService {
 
   async getCustomFile(filename: string): Promise<string> {
     const handle = await this.getCustomDirectoryHandle();
-    if (!handle) throw new Error('No custom directory configured');
+    if (!handle) throw new Error("No custom directory configured");
 
     const permission = await this.verifyPermission(handle, false);
-    if (!permission) throw new Error('Permission denied');
+    if (!permission) throw new Error("Permission denied");
 
     const fileHandle = await handle.getFileHandle(filename);
     const file = await fileHandle.getFile();
     return file.text();
   }
 
-  private async verifyPermission(handle: FileSystemDirectoryHandle, readWrite: boolean): Promise<boolean> {
+  private async verifyPermission(
+    handle: FileSystemDirectoryHandle,
+    readWrite: boolean,
+  ): Promise<boolean> {
     const options: FileSystemHandlePermissionDescriptor = {};
     if (readWrite) {
-      options.mode = 'readwrite';
+      options.mode = "readwrite";
     }
-    if ((await handle.queryPermission(options)) === 'granted') {
+    if ((await handle.queryPermission(options)) === "granted") {
       return true;
     }
-    if ((await handle.requestPermission(options)) === 'granted') {
+    if ((await handle.requestPermission(options)) === "granted") {
       return true;
     }
     return false;

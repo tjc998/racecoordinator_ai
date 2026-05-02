@@ -81,7 +81,7 @@ test.describe("Team Editor Visuals", () => {
     );
 
     const container = page.locator(".page-container");
-    const harness = new TeamEditorHarnessE2e(container);
+    const _harness = new TeamEditorHarnessE2e(container);
 
     await page.locator(".loader-overlay").waitFor({ state: "hidden" });
 

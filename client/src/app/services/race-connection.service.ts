@@ -7,11 +7,24 @@ import { RaceConverter } from "src/app/converters/race.converter";
 import { RaceParticipantConverter } from "src/app/converters/race_participant.converter";
 import { TrackConverter } from "src/app/converters/track.converter";
 import { DataService } from "src/app/data.service";
-import { com } from "src/app/proto/message";
 
 import { RaceService } from "./race.service";
 
-import InterfaceStatus = com.antigravity.InterfaceStatus;
+import {
+  ICarData,
+  IInterfaceEvent,
+  ILap,
+  IOverallStandingsUpdate,
+  IRace,
+  IRaceTime,
+  IReactionTime,
+  IRecordData,
+  ISegment,
+  IStandingsUpdate,
+  InterfaceStatus,
+  RaceFlag,
+  RaceState,
+} from "src/app/proto/antigravity";
 
 @Injectable({
   providedIn: "root",
@@ -22,46 +35,43 @@ export class RaceConnectionService implements OnDestroy {
   private isDestroyed = false;
 
   // Subjects for side effects
-  private lapSubject = new Subject<com.antigravity.ILap>();
+  private lapSubject = new Subject<ILap>();
   laps$ = this.lapSubject.asObservable();
 
-  private reactionTimeSubject = new Subject<com.antigravity.IReactionTime>();
+  private reactionTimeSubject = new Subject<IReactionTime>();
   reactionTimes$ = this.reactionTimeSubject.asObservable();
 
-  private standingsSubject = new Subject<com.antigravity.IStandingsUpdate>();
+  private standingsSubject = new Subject<IStandingsUpdate>();
   standingsUpdate$ = this.standingsSubject.asObservable();
 
-  private overallStandingsSubject =
-    new Subject<com.antigravity.IOverallStandingsUpdate>();
+  private overallStandingsSubject = new Subject<IOverallStandingsUpdate>();
   overallStandingsUpdate$ = this.overallStandingsSubject.asObservable();
 
-  private interfaceEventSubject =
-    new Subject<com.antigravity.IInterfaceEvent>();
+  private interfaceEventSubject = new Subject<IInterfaceEvent>();
   interfaceEvents$ = this.interfaceEventSubject.asObservable();
 
-  private carDataSubject = new Subject<com.antigravity.ICarData>();
+  private carDataSubject = new Subject<ICarData>();
   carData$ = this.carDataSubject.asObservable();
 
-  private segmentSubject = new Subject<com.antigravity.ISegment>();
+  private segmentSubject = new Subject<ISegment>();
   segments$ = this.segmentSubject.asObservable();
 
-  private raceTimeSubject = new BehaviorSubject<com.antigravity.IRaceTime>({
+  private raceTimeSubject = new BehaviorSubject<IRaceTime>({
     time: 0,
   });
   raceTime$ = this.raceTimeSubject.asObservable();
 
-  private raceStateSubject = new BehaviorSubject<com.antigravity.RaceState>(
-    com.antigravity.RaceState.UNKNOWN_STATE,
+  private raceStateSubject = new BehaviorSubject<RaceState>(
+    RaceState.UNKNOWN_STATE,
   );
   raceState$ = this.raceStateSubject.asObservable();
 
-  private raceFlagSubject = new BehaviorSubject<com.antigravity.RaceFlag>(
-    com.antigravity.RaceFlag.UNKNOWN_FLAG,
+  private raceFlagSubject = new BehaviorSubject<RaceFlag>(
+    RaceFlag.UNKNOWN_FLAG,
   );
   raceFlag$ = this.raceFlagSubject.asObservable();
 
-  private recordDataSubject =
-    new BehaviorSubject<com.antigravity.IRecordData | null>(null);
+  private recordDataSubject = new BehaviorSubject<IRecordData | null>(null);
   recordData$ = this.recordDataSubject.asObservable();
 
   // Watchdog variables
@@ -75,7 +85,7 @@ export class RaceConnectionService implements OnDestroy {
   public driverRankings = new Map<string, number>();
 
   private driversLoaded = false;
-  private pendingUpdate: com.antigravity.IRace | null = null;
+  private pendingUpdate: IRace | null = null;
 
   // Test hook or configuration
   private get WATCHDOG_TIMEOUT(): number {
@@ -154,6 +164,7 @@ export class RaceConnectionService implements OnDestroy {
               lap.averageLapTime!,
               lap.medianLapTime!,
               lap.bestLapTime!,
+              lap.adjustedLapCount!,
               lap.driverId!,
               lap.isDrift!,
             );
@@ -218,7 +229,7 @@ export class RaceConnectionService implements OnDestroy {
     this.subscriptions.push(
       this.dataService.getOverallStandingsUpdate().subscribe((update) => {
         if (update && update.participants) {
-          const participants = update.participants.map((p) =>
+          const participants = update.participants.map((p: any) =>
             RaceParticipantConverter.fromProto(p),
           );
           this.raceService.setParticipants(participants);
@@ -283,7 +294,7 @@ export class RaceConnectionService implements OnDestroy {
             this.pendingUpdate = null;
           }
         },
-        error: (err) => {
+        error: (_err) => {
           this.driversLoaded = true;
           if (this.pendingUpdate) {
             this.processRaceUpdate(this.pendingUpdate);
@@ -294,39 +305,33 @@ export class RaceConnectionService implements OnDestroy {
     );
   }
 
-  private processRaceUpdate(update: com.antigravity.IRace) {
+  private processRaceUpdate(update: IRace) {
     console.log(
       "RaceConnectionService: processRaceUpdate called with:",
       update,
     );
-    let raceDataChanged = false;
-
     if (update.race) {
       const race = RaceConverter.fromProto(update.race);
       this.raceService.setRace(race);
-      raceDataChanged = true;
     }
 
     if (update.drivers && update.drivers.length > 0) {
-      const participants = update.drivers.map((d) =>
+      const participants = update.drivers.map((d: any) =>
         RaceParticipantConverter.fromProto(d),
       );
       this.raceService.setParticipants(participants);
-      raceDataChanged = true;
     }
 
     if (update.heats && update.heats.length > 0) {
-      const heats = update.heats.map((h, index) =>
+      const heats = update.heats.map((h: any, index: number) =>
         HeatConverter.fromProto(h, index + 1),
       );
       this.raceService.setHeats(heats);
-      raceDataChanged = true;
     }
 
     if (update.currentHeat) {
       const currentHeat = HeatConverter.fromProto(update.currentHeat);
       this.raceService.setCurrentHeat(currentHeat);
-      raceDataChanged = true;
     }
 
     if (update.recordData) {
@@ -336,12 +341,9 @@ export class RaceConnectionService implements OnDestroy {
     // Gaps updating after race update might be needed, or it's handled by StandingsUpdate
   }
 
-  private applyStandingsUpdate(
-    update: com.antigravity.IStandingsUpdate,
-    heat: any,
-  ) {
+  private applyStandingsUpdate(update: IStandingsUpdate, heat: any) {
     if (heat && update && update.updates) {
-      update.updates.forEach((u) => {
+      update.updates.forEach((u: any) => {
         if (u.objectId) {
           this.driverRankings.set(u.objectId, u.rank || 0);
           const driverData = heat.heatDrivers.find(
@@ -364,7 +366,7 @@ export class RaceConnectionService implements OnDestroy {
 
   // ... inside starting connection ...
 
-  private handleInterfaceEvent(event: com.antigravity.IInterfaceEvent) {
+  private handleInterfaceEvent(event: IInterfaceEvent) {
     if (event.status) {
       const status = event.status.status;
       if (status === this.lastInterfaceStatus) {

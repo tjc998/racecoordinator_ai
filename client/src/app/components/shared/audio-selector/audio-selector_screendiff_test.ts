@@ -1,9 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { ItemSelectorHarnessE2e } from "src/app/components/shared/item-selector/testing/item-selector.harness.e2e";
-import { com } from "src/app/proto/message";
+
 import { TestSetupHelper } from "src/app/testing/test-setup_helper";
 
 import { AudioSelectorHarnessE2e } from "./testing/audio-selector.harness.e2e";
+
+import { ListAssetsResponse } from "src/app/proto/antigravity";
 
 test.describe("Audio Selector Visuals", () => {
   test.beforeEach(async ({ page }) => {
@@ -44,9 +46,8 @@ test.describe("Audio Selector Visuals", () => {
         filename: `snd${i}.mp3`,
       }));
 
-      const response = com.antigravity.ListAssetsResponse.create({ assets });
-      const buffer =
-        com.antigravity.ListAssetsResponse.encode(response).finish();
+      const response = ListAssetsResponse.create({ assets });
+      const buffer = ListAssetsResponse.encode(response).finish();
 
       await route.fulfill({
         status: 200,
@@ -71,7 +72,7 @@ test.describe("Audio Selector Visuals", () => {
 
     // Wait for item selector to be visible
     const itemSelector = audioSelector.locator("app-item-selector");
-    const itemHarness = new ItemSelectorHarnessE2e(itemSelector);
+    const _itemHarness = new ItemSelectorHarnessE2e(itemSelector);
     await expect(itemSelector.locator(".modal-content")).toBeVisible();
 
     // Items count checked visually

@@ -75,7 +75,8 @@
   text-transform: uppercase;
 }
 
-.editor-section input[type="text"] {
+.editor-section input[type="text"],
+.editor-section input[type="number"] {
   background: rgba(15, 23, 42, 0.5);
   border: 1px solid rgba(148, 163, 184, 0.3);
   color: #f1f5f9;
@@ -85,7 +86,8 @@
   font-family: inherit;
 }
 
-.editor-section input[type="text"]:focus {
+.editor-section input[type="text"]:focus,
+.editor-section input[type="number"]:focus {
   border-color: #38bdf8;
   outline: none;
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);

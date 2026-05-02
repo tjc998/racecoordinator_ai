@@ -46,8 +46,8 @@ describe("HeatResultsComponent", () => {
       0,
       mockDriver1,
     );
-    hd1.addLapTime(1, 10.5, 10.5, 10.5, 10.5);
-    hd1.addLapTime(2, 10.2, 10.35, 10.35, 10.2);
+    hd1.addLapTime(1, 10.5, 10.5, 10.5, 10.5, 1);
+    hd1.addLapTime(2, 10.2, 10.35, 10.35, 10.2, 2);
 
     const hd2 = new DriverHeatData(
       "hd2",
@@ -55,8 +55,8 @@ describe("HeatResultsComponent", () => {
       1,
       mockDriver2,
     );
-    hd2.addLapTime(1, 11.1, 11.1, 11.1, 11.1);
-    hd2.addLapTime(2, 10.9, 11.0, 11.0, 10.9);
+    hd2.addLapTime(1, 11.1, 11.1, 11.1, 11.1, 1);
+    hd2.addLapTime(2, 10.9, 11.0, 11.0, 10.9, 2);
 
     const mockHeat = new Heat("h1", 1, [hd1, hd2]);
     const mockRace = new Race(

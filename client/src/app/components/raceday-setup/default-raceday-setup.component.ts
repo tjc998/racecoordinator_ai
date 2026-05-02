@@ -464,7 +464,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
     event.preventDefault();
   }
 
-  onDragStarted(event: any) {
+  onDragStarted(_event: any) {
     if (window.getSelection) {
       window.getSelection()?.removeAllRanges();
     }

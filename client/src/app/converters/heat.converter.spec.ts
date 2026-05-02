@@ -1,29 +1,31 @@
-import { com } from 'src/app/proto/message';
+import { DriverConverter } from "./driver.converter";
+import { HeatConverter } from "./heat.converter";
 
-import { DriverConverter } from './driver.converter';
-import { HeatConverter } from './heat.converter';
+import { IHeat } from "src/app/proto/antigravity";
 
-describe('HeatConverter', () => {
+describe("HeatConverter", () => {
   beforeEach(() => {
     HeatConverter.clearCache();
     DriverConverter.clearCache();
   });
 
-  it('should populate actualDriver when present in proto', () => {
-    const proto: com.antigravity.IHeat = {
-      objectId: 'heat1',
+  it("should populate actualDriver when present in proto", () => {
+    const proto: IHeat = {
+      objectId: "heat1",
       heatNumber: 1,
-      heatDrivers: [{
-        objectId: 'hd1',
-        driver: {
-          objectId: 'p1',
-          driver: { name: 'Participant Driver' }
+      heatDrivers: [
+        {
+          objectId: "hd1",
+          driver: {
+            objectId: "p1",
+            driver: { name: "Participant Driver" },
+          },
+          driverId: "d1",
+          actualDriver: {
+            name: "Actual Driver",
+          },
         },
-        driverId: 'd1',
-        actualDriver: {
-          name: 'Actual Driver'
-        }
-      }]
+      ],
     };
 
     const heat = HeatConverter.fromProto(proto);
@@ -31,23 +33,25 @@ describe('HeatConverter', () => {
     const driverData = heat.heatDrivers[0];
 
     expect(driverData.actualDriver).toBeDefined();
-    expect(driverData.actualDriver?.name).toBe('Actual Driver');
-    expect(driverData.driver.name).toBe('Actual Driver');
+    expect(driverData.actualDriver?.name).toBe("Actual Driver");
+    expect(driverData.driver.name).toBe("Actual Driver");
   });
 
-  it('should fallback to participant driver when actualDriver is missing', () => {
-    const proto: com.antigravity.IHeat = {
-      objectId: 'heat1',
+  it("should fallback to participant driver when actualDriver is missing", () => {
+    const proto: IHeat = {
+      objectId: "heat1",
       heatNumber: 1,
-      heatDrivers: [{
-        objectId: 'hd1',
-        driver: {
-          objectId: 'p1',
-          driver: { name: 'Participant Driver' }
+      heatDrivers: [
+        {
+          objectId: "hd1",
+          driver: {
+            objectId: "p1",
+            driver: { name: "Participant Driver" },
+          },
+          driverId: "d1",
+          // No actualDriver
         },
-        driverId: 'd1'
-        // No actualDriver
-      }]
+      ],
     };
 
     const heat = HeatConverter.fromProto(proto);
@@ -55,6 +59,45 @@ describe('HeatConverter', () => {
     const driverData = heat.heatDrivers[0];
 
     expect(driverData.actualDriver).toBeUndefined();
-    expect(driverData.driver.name).toBe('Participant Driver');
+    expect(driverData.driver.name).toBe("Participant Driver");
+  });
+  it("should populate reactionTime and other performance metrics", () => {
+    const proto: IHeat = {
+      objectId: "heat1",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd1",
+          driver: {
+            objectId: "p1",
+            driver: { name: "Driver 1" },
+          },
+          reactionTime: 0.75,
+          gapLeader: 1.5,
+          gapPosition: 0.5,
+          penaltyLaps: 1,
+          userLaps: 2,
+          autoCalculatedLaps: 0.5,
+          adjustedLapCount: 10.5,
+          segments: [0.1, 0.2, 0.3],
+          isRefueling: true,
+          currentLocation: 100,
+        } as any,
+      ],
+    };
+
+    const heat = HeatConverter.fromProto(proto);
+    const driverData = heat.heatDrivers[0]!;
+
+    expect(driverData.reactionTime).toBe(0.75);
+    expect(driverData.gapLeader).toBe(1.5);
+    expect(driverData.gapPosition).toBe(0.5);
+    expect(driverData.penaltyLaps).toBe(1);
+    expect(driverData.userLaps).toBe(2);
+    expect(driverData.autoCalculatedLaps).toBe(0.5);
+    expect(driverData.adjustedLapCount).toBe(10.5);
+    expect(driverData.currentLapSegments).toEqual([0.1, 0.2, 0.3]);
+    expect(driverData.isRefueling).toBe(true);
+    expect(driverData.currentLocation).toBe(100);
   });
 });

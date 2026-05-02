@@ -6,7 +6,7 @@ import { Subscription } from "rxjs";
 import { forkJoin } from "rxjs";
 import { ManagerHeaderComponent } from "src/app/components/shared/manager-header/manager-header.component";
 import { DataService } from "src/app/data.service";
-import { com } from "src/app/proto/message";
+
 import {
   ConnectionMonitorService,
   ConnectionState,
@@ -15,6 +15,14 @@ import { GuideStep, HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 import { mockTTSContext, playSound } from "src/app/utils/audio";
+
+import {
+  IAssetMessage,
+  IAudioSetEntry,
+  IImageSetEntry,
+  ISaveAudioSetEntry,
+  ISaveImageSetEntry,
+} from "src/app/proto/antigravity";
 
 // Interface matching the mock/view needs, mapped from Protobuf
 export interface AssetView {
@@ -25,8 +33,8 @@ export interface AssetView {
   url: string;
   editMode?: boolean;
   selected?: boolean;
-  images?: com.antigravity.IImageSetEntry[];
-  audioEntries?: com.antigravity.IAudioSetEntry[];
+  images?: IImageSetEntry[];
+  audioEntries?: IAudioSetEntry[];
   currentPreviewIndex?: number;
 }
 
@@ -53,13 +61,13 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   showImageSetEditor: boolean = false;
   editingAssetId?: string;
   editingAssetName: string = "";
-  editingAssetEntries: com.antigravity.ISaveImageSetEntry[] = [];
+  editingAssetEntries: ISaveImageSetEntry[] = [];
 
   // Audio Set Editor
   showAudioSetEditor: boolean = false;
   editingAudioAssetId?: string;
   editingAudioAssetName: string = "";
-  editingAudioAssetEntries: com.antigravity.ISaveAudioSetEntry[] = [];
+  editingAudioAssetEntries: ISaveAudioSetEntry[] = [];
   lastSelectedIndex: number = -1;
 
   // Delete Confirmation
@@ -207,7 +215,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   }
 
   // Helper to construct full URL if needed, or use what server sent
-  getAssetUrl(asset: com.antigravity.IAssetMessage): string {
+  getAssetUrl(asset: IAssetMessage): string {
     // If server provides a relative path, prepend base url
     if (asset.url && asset.url.startsWith("/")) {
       return `http://localhost:7070${asset.url}`;
@@ -612,7 +620,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     this.showImageSetEditor = true;
   }
 
-  onImageSetSaved(asset: com.antigravity.IAssetMessage) {
+  onImageSetSaved(_asset: IAssetMessage) {
     this.loadAssets();
   }
 
@@ -636,7 +644,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  onAudioSetSaved(asset: com.antigravity.IAssetMessage) {
+  onAudioSetSaved(_asset: IAssetMessage) {
     this.loadAssets();
   }
 

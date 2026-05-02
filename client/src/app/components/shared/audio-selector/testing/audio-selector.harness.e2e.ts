@@ -40,7 +40,7 @@ export class AudioSelectorHarnessE2e implements AudioSelectorHarnessBase {
     for (const span of spans) {
       const classList = (await span.getAttribute("class")) || "";
       if (classList.includes("active")) {
-        const id = (await span.getAttribute("id")) || "";
+        const _id = (await span.getAttribute("id")) || "";
         // If we added IDs, that would be better. Let's check innerText as fallback
         const text = await span.innerText();
         if (text.match(/preset/i)) return "preset";

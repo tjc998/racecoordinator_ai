@@ -2,7 +2,10 @@ module.exports = {
   "root": true,
   "ignorePatterns": [
     "projects/**/*",
-    "scripts/**/*"
+    "scripts/**/*",
+    "src/app/proto/message.d.ts",
+    "src/app/proto/message.js",
+    "src/app/proto/antigravity.ts"
   ],
   "overrides": [
     {
@@ -39,10 +42,32 @@ module.exports = {
           }
         ],
         "@angular-eslint/no-output-native": "off",
-        "simple-import-sort/imports": "error",
-        "simple-import-sort/exports": "error"
+        "@typescript-eslint/no-unused-vars": [
+          "error",
+          {
+            "vars": "all",
+            "args": "after-used",
+            "ignoreRestSiblings": true,
+            "argsIgnorePattern": "^_",
+            "varsIgnorePattern": "^_"
+          }
+        ],
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "MemberExpression[object.name='com'], MemberExpression[object.name='antigravity']",
+            "message": "Do not qualify protobuf messages (e.g., com.antigravity.X or antigravity.X). Use direct imports instead."
+          },
+          {
+            "selector": "ImportEqualsDeclaration[moduleReference.type='QualifiedName']",
+            "message": "Use standard ES6 imports (import { ... } from '...') instead of namespace aliases (import X = Y.X)."
+          }
+        ]
       },
-      "plugins": ["simple-import-sort"]
+      "plugins": [
+        "@typescript-eslint",
+        "simple-import-sort"
+      ]
     },
     {
       "files": [

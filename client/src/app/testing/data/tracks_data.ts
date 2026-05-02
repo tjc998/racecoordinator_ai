@@ -99,6 +99,7 @@ export const MOCK_TRACK_INSTANCES = MOCK_TRACKS.map(
     new Track(
       t.entity_id,
       t.name,
+      t.num_track_sections || 100,
       t.lanes.map(
         (l: any) =>
           new Lane(l.entity_id, l.foregroundColor, l.backgroundColor, l.length),

@@ -19,6 +19,7 @@ public class TrackConverter {
       return TrackModel.newBuilder()
           .setModel(Model.newBuilder().setEntityId(track.getObjectId()).build())
           .setName(track.getName())
+          .setNumTrackSections(track.getNumTrackSections())
           .setHasDigitalFuel(hasDigitalFuel(track))
           .addAllArduinoConfigs(
               track.getArduinoConfigs().stream()

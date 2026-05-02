@@ -132,6 +132,33 @@ Run the JUnit tests for the backend:
 - **Linux/Mac**: `./run_server_tests.sh`
 - **Windows**: `.\run_server_tests.ps1`
 
+## Linting
+
+This project enforces code quality and style standards for both the client (TypeScript/HTML) and server (Java).
+
+### What is Checked?
+- **Client**: TypeScript and HTML linting (ESLint), code formatting (Prettier). A custom rule is enforced to forbid fully qualified Protobuf message names (e.g., `antigravity.Message`) in favor of direct imports.
+- **Server**: Java code style (Spotless/Google Style), static analysis (Checkstyle), and potential bug detection (PMD).
+- **Automation**: Linting and formatting are automatically run on staged files during commit via `husky` and `lint-staged`.
+
+### How to Validate
+You can run the following commands from the project root to check for linting errors:
+
+- **Both Client & Server**: `npm run lint`
+- **Client Only**: `npm run lint:client`
+- **Server Only**: `npm run lint:server`
+
+### How to Fix
+Many linting issues can be fixed automatically:
+
+- **Client**: Running `npm run lint:client` will automatically fix most TypeScript/HTML style and formatting issues.
+- **Server**: To fix Java formatting issues automatically, run:
+  - **Linux/Mac**: `cd server && mvn spotless:apply`
+  - **Windows**: `cd server; mvn spotless:apply`
+
+> [!TIP]
+> You can also run `npm run lint` which will attempt to fix the client automatically while checking the server.
+
 ## Debugging
 
 ### Server (Java)

@@ -96,6 +96,7 @@ export class TrackManagerComponent implements OnInit {
             new Track(
               t.entity_id,
               t.name,
+              t.num_track_sections ?? 100,
               t.lanes || [],
               t.has_digital_fuel ?? false,
               t.arduino_configs,

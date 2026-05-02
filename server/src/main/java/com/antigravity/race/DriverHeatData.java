@@ -74,6 +74,10 @@ public class DriverHeatData extends ServerToClientObject {
   private double gapPosition = 0.0;
   private final ArrayList<Double> segments = new ArrayList<>();
   private CarLocation currentLocation;
+  private double penaltyLaps = 0;
+  private double userLaps = 0;
+  private double autoCalculatedLaps = 0;
+  private boolean isRefueling = false;
 
   public DriverHeatData(RaceParticipant driver, Driver actualDriver) {
     super();
@@ -146,6 +150,10 @@ public class DriverHeatData extends ServerToClientObject {
 
   public int getLapCount() {
     return laps.size();
+  }
+
+  public double getAdjustedLapCount() {
+    return (double) getLapCount() + penaltyLaps + userLaps + autoCalculatedLaps;
   }
 
   public List<LapData> getLaps() {
@@ -261,5 +269,37 @@ public class DriverHeatData extends ServerToClientObject {
 
   public void setCurrentLocation(CarLocation currentLocation) {
     this.currentLocation = currentLocation;
+  }
+
+  public double getPenaltyLaps() {
+    return penaltyLaps;
+  }
+
+  public void setPenaltyLaps(double penaltyLaps) {
+    this.penaltyLaps = penaltyLaps;
+  }
+
+  public double getUserLaps() {
+    return userLaps;
+  }
+
+  public void setUserLaps(double userLaps) {
+    this.userLaps = userLaps;
+  }
+
+  public double getAutoCalculatedLaps() {
+    return autoCalculatedLaps;
+  }
+
+  public boolean isRefueling() {
+    return isRefueling;
+  }
+
+  public void setRefueling(boolean refueling) {
+    isRefueling = refueling;
+  }
+
+  public void setAutoCalculatedLaps(double autoCalculatedLaps) {
+    this.autoCalculatedLaps = autoCalculatedLaps;
   }
 }

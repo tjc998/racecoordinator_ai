@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
-import { com } from "src/app/proto/message";
+
 import { TestSetupHelper } from "src/app/testing/test-setup_helper";
+
+import { RaceState } from "src/app/proto/antigravity";
 
 test.describe("Raceday Start Sequence Visuals", () => {
   test.beforeEach(async ({ page }) => {
@@ -73,10 +75,7 @@ test.describe("Raceday Start Sequence Visuals", () => {
     await page.waitForTimeout(200);
 
     // Transition to STARTING state
-    await TestSetupHelper.sendRaceState(
-      page,
-      com.antigravity.RaceState.STARTING,
-    );
+    await TestSetupHelper.sendRaceState(page, RaceState.STARTING);
     await TestSetupHelper.sendRaceTime(page, {
       time: 5.0,
       autoStartRemaining: 5.0,
@@ -128,10 +127,7 @@ test.describe("Raceday Start Sequence Visuals", () => {
 
     // Transition to STARTING state and tick down
     // At T=2.5, 5 - floor(2.5) = 5 - 2 = 3 lamps should be ON
-    await TestSetupHelper.sendRaceState(
-      page,
-      com.antigravity.RaceState.STARTING,
-    );
+    await TestSetupHelper.sendRaceState(page, RaceState.STARTING);
     await TestSetupHelper.sendRaceTime(page, {
       time: 2.5,
       autoStartRemaining: 2.5,
@@ -178,15 +174,12 @@ test.describe("Raceday Start Sequence Visuals", () => {
     await page.waitForTimeout(200);
 
     // Transition to STARTING then RACING
-    await TestSetupHelper.sendRaceState(
-      page,
-      com.antigravity.RaceState.STARTING,
-    );
+    await TestSetupHelper.sendRaceState(page, RaceState.STARTING);
     await TestSetupHelper.sendRaceTime(page, {
       time: 0.1,
       autoStartRemaining: 0.1,
     });
-    await TestSetupHelper.sendRaceState(page, com.antigravity.RaceState.RACING);
+    await TestSetupHelper.sendRaceState(page, RaceState.RACING);
 
     // Wait for the component to process the WebSocket messages and fetch assets if needed
     await page.waitForTimeout(500);
@@ -231,15 +224,12 @@ test.describe("Raceday Start Sequence Visuals", () => {
     await page.waitForTimeout(200);
 
     // 1. Transition to STARTING then RACING
-    await TestSetupHelper.sendRaceState(
-      page,
-      com.antigravity.RaceState.STARTING,
-    );
+    await TestSetupHelper.sendRaceState(page, RaceState.STARTING);
     await TestSetupHelper.sendRaceTime(page, {
       time: 0.1,
       autoStartRemaining: 0.1,
     });
-    await TestSetupHelper.sendRaceState(page, com.antigravity.RaceState.RACING);
+    await TestSetupHelper.sendRaceState(page, RaceState.RACING);
 
     // 2. Wait a tiny bit, but less than 1s (overlay still visible)
     await page.waitForTimeout(200);
@@ -298,10 +288,7 @@ test.describe("Raceday Start Sequence Visuals", () => {
     await page.waitForTimeout(200);
 
     // Transition to STARTING state
-    await TestSetupHelper.sendRaceState(
-      page,
-      com.antigravity.RaceState.STARTING,
-    );
+    await TestSetupHelper.sendRaceState(page, RaceState.STARTING);
     await TestSetupHelper.sendRaceTime(page, {
       time: 3.0,
       autoStartRemaining: 3.0,
@@ -352,16 +339,13 @@ test.describe("Raceday Start Sequence Visuals", () => {
     await page.waitForTimeout(200);
 
     // 1. Initial State: RACING
-    await TestSetupHelper.sendRaceState(page, com.antigravity.RaceState.RACING);
+    await TestSetupHelper.sendRaceState(page, RaceState.RACING);
 
     // 2. PAUSE
-    await TestSetupHelper.sendRaceState(page, com.antigravity.RaceState.PAUSED);
+    await TestSetupHelper.sendRaceState(page, RaceState.PAUSED);
 
     // 3. Resume -> STARTING
-    await TestSetupHelper.sendRaceState(
-      page,
-      com.antigravity.RaceState.STARTING,
-    );
+    await TestSetupHelper.sendRaceState(page, RaceState.STARTING);
     await TestSetupHelper.sendRaceTime(page, {
       time: 2.0,
       autoStartRemaining: 2.0,

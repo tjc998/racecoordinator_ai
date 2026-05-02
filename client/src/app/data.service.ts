@@ -1,9 +1,68 @@
 import { HttpClient, HttpHeaders } from "@angular/common/http";
-import { Injectable } from "@angular/core";
+import { Injectable, NgZone } from "@angular/core";
 import { BehaviorSubject, Observable, ReplaySubject, Subject } from "rxjs";
 import { map } from "rxjs/operators";
 import { ArduinoConfig } from "src/app/models/track";
-import { com } from "src/app/proto/message";
+import {
+  DeferHeatRequest,
+  DeferHeatResponse,
+  DeleteAssetRequest,
+  DeleteAssetResponse,
+  IAssetMessage,
+  ICarData,
+  IInterfaceEvent,
+  ILap,
+  IOverallStandingsUpdate,
+  IRace,
+  IRaceTime,
+  IReactionTime,
+  IRecordData,
+  IRgbLedState,
+  ISaveAudioSetEntry,
+  ISaveImageSetEntry,
+  ISegment,
+  IStandingsUpdate,
+  ITeamModel,
+  InitializeInterfaceRequest,
+  InitializeInterfaceResponse,
+  InitializeRaceRequest,
+  InitializeRaceResponse,
+  InterfaceEvent,
+  ListAssetsResponse,
+  NextHeatRequest,
+  NextHeatResponse,
+  PauseRaceRequest,
+  PauseRaceResponse,
+  RaceData,
+  RaceFlag,
+  RaceState,
+  RaceSubscriptionRequest,
+  RenameAssetRequest,
+  RenameAssetResponse,
+  RestartHeatRequest,
+  RestartHeatResponse,
+  RgbLedState,
+  SaveAudioSetRequest,
+  SaveAudioSetResponse,
+  SaveImageSetRequest,
+  SaveImageSetResponse,
+  SetInterfacePinStateRequest,
+  SetInterfacePinStateResponse,
+  SetInterfaceRgbLedStateRequest,
+  SetInterfaceRgbLedStateResponse,
+  SkipHeatRequest,
+  SkipHeatResponse,
+  StartRaceRequest,
+  StartRaceResponse,
+  UpdateInterfaceConfigRequest,
+  UpdateInterfaceConfigResponse,
+  UploadAssetRequest,
+  UploadAssetResponse,
+  VoltageConfig,
+  ArduinoConfig as ProtoArduinoConfig,
+  LedString as ProtoLedString,
+  VoltageConfig as ProtoVoltageConfig,
+} from "src/app/proto/antigravity";
 import { SettingsService } from "src/app/services/settings.service";
 
 @Injectable({
@@ -38,6 +97,7 @@ export class DataService {
   constructor(
     private http: HttpClient,
     private settingsService: SettingsService,
+    private ngZone: NgZone,
   ) {
     const settings = this.settingsService.getSettings();
     if (settings.serverIp) {
@@ -164,14 +224,13 @@ export class DataService {
     raceId: string,
     driverIds: string[],
     isDemoMode: boolean,
-  ): Observable<com.antigravity.InitializeRaceResponse> {
-    const request = com.antigravity.InitializeRaceRequest.create({
+  ): Observable<InitializeRaceResponse> {
+    const request = InitializeRaceRequest.create({
       raceId,
       driverIds,
       isDemoMode,
     });
-    const buffer =
-      com.antigravity.InitializeRaceRequest.encode(request).finish();
+    const buffer = InitializeRaceRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
       "Content-Type": "application/octet-stream",
@@ -185,9 +244,7 @@ export class DataService {
       })
       .pipe(
         map((response) => {
-          return com.antigravity.InitializeRaceResponse.decode(
-            new Uint8Array(response as any),
-          );
+          return InitializeRaceResponse.decode(new Uint8Array(response as any));
         }),
       );
   }
@@ -195,10 +252,10 @@ export class DataService {
   initializeInterface(
     configs: ArduinoConfig[],
     laneCount: number,
-  ): Observable<com.antigravity.InitializeInterfaceResponse> {
-    const request = com.antigravity.InitializeInterfaceRequest.create({
+  ): Observable<InitializeInterfaceResponse> {
+    const request = InitializeInterfaceRequest.create({
       configs: configs.map((config) =>
-        com.antigravity.ArduinoConfig.create({
+        ProtoArduinoConfig.create({
           name: config.name,
           commPort: config.commPort,
           baudRate: config.baudRate,
@@ -213,7 +270,7 @@ export class DataService {
           analogIds: config.analogIds,
           ledStrings:
             config.ledStrings?.map((ls) =>
-              com.antigravity.LedString.create({
+              ProtoLedString.create({
                 pin: ls.pin,
                 leds: ls.leds,
                 numUsedLeds: ls.numUsedLeds,
@@ -226,7 +283,7 @@ export class DataService {
             ) || [],
           voltageConfigs: Object.entries(config.voltageConfigs || {}).map(
             ([lane, maxVoltage]) =>
-              com.antigravity.VoltageConfig.create({
+              ProtoVoltageConfig.create({
                 lane: parseInt(lane, 10),
                 maxVoltage: maxVoltage as number,
               }),
@@ -235,8 +292,7 @@ export class DataService {
       ),
       laneCount,
     });
-    const buffer =
-      com.antigravity.InitializeInterfaceRequest.encode(request).finish();
+    const buffer = InitializeInterfaceRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
       "Content-Type": "application/octet-stream",
@@ -254,7 +310,7 @@ export class DataService {
       )
       .pipe(
         map((response) => {
-          return com.antigravity.InitializeInterfaceResponse.decode(
+          return InitializeInterfaceResponse.decode(
             new Uint8Array(response as any),
           );
         }),
@@ -264,9 +320,9 @@ export class DataService {
   updateInterfaceConfig(
     config: ArduinoConfig,
     interfaceIndex: number,
-  ): Observable<com.antigravity.UpdateInterfaceConfigResponse> {
-    const request = com.antigravity.UpdateInterfaceConfigRequest.create({
-      config: com.antigravity.ArduinoConfig.create({
+  ): Observable<UpdateInterfaceConfigResponse> {
+    const request = UpdateInterfaceConfigRequest.create({
+      config: ProtoArduinoConfig.create({
         name: config.name,
         commPort: config.commPort,
         baudRate: config.baudRate,
@@ -281,7 +337,7 @@ export class DataService {
         analogIds: config.analogIds,
         ledStrings:
           config.ledStrings?.map((ls) =>
-            com.antigravity.LedString.create({
+            ProtoLedString.create({
               pin: ls.pin,
               leds: ls.leds,
               numUsedLeds: ls.numUsedLeds,
@@ -294,7 +350,7 @@ export class DataService {
           ) || [],
         voltageConfigs: Object.entries(config.voltageConfigs || {}).map(
           ([lane, maxVoltage]) =>
-            com.antigravity.VoltageConfig.create({
+            VoltageConfig.create({
               lane: parseInt(lane, 10),
               maxVoltage: maxVoltage as number,
             }),
@@ -302,8 +358,7 @@ export class DataService {
       }),
       interfaceIndex,
     });
-    const buffer =
-      com.antigravity.UpdateInterfaceConfigRequest.encode(request).finish();
+    const buffer = UpdateInterfaceConfigRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
       "Content-Type": "application/octet-stream",
@@ -321,7 +376,7 @@ export class DataService {
       )
       .pipe(
         map((response) => {
-          return com.antigravity.UpdateInterfaceConfigResponse.decode(
+          return UpdateInterfaceConfigResponse.decode(
             new Uint8Array(response as any),
           );
         }),
@@ -333,15 +388,14 @@ export class DataService {
     isDigital: boolean,
     isHigh: boolean,
     interfaceIndex: number,
-  ): Observable<com.antigravity.SetInterfacePinStateResponse> {
-    const request = com.antigravity.SetInterfacePinStateRequest.create({
+  ): Observable<SetInterfacePinStateResponse> {
+    const request = SetInterfacePinStateRequest.create({
       pin,
       isDigital,
       isHigh,
       interfaceIndex,
     });
-    const buffer =
-      com.antigravity.SetInterfacePinStateRequest.encode(request).finish();
+    const buffer = SetInterfacePinStateRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
       "Content-Type": "application/octet-stream",
@@ -359,7 +413,7 @@ export class DataService {
       )
       .pipe(
         map((response) => {
-          return com.antigravity.SetInterfacePinStateResponse.decode(
+          return SetInterfacePinStateResponse.decode(
             new Uint8Array(response as any),
           );
         }),
@@ -368,16 +422,15 @@ export class DataService {
 
   setInterfaceRgbLedState(
     pin: number,
-    leds: com.antigravity.IRgbLedState[],
+    leds: IRgbLedState[],
     interfaceIndex: number,
-  ): Observable<com.antigravity.SetInterfaceRgbLedStateResponse> {
-    const request = com.antigravity.SetInterfaceRgbLedStateRequest.create({
+  ): Observable<SetInterfaceRgbLedStateResponse> {
+    const request = SetInterfaceRgbLedStateRequest.create({
       pin,
-      leds: leds.map((l) => com.antigravity.RgbLedState.create(l)),
+      leds: leds.map((l) => RgbLedState.create(l)),
       interfaceIndex,
     });
-    const buffer =
-      com.antigravity.SetInterfaceRgbLedStateRequest.encode(request).finish();
+    const buffer = SetInterfaceRgbLedStateRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
       "Content-Type": "application/octet-stream",
@@ -395,7 +448,7 @@ export class DataService {
       )
       .pipe(
         map((response) => {
-          return com.antigravity.SetInterfaceRgbLedStateResponse.decode(
+          return SetInterfaceRgbLedStateResponse.decode(
             new Uint8Array(response as any),
           );
         }),
@@ -407,8 +460,8 @@ export class DataService {
   }
 
   startRace(): Observable<boolean> {
-    const request = com.antigravity.StartRaceRequest.create({});
-    const buffer = com.antigravity.StartRaceRequest.encode(request).finish();
+    const request = StartRaceRequest.create({});
+    const buffer = StartRaceRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
       "Content-Type": "application/octet-stream",
@@ -422,7 +475,7 @@ export class DataService {
       })
       .pipe(
         map((response) => {
-          const startResponse = com.antigravity.StartRaceResponse.decode(
+          const startResponse = StartRaceResponse.decode(
             new Uint8Array(response as any),
           );
           return startResponse.success;
@@ -431,8 +484,8 @@ export class DataService {
   }
 
   pauseRace(): Observable<boolean> {
-    const request = com.antigravity.PauseRaceRequest.create({});
-    const buffer = com.antigravity.PauseRaceRequest.encode(request).finish();
+    const request = PauseRaceRequest.create({});
+    const buffer = PauseRaceRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
       "Content-Type": "application/octet-stream",
@@ -446,7 +499,7 @@ export class DataService {
       })
       .pipe(
         map((response) => {
-          const pauseResponse = com.antigravity.PauseRaceResponse.decode(
+          const pauseResponse = PauseRaceResponse.decode(
             new Uint8Array(response as any),
           );
           return pauseResponse.success;
@@ -455,8 +508,8 @@ export class DataService {
   }
 
   abortTimers(): Observable<boolean> {
-    const request = com.antigravity.PauseRaceRequest.create({});
-    const buffer = com.antigravity.PauseRaceRequest.encode(request).finish();
+    const request = PauseRaceRequest.create({});
+    const buffer = PauseRaceRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
       "Content-Type": "application/octet-stream",
@@ -470,7 +523,7 @@ export class DataService {
       })
       .pipe(
         map((response) => {
-          const abortResponse = com.antigravity.PauseRaceResponse.decode(
+          const abortResponse = PauseRaceResponse.decode(
             new Uint8Array(response as any),
           );
           return abortResponse.success ?? false;
@@ -479,8 +532,8 @@ export class DataService {
   }
 
   nextHeat(): Observable<boolean> {
-    const request = com.antigravity.NextHeatRequest.create({});
-    const buffer = com.antigravity.NextHeatRequest.encode(request).finish();
+    const request = NextHeatRequest.create({});
+    const buffer = NextHeatRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
       "Content-Type": "application/octet-stream",
@@ -494,7 +547,7 @@ export class DataService {
       })
       .pipe(
         map((response) => {
-          const nextResponse = com.antigravity.NextHeatResponse.decode(
+          const nextResponse = NextHeatResponse.decode(
             new Uint8Array(response as any),
           );
           return nextResponse.success ?? false;
@@ -503,8 +556,8 @@ export class DataService {
   }
 
   restartHeat(): Observable<boolean> {
-    const request = com.antigravity.RestartHeatRequest.create({});
-    const buffer = com.antigravity.RestartHeatRequest.encode(request).finish();
+    const request = RestartHeatRequest.create({});
+    const buffer = RestartHeatRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
       "Content-Type": "application/octet-stream",
@@ -518,7 +571,7 @@ export class DataService {
       })
       .pipe(
         map((response) => {
-          const restartResponse = com.antigravity.RestartHeatResponse.decode(
+          const restartResponse = RestartHeatResponse.decode(
             new Uint8Array(response as any),
           );
           return restartResponse.success ?? false;
@@ -527,8 +580,8 @@ export class DataService {
   }
 
   skipHeat(): Observable<boolean> {
-    const request = com.antigravity.SkipHeatRequest.create({});
-    const buffer = com.antigravity.SkipHeatRequest.encode(request).finish();
+    const request = SkipHeatRequest.create({});
+    const buffer = SkipHeatRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
       "Content-Type": "application/octet-stream",
@@ -542,7 +595,7 @@ export class DataService {
       })
       .pipe(
         map((response) => {
-          const skipResponse = com.antigravity.SkipHeatResponse.decode(
+          const skipResponse = SkipHeatResponse.decode(
             new Uint8Array(response as any),
           );
           return skipResponse.success ?? false;
@@ -551,8 +604,8 @@ export class DataService {
   }
 
   deferHeat(): Observable<boolean> {
-    const request = com.antigravity.DeferHeatRequest.create({});
-    const buffer = com.antigravity.DeferHeatRequest.encode(request).finish();
+    const request = DeferHeatRequest.create({});
+    const buffer = DeferHeatRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
       "Content-Type": "application/octet-stream",
@@ -566,7 +619,7 @@ export class DataService {
       })
       .pipe(
         map((response) => {
-          const deferResponse = com.antigravity.DeferHeatResponse.decode(
+          const deferResponse = DeferHeatResponse.decode(
             new Uint8Array(response as any),
           );
           return deferResponse.success ?? false;
@@ -576,10 +629,8 @@ export class DataService {
 
   // --- Database Management ---
 
-  getTeams(): Observable<com.antigravity.ITeamModel[]> {
-    return this.http.get<com.antigravity.ITeamModel[]>(
-      `${this.baseUrl}/api/teams`,
-    );
+  getTeams(): Observable<ITeamModel[]> {
+    return this.http.get<ITeamModel[]>(`${this.baseUrl}/api/teams`);
   }
 
   createTeam(team: any): Observable<any> {
@@ -677,14 +728,14 @@ export class DataService {
   }
 
   // --- Asset Management ---
-  listAssets(): Observable<com.antigravity.IAssetMessage[]> {
+  listAssets(): Observable<IAssetMessage[]> {
     return this.http
       .get(`${this.baseUrl}/api/assets/list`, {
         responseType: "arraybuffer",
       })
       .pipe(
         map((response) => {
-          const listResponse = com.antigravity.ListAssetsResponse.decode(
+          const listResponse = ListAssetsResponse.decode(
             new Uint8Array(response as any),
           );
           return listResponse.assets;
@@ -700,13 +751,13 @@ export class DataService {
     name: string,
     type: string,
     data: Uint8Array,
-  ): Observable<com.antigravity.IAssetMessage> {
-    const request = com.antigravity.UploadAssetRequest.create({
+  ): Observable<IAssetMessage> {
+    const request = UploadAssetRequest.create({
       name,
       type,
       data,
     });
-    const buffer = com.antigravity.UploadAssetRequest.encode(request).finish();
+    const buffer = UploadAssetRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
       "Content-Type": "application/octet-stream",
@@ -720,7 +771,7 @@ export class DataService {
       })
       .pipe(
         map((response) => {
-          const uploadResponse = com.antigravity.UploadAssetResponse.decode(
+          const uploadResponse = UploadAssetResponse.decode(
             new Uint8Array(response as any),
           );
           if (!uploadResponse.success) {
@@ -733,15 +784,15 @@ export class DataService {
 
   saveImageSet(
     name: string,
-    entries: com.antigravity.ISaveImageSetEntry[],
+    entries: ISaveImageSetEntry[],
     id?: string,
-  ): Observable<com.antigravity.IAssetMessage> {
-    const request = com.antigravity.SaveImageSetRequest.create({
+  ): Observable<IAssetMessage> {
+    const request = SaveImageSetRequest.create({
       id,
       name,
       entries,
     });
-    const buffer = com.antigravity.SaveImageSetRequest.encode(request).finish();
+    const buffer = SaveImageSetRequest.encode(request).finish();
     const headers = new HttpHeaders().set(
       "Content-Type",
       "application/octet-stream",
@@ -758,7 +809,7 @@ export class DataService {
       )
       .pipe(
         map((response) => {
-          const saveResponse = com.antigravity.SaveImageSetResponse.decode(
+          const saveResponse = SaveImageSetResponse.decode(
             new Uint8Array(response as any),
           );
           if (!saveResponse.success) {
@@ -773,15 +824,15 @@ export class DataService {
 
   saveAudioSet(
     name: string,
-    entries: com.antigravity.ISaveAudioSetEntry[],
+    entries: ISaveAudioSetEntry[],
     id?: string,
-  ): Observable<com.antigravity.IAssetMessage> {
-    const request = com.antigravity.SaveAudioSetRequest.create({
+  ): Observable<IAssetMessage> {
+    const request = SaveAudioSetRequest.create({
       id,
       name,
       entries,
     });
-    const buffer = com.antigravity.SaveAudioSetRequest.encode(request).finish();
+    const buffer = SaveAudioSetRequest.encode(request).finish();
     const headers = new HttpHeaders().set(
       "Content-Type",
       "application/octet-stream",
@@ -798,7 +849,7 @@ export class DataService {
       )
       .pipe(
         map((response) => {
-          const saveResponse = com.antigravity.SaveAudioSetResponse.decode(
+          const saveResponse = SaveAudioSetResponse.decode(
             new Uint8Array(response as any),
           );
           if (!saveResponse.success) {
@@ -812,8 +863,8 @@ export class DataService {
   }
 
   deleteAsset(id: string): Observable<boolean> {
-    const request = com.antigravity.DeleteAssetRequest.create({ id });
-    const buffer = com.antigravity.DeleteAssetRequest.encode(request).finish();
+    const request = DeleteAssetRequest.create({ id });
+    const buffer = DeleteAssetRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
       "Content-Type": "application/octet-stream",
@@ -827,7 +878,7 @@ export class DataService {
       })
       .pipe(
         map((response) => {
-          const deleteResponse = com.antigravity.DeleteAssetResponse.decode(
+          const deleteResponse = DeleteAssetResponse.decode(
             new Uint8Array(response as any),
           );
           if (!deleteResponse.success) {
@@ -839,8 +890,8 @@ export class DataService {
   }
 
   renameAsset(id: string, newName: string): Observable<boolean> {
-    const request = com.antigravity.RenameAssetRequest.create({ id, newName });
-    const buffer = com.antigravity.RenameAssetRequest.encode(request).finish();
+    const request = RenameAssetRequest.create({ id, newName });
+    const buffer = RenameAssetRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
       "Content-Type": "application/octet-stream",
@@ -854,7 +905,7 @@ export class DataService {
       })
       .pipe(
         map((response) => {
-          const renameResponse = com.antigravity.RenameAssetResponse.decode(
+          const renameResponse = RenameAssetResponse.decode(
             new Uint8Array(response as any),
           );
           if (!renameResponse.success) {
@@ -867,27 +918,24 @@ export class DataService {
 
   private raceDataSocket?: WebSocket;
   private interfaceDataSocket?: WebSocket;
-  private raceTimeSubject = new BehaviorSubject<com.antigravity.IRaceTime>({
+  private raceTimeSubject = new BehaviorSubject<IRaceTime>({
     time: 0,
   });
-  private lapSubject = new Subject<com.antigravity.ILap>();
-  private reactionTimeSubject = new Subject<com.antigravity.IReactionTime>();
-  private standingsSubject =
-    new ReplaySubject<com.antigravity.IStandingsUpdate>(1);
-  private overallStandingsSubject =
-    new ReplaySubject<com.antigravity.IOverallStandingsUpdate>(1);
-  private raceUpdateSubject = new ReplaySubject<com.antigravity.IRace>(1);
-  private interfaceEventSubject =
-    new Subject<com.antigravity.IInterfaceEvent>();
-  private carDataSubject = new Subject<com.antigravity.ICarData>();
-  private segmentSubject = new Subject<com.antigravity.ISegment>();
-  private raceStateSubject = new BehaviorSubject<com.antigravity.RaceState>(
-    com.antigravity.RaceState.UNKNOWN_STATE,
+  private lapSubject = new Subject<ILap>();
+  private reactionTimeSubject = new Subject<IReactionTime>();
+  private standingsSubject = new ReplaySubject<IStandingsUpdate>(1);
+  private overallStandingsSubject = new ReplaySubject<IOverallStandingsUpdate>(
+    1,
   );
-  private flagSubject = new BehaviorSubject<com.antigravity.RaceFlag>(
-    com.antigravity.RaceFlag.UNKNOWN_FLAG,
+  private raceUpdateSubject = new ReplaySubject<IRace>(1);
+  private interfaceEventSubject = new Subject<IInterfaceEvent>();
+  private carDataSubject = new Subject<ICarData>();
+  private segmentSubject = new Subject<ISegment>();
+  private raceStateSubject = new BehaviorSubject<RaceState>(
+    RaceState.UNKNOWN_STATE,
   );
-  private recordDataSubject = new ReplaySubject<com.antigravity.IRecordData>(1);
+  private flagSubject = new BehaviorSubject<RaceFlag>(RaceFlag.UNKNOWN_FLAG);
+  private recordDataSubject = new ReplaySubject<IRecordData>(1);
 
   private shouldSubscribeToRaceData = false;
 
@@ -915,11 +963,10 @@ export class DataService {
     )
       return;
 
-    const request = com.antigravity.RaceSubscriptionRequest.create({
+    const request = RaceSubscriptionRequest.create({
       subscribe,
     });
-    const buffer =
-      com.antigravity.RaceSubscriptionRequest.encode(request).finish();
+    const buffer = RaceSubscriptionRequest.encode(request).finish();
     this.raceDataSocket.send(buffer);
     console.log(`Sent RaceSubscriptionRequest: subscribe=${subscribe}`);
   }
@@ -955,57 +1002,57 @@ export class DataService {
     };
 
     this.raceDataSocket.onmessage = (event) => {
-      try {
-        const arrayBuffer = event.data as ArrayBuffer;
-        const raceData = com.antigravity.RaceData.decode(
-          new Uint8Array(arrayBuffer),
-        );
+      this.ngZone.run(() => {
+        try {
+          const arrayBuffer = event.data as ArrayBuffer;
+          const raceData = RaceData.decode(new Uint8Array(arrayBuffer));
 
-        if (raceData.raceTime) {
-          this.raceTimeSubject.next(raceData.raceTime);
-        }
-        if (raceData.lap) {
-          this.lapSubject.next(raceData.lap);
-        }
-        if (raceData.reactionTime) {
-          this.reactionTimeSubject.next(raceData.reactionTime);
-        }
-        if (raceData.standingsUpdate) {
-          this.standingsSubject.next(raceData.standingsUpdate);
-        }
-        if (raceData.overallStandingsUpdate) {
-          this.overallStandingsSubject.next(raceData.overallStandingsUpdate);
-        }
-        if (raceData.raceState) {
-          console.log("WS: Received RaceState", raceData.raceState);
-          this.raceStateSubject.next(raceData.raceState);
-        }
-        if (raceData.race) {
-          console.log("WS: Received Race", raceData.race);
-          this.raceUpdateSubject.next(raceData.race);
-          if (raceData.race.state) {
-            this.raceStateSubject.next(raceData.race.state);
+          if (raceData.raceTime) {
+            this.raceTimeSubject.next(raceData.raceTime);
           }
-          if (raceData.race.flag) {
-            this.flagSubject.next(raceData.race.flag);
+          if (raceData.lap) {
+            this.lapSubject.next(raceData.lap);
           }
+          if (raceData.reactionTime) {
+            this.reactionTimeSubject.next(raceData.reactionTime);
+          }
+          if (raceData.standingsUpdate) {
+            this.standingsSubject.next(raceData.standingsUpdate);
+          }
+          if (raceData.overallStandingsUpdate) {
+            this.overallStandingsSubject.next(raceData.overallStandingsUpdate);
+          }
+          if (raceData.raceState) {
+            console.log("WS: Received RaceState", raceData.raceState);
+            this.raceStateSubject.next(raceData.raceState);
+          }
+          if (raceData.race) {
+            console.log("WS: Received Race", raceData.race);
+            this.raceUpdateSubject.next(raceData.race);
+            if (raceData.race.state) {
+              this.raceStateSubject.next(raceData.race.state);
+            }
+            if (raceData.race.flag) {
+              this.flagSubject.next(raceData.race.flag);
+            }
+          }
+          if (raceData.carData) {
+            this.carDataSubject.next(raceData.carData);
+          }
+          if (raceData.segment) {
+            this.segmentSubject.next(raceData.segment);
+          }
+          if (raceData.flag) {
+            console.log("WS: Received RaceFlag", raceData.flag);
+            this.flagSubject.next(raceData.flag);
+          }
+          if (raceData.recordData) {
+            this.recordDataSubject.next(raceData.recordData);
+          }
+        } catch (e) {
+          console.error("Error parsing race data message", e);
         }
-        if (raceData.carData) {
-          this.carDataSubject.next(raceData.carData);
-        }
-        if (raceData.segment) {
-          this.segmentSubject.next(raceData.segment);
-        }
-        if (raceData.flag) {
-          console.log("WS: Received RaceFlag", raceData.flag);
-          this.flagSubject.next(raceData.flag);
-        }
-        if (raceData.recordData) {
-          this.recordDataSubject.next(raceData.recordData);
-        }
-      } catch (e) {
-        console.error("Error parsing race data message", e);
-      }
+      });
     };
 
     this.raceDataSocket.onclose = () => {
@@ -1078,7 +1125,7 @@ export class DataService {
           return;
         }
 
-        const msg = com.antigravity.InterfaceEvent.decode(uint8Array);
+        const msg = InterfaceEvent.decode(uint8Array);
         this.interfaceEventSubject.next(msg);
       } catch (e) {
         console.error("Error decoding Interface WebSocket message", e);
@@ -1098,51 +1145,51 @@ export class DataService {
     }
   }
 
-  public getRaceTime(): Observable<com.antigravity.IRaceTime> {
+  public getRaceTime(): Observable<IRaceTime> {
     return this.raceTimeSubject.asObservable();
   }
 
-  public getLaps(): Observable<com.antigravity.ILap> {
+  public getLaps(): Observable<ILap> {
     return this.lapSubject.asObservable();
   }
 
-  public getReactionTimes(): Observable<com.antigravity.IReactionTime> {
+  public getReactionTimes(): Observable<IReactionTime> {
     return this.reactionTimeSubject.asObservable();
   }
 
-  public getStandingsUpdate(): Observable<com.antigravity.IStandingsUpdate> {
+  public getStandingsUpdate(): Observable<IStandingsUpdate> {
     return this.standingsSubject.asObservable();
   }
 
-  public getOverallStandingsUpdate(): Observable<com.antigravity.IOverallStandingsUpdate> {
+  public getOverallStandingsUpdate(): Observable<IOverallStandingsUpdate> {
     return this.overallStandingsSubject.asObservable();
   }
 
-  public getRaceUpdate(): Observable<com.antigravity.IRace> {
+  public getRaceUpdate(): Observable<IRace> {
     return this.raceUpdateSubject.asObservable();
   }
 
-  public getInterfaceEvents(): Observable<com.antigravity.IInterfaceEvent> {
+  public getInterfaceEvents(): Observable<IInterfaceEvent> {
     return this.interfaceEventSubject.asObservable();
   }
 
-  public getRaceState(): Observable<com.antigravity.RaceState> {
+  public getRaceState(): Observable<RaceState> {
     return this.raceStateSubject.asObservable();
   }
 
-  public getRaceFlag(): Observable<com.antigravity.RaceFlag> {
+  public getRaceFlag(): Observable<RaceFlag> {
     return this.flagSubject.asObservable();
   }
 
-  public getCarData(): Observable<com.antigravity.ICarData> {
+  public getCarData(): Observable<ICarData> {
     return this.carDataSubject.asObservable();
   }
 
-  public getSegments(): Observable<com.antigravity.ISegment> {
+  public getSegments(): Observable<ISegment> {
     return this.segmentSubject.asObservable();
   }
 
-  public getRecordData(): Observable<com.antigravity.IRecordData> {
+  public getRecordData(): Observable<IRecordData> {
     return this.recordDataSubject.asObservable();
   }
 
@@ -1210,6 +1257,13 @@ export class DataService {
   }> {
     return this.http.get<{ clientId: string; measurementId: string }>(
       `${this.baseUrl}/api/analytics/config`,
+    );
+  }
+
+  updateUserLaps(lane: number, userLaps: number): Observable<any> {
+    return this.http.post<any>(
+      `${this.baseUrl}/api/races/current-heat/drivers/${lane}/user-laps`,
+      { userLaps },
     );
   }
 }

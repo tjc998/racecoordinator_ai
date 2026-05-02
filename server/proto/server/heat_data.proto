@@ -23,5 +23,16 @@ message DriverHeatData {
   double gap_position = 6;
   repeated double segments = 7;
   repeated LapData laps = 8;
+  double penalty_laps = 9;
+  double user_laps = 10;
+  double auto_calculated_laps = 11;
+  double adjusted_lap_count = 12;
+  double average_lap_time = 13;
+  double median_lap_time = 14;
+  double best_lap_time = 15;
+  double reaction_time = 16;
+  bool is_refueling = 17;
+  int32 current_location = 18;
+  double initial_fuel_level = 19;
 }
 

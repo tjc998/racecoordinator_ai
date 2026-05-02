@@ -12,7 +12,6 @@ import {
 import {
   ComponentFixture,
   fakeAsync,
-  flush,
   TestBed,
   tick,
 } from "@angular/core/testing";
@@ -46,9 +45,9 @@ class MockSvgTextScalerDirective {
 }
 import { of, Subject } from "rxjs";
 import { THEME_SLOT_KEYS } from "src/app/models/theme";
-import { com } from "src/app/proto/message";
+
 import { RaceConnectionService } from "src/app/services/race-connection.service";
-import * as audioUtils from "src/app/utils/audio";
+import * as _audio from "src/app/utils/audio";
 
 @Component({
   selector: "app-acknowledgement-modal",
@@ -84,14 +83,23 @@ import { createDefaultSettings } from "src/app/testing/data/settings_data";
 import { MOCK_TRACKS } from "src/app/testing/data/tracks_data";
 import {
   mockRouter,
-  mockSettingsService,
+  mockSettingsService as _mockSettingsService,
   mockTranslationService,
   resetMocks,
 } from "src/app/testing/unit-test-mocks";
 
-import { AnchorPoint, ColumnDefinition } from "./column_definition";
+import { AnchorPoint } from "./column_definition";
 import { DefaultRacedayComponent } from "./default-raceday.component";
 import { createRacedayMocks } from "./testing/raceday_helper";
+
+import {
+  IInterfaceEvent,
+  ILap,
+  IRaceTime,
+  IRecordData,
+  IStandingsUpdate,
+  RaceState,
+} from "src/app/proto/antigravity";
 
 describe("DefaultRacedayComponent", () => {
   let component: DefaultRacedayComponent;
@@ -101,17 +109,17 @@ describe("DefaultRacedayComponent", () => {
   let mockSettings: Settings;
   let mockRaceConnectionService: any;
   let mockRaceFlagService: any;
-  let interfaceEventsSubject: Subject<com.antigravity.IInterfaceEvent>;
+  let interfaceEventsSubject: Subject<IInterfaceEvent>;
   let interfaceAlertSubject: Subject<{ titleKey: string; messageKey: string }>;
-  let raceTimeSubject: Subject<com.antigravity.IRaceTime>;
-  let lapsSubject: Subject<com.antigravity.ILap>;
-  let standingsUpdateSubject: Subject<com.antigravity.IStandingsUpdate>;
-  let originalAudio: any;
+  let raceTimeSubject: Subject<IRaceTime>;
+  let lapsSubject: Subject<ILap>;
+  let standingsUpdateSubject: Subject<IStandingsUpdate>;
+  let _originalAudio: any;
   let mockAudioInstance: any;
-  let recordDataSubject: Subject<com.antigravity.IRecordData>;
+  let recordDataSubject: Subject<IRecordData>;
   let participantsSubject: Subject<any[]>;
 
-  let raceStateSubject: Subject<com.antigravity.RaceState>;
+  let raceStateSubject: Subject<RaceState>;
 
   beforeEach(() => {
     mockAudioInstance = jasmine.createSpyObj("AudioInstance", [
@@ -354,31 +362,31 @@ describe("DefaultRacedayComponent", () => {
   describe("isNextHeatDisabled", () => {
     it("should be disabled when state is STARTING", () => {
       fixture.detectChanges();
-      component["raceState"] = com.antigravity.RaceState.STARTING;
+      component["raceState"] = RaceState.STARTING;
       expect(component.isNextHeatDisabled).toBeTrue();
     });
 
     it("should be disabled when state is RACING", () => {
       fixture.detectChanges();
-      component["raceState"] = com.antigravity.RaceState.RACING;
+      component["raceState"] = RaceState.RACING;
       expect(component.isNextHeatDisabled).toBeTrue();
     });
 
     it("should be enabled when state is HEAT_OVER", () => {
       fixture.detectChanges();
-      component["raceState"] = com.antigravity.RaceState.HEAT_OVER;
+      component["raceState"] = RaceState.HEAT_OVER;
       expect(component.isNextHeatDisabled).toBeFalse();
     });
 
     it("should be disabled when state is RACE_OVER", () => {
       fixture.detectChanges();
-      component["raceState"] = com.antigravity.RaceState.RACE_OVER;
+      component["raceState"] = RaceState.RACE_OVER;
       expect(component.isNextHeatDisabled).toBeTrue();
     });
 
     it("should be disabled when state is NOT_STARTED", () => {
       fixture.detectChanges();
-      component["raceState"] = com.antigravity.RaceState.NOT_STARTED;
+      component["raceState"] = RaceState.NOT_STARTED;
       expect(component.isNextHeatDisabled).toBeTrue();
     });
   });
@@ -389,32 +397,32 @@ describe("DefaultRacedayComponent", () => {
     });
 
     it("should be enabled in NOT_STARTED if autoStartRemaining > 0", () => {
-      component["raceState"] = com.antigravity.RaceState.NOT_STARTED;
+      component["raceState"] = RaceState.NOT_STARTED;
       component["autoStartRemaining"] = 5.0;
       expect(component.isPauseDisabled).toBeFalse();
     });
 
     it("should be disabled in NOT_STARTED if autoStartRemaining <= 0", () => {
-      component["raceState"] = com.antigravity.RaceState.NOT_STARTED;
+      component["raceState"] = RaceState.NOT_STARTED;
       component["autoStartRemaining"] = 0;
       expect(component.isPauseDisabled).toBeTrue();
     });
 
     it("should be enabled in HEAT_OVER if autoAdvanceRemaining > 0", () => {
-      component["raceState"] = com.antigravity.RaceState.HEAT_OVER;
+      component["raceState"] = RaceState.HEAT_OVER;
       component["autoAdvanceRemaining"] = 5.0;
       expect(component.isPauseDisabled).toBeFalse();
     });
 
     it("should be disabled in HEAT_OVER if autoAdvanceRemaining <= 0", () => {
-      component["raceState"] = com.antigravity.RaceState.HEAT_OVER;
+      component["raceState"] = RaceState.HEAT_OVER;
       component["autoAdvanceRemaining"] = 0;
       expect(component.isPauseDisabled).toBeTrue();
     });
 
     it("should be enabled when DISCONNECTED if an auto-timer is active", () => {
       component["isInterfaceConnected"] = false;
-      component["raceState"] = com.antigravity.RaceState.NOT_STARTED;
+      component["raceState"] = RaceState.NOT_STARTED;
       component["autoStartRemaining"] = 5.0;
       expect(component.isPauseDisabled).toBeFalse();
     });
@@ -442,7 +450,7 @@ describe("DefaultRacedayComponent", () => {
     });
 
     it("should trigger NEXT_HEAT when state is HEAT_OVER", () => {
-      component["raceState"] = com.antigravity.RaceState.HEAT_OVER;
+      component["raceState"] = RaceState.HEAT_OVER;
 
       component.handleKeyUpEvent(mockEvent);
 
@@ -450,7 +458,7 @@ describe("DefaultRacedayComponent", () => {
     });
 
     it("should trigger START_RESUME when state is NOT_STARTED", () => {
-      component["raceState"] = com.antigravity.RaceState.NOT_STARTED;
+      component["raceState"] = RaceState.NOT_STARTED;
 
       component.handleKeyUpEvent(mockEvent);
 
@@ -458,7 +466,7 @@ describe("DefaultRacedayComponent", () => {
     });
 
     it("should trigger START_RESUME when state is PAUSED", () => {
-      component["raceState"] = com.antigravity.RaceState.PAUSED;
+      component["raceState"] = RaceState.PAUSED;
 
       component.handleKeyUpEvent(mockEvent);
 
@@ -466,7 +474,7 @@ describe("DefaultRacedayComponent", () => {
     });
 
     it("should trigger ABORT_TIMERS when state is STARTING", () => {
-      component["raceState"] = com.antigravity.RaceState.STARTING;
+      component["raceState"] = RaceState.STARTING;
       component["autoStartRemaining"] = 3.0;
 
       component.handleKeyUpEvent(mockEvent);
@@ -475,7 +483,7 @@ describe("DefaultRacedayComponent", () => {
     });
 
     it("should trigger ABORT_TIMERS when state is RACING (if timer active)", () => {
-      component["raceState"] = com.antigravity.RaceState.RACING;
+      component["raceState"] = RaceState.RACING;
       component["autoStartRemaining"] = 3.0;
 
       component.handleKeyUpEvent(mockEvent);
@@ -484,7 +492,7 @@ describe("DefaultRacedayComponent", () => {
     });
 
     it("should trigger ABORT_TIMERS when state is NOT_STARTED and autoStartRemaining > 0", () => {
-      component["raceState"] = com.antigravity.RaceState.NOT_STARTED;
+      component["raceState"] = RaceState.NOT_STARTED;
       component["autoStartRemaining"] = 5.0;
 
       component.handleKeyUpEvent(mockEvent);
@@ -493,7 +501,7 @@ describe("DefaultRacedayComponent", () => {
     });
 
     it("should trigger ABORT_TIMERS when state is HEAT_OVER and autoAdvanceRemaining > 0", () => {
-      component["raceState"] = com.antigravity.RaceState.HEAT_OVER;
+      component["raceState"] = RaceState.HEAT_OVER;
       component["autoAdvanceRemaining"] = 5.0;
 
       component.handleKeyUpEvent(mockEvent);
@@ -1035,7 +1043,7 @@ describe("DefaultRacedayComponent", () => {
 
   describe("Timer Formatting", () => {
     beforeEach(() => {
-      component["raceState"] = com.antigravity.RaceState.RACING;
+      component["raceState"] = RaceState.RACING;
     });
 
     it("should format hours correctly (3665s -> 1:01:05)", () => {
@@ -1082,10 +1090,10 @@ describe("DefaultRacedayComponent", () => {
   });
 
   describe("Lap Highlighting", () => {
-    let lapsSubject: Subject<com.antigravity.ILap>;
+    let lapsSubject: Subject<ILap>;
 
     beforeEach(() => {
-      lapsSubject = new Subject<com.antigravity.ILap>();
+      lapsSubject = new Subject<ILap>();
 
       mockRaceConnectionService.laps$ = lapsSubject.asObservable();
       mockRaceService.getRace.and.returnValue({
@@ -1433,7 +1441,7 @@ describe("DefaultRacedayComponent", () => {
     });
 
     it("should display record values and holders when provided", () => {
-      const mockRecords: com.antigravity.IRecordData = {
+      const mockRecords: IRecordData = {
         overall: {
           fastestLap: {
             value: 3.123,
@@ -1463,7 +1471,7 @@ describe("DefaultRacedayComponent", () => {
     });
 
     it("should use placeholders '---' and '--.---' when record value is 0", () => {
-      const mockRecords: com.antigravity.IRecordData = {
+      const mockRecords: IRecordData = {
         overall: {
           fastestLap: {
             value: 0,
@@ -1521,7 +1529,7 @@ describe("DefaultRacedayComponent", () => {
     it("should show overlay and calculate lamps in STARTING state", fakeAsync(() => {
       component["race"] = { ...MOCK_RACES[0], start_time: 5.0 } as any;
       raceTimeSubject.next({ time: 5.0, autoStartRemaining: 5.0 });
-      raceStateSubject.next(com.antigravity.RaceState.STARTING);
+      raceStateSubject.next(RaceState.STARTING);
       tick();
       (window.Audio as any).calls.reset();
 
@@ -1541,9 +1549,9 @@ describe("DefaultRacedayComponent", () => {
       const race = { ...MOCK_RACES[0], start_time: 3.0 } as any;
       component["race"] = race;
       mockRaceService.getRace.and.returnValue(race);
-      raceStateSubject.next(com.antigravity.RaceState.NOT_STARTED);
+      raceStateSubject.next(RaceState.NOT_STARTED);
       tick();
-      raceStateSubject.next(com.antigravity.RaceState.STARTING);
+      raceStateSubject.next(RaceState.STARTING);
       tick();
       (window.Audio as any).calls.reset();
 
@@ -1559,11 +1567,11 @@ describe("DefaultRacedayComponent", () => {
       } as any;
       component["race"] = race;
       mockRaceService.getRace.and.returnValue(race);
-      raceStateSubject.next(com.antigravity.RaceState.RACING);
+      raceStateSubject.next(RaceState.RACING);
       tick();
-      raceStateSubject.next(com.antigravity.RaceState.PAUSED);
+      raceStateSubject.next(RaceState.PAUSED);
       tick();
-      raceStateSubject.next(com.antigravity.RaceState.STARTING);
+      raceStateSubject.next(RaceState.STARTING);
       tick();
       (window.Audio as any).calls.reset();
 
@@ -1573,7 +1581,7 @@ describe("DefaultRacedayComponent", () => {
     }));
 
     it("should re-sync countdownTotalLamps when race data is loaded during STARTING", fakeAsync(() => {
-      component["raceState"] = com.antigravity.RaceState.STARTING;
+      component["raceState"] = RaceState.STARTING;
       component["isRestarting"] = true; // resumed from pause
 
       const newRace = { ...MOCK_RACES[0], restart_time: 4.0 };
@@ -1587,7 +1595,7 @@ describe("DefaultRacedayComponent", () => {
     it("should update lamp states based on time remaining", fakeAsync(() => {
       component["race"] = { ...MOCK_RACES[0], start_time: 5.0 } as any;
       raceTimeSubject.next({ time: 5.0, autoStartRemaining: 5.0 });
-      raceStateSubject.next(com.antigravity.RaceState.STARTING);
+      raceStateSubject.next(RaceState.STARTING);
       tick();
       (window.Audio as any).calls.reset();
 
@@ -1612,11 +1620,11 @@ describe("DefaultRacedayComponent", () => {
 
     it("should transition to green and hide after 5s when state becomes RACING", fakeAsync(() => {
       component["race"] = { ...MOCK_RACES[0], start_time: 5.0 } as any;
-      raceStateSubject.next(com.antigravity.RaceState.STARTING);
+      raceStateSubject.next(RaceState.STARTING);
       tick();
       (window.Audio as any).calls.reset();
 
-      raceStateSubject.next(com.antigravity.RaceState.RACING);
+      raceStateSubject.next(RaceState.RACING);
       tick();
 
       expect(
@@ -1629,12 +1637,12 @@ describe("DefaultRacedayComponent", () => {
     }));
 
     it("should hide immediately if state becomes PAUSED during countdown", fakeAsync(() => {
-      raceStateSubject.next(com.antigravity.RaceState.STARTING);
+      raceStateSubject.next(RaceState.STARTING);
       tick();
       (window.Audio as any).calls.reset();
       expect(component["showCountdownOverlay"]).toBeTrue();
 
-      raceStateSubject.next(com.antigravity.RaceState.PAUSED);
+      raceStateSubject.next(RaceState.PAUSED);
       tick();
       expect(component["showCountdownOverlay"]).toBeFalse();
     }));
@@ -1780,7 +1788,7 @@ describe("DefaultRacedayComponent", () => {
 
     it("should call dataService.changeLane for SingleHeat in NOT_STARTED state", () => {
       (component as any).race.heat_rotation_type = "SingleHeat";
-      component["raceState"] = com.antigravity.RaceState.NOT_STARTED;
+      component["raceState"] = RaceState.NOT_STARTED;
       const fromHd = component["sortedHeatDrivers"][0];
       const event = {
         previousIndex: 0,
@@ -1797,7 +1805,7 @@ describe("DefaultRacedayComponent", () => {
 
     it("should NOT call dataService.changeLane for SingleHeat in RACING state", () => {
       (component as any).race.heat_rotation_type = "SingleHeat";
-      component["raceState"] = com.antigravity.RaceState.RACING;
+      component["raceState"] = RaceState.RACING;
       const fromHd = component["sortedHeatDrivers"][0];
       const event = {
         previousIndex: 0,
@@ -1860,10 +1868,10 @@ describe("DefaultRacedayComponent", () => {
 
     it("should play yellow flag audio when transitioning from RACING to PAUSED", () => {
       // Set initial state
-      component["raceState"] = com.antigravity.RaceState.RACING;
+      component["raceState"] = RaceState.RACING;
 
       // Trigger state change
-      raceStateSubject.next(com.antigravity.RaceState.PAUSED);
+      raceStateSubject.next(RaceState.PAUSED);
 
       expect(mockThemeService.resolveAudioConfig).toHaveBeenCalledWith(
         THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG,
@@ -1876,10 +1884,10 @@ describe("DefaultRacedayComponent", () => {
 
     it("should NOT play yellow flag audio when transitioning from STARTING to PAUSED", () => {
       // Set initial state
-      component["raceState"] = com.antigravity.RaceState.STARTING;
+      component["raceState"] = RaceState.STARTING;
 
       // Trigger state change
-      raceStateSubject.next(com.antigravity.RaceState.PAUSED);
+      raceStateSubject.next(RaceState.PAUSED);
 
       expect(window.Audio).not.toHaveBeenCalled();
     });
@@ -1889,9 +1897,9 @@ describe("DefaultRacedayComponent", () => {
         type: "tts",
         text: "Caution on track!",
       });
-      component["raceState"] = com.antigravity.RaceState.RACING;
+      component["raceState"] = RaceState.RACING;
 
-      raceStateSubject.next(com.antigravity.RaceState.PAUSED);
+      raceStateSubject.next(RaceState.PAUSED);
 
       expect(mockSpeechSynthesis.speak).toHaveBeenCalled();
       const callArgs = mockSpeechSynthesis.speak.calls.mostRecent().args;
@@ -1934,7 +1942,7 @@ describe("DefaultRacedayComponent", () => {
       });
 
       component["race"] = { ...MOCK_RACES[0], start_time: 5.0 } as any;
-      raceStateSubject.next(com.antigravity.RaceState.STARTING);
+      raceStateSubject.next(RaceState.STARTING);
       tick();
       (window.Audio as any).calls.reset();
       // Reset so next time update triggers a fresh play
@@ -1958,7 +1966,7 @@ describe("DefaultRacedayComponent", () => {
       const race = { ...MOCK_RACES[0], start_time: 3.0 } as any;
       component["race"] = race;
       mockRaceService.getRace.and.returnValue(race);
-      raceStateSubject.next(com.antigravity.RaceState.STARTING);
+      raceStateSubject.next(RaceState.STARTING);
       tick();
       (window.Audio as any).calls.reset();
       // Reset so next time update triggers a fresh play
@@ -1988,8 +1996,8 @@ describe("DefaultRacedayComponent", () => {
         return null;
       });
 
-      component["raceState"] = com.antigravity.RaceState.STARTING;
-      raceStateSubject.next(com.antigravity.RaceState.RACING);
+      component["raceState"] = RaceState.STARTING;
+      raceStateSubject.next(RaceState.RACING);
       tick();
 
       expect(window.Audio).toHaveBeenCalledWith(
@@ -2006,7 +2014,7 @@ describe("DefaultRacedayComponent", () => {
       });
 
       component["race"] = { ...MOCK_RACES[0], start_time: 5.0 } as any;
-      raceStateSubject.next(com.antigravity.RaceState.STARTING);
+      raceStateSubject.next(RaceState.STARTING);
       tick();
       (window.Audio as any).calls.reset();
 
@@ -2078,7 +2086,7 @@ describe("DefaultRacedayComponent", () => {
 
       fixture.detectChanges();
       // Use the subject to trigger state change logic (setting overlay, etc)
-      raceStateSubject.next(com.antigravity.RaceState.STARTING);
+      raceStateSubject.next(RaceState.STARTING);
 
       // Trigger a countdown threshold
       raceTimeSubject.next({ time: 1.0, autoStartRemaining: 1.0 });
@@ -2109,7 +2117,7 @@ describe("DefaultRacedayComponent", () => {
       mockRaceService.getRace.and.returnValue(race);
 
       fixture.detectChanges();
-      component["raceState"] = com.antigravity.RaceState.RACING;
+      component["raceState"] = RaceState.RACING;
 
       // Initial time: 5 minutes (300s)
       raceTimeSubject.next({ time: 300.0 });
@@ -2269,6 +2277,53 @@ describe("DefaultRacedayComponent", () => {
       (component as any).playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, 99);
 
       expect(window.Audio).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("fractional lap adjustments", () => {
+    it("should format fractional lap counts with up to 2 decimal places", () => {
+      const hd: any = { reactionTime: 1.0 };
+      expect(component.formatValue("lapCount", 10, hd)).toBe("10");
+      expect(component.formatValue("lapCount", 10.25, hd)).toBe("10.25");
+      expect(component.formatValue("lapCount", 10.5, hd)).toBe("10.5");
+      expect(component.formatValue("lapCount", 10.75, hd)).toBe("10.75");
+      expect(component.formatValue("lapCount", 10.123, hd)).toBe("10.12"); // Rounded to 2
+    });
+
+    it("should call updateUserLaps with current + 0.25 on cell click", () => {
+      const mockHd: any = {
+        laneIndex: 1,
+        userLaps: 1.25,
+        adjustedLapCount: 10.25,
+      };
+      mockDataService.updateUserLaps.and.returnValue(
+        of({ adjustedLapCount: 10.5 }),
+      );
+
+      const mockCol: any = { propertyName: "lapCount" };
+      const mockEvent = { ctrlKey: false } as MouseEvent;
+      component.onCellClick(mockHd, mockCol, mockEvent);
+
+      expect(mockDataService.updateUserLaps).toHaveBeenCalledWith(1, 1.5);
+      expect(mockHd.adjustedLapCount).toBe(10.5);
+    });
+
+    it("should call updateUserLaps with current - 0.25 on shift+click", () => {
+      const mockHd: any = {
+        laneIndex: 1,
+        userLaps: 1.25,
+        adjustedLapCount: 10.25,
+      };
+      mockDataService.updateUserLaps.and.returnValue(
+        of({ adjustedLapCount: 10.0 }),
+      );
+
+      const mockCol: any = { propertyName: "lapCount" };
+      const mockEvent = { shiftKey: true } as MouseEvent;
+      component.onCellClick(mockHd, mockCol, mockEvent);
+
+      expect(mockDataService.updateUserLaps).toHaveBeenCalledWith(1, 1.0);
+      expect(mockHd.adjustedLapCount).toBe(10.0);
     });
   });
 });

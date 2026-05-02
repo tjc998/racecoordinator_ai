@@ -226,7 +226,7 @@ public class DatabaseService {
     List<ArduinoConfig> configs = new ArrayList<>();
     configs.add(config);
     Track track =
-        new Track("The Heights", lanes, configs, getNextSequence(database, "tracks"), null);
+        new Track("The Heights", 100, lanes, configs, getNextSequence(database, "tracks"), null);
 
     trackCollection.insertOne(track);
     System.out.println("Tracks reset.");
@@ -406,10 +406,11 @@ public class DatabaseService {
     ArduinoConfig config = new ArduinoConfig();
     List<ArduinoConfig> configs = new ArrayList<>();
     configs.add(config);
-    return new Track("New Track", lanes, configs, null, null);
+    return new Track("New Track", 100, lanes, configs, null, null);
   }
 
-  public void saveRaceHistory(MongoDatabase database, com.antigravity.race.Race runtimeRace) {
+  public void saveRaceHistory(
+      MongoDatabase database, com.antigravity.race.Race runtimeRace) { // fqn-collision
     if (runtimeRace == null) return;
     boolean isDemo = runtimeRace.isDemoMode();
     try {
@@ -437,7 +438,7 @@ public class DatabaseService {
   }
 
   public void updateGlobalStatistics(
-      MongoDatabase database, com.antigravity.race.Race runtimeRace) {
+      MongoDatabase database, com.antigravity.race.Race runtimeRace) { // fqn-collision
     if (runtimeRace == null) return;
     boolean isDemo = runtimeRace.isDemoMode();
     try {
@@ -457,7 +458,7 @@ public class DatabaseService {
         stats.addRaceTimeMs(runtimeRace.getStatistics().getDurationMillis());
       }
 
-      int totalLaps = 0;
+      double totalLaps = 0;
       for (RaceParticipant p : runtimeRace.getDrivers()) {
         totalLaps += p.getTotalLaps();
       }

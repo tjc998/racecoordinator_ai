@@ -1,8 +1,9 @@
 import { ArduinoConfig, LedString } from "src/app/models/track";
-import { com } from "src/app/proto/message";
+
+import { IArduinoConfig } from "src/app/proto/antigravity";
 
 export class ArduinoConfigConverter {
-  static fromProto(proto: com.antigravity.IArduinoConfig): ArduinoConfig {
+  static fromProto(proto: IArduinoConfig): ArduinoConfig {
     const p = proto as any;
 
     const ledStrings: LedString[] = (p.ledStrings || []).map((ls: any) => ({

@@ -1,7 +1,9 @@
 import { Component, Input } from "@angular/core";
 import { ArduinoConfig } from "src/app/models/track";
-import { com } from "src/app/proto/message";
+
 import { TranslationService } from "src/app/services/translation.service";
+
+import { PinBehavior } from "src/app/proto/antigravity";
 
 @Component({
   selector: "app-arduino-summary",
@@ -30,8 +32,8 @@ export class ArduinoSummaryComponent {
     const isConfigured = (id: number) => {
       // 0 = BEHAVIOR_UNUSED, 1 = BEHAVIOR_RESERVED
       return (
-        id !== com.antigravity.PinBehavior.BEHAVIOR_UNUSED &&
-        id !== com.antigravity.PinBehavior.BEHAVIOR_RESERVED &&
+        id !== PinBehavior.BEHAVIOR_UNUSED &&
+        id !== PinBehavior.BEHAVIOR_RESERVED &&
         id !== -1
       );
     };
@@ -52,7 +54,7 @@ export class ArduinoSummaryComponent {
     const analogIds = this.config.analogIds || [];
     const allPins = [...digitalIds, ...analogIds];
 
-    const PB = com.antigravity.PinBehavior;
+    const PB = PinBehavior;
 
     switch (behaviorType) {
       case "lap":

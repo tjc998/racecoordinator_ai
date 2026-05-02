@@ -4,7 +4,7 @@ import { NO_ERRORS_SCHEMA } from "@angular/core";
 import {
   ComponentFixture,
   fakeAsync,
-  flush,
+  flush as _flush,
   TestBed,
   tick,
 } from "@angular/core/testing";
@@ -43,9 +43,9 @@ import { RaceEditorHarness } from "./testing/race-editor.harness";
 describe("RaceEditorComponent", () => {
   let component: RaceEditorComponent;
   let fixture: ComponentFixture<RaceEditorComponent>;
-  let loader: HarnessLoader;
+  let _loader: HarnessLoader;
   let dataService: any;
-  let router: any;
+  let _router: any;
   let activatedRoute: any;
 
   beforeEach(() => {
@@ -89,9 +89,9 @@ describe("RaceEditorComponent", () => {
 
     fixture = TestBed.createComponent(RaceEditorComponent);
     component = fixture.componentInstance;
-    loader = TestbedHarnessEnvironment.loader(fixture);
+    _loader = TestbedHarnessEnvironment.loader(fixture);
     dataService = TestBed.inject(DataService);
-    router = TestBed.inject(Router);
+    _router = TestBed.inject(Router);
     activatedRoute = TestBed.inject(ActivatedRoute);
 
     // Initialize with safe defaults for template binding (usually handled by loadData)
@@ -488,8 +488,8 @@ describe("RaceEditorComponent", () => {
 
     it("should correctly identify digital fuel capability of a track", () => {
       component.tracks = [
-        new Track("t1", "Analog Track", [], false),
-        new Track("speedway", "Digital Track", [], true),
+        new Track("t1", "Analog Track", 100, [], false),
+        new Track("speedway", "Digital Track", 100, [], true),
       ];
 
       component.editingRace.track_entity_id = "t1";
@@ -500,7 +500,7 @@ describe("RaceEditorComponent", () => {
     });
 
     it("should enforce fuel rules: disable digital fuel if track is analog", () => {
-      component.tracks = [new Track("track1", "Analog Track", [], false)];
+      component.tracks = [new Track("track1", "Analog Track", 100, [], false)];
       component.editingRace.track_entity_id = "track1";
       component.editingRace.digital_fuel_options = { enabled: true } as any;
 
@@ -693,7 +693,7 @@ describe("RaceEditorComponent", () => {
   }));
 
   it("should create a duplicate with unique name when Duplicate is clicked", fakeAsync(async () => {
-    const harness = await TestbedHarnessEnvironment.harnessForFixture(
+    const _harness = await TestbedHarnessEnvironment.harnessForFixture(
       fixture,
       RaceEditorHarness,
     );

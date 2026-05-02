@@ -5,7 +5,8 @@ import {
 import { TestBed } from "@angular/core/testing";
 
 import { DataService } from "./data.service";
-import { com } from "./proto/message";
+
+import { SaveAudioSetResponse } from "src/app/proto/antigravity";
 
 describe("DataService", () => {
   let service: DataService;
@@ -48,7 +49,7 @@ describe("DataService", () => {
     expect(req.request.body instanceof Blob).toBeTrue();
 
     // Mock response using SaveAudioSetResponse
-    const saveResponse = com.antigravity.SaveAudioSetResponse.create({
+    const saveResponse = SaveAudioSetResponse.create({
       success: true,
       asset: {
         model: { entityId: "new-id" },
@@ -56,13 +57,27 @@ describe("DataService", () => {
         type: "audio_set",
       },
     });
-    const buffer =
-      com.antigravity.SaveAudioSetResponse.encode(saveResponse).finish();
+    const buffer = SaveAudioSetResponse.encode(saveResponse).finish();
     req.flush(
       buffer.buffer.slice(
         buffer.byteOffset,
         buffer.byteOffset + buffer.byteLength,
       ),
     );
+  });
+
+  it("should call updateUserLaps endpoint", (done) => {
+    service.updateUserLaps(1, 1.25).subscribe((response) => {
+      expect(response.adjustedLapCount).toBe(1.25);
+      done();
+    });
+
+    const req = httpMock.expectOne(
+      (request) =>
+        request.url.endsWith("/api/races/current-heat/drivers/1/user-laps") &&
+        request.body.userLaps === 1.25,
+    );
+    expect(req.request.method).toBe("POST");
+    req.flush({ adjustedLapCount: 1.25 });
   });
 });

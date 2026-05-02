@@ -317,7 +317,7 @@
                   [class.leader-gold]="getLeaderboardPosition(entry) === 0"
                   [class.leader-white]="getLeaderboardPosition(entry) > 0"
                 >
-                  {{ entry.score }}
+                  {{ entry.score | number: "1.0-2" }}
                 </span>
               </div>
             </div>
@@ -384,6 +384,7 @@
               [style.border-right-color]="
                 track.lanes[hd.laneIndex]?.foreground_color
               "
+              (click)="onCellClick(hd, col, $event)"
             >
               <div
                 class="drift-indicator"

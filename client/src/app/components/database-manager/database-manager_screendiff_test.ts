@@ -139,7 +139,7 @@ test.describe("Database Manager Visuals", () => {
     });
 
     const container = page.locator(".page-container");
-    const harness = new DatabaseManagerHarnessE2e(container);
+    const _harness = new DatabaseManagerHarnessE2e(container);
 
     // Wait for database rows to be rendered
     await page.locator(".list-item").first().waitFor({ state: "visible" });

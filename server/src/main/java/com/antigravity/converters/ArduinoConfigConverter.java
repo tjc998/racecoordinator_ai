@@ -1,5 +1,7 @@
 package com.antigravity.converters;
 
+import com.antigravity.proto.ColorOrder;
+import com.antigravity.proto.LedType;
 import com.antigravity.proto.VoltageConfig;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.arduino.LedString;
@@ -11,7 +13,8 @@ import java.util.stream.Collectors;
 
 public class ArduinoConfigConverter {
 
-  public static ArduinoConfig fromProto(com.antigravity.proto.ArduinoConfig proto) {
+  public static ArduinoConfig fromProto(
+      com.antigravity.proto.ArduinoConfig proto) { // fqn-collision
     Map<String, Integer> voltageConfigs = new HashMap<>();
     for (VoltageConfig vc : proto.getVoltageConfigsList()) {
       voltageConfigs.put(String.valueOf(vc.getLane()), vc.getMaxVoltage());
@@ -49,13 +52,13 @@ public class ArduinoConfigConverter {
         voltageConfigs);
   }
 
-  public static com.antigravity.proto.ArduinoConfig toProto(ArduinoConfig config) {
+  public static com.antigravity.proto.ArduinoConfig toProto(ArduinoConfig config) { // fqn-collision
     if (config == null) {
-      return com.antigravity.proto.ArduinoConfig.getDefaultInstance();
+      return com.antigravity.proto.ArduinoConfig.getDefaultInstance(); // fqn-collision
     }
 
-    com.antigravity.proto.ArduinoConfig.Builder builder =
-        com.antigravity.proto.ArduinoConfig.newBuilder()
+    com.antigravity.proto.ArduinoConfig.Builder builder = // fqn-collision
+        com.antigravity.proto.ArduinoConfig.newBuilder() // fqn-collision
             .setName(config.name != null ? config.name : "")
             .setCommPort(config.commPort != null ? config.commPort : "")
             .setBaudRate(config.baudRate)
@@ -79,14 +82,14 @@ public class ArduinoConfigConverter {
 
     if (config.ledStrings != null) {
       for (LedString ls : config.ledStrings) {
-        com.antigravity.proto.LedString.Builder lsBuilder =
-            com.antigravity.proto.LedString.newBuilder()
+        com.antigravity.proto.LedString.Builder lsBuilder = // fqn-collision
+            com.antigravity.proto.LedString.newBuilder() // fqn-collision
                 .setPin(ls.pin)
                 .setNumUsedLeds(ls.numUsedLeds)
                 .setAddressableLeds(ls.addressableLeds)
                 .setBrightness(ls.brightness)
-                .setLedType(com.antigravity.proto.LedType.forNumber(ls.ledType))
-                .setColorOrder(com.antigravity.proto.ColorOrder.forNumber(ls.colorOrder))
+                .setLedType(LedType.forNumber(ls.ledType))
+                .setColorOrder(ColorOrder.forNumber(ls.colorOrder))
                 .setFlagFlashRate(ls.flagFlashRate);
 
         if (ls.leds != null) {

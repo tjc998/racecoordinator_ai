@@ -373,7 +373,7 @@ public class ArduinoLedHelper {
               break;
           }
 
-          if (state == com.antigravity.proto.RaceState.STARTING) {
+          if (state == RaceState.STARTING) {
             isInterleaved = false;
             canFlash = false;
           }
