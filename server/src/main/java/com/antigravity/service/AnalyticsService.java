@@ -117,6 +117,10 @@ public class AnalyticsService {
       return;
     }
 
+    sendPayload(createPayload("backend_race_started", buildRaceStartParams(race)));
+  }
+
+  /* package */ Map<String, Object> buildRaceStartParams(Race race) {
     Map<String, Object> params = new HashMap<>();
     params.put(
         "number_of_lanes",
@@ -125,10 +129,19 @@ public class AnalyticsService {
             : 0);
     params.put("driver_count", race.getDrivers() != null ? race.getDrivers().size() : 0);
     params.put("is_demo", race.isDemoMode());
+    params.put("heat_rotation_type", race.getRaceModel().getHeatRotationType().name());
+    params.put("heat_scoring_method", race.getRaceModel().getHeatScoring().getHeatRanking().name());
+    params.put(
+        "overall_scoring_method",
+        race.getRaceModel().getOverallScoring().getRankingMethod().name());
+    params.put(
+        "fuel_system",
+        race.getFuelOptions() != null && race.getFuelOptions().isEnabled()
+            ? (race.getTrack() != null && race.getTrack().hasDigitalFuel() ? "Digital" : "Analog")
+            : "None");
     params.put("engagement_time_msec", 1L);
     params.put("session_id", System.currentTimeMillis());
-
-    sendPayload(createPayload("backend_race_started", params));
+    return params;
   }
 
   /* package */ Map<String, Object> createPayload(String eventName, Map<String, Object> params) {

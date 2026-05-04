@@ -7,6 +7,10 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.antigravity.models.FuelOptions;
+import com.antigravity.models.HeatRotationType;
+import com.antigravity.models.HeatScoring;
+import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Track;
 import com.antigravity.race.Race;
 import java.lang.reflect.Field;
@@ -241,5 +245,97 @@ public class AnalyticsServiceTest {
 
     enabledField.set(service, originalEnabled);
     measurementIdField.set(service, originalMeasurement);
+  }
+
+  @Test
+  public void testBuildRaceStartParams_DigitalFuel() {
+    Race mockRace = mock(Race.class);
+    Track mockTrack = mock(Track.class);
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    OverallScoring mockOverallScoring = mock(OverallScoring.class);
+    FuelOptions mockFuelOptions = mock(FuelOptions.class);
+
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
+    when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
+    when(mockRace.isDemoMode()).thenReturn(false);
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.LAP_COUNT);
+    when(mockModel.getOverallScoring()).thenReturn(mockOverallScoring);
+    when(mockOverallScoring.getRankingMethod()).thenReturn(OverallScoring.OverallRanking.LAP_COUNT);
+    when(mockRace.getFuelOptions()).thenReturn(mockFuelOptions);
+    when(mockFuelOptions.isEnabled()).thenReturn(true);
+    when(mockTrack.hasDigitalFuel()).thenReturn(true);
+
+    Map<String, Object> params = service.buildRaceStartParams(mockRace);
+
+    assertEquals(HeatRotationType.RoundRobin.name(), params.get("heat_rotation_type"));
+    assertEquals(HeatScoring.HeatRanking.LAP_COUNT.name(), params.get("heat_scoring_method"));
+    assertEquals(
+        OverallScoring.OverallRanking.LAP_COUNT.name(), params.get("overall_scoring_method"));
+    assertEquals("Digital", params.get("fuel_system"));
+  }
+
+  @Test
+  public void testBuildRaceStartParams_AnalogFuel() {
+    Race mockRace = mock(Race.class);
+    Track mockTrack = mock(Track.class);
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    OverallScoring mockOverallScoring = mock(OverallScoring.class);
+    FuelOptions mockFuelOptions = mock(FuelOptions.class);
+
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
+    when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatRotationType()).thenReturn(HeatRotationType.CustomRoundRobin);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.TOTAL_TIME);
+    when(mockModel.getOverallScoring()).thenReturn(mockOverallScoring);
+    when(mockOverallScoring.getRankingMethod())
+        .thenReturn(OverallScoring.OverallRanking.TOTAL_TIME);
+    when(mockRace.getFuelOptions()).thenReturn(mockFuelOptions);
+    when(mockFuelOptions.isEnabled()).thenReturn(true);
+    when(mockTrack.hasDigitalFuel()).thenReturn(false);
+
+    Map<String, Object> params = service.buildRaceStartParams(mockRace);
+
+    assertEquals(HeatRotationType.CustomRoundRobin.name(), params.get("heat_rotation_type"));
+    assertEquals(HeatScoring.HeatRanking.TOTAL_TIME.name(), params.get("heat_scoring_method"));
+    assertEquals(
+        OverallScoring.OverallRanking.TOTAL_TIME.name(), params.get("overall_scoring_method"));
+    assertEquals("Analog", params.get("fuel_system"));
+  }
+
+  @Test
+  public void testBuildRaceStartParams_NoFuel() {
+    Race mockRace = mock(Race.class);
+    Track mockTrack = mock(Track.class);
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    OverallScoring mockOverallScoring = mock(OverallScoring.class);
+    FuelOptions mockFuelOptions = mock(FuelOptions.class);
+
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
+    when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.FASTEST_LAP);
+    when(mockModel.getOverallScoring()).thenReturn(mockOverallScoring);
+    when(mockOverallScoring.getRankingMethod())
+        .thenReturn(OverallScoring.OverallRanking.FASTEST_LAP);
+    when(mockRace.getFuelOptions()).thenReturn(mockFuelOptions);
+    when(mockFuelOptions.isEnabled()).thenReturn(false);
+
+    Map<String, Object> params = service.buildRaceStartParams(mockRace);
+
+    assertEquals("None", params.get("fuel_system"));
+    assertEquals(HeatScoring.HeatRanking.FASTEST_LAP.name(), params.get("heat_scoring_method"));
   }
 }

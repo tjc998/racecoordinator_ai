@@ -32,6 +32,10 @@ The backend uses Google's specialized Measurement Protocol. Because it uses dire
    - `number_of_lanes`
    - `driver_count`
    - `is_demo` (true/false tracking)
+   - `heat_rotation_type`
+   - `heat_scoring_method`
+   - `overall_scoring_method` (e.g., LAP_COUNT, TOTAL_TIME)
+   - `fuel_system` (Analog, Digital, or None)
 2. **`analytics_toggled`**: Fired exactly when the user clicks the option to enable or disable analytics routing on their local install. 
    - `analytics_enabled`: A boolean capturing whether they are actively enabling or disabling. 
    - *Note: This particular event intentionally bypasses the disabled check to reliably inform system metrics of uninstalls/opt-outs.*
