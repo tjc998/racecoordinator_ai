@@ -3,6 +3,7 @@ package com.antigravity.race.states;
 import com.antigravity.converters.HeatConverter;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceFlag;
+import com.antigravity.proto.RaceState;
 import com.antigravity.protocols.CarData;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Heat;
@@ -29,7 +30,6 @@ public class NotStarted implements IRaceState {
     double autoStartTime = race.getRaceModel().getAutoStartTime();
     double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
     double elapsed = autoStartTime - race.getAutoStartRemaining();
-
     if (autoStartWarmupTime > 0
         && elapsed <= autoStartWarmupTime
         && race.getAutoStartRemaining() > 0) {
@@ -96,7 +96,15 @@ public class NotStarted implements IRaceState {
   public void start(Race race) {
     logger.info("NotStarted.start() called. Starting new race.");
     stopTimer();
-    race.resetRaceTime();
+    double autoStartTime = race.getRaceModel().getAutoStartTime();
+    double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
+    double elapsed = autoStartTime - race.getAutoStartRemaining();
+
+    if (autoStartWarmupTime > 0 && elapsed <= autoStartWarmupTime) {
+      logger.info("NotStarted.start(): Warmup was active, resetting heat.");
+      race.resetCurrentHeat();
+    }
+
     race.changeState(new Starting());
   }
 
@@ -269,6 +277,7 @@ public class NotStarted implements IRaceState {
     final Runnable ticker =
         new Runnable() {
           long lastTime = 0;
+          RaceFlag lastFlag = RaceFlag.RED;
 
           @Override
           public void run() {
@@ -321,6 +330,14 @@ public class NotStarted implements IRaceState {
                   }
                 }
 
+                RaceFlag currentFlag = getFlagType(race);
+                if (currentFlag != lastFlag) {
+                  logger.info("Auto-start flag changed to: {}", currentFlag);
+                  race.broadcastFlag(currentFlag);
+                  lastFlag = currentFlag;
+                }
+
+                race.setRaceState(RaceState.NOT_STARTED, currentFlag, remaining);
                 broadcastTime(race);
               }
             } catch (Exception e) {

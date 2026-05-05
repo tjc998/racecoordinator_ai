@@ -311,12 +311,7 @@ public class ArduinoLedHelper {
     RaceFlag flag = lastFlag;
     double countdown = lastCountdown;
 
-    // During the STARTING state (countdown), the LEDs should always be RED regardless of the
-    // logical flag (which might be YELLOW for a restart).
-    if (state == RaceState.STARTING) {
-      flag = RaceFlag.RED;
-    }
-
+    // Ensure we refresh when the state or flag changes
     logger.info("refreshRaceState: state={}, flag={}, countdown={}", state, flag, countdown);
 
     if (state == RaceState.UNKNOWN_STATE) {
@@ -364,7 +359,7 @@ public class ArduinoLedHelper {
               break;
             case GREEN_YELLOW:
               isInterleaved = true;
-              canFlash = true;
+              canFlash = false; // We'll use rotation instead of flashing
               rgb1 = new int[] {0, 255, 0}; // Green
               rgb2 = new int[] {255, 255, 0}; // Yellow
               break;
@@ -373,23 +368,36 @@ public class ArduinoLedHelper {
           }
 
           if (state == RaceState.STARTING) {
+            flag = RaceFlag.RED;
             isInterleaved = false;
             canFlash = false;
           }
 
-          if (canFlash && ledString.flagFlashRate > 0) {
-            long halfPeriod = (long) (1000.0 / (ledString.flagFlashRate * 2.0));
-            boolean toggle = (now / halfPeriod) % 2 != 0;
-            if (toggle) {
-              int[] temp = rgb1;
-              rgb1 = rgb2;
-              rgb2 = temp;
+          int[] finalRgb = {0, 0, 0};
+          if (flag == RaceFlag.GREEN_YELLOW) {
+            // Rotating effect: shift the interleaving over time
+            long rotationOffset = (now / 150) % 2; // Shift every 150ms
+            int n = behavior - raceStateBehavior;
+            if ((n + rotationOffset) % 2 != 0) {
+              finalRgb = rgb2;
+            } else {
+              finalRgb = rgb1;
             }
-          }
+          } else {
+            if (canFlash && ledString.flagFlashRate > 0) {
+              long halfPeriod = (long) (1000.0 / (ledString.flagFlashRate * 2.0));
+              boolean toggle = (now / halfPeriod) % 2 != 0;
+              if (toggle) {
+                int[] temp = rgb1;
+                rgb1 = rgb2;
+                rgb2 = temp;
+              }
+            }
 
-          int[] finalRgb = rgb1;
-          if (isInterleaved && ((behavior - raceStateBehavior) % 2 != 0)) {
-            finalRgb = rgb2;
+            finalRgb = rgb1;
+            if (isInterleaved && ((behavior - raceStateBehavior) % 2 != 0)) {
+              finalRgb = rgb2;
+            }
           }
 
           if (state == RaceState.STARTING) {

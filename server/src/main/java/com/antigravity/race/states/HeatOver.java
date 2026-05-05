@@ -1,6 +1,7 @@
 package com.antigravity.race.states;
 
 import com.antigravity.proto.RaceFlag;
+import com.antigravity.proto.RaceState;
 import com.antigravity.protocols.CarData;
 import com.antigravity.race.Race;
 import java.time.OffsetDateTime;
@@ -115,6 +116,7 @@ public class HeatOver implements IRaceState {
     final Runnable ticker =
         new Runnable() {
           long lastTime = 0;
+          RaceFlag lastFlag = RaceFlag.RED;
 
           @Override
           public void run() {
@@ -153,6 +155,14 @@ public class HeatOver implements IRaceState {
                   }
                 }
 
+                RaceFlag currentFlag = getFlagType(race);
+                if (currentFlag != lastFlag) {
+                  logger.info("Auto-advance flag changed to: {}", currentFlag);
+                  race.broadcastFlag(currentFlag);
+                  lastFlag = currentFlag;
+                }
+
+                race.setRaceState(RaceState.HEAT_OVER, currentFlag, remaining);
                 broadcastTime(race);
               }
             } catch (Exception e) {
