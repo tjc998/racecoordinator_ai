@@ -172,8 +172,9 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
 
     if (this.editingRace.heat_rotation_type === "Custom") {
       return (
-        !this.editingRace.custom_rotations ||
-        this.editingRace.custom_rotations.length === 0
+        (!this.editingRace.custom_rotations ||
+          this.editingRace.custom_rotations.length === 0) &&
+        !this.editingRace.custom_rotation_asset_id
       );
     }
 
@@ -311,6 +312,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
               overall_time_limit: 0,
               require_pit_stop_change_driver: false,
             };
+          }
+          if (!this.editingRace.custom_rotation_sequence) {
+            this.editingRace.custom_rotation_sequence = [];
+          }
+          if (!this.editingRace.custom_rotations) {
+            this.editingRace.custom_rotations = [];
           }
         } else {
           this.createNewRace();
@@ -1477,6 +1484,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       restart_delay: race.restart_delay,
       solo_lane_index: race.solo_lane_index,
       custom_rotation_sequence: race.custom_rotation_sequence,
+      custom_rotation_asset_id: race.custom_rotation_asset_id,
       team_options: race.team_options
         ? {
             heat_lap_limit: race.team_options.heat_lap_limit,

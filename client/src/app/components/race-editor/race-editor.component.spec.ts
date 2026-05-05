@@ -93,6 +93,12 @@ describe("RaceEditorComponent", () => {
     // Initialize with safe defaults for template binding (usually handled by loadData)
     component.editingRace = JSON.parse(JSON.stringify(MOCK_RACE_INSTANCES[0]));
     Object.setPrototypeOf(component.editingRace, Race.prototype);
+    if (component.editingRace) {
+      component.editingRace.custom_rotation_sequence =
+        component.editingRace.custom_rotation_sequence || [];
+      component.editingRace.custom_rotations =
+        component.editingRace.custom_rotations || [];
+    }
     component.originalRace = JSON.parse(JSON.stringify(component.editingRace));
     component.undoManager.initialize(component.editingRace!);
 
@@ -187,7 +193,7 @@ describe("RaceEditorComponent", () => {
       0,
       jasmine.any(Array),
       undefined,
-      undefined,
+      jasmine.any(Array),
     );
     expect(component.generatedHeats.length).toBeGreaterThan(0);
   }));
@@ -207,7 +213,7 @@ describe("RaceEditorComponent", () => {
       0,
       jasmine.any(Array),
       undefined,
-      undefined,
+      jasmine.any(Array),
     );
 
     component.driverCount = 12;
@@ -221,7 +227,7 @@ describe("RaceEditorComponent", () => {
       0,
       jasmine.any(Array),
       undefined,
-      undefined,
+      jasmine.any(Array),
     );
   }));
 
@@ -1023,10 +1029,68 @@ describe("RaceEditorComponent", () => {
         "SingleHeatSolo",
         4,
         2,
+        jasmine.any(Array),
         undefined,
-        undefined,
-        undefined,
+        jasmine.any(Array),
       );
     }));
+  });
+
+  describe("Custom Rotation", () => {
+    beforeEach(() => {
+      component.editingRace = {
+        name: "Custom Race",
+        track_entity_id: "t1",
+        heat_rotation_type: "Custom",
+        heat_scoring: { finish_method: "Lap" },
+        overall_scoring: { dropped_heats: 0 },
+        custom_rotations: [],
+      } as any;
+    });
+
+    it("should be invalid if no custom rotations and no asset ID", () => {
+      component.editingRace.custom_rotations = [];
+      component.editingRace.custom_rotation_asset_id = "";
+      expect(component.isRotationInvalid).toBeTrue();
+    });
+
+    it("should be valid if custom rotations are present", () => {
+      component.editingRace.custom_rotations = [{ numDrivers: 10, heats: [] }];
+      component.editingRace.custom_rotation_asset_id = "";
+      expect(component.isRotationInvalid).toBeFalse();
+    });
+
+    it("should be valid if custom rotation asset ID is present", () => {
+      component.editingRace.custom_rotations = [];
+      component.editingRace.custom_rotation_asset_id = "asset1";
+      expect(component.isRotationInvalid).toBeFalse();
+    });
+
+    it("should include custom_rotation_asset_id in payload", fakeAsync(() => {
+      component.editingRace.custom_rotation_asset_id = "asset1";
+      component.editingRace.entity_id = "r1";
+      spyOn(component, "isDirtyState").and.returnValue(true);
+      dataService.updateRace.and.returnValue(of({}));
+      dataService.getRaces.and.returnValue(of([]));
+
+      component.updateRace();
+      tick();
+
+      expect(dataService.updateRace).toHaveBeenCalled();
+      const payload = dataService.updateRace.calls.mostRecent().args[1];
+      expect(payload.custom_rotation_asset_id).toBe("asset1");
+    }));
+
+    it("should update asset ID and clear inline rotations on asset change", () => {
+      component.editingRace.custom_rotations = [{ numDrivers: 10, heats: [] }];
+      component.selectedCustomRotationAssetId = "new-asset";
+      spyOn(component, "captureState");
+
+      component.onCustomRotationAssetChange();
+
+      expect(component.editingRace.custom_rotation_asset_id).toBe("new-asset");
+      expect(component.editingRace.custom_rotations).toBeUndefined();
+      expect(component.captureState).toHaveBeenCalled();
+    });
   });
 });
