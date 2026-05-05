@@ -88,6 +88,16 @@ public class AnalyticsServiceTest {
     when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
     when(mockRace.isDemoMode()).thenReturn(true);
 
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.LAP_COUNT);
+    OverallScoring mockOverallScoring = mock(OverallScoring.class);
+    when(mockModel.getOverallScoring()).thenReturn(mockOverallScoring);
+    when(mockOverallScoring.getRankingMethod()).thenReturn(OverallScoring.OverallRanking.LAP_COUNT);
+
     // This simulates a full payload build and an HTTP post dispatch internally over
     // a CompletableFuture thread
     // The mock server destination will fail to connect, sending a WARN to SLF4J
@@ -204,6 +214,16 @@ public class AnalyticsServiceTest {
     when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
     when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
 
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.LAP_COUNT);
+    OverallScoring mockOverallScoring = mock(OverallScoring.class);
+    when(mockModel.getOverallScoring()).thenReturn(mockOverallScoring);
+    when(mockOverallScoring.getRankingMethod()).thenReturn(OverallScoring.OverallRanking.LAP_COUNT);
+
     // We can't easily mock the internal createConnection call on the real singleton
     // without more refactoring, but we can verify that triggering a transmission
     // to a non-existent endpoint doesn't crash the app and logs appropriately.
@@ -236,6 +256,16 @@ public class AnalyticsServiceTest {
     when(mockRace.getTrack()).thenReturn(mockTrack);
     when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
     when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
+
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.LAP_COUNT);
+    OverallScoring mockOverallScoring = mock(OverallScoring.class);
+    when(mockModel.getOverallScoring()).thenReturn(mockOverallScoring);
+    when(mockOverallScoring.getRankingMethod()).thenReturn(OverallScoring.OverallRanking.LAP_COUNT);
 
     // Trigger transmission. Even though it won't actually hit a server,
     // we want to ensure the surrounding logic in sendPayload is stable.
