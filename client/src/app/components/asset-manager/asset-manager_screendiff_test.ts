@@ -27,10 +27,10 @@ test.describe("Asset Manager Visuals", () => {
     const _harness = new AssetManagerHarnessE2e(container);
 
     // Wait for the asset list to appear
-    await expect(page.locator(".asset-grid")).toBeVisible();
+    await page.locator(".asset-grid").waitFor({ state: "visible" });
 
     // Ensure loading is finished
-    await expect(page.locator(".loading-overlay")).not.toBeVisible();
+    await page.locator(".loading-overlay").waitFor({ state: "hidden" });
 
     // Wait for items to be rendered (we expect 4 items from mock: image, sound, 2x image_set)
     // Counts and names checked visually
@@ -59,7 +59,7 @@ test.describe("Asset Manager Visuals", () => {
       "en",
       page.goto("/asset-manager"),
     );
-    await expect(page.locator(".asset-grid")).toBeVisible();
+    await page.locator(".asset-grid").waitFor({ state: "visible" });
 
     const container = page.locator(".am-container");
     const harness = new AssetManagerHarnessE2e(container);
@@ -78,5 +78,119 @@ test.describe("Asset Manager Visuals", () => {
     });
   });
 
-  // Navigation test removed as it has no screenshot and is covered by unit tests
+  test("should filter assets by name", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/asset-manager"),
+    );
+    await page.locator(".asset-grid").waitFor({ state: "visible" });
+
+    const container = page.locator(".am-container");
+    const harness = new AssetManagerHarnessE2e(container);
+
+    // Filter by name "Fuel"
+    await harness.setSearchText("Fuel");
+    await page.waitForTimeout(100);
+
+    await expect(page).toHaveScreenshot("asset-manager-filtered-name.png");
+  });
+
+  test("should show audio set assets visuals", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/asset-manager"),
+    );
+    await page.locator(".asset-grid").waitFor({ state: "visible" });
+
+    const container = page.locator(".am-container");
+    const harness = new AssetManagerHarnessE2e(container);
+
+    await harness.setFilterType("audio_set");
+    await page.waitForTimeout(100);
+
+    await expect(page).toHaveScreenshot(
+      "asset-manager-filtered-audio-sets.png",
+    );
+  });
+
+  test("should show custom rotation assets visuals", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/asset-manager"),
+    );
+    await page.locator(".asset-grid").waitFor({ state: "visible" });
+
+    const container = page.locator(".am-container");
+    const harness = new AssetManagerHarnessE2e(container);
+
+    await harness.setFilterType("custom_rotation");
+    await page.waitForTimeout(100);
+
+    await expect(page).toHaveScreenshot("asset-manager-filtered-rotations.png");
+  });
+
+  test("should open new image set editor", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/asset-manager"),
+    );
+    await page.locator(".asset-grid").waitFor({ state: "visible" });
+
+    const container = page.locator(".am-container");
+    const harness = new AssetManagerHarnessE2e(container);
+
+    await harness.clickNewImageSet();
+    await page
+      .locator("app-image-set-editor .modal-content")
+      .waitFor({ state: "visible" });
+    await page.waitForTimeout(500); // Wait for modal animation settle
+
+    await expect(page).toHaveScreenshot("asset-manager-new-image-set.png");
+  });
+
+  test("should open new audio set editor", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/asset-manager"),
+    );
+    await page.locator(".asset-grid").waitFor({ state: "visible" });
+
+    const container = page.locator(".am-container");
+    const harness = new AssetManagerHarnessE2e(container);
+
+    await harness.clickNewAudioSet();
+    await page
+      .locator("app-audio-set-editor .modal-content")
+      .waitFor({ state: "visible" });
+    await page.waitForTimeout(500);
+
+    await expect(page).toHaveScreenshot("asset-manager-new-audio-set.png");
+  });
+
+  test("should open new custom rotation editor", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/asset-manager"),
+    );
+    await page.locator(".asset-grid").waitFor({ state: "visible" });
+
+    const container = page.locator(".am-container");
+    const harness = new AssetManagerHarnessE2e(container);
+
+    await harness.clickNewCustomRotation();
+    await page
+      .locator("app-custom-rotation-editor .modal-content")
+      .waitFor({ state: "visible" });
+    await page.waitForTimeout(500);
+
+    await expect(page).toHaveScreenshot(
+      "asset-manager-new-custom-rotation.png",
+    );
+  });
 });

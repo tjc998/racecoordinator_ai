@@ -9,6 +9,8 @@ import com.antigravity.proto.RenameAssetRequest;
 import com.antigravity.proto.RenameAssetResponse;
 import com.antigravity.proto.SaveAudioSetRequest;
 import com.antigravity.proto.SaveAudioSetResponse;
+import com.antigravity.proto.SaveCustomRotationRequest;
+import com.antigravity.proto.SaveCustomRotationResponse;
 import com.antigravity.proto.SaveImageSetRequest;
 import com.antigravity.proto.SaveImageSetResponse;
 import com.antigravity.proto.UploadAssetRequest;
@@ -36,6 +38,7 @@ public class AssetTaskHandler {
     app.post("/api/assets/rename", this::renameAsset);
     app.post("/api/assets/save-image-set", this::saveImageSet);
     app.post("/api/assets/save-audio-set", this::saveAudioSet);
+    app.post("/api/assets/save-custom-rotation", this::saveCustomRotation);
     app.get("/api/assets/download/{id}", this::downloadAsset);
     app.get("/assets/{filename}", this::serveAsset);
   }
@@ -301,6 +304,37 @@ public class AssetTaskHandler {
           SaveAudioSetResponse.newBuilder()
               .setSuccess(false)
               .setMessage("Error saving audio set: " + e.getMessage())
+              .build();
+      setContentType(ctx, "application/octet-stream");
+      setResult(ctx, response.toByteArray());
+    }
+  }
+
+  public void saveCustomRotation(Context ctx) {
+    try {
+      SaveCustomRotationRequest request = SaveCustomRotationRequest.parseFrom(getBodyBytes(ctx));
+      AssetService service = getAssetService();
+      AssetMessage asset =
+          service.saveCustomRotation(
+              request.getId(),
+              request.getName(),
+              request.getNumLanes(),
+              request.getRotationsList());
+
+      SaveCustomRotationResponse response =
+          SaveCustomRotationResponse.newBuilder()
+              .setSuccess(true)
+              .setMessage("Custom rotation saved successfully")
+              .setAsset(asset)
+              .build();
+      setContentType(ctx, "application/octet-stream");
+      setResult(ctx, response.toByteArray());
+    } catch (Exception e) {
+      e.printStackTrace();
+      SaveCustomRotationResponse response =
+          SaveCustomRotationResponse.newBuilder()
+              .setSuccess(false)
+              .setMessage("Error saving custom rotation: " + e.getMessage())
               .build();
       setContentType(ctx, "application/octet-stream");
       setResult(ctx, response.toByteArray());

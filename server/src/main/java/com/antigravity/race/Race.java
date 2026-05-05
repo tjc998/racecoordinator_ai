@@ -5,6 +5,8 @@ import com.antigravity.converters.HeatConverter;
 import com.antigravity.converters.RaceConverter;
 import com.antigravity.converters.RaceParticipantConverter;
 import com.antigravity.models.AnalogFuelOptions;
+import com.antigravity.models.CustomHeat;
+import com.antigravity.models.CustomRotation;
 import com.antigravity.models.Driver;
 import com.antigravity.models.FuelOptions;
 import com.antigravity.models.GlobalStatistics;
@@ -41,10 +43,12 @@ import com.antigravity.race.states.Racing;
 import com.antigravity.race.states.Starting;
 import com.antigravity.service.DatabaseService;
 import com.google.protobuf.GeneratedMessageV3;
+import com.mongodb.client.model.Filters;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +62,7 @@ public class Race implements ProtocolListener {
   private List<Heat> heats;
   private Heat currentHeat;
   private final OverallStandings overallStandings;
+  private final List<CustomRotation> customRotations;
 
   public List<RaceParticipant> getDrivers() {
     return drivers;
@@ -138,6 +143,7 @@ public class Race implements ProtocolListener {
     this.track = builder.track;
     this.drivers = builder.drivers;
     this.databaseContext = builder.databaseContext;
+    this.customRotations = builder.customRotations;
 
     // If not a restored race, ensure drivers are populated correctly and heats are
     // built
@@ -149,7 +155,11 @@ public class Race implements ProtocolListener {
       while (this.drivers.size() < numLanes) {
         this.drivers.add(new RaceParticipant(Driver.EMPTY_DRIVER));
       }
-      this.heats = HeatBuilder.buildHeats(this, this.drivers);
+      List<CustomRotation> rotationsToUse = this.customRotations;
+      if (rotationsToUse == null && this.model.getHeatRotationType() == HeatRotationType.Custom) {
+        rotationsToUse = resolveCustomRotations(this.model.getCustomRotationAssetId());
+      }
+      this.heats = HeatBuilder.buildHeats(this, this.drivers, rotationsToUse);
       this.currentHeat = this.heats.get(0);
       resetHeatRecords();
     } else {
@@ -253,7 +263,7 @@ public class Race implements ProtocolListener {
 
   private void loadGlobalRecords() {
     if (databaseContext == null) {
-      logger.error("DatabaseContext is missing - initialization of empty lane records.");
+      logger.debug("DatabaseContext is missing - initialization of empty lane records.");
       initializeLaneRecords();
       return;
     }
@@ -346,7 +356,8 @@ public class Race implements ProtocolListener {
     private boolean isDemoMode = false;
     private DatabaseContext databaseContext;
     private List<Heat> heats;
-    private int currentHeatIndex = 0;
+    private List<CustomRotation> customRotations;
+    private int currentHeatIndex = -1;
     private float accumulatedRaceTime = 0f;
     private boolean hasRacedInCurrentHeat = false;
     private boolean autoStartFired = false;
@@ -381,6 +392,11 @@ public class Race implements ProtocolListener {
 
     public Builder heats(List<Heat> heats) {
       this.heats = heats;
+      return this;
+    }
+
+    public Builder customRotations(List<CustomRotation> customRotations) {
+      this.customRotations = customRotations;
       return this;
     }
 
@@ -563,6 +579,43 @@ public class Race implements ProtocolListener {
 
   public RaceStatistics getStatistics() {
     return statistics;
+  }
+
+  private List<CustomRotation> resolveCustomRotations(String assetId) {
+    if (assetId == null || assetId.isEmpty() || databaseContext == null) {
+      return null;
+    }
+    Document doc =
+        databaseContext
+            .getDatabase()
+            .getCollection("assets")
+            .find(Filters.eq("_id", assetId))
+            .first();
+    if (doc == null) {
+      logger.warn("Custom rotation asset not found: {}", assetId);
+      return null;
+    }
+
+    List<CustomRotation> result = new ArrayList<>();
+    List<Document> rotationList = (List<Document>) doc.get("custom_rotations");
+    if (rotationList != null) {
+      for (Document rotDoc : rotationList) {
+        int numDrivers = rotDoc.getInteger("num_drivers");
+        List<CustomHeat> heats = new ArrayList<>();
+        List<Document> heatList = (List<Document>) rotDoc.get("heats");
+        if (heatList != null) {
+          for (Document heatDoc : heatList) {
+            heats.add(new CustomHeat((List<Integer>) heatDoc.get("driver_indices")));
+          }
+        }
+        result.add(new CustomRotation(numDrivers, heats));
+      }
+    }
+    return result;
+  }
+
+  public double getMinLapTime() {
+    return model.getMinLapTime();
   }
 
   public float getRaceTime() {

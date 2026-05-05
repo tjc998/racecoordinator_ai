@@ -23,6 +23,18 @@ export class AssetManagerHarness
   protected getFilterTabs = this.locatorForAll(
     AssetManagerHarnessBase.selectors.filterTab,
   );
+  protected getFilterInput = this.locatorFor(
+    AssetManagerHarnessBase.selectors.filterInput,
+  );
+  protected getBtnNewImageSet = this.locatorFor(
+    AssetManagerHarnessBase.selectors.btnNewImageSet,
+  );
+  protected getBtnNewAudioSet = this.locatorFor(
+    AssetManagerHarnessBase.selectors.btnNewAudioSet,
+  );
+  protected getBtnNewCustomRotation = this.locatorFor(
+    AssetManagerHarnessBase.selectors.btnNewCustomRotation,
+  );
   protected getBackButton = this.locatorFor(
     AssetManagerHarnessBase.selectors.backBtn,
   );
@@ -50,29 +62,67 @@ export class AssetManagerHarness
   }
 
   async setFilterType(
-    type: "all" | "image" | "image_set" | "sound",
+    type:
+      | "all"
+      | "image"
+      | "image_set"
+      | "sound"
+      | "audio_set"
+      | "custom_rotation",
   ): Promise<void> {
     const tabs = await this.getFilterTabs();
-    const indexMap = { all: 0, image: 1, image_set: 2, sound: 3 };
+    const indexMap = {
+      all: 0,
+      image: 1,
+      image_set: 2,
+      sound: 3,
+      audio_set: 4,
+      custom_rotation: 5,
+    };
     const tab = tabs[indexMap[type]];
     await tab.click();
   }
 
   async getActiveFilterType(): Promise<string> {
     const tabs = await this.getFilterTabs();
+    const typeMap = [
+      "all",
+      "image",
+      "image_set",
+      "sound",
+      "audio_set",
+      "custom_rotation",
+    ];
     for (let i = 0; i < tabs.length; i++) {
       const tab = tabs[i];
       if (await tab.hasClass("active")) {
-        return i === 0
-          ? "all"
-          : i === 1
-            ? "image"
-            : i === 2
-              ? "image_set"
-              : "sound";
+        return typeMap[i] || "";
       }
     }
     return "";
+  }
+
+  async setSearchText(text: string): Promise<void> {
+    const input = await this.getFilterInput();
+    await input.clear();
+    if (text) {
+      await input.sendKeys(text);
+    }
+  }
+
+  async clickNewImageSet(): Promise<void> {
+    const btn = await this.getBtnNewImageSet();
+    await btn.click();
+  }
+
+  async clickNewAudioSet(): Promise<void> {
+    const btn = await this.getBtnNewAudioSet();
+    await btn.click();
+  }
+
+  async clickNewCustomRotation(): Promise<void> {
+    const btn = await this.getBtnNewCustomRotation();
+    await btn.click();
   }
 
   async clickBack(): Promise<void> {

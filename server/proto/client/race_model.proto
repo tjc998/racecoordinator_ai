@@ -3,6 +3,7 @@ package com.antigravity;
 
 import "client/track_model.proto";
 import "client/model.proto";
+import "client/rotation_model.proto";
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
@@ -75,6 +76,7 @@ enum HeatRotationType {
   SINGLE_HEAT = 3;
   SINGLE_HEAT_SOLO = 4;
   CUSTOM_ROUND_ROBIN = 5;
+  CUSTOM = 6;
 }
 
 message RaceModel {
@@ -99,7 +101,11 @@ message RaceModel {
   HeatRotationType heat_rotation_type = 19;
   int32 solo_lane_index = 20;
   repeated int32 custom_rotation_sequence = 21;
+  repeated CustomRotation custom_rotations = 22;
+  string custom_rotation_asset_id = 23;
 }
+
+// CustomRotation and CustomHeat moved to rotation_model.proto
 
 enum FuelUsageType {
   LINEAR = 0;

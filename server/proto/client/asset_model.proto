@@ -2,6 +2,7 @@ syntax = "proto3";
 package com.antigravity;
 
 import "client/model.proto";
+import "client/rotation_model.proto";
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
@@ -29,4 +30,6 @@ message AssetMessage {
   string url = 5;  // URL for the client to fetch the file (or main/first image in set)
   repeated ImageSetEntry images = 6;
   repeated AudioSetEntry audio_entries = 7;
+  int32 num_lanes = 8;
+  repeated CustomRotation custom_rotations = 9;
 }

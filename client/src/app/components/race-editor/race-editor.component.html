@@ -72,8 +72,39 @@
             <option value="CustomRoundRobin">
               {{ "RE_ROTATION_CUSTOM_ROUND_ROBIN" | translate }}
             </option>
+            <option value="Custom">
+              {{ "RE_ROTATION_CUSTOM" | translate }}
+            </option>
           </select>
         </div>
+        @if (editingRace.heat_rotation_type === "Custom") {
+          <div class="editor-section" [class.invalid]="isRotationInvalid">
+            <label>{{ "RE_CUSTOM_ROTATION_ASSET_LABEL" | translate }}</label>
+            <select
+              [(ngModel)]="selectedCustomRotationAssetId"
+              (ngModelChange)="onCustomRotationAssetChange()"
+            >
+              @if (!selectedCustomRotationAssetId) {
+                <option value="">
+                  -- {{ "RE_SELECT_CUSTOM_ROTATION" | translate }} --
+                </option>
+              }
+              @for (
+                asset of filteredCustomRotationAssets;
+                track asset.model?.entityId
+              ) {
+                <option [value]="asset.model?.entityId">
+                  {{ asset.name }}
+                </option>
+              }
+            </select>
+            @if (!selectedCustomRotationAssetId) {
+              <div class="error-message">
+                {{ "RE_ERROR_NO_ROTATION_SELECTED" | translate }}
+              </div>
+            }
+          </div>
+        }
         @if (editingRace.heat_rotation_type === "CustomRoundRobin") {
           <div class="editor-section" [class.invalid]="isRotationInvalid">
             <label>{{ "RE_CUSTOM_SEQUENCE_LABEL" | translate }}</label>

@@ -61,6 +61,10 @@ export const mockDataService = {
     .createSpy("importDatabase")
     .and.returnValue(of({ success: true })),
   getRecordData: jasmine.createSpy("getRecordData").and.returnValue(of(null)),
+  getTracks: jasmine.createSpy("getTracks").and.returnValue(of([])),
+  saveCustomRotation: jasmine
+    .createSpy("saveCustomRotation")
+    .and.returnValue(of({})),
   serverUrl: "http://localhost:7070",
 };
 
@@ -158,6 +162,8 @@ export function resetMocks() {
   mockDataService.connectToRaceDataSocket.and.stub();
   mockDataService.getRaceUpdate.and.returnValue(new Subject().asObservable());
   mockDataService.getRecordData.and.returnValue(of(null));
+  mockDataService.getTracks.and.returnValue(of([]));
+  mockDataService.saveCustomRotation.and.returnValue(of({}));
 
   // Restore default behaviors for mockTranslationService
   mockTranslationService.translate.and.callFake((key: string) => key);

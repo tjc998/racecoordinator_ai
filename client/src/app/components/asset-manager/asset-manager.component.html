@@ -48,7 +48,7 @@
           <div class="breakdown-item">
             <div class="breakdown-label">
               <img
-                src="assets/images/am_icon_image.png"
+                src="assets/images/am_icon_image.svg"
                 alt="Img"
                 class="mini-icon icon-cyan"
               />
@@ -56,7 +56,10 @@
                 "AM_IMAGES_LABEL" | translate: { count: imageCount }
               }}</span>
             </div>
-            <div class="progress-bar">
+            <div
+              class="progress-bar"
+              [attr.title]="formatAssetTooltip(imageBytes)"
+            >
               <div
                 class="fill image-fill"
                 [style.width.%]="imageUsagePercent"
@@ -67,7 +70,7 @@
           <div class="breakdown-item">
             <div class="breakdown-label">
               <img
-                src="assets/images/am_icon_image.png"
+                src="assets/images/am_icon_image.svg"
                 alt="ImgSet"
                 class="mini-icon icon-cyan"
                 style="opacity: 0.5"
@@ -76,12 +79,21 @@
                 "AM_IMAGE_SETS_LABEL" | translate: { count: imageSetCount }
               }}</span>
             </div>
+            <div
+              class="progress-bar"
+              [attr.title]="formatAssetTooltip(imageSetBytes)"
+            >
+              <div
+                class="fill image-set-fill"
+                [style.width.%]="imageSetUsagePercent"
+              ></div>
+            </div>
           </div>
 
           <div class="breakdown-item">
             <div class="breakdown-label">
               <img
-                src="assets/images/am_icon_audio_wave.png"
+                src="assets/images/am_icon_audio_wave.svg"
                 alt="Snd"
                 class="mini-icon icon-cyan"
               />
@@ -89,7 +101,10 @@
                 "AM_SOUNDS_LABEL" | translate: { count: soundCount }
               }}</span>
             </div>
-            <div class="progress-bar">
+            <div
+              class="progress-bar"
+              [attr.title]="formatAssetTooltip(soundBytes)"
+            >
               <div
                 class="fill sound-fill"
                 [style.width.%]="soundUsagePercent"
@@ -100,7 +115,7 @@
           <div class="breakdown-item">
             <div class="breakdown-label">
               <img
-                src="assets/images/am_icon_audio_wave.png"
+                src="assets/images/am_icon_audio_wave.svg"
                 alt="SndSet"
                 class="mini-icon icon-cyan"
                 style="opacity: 0.5"
@@ -108,6 +123,39 @@
               <span>{{
                 "AM_AUDIO_SETS_LABEL" | translate: { count: audioSetCount }
               }}</span>
+            </div>
+            <div
+              class="progress-bar"
+              [attr.title]="formatAssetTooltip(audioSetBytes)"
+            >
+              <div
+                class="fill audio-set-fill"
+                [style.width.%]="audioSetUsagePercent"
+              ></div>
+            </div>
+          </div>
+
+          <div class="breakdown-item">
+            <div class="breakdown-label">
+              <img
+                src="assets/images/am_icon_rotation.svg"
+                alt="Rot"
+                class="mini-icon icon-cyan"
+                style="opacity: 0.5"
+              />
+              <span>{{
+                "AM_CUSTOM_ROTATIONS_LABEL"
+                  | translate: { count: customRotationCount }
+              }}</span>
+            </div>
+            <div
+              class="progress-bar"
+              [attr.title]="formatAssetTooltip(customRotationBytes)"
+            >
+              <div
+                class="fill rotation-fill"
+                [style.width.%]="customRotationUsagePercent"
+              ></div>
             </div>
           </div>
         </div>
@@ -170,6 +218,13 @@
         >
           {{ "AM_BTN_NEW_AUDIO_SET" | translate }}
         </button>
+        <button
+          class="btn-new-set"
+          (click)="openNewCustomRotationEditor()"
+          [disabled]="isUploading"
+        >
+          {{ "AM_BTN_NEW_CUSTOM_ROTATION" | translate }}
+        </button>
       </div>
     </div>
 
@@ -224,6 +279,13 @@
             >
               {{ "AM_FILTER_AUDIO_SETS" | translate }}
             </div>
+            <div
+              class="tab"
+              [class.active]="filterType === 'custom_rotation'"
+              (click)="setFilterType('custom_rotation')"
+            >
+              {{ "AM_FILTER_CUSTOM_ROTATIONS" | translate }}
+            </div>
           </div>
         </div>
       </div>
@@ -275,6 +337,12 @@
                   class="preview-icon"
                   alt="sound"
                 />
+              }
+              @if (asset.type === "custom_rotation") {
+                <div class="rotation-preview">
+                  <i class="fas fa-sync-alt"></i>
+                  <span class="lane-count">{{ asset.numLanes }} Lanes</span>
+                </div>
               }
             </div>
             <!-- Name Area -->
@@ -339,7 +407,9 @@
                             ? openEditImageSetEditor(asset)
                             : asset.type === 'audio_set'
                               ? openEditAudioSetEditor(asset)
-                              : startEditing(asset.id))
+                              : asset.type === 'custom_rotation'
+                                ? openEditCustomRotationEditor(asset)
+                                : startEditing(asset.id))
                       "
                       title="Edit"
                     />
@@ -391,6 +461,18 @@
     (saved)="onAudioSetSaved($event)"
   >
   </app-audio-set-editor>
+
+  @if (showCustomRotationEditor) {
+    <app-custom-rotation-editor
+      [assetId]="editingRotationAssetId"
+      [assetName]="editingRotationAssetName"
+      [numLanes]="editingRotationNumLanes"
+      [rotations]="editingRotations"
+      (cancelled)="showCustomRotationEditor = false"
+      (saved)="onCustomRotationSaved($event)"
+    >
+    </app-custom-rotation-editor>
+  }
 
   <app-confirmation-modal
     [visible]="showDeleteConfirm"

@@ -49,6 +49,7 @@ build_cache/java8.zip
 build_cache/java17.zip
 
 # Playwright stuffs
+client/.isolated-test/
 client/.browser-tmp/
 client/.npm-cache/
 client/.npm_cache/

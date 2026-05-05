@@ -186,6 +186,8 @@ describe("RaceEditorComponent", () => {
       10,
       0,
       jasmine.any(Array),
+      undefined,
+      undefined,
     );
     expect(component.generatedHeats.length).toBeGreaterThan(0);
   }));
@@ -204,6 +206,8 @@ describe("RaceEditorComponent", () => {
       10,
       0,
       jasmine.any(Array),
+      undefined,
+      undefined,
     );
 
     component.driverCount = 12;
@@ -216,6 +220,8 @@ describe("RaceEditorComponent", () => {
       12,
       0,
       jasmine.any(Array),
+      undefined,
+      undefined,
     );
   }));
 
@@ -1017,6 +1023,8 @@ describe("RaceEditorComponent", () => {
         "SingleHeatSolo",
         4,
         2,
+        undefined,
+        undefined,
         undefined,
       );
     }));

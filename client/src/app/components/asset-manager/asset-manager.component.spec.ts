@@ -385,4 +385,95 @@ describe("AssetManagerComponent", () => {
     component.onEditSelected();
     expect(component.startEditing).not.toHaveBeenCalled();
   });
+
+  describe("Asset Calculations", () => {
+    beforeEach(() => {
+      component.assets = [
+        {
+          id: "a1",
+          name: "Img1",
+          type: "image",
+          size: "100 KB",
+          url: "",
+        },
+        {
+          id: "a2",
+          name: "ImgSet1",
+          type: "image_set",
+          size: "200 KB",
+          url: "",
+          images: [{ url: "1.png" }, { url: "2.png" }],
+        },
+        {
+          id: "a3",
+          name: "Snd1",
+          type: "sound",
+          size: "50 KB",
+          url: "",
+        },
+        {
+          id: "a4",
+          name: "AudioSet1",
+          type: "audio_set",
+          size: "150 KB",
+          url: "",
+          audioEntries: [{ url: "1.mp3" }, { url: "2.mp3" }],
+        },
+        {
+          id: "a5",
+          name: "Rot1",
+          type: "custom_rotation",
+          size: "10 KB",
+          url: "",
+        },
+      ];
+    });
+
+    it("should calculate totalBytes correctly", () => {
+      // 100 + 200 + 50 + 150 + 10 = 510 KB
+      // 510 * 1024 = 522240 bytes
+      expect(component.totalBytes).toBe(510 * 1024);
+    });
+
+    it("should calculate bytes by type correctly", () => {
+      expect(component.imageBytes).toBe(100 * 1024);
+      expect(component.imageSetBytes).toBe(200 * 1024);
+      expect(component.soundBytes).toBe(50 * 1024);
+      expect(component.audioSetBytes).toBe(150 * 1024);
+      expect(component.customRotationBytes).toBe(10 * 1024);
+    });
+
+    it("should calculate usage percentages correctly", () => {
+      const total = 510;
+      expect(component.imageUsagePercent).toBeCloseTo((100 / total) * 100, 2);
+      expect(component.imageSetUsagePercent).toBeCloseTo(
+        (200 / total) * 100,
+        2,
+      );
+      expect(component.soundUsagePercent).toBeCloseTo((50 / total) * 100, 2);
+      expect(component.audioSetUsagePercent).toBeCloseTo(
+        (150 / total) * 100,
+        2,
+      );
+      expect(component.customRotationUsagePercent).toBeCloseTo(
+        (10 / total) * 100,
+        2,
+      );
+    });
+
+    it("should format tooltips correctly", () => {
+      const bytes = 1024 * 1024; // 1 MB
+      expect(component.formatAssetTooltip(bytes)).toBe(
+        "1,048,576 bytes (1.00 MB)",
+      );
+    });
+
+    it("should count only top-level assets", () => {
+      expect(component.imageCount).toBe(1);
+      expect(component.soundCount).toBe(1);
+      expect(component.imageSetCount).toBe(1);
+      expect(component.audioSetCount).toBe(1);
+      expect(component.customRotationCount).toBe(1);
+    });
+  });
 });

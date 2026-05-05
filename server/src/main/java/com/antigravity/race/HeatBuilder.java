@@ -1,5 +1,7 @@
 package com.antigravity.race;
 
+import com.antigravity.models.CustomHeat;
+import com.antigravity.models.CustomRotation;
 import com.antigravity.models.Driver;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
@@ -13,7 +15,8 @@ import org.slf4j.LoggerFactory;
 public class HeatBuilder {
   private static final Logger logger = LoggerFactory.getLogger(HeatBuilder.class);
 
-  public static List<Heat> buildHeats(Race race, List<RaceParticipant> drivers) {
+  public static List<Heat> buildHeats(
+      Race race, List<RaceParticipant> drivers, List<CustomRotation> customRotations) {
     int numLanes = race.getTrack().getLanes().size();
     HeatRotationType rotationType = race.getRaceModel().getHeatRotationType();
     switch (rotationType) {
@@ -53,6 +56,9 @@ public class HeatBuilder {
             race.getRaceModel().getCustomRotationSequence(),
             false,
             race.getRaceModel().getHeatScoring());
+      case Custom:
+        return getCustomHeats(
+            drivers, numLanes, customRotations, race.getRaceModel().getHeatScoring());
       default:
         throw new IllegalArgumentException("Unknown HeatRotationType: " + rotationType);
     }
@@ -247,6 +253,92 @@ public class HeatBuilder {
 
       heatList.add(new Heat(h + 1, heatDrivers, scoring));
     }
+    return heatList;
+  }
+
+  private static List<Heat> getCustomHeats(
+      List<RaceParticipant> drivers,
+      int numLanes,
+      List<CustomRotation> customRotations,
+      HeatScoring scoring) {
+    if (customRotations == null || customRotations.isEmpty()) {
+      throw new IllegalArgumentException("No custom rotations defined");
+    }
+
+    int driverCount = drivers.size();
+    CustomRotation selectedRotation = null;
+
+    // 1) Exact match
+    for (CustomRotation rot : customRotations) {
+      if (rot.getNumDrivers() == driverCount) {
+        selectedRotation = rot;
+        break;
+      }
+    }
+
+    // 2) Closest above
+    if (selectedRotation == null) {
+      int minDiff = Integer.MAX_VALUE;
+      for (CustomRotation rot : customRotations) {
+        if (rot.getNumDrivers() > driverCount) {
+          int diff = rot.getNumDrivers() - driverCount;
+          if (diff < minDiff) {
+            minDiff = diff;
+            selectedRotation = rot;
+          }
+        }
+      }
+    }
+
+    // 3) Closest below
+    if (selectedRotation == null) {
+      int minDiff = Integer.MAX_VALUE;
+      for (CustomRotation rot : customRotations) {
+        int diff = driverCount - rot.getNumDrivers();
+        if (diff < minDiff) {
+          minDiff = diff;
+          selectedRotation = rot;
+        }
+      }
+    }
+
+    if (selectedRotation == null) {
+      throw new IllegalStateException("Could not select a custom rotation");
+    }
+
+    List<Heat> heatList = new ArrayList<>();
+    for (int h = 0; h < selectedRotation.getHeats().size(); h++) {
+      CustomHeat customHeat = selectedRotation.getHeats().get(h);
+      List<DriverHeatData> heatDrivers = new ArrayList<>();
+
+      for (int l = 0; l < numLanes; l++) {
+        int driverIdx = 0;
+        if (l < customHeat.getDriverIndices().size()) {
+          driverIdx = customHeat.getDriverIndices().get(l);
+        }
+
+        if (driverIdx > 0 && driverIdx <= drivers.size()) {
+          RaceParticipant participant = drivers.get(driverIdx - 1);
+          DriverHeatData data = new DriverHeatData(participant);
+
+          if (participant.isTeamParticipant()
+              && participant.getTeam() != null
+              && participant.getTeamDrivers() != null
+              && !participant.getTeamDrivers().isEmpty()) {
+            // Rotate drivers based on heat number
+            int teamDriverIdx = h % participant.getTeamDrivers().size();
+            Driver assignedDriver = participant.getTeamDrivers().get(teamDriverIdx);
+            data.setActualDriver(assignedDriver);
+          }
+
+          heatDrivers.add(data);
+        } else {
+          heatDrivers.add(new DriverHeatData(new RaceParticipant(Driver.EMPTY_DRIVER)));
+        }
+      }
+      heatList.add(new Heat(h + 1, heatDrivers, scoring));
+    }
+
     return heatList;
   }
 }

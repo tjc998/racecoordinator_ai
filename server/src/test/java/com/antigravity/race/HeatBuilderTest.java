@@ -6,6 +6,8 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.antigravity.models.CustomHeat;
+import com.antigravity.models.CustomRotation;
 import com.antigravity.models.Driver;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
@@ -113,7 +115,7 @@ public class HeatBuilderTest {
     participants.add(teamParticipant); // Add as 4th participant
 
     // Build heats (4 participants, 4 lanes -> 4 heats)
-    List<Heat> heats = HeatBuilder.buildHeats(race, participants);
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, new ArrayList<>());
 
     assertEquals(4, heats.size());
 
@@ -201,7 +203,7 @@ public class HeatBuilderTest {
     teamParticipant.setTeamDrivers(teamDrivers);
     participants.add(teamParticipant); // 5th participant
 
-    List<Heat> heats = HeatBuilder.buildHeats(race, participants);
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, new ArrayList<>());
 
     assertEquals(5, heats.size());
     // Verify team driver rotation across heats, even when sitting out
@@ -257,7 +259,7 @@ public class HeatBuilderTest {
                   null)));
     }
 
-    List<Heat> heats = HeatBuilder.buildHeats(race, participants);
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, new ArrayList<>());
 
     // 10 participants, 4 lanes -> 3 heats (ceil(10/4))
     assertEquals(3, heats.size());
@@ -303,7 +305,7 @@ public class HeatBuilderTest {
                   null)));
     }
 
-    List<Heat> heats = HeatBuilder.buildHeats(race, participants);
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, new ArrayList<>());
 
     // 3 participants -> 3 heats
     assertEquals(3, heats.size());
@@ -334,7 +336,7 @@ public class HeatBuilderTest {
             new Driver(
                 "D1", "d1", null, null, null, null, null, null, null, null, null, "1", null)));
 
-    List<Heat> heats = HeatBuilder.buildHeats(race, participants);
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, new ArrayList<>());
 
     assertEquals(1, heats.size());
     Heat h = heats.get(0);
@@ -376,7 +378,7 @@ public class HeatBuilderTest {
                   null)));
     }
 
-    List<Heat> heats = HeatBuilder.buildHeats(race, participants);
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, new ArrayList<>());
 
     // ceil(5/4) = 2 heats
     assertEquals(2, heats.size());
@@ -416,7 +418,7 @@ public class HeatBuilderTest {
                   null)));
     }
 
-    List<Heat> heats = HeatBuilder.buildHeats(race, participants);
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, new ArrayList<>());
 
     // ceil(12/6) = 2 heats
     assertEquals(2, heats.size());
@@ -449,7 +451,7 @@ public class HeatBuilderTest {
                   null)));
     }
 
-    List<Heat> heats = HeatBuilder.buildHeats(race, participants);
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, new ArrayList<>());
 
     // ceil(11/4) = 3 heats
     assertEquals(3, heats.size());
@@ -483,7 +485,7 @@ public class HeatBuilderTest {
                   null)));
     }
 
-    List<Heat> heats = HeatBuilder.buildHeats(race, participants);
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, new ArrayList<>());
 
     // ceil(4/4) = 1 heat
     assertEquals(1, heats.size());
@@ -517,7 +519,7 @@ public class HeatBuilderTest {
                   null)));
     }
 
-    List<Heat> heats = HeatBuilder.buildHeats(race, participants);
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, new ArrayList<>());
 
     assertEquals(4, heats.size());
 
@@ -550,7 +552,7 @@ public class HeatBuilderTest {
             new Driver(
                 "D1", "d1", null, null, null, null, null, null, null, null, null, "1", null)));
 
-    HeatBuilder.buildHeats(race, participants);
+    HeatBuilder.buildHeats(race, participants, new ArrayList<>());
   }
 
   @Test
@@ -566,7 +568,7 @@ public class HeatBuilderTest {
             new Driver(
                 "D1", "d1", null, null, null, null, null, null, null, null, null, "1", null)));
 
-    List<Heat> heats = HeatBuilder.buildHeats(race, participants);
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, new ArrayList<>());
     assertEquals(4, heats.size());
 
     // Heat 1: Lane 1
@@ -591,13 +593,175 @@ public class HeatBuilderTest {
             new Driver(
                 "D1", "d1", null, null, null, null, null, null, null, null, null, "1", null)));
 
-    List<Heat> heats = HeatBuilder.buildHeats(race, participants);
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, new ArrayList<>());
     assertEquals(2, heats.size());
 
     // Heat 1: Lane 1
     assertEquals("1", heats.get(0).getDrivers().get(0).getActualDriver().getEntityId());
     // Heat 2: Lane 99 -> skipped
     assertEquals(0, countDrivers(heats.get(1)));
+  }
+
+  @Test
+  public void testCustomRotation() {
+    when(raceModel.getHeatRotationType()).thenReturn(HeatRotationType.Custom);
+
+    CustomRotation rot4 =
+        new CustomRotation(
+            4,
+            Arrays.asList(
+                new CustomHeat(Arrays.asList(1, 2, 3, 4)),
+                new CustomHeat(Arrays.asList(4, 3, 2, 1))));
+    CustomRotation rot6 =
+        new CustomRotation(
+            6,
+            Arrays.asList(
+                new CustomHeat(Arrays.asList(1, 0, 2, 0)),
+                new CustomHeat(Arrays.asList(0, 3, 0, 4))));
+
+    List<CustomRotation> customRotations = Arrays.asList(rot4, rot6);
+
+    // Test with 4 drivers (Exact match)
+    List<RaceParticipant> drivers4 = createDrivers(4);
+    List<Heat> heats4 = HeatBuilder.buildHeats(race, drivers4, customRotations);
+    assertEquals(2, heats4.size());
+    assertEquals("1", heats4.get(0).getDrivers().get(0).getActualDriver().getEntityId());
+    assertEquals("2", heats4.get(0).getDrivers().get(1).getActualDriver().getEntityId());
+    assertEquals("4", heats4.get(1).getDrivers().get(0).getActualDriver().getEntityId());
+
+    // Test with 5 drivers (Closest above -> 6)
+    List<RaceParticipant> drivers5 = createDrivers(5);
+    List<Heat> heats5 = HeatBuilder.buildHeats(race, drivers5, customRotations);
+    assertEquals(2, heats5.size());
+    assertEquals("1", heats5.get(0).getDrivers().get(0).getActualDriver().getEntityId());
+    assertEquals(
+        Driver.EMPTY_DRIVER.getEntityId(),
+        heats5.get(0).getDrivers().get(1).getActualDriver().getEntityId()); // value 0
+    assertEquals("2", heats5.get(0).getDrivers().get(2).getActualDriver().getEntityId()); // value 2
+
+    // Test with 7 drivers (Closest below -> 6)
+    List<RaceParticipant> drivers7 = createDrivers(7);
+    List<Heat> heats7 = HeatBuilder.buildHeats(race, drivers7, customRotations);
+    assertEquals(2, heats7.size());
+    assertEquals("1", heats7.get(0).getDrivers().get(0).getActualDriver().getEntityId());
+    assertEquals("2", heats7.get(0).getDrivers().get(2).getActualDriver().getEntityId());
+  }
+
+  @Test
+  public void testCustomRotation_WithTeam() {
+    when(raceModel.getHeatRotationType()).thenReturn(HeatRotationType.Custom);
+
+    // Create a team with 2 drivers
+    Team team = new Team("Team1", null, Arrays.asList("TD1", "TD2"), "t1", null);
+    RaceParticipant teamParticipant = new RaceParticipant(team);
+    List<Driver> teamDrivers = new ArrayList<>();
+    teamDrivers.add(
+        new Driver(
+            "TeamDriver1",
+            "TD1",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "td1",
+            null));
+    teamDrivers.add(
+        new Driver(
+            "TeamDriver2",
+            "TD2",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "td2",
+            null));
+    teamParticipant.setTeamDrivers(teamDrivers);
+
+    // 1 participant (the team)
+    List<RaceParticipant> participants = Arrays.asList(teamParticipant);
+
+    // Custom rotation for 1 driver, 2 heats, driver in lane 1 both times
+    CustomRotation rot1 =
+        new CustomRotation(
+            1,
+            Arrays.asList(
+                new CustomHeat(Arrays.asList(1, 0, 0, 0)),
+                new CustomHeat(Arrays.asList(1, 0, 0, 0))));
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, Arrays.asList(rot1));
+
+    assertEquals(2, heats.size());
+
+    // Heat 1: First team driver
+    assertEquals("td1", heats.get(0).getDrivers().get(0).getActualDriver().getEntityId());
+    // Heat 2: Second team driver
+    assertEquals("td2", heats.get(1).getDrivers().get(0).getActualDriver().getEntityId());
+  }
+
+  @Test
+  public void testCustomRotation_WithSitOut() {
+    when(raceModel.getHeatRotationType()).thenReturn(HeatRotationType.Custom);
+
+    List<RaceParticipant> participants = createDrivers(2);
+
+    // Custom rotation for 2 drivers, 2 heats
+    // Heat 1: D1 in Lane 1, D2 sits out (0)
+    // Heat 2: D1 sits out (0), D2 in Lane 2
+    CustomRotation rot =
+        new CustomRotation(
+            2,
+            Arrays.asList(
+                new CustomHeat(Arrays.asList(1, 0, 0, 0)),
+                new CustomHeat(Arrays.asList(0, 2, 0, 0))));
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, Arrays.asList(rot));
+
+    assertEquals(2, heats.size());
+
+    // Heat 1
+    assertEquals("1", heats.get(0).getDrivers().get(0).getActualDriver().getEntityId());
+    assertEquals(
+        Driver.EMPTY_DRIVER.getEntityId(),
+        heats.get(0).getDrivers().get(1).getActualDriver().getEntityId());
+
+    // Heat 2
+    assertEquals(
+        Driver.EMPTY_DRIVER.getEntityId(),
+        heats.get(1).getDrivers().get(0).getActualDriver().getEntityId());
+    assertEquals("2", heats.get(1).getDrivers().get(1).getActualDriver().getEntityId());
+  }
+
+  private List<RaceParticipant> createDrivers(int count) {
+    List<RaceParticipant> participants = new ArrayList<>();
+    for (int i = 1; i <= count; i++) {
+      participants.add(
+          new RaceParticipant(
+              new Driver(
+                  "D" + i,
+                  "d" + i,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  String.valueOf(i),
+                  null)));
+    }
+    return participants;
   }
 
   private int countDrivers(Heat heat) {

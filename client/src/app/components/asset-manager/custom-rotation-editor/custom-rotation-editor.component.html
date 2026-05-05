@@ -1,0 +1,292 @@
+<div class="editor-overlay modal-backdrop">
+  <div class="editor-container modal-content">
+    <div class="editor-header">
+      <h2>
+        {{
+          (assetId() ? "AM_EDIT_CUSTOM_ROTATION" : "AM_NEW_CUSTOM_ROTATION")
+            | translate
+        }}
+      </h2>
+      <button class="close-btn" (click)="cancel()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="editor-content">
+      <div class="settings-row">
+        <div class="input-group">
+          <label>{{ "AM_LABEL_ASSET_NAME" | translate }}</label>
+          <input
+            type="text"
+            [(ngModel)]="internalAssetName"
+            [placeholder]="'AM_PLACEHOLDER_ASSET_NAME' | translate"
+          />
+        </div>
+        <div class="input-group">
+          <label>{{ "RM_COL_TRACK" | translate }}</label>
+          <select [(ngModel)]="selectedTrackId" (change)="onTrackChange()">
+            @for (
+              track of tracks;
+              track $any(track).entity_id || track.model?.entityId
+            ) {
+              <option
+                [value]="($any(track).entity_id || track.model?.entityId) ?? ''"
+              >
+                {{ track.name }}
+              </option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="rotations-list">
+        <div class="section-header">
+          <h3>{{ "AM_LABEL_ROTATIONS" | translate }}</h3>
+          <button class="add-btn" (click)="addRotation()">
+            <i class="fas fa-plus"></i> {{ "AM_BTN_ADD_ROTATION" | translate }}
+          </button>
+          <button class="import-btn" (click)="fileInput.click()">
+            <i class="fas fa-file-import"></i>
+            {{ "AM_BTN_IMPORT_ROTATION" | translate }}
+          </button>
+          <button class="export-btn" (click)="exportRotations()">
+            <i class="fas fa-file-export"></i>
+            {{ "AM_BTN_EXPORT_ROTATION" | translate }}
+          </button>
+          <input
+            #fileInput
+            type="file"
+            multiple
+            accept=".json,.txt"
+            style="display: none"
+            (change)="onImportFiles($event)"
+          />
+        </div>
+
+        @for (
+          rotation of internalRotations;
+          track $index;
+          let rotIdx = $index
+        ) {
+          <div class="rotation-card">
+            <div class="card-header">
+              <div class="input-group mini">
+                <label>{{ "AM_LABEL_NUM_DRIVERS" | translate }}</label>
+                <input
+                  type="number"
+                  [(ngModel)]="rotation.numDrivers"
+                  min="1"
+                />
+              </div>
+              <button
+                class="equality-btn"
+                [class.equal]="isRotationEqual(rotation)"
+                [class.unequal]="!isRotationEqual(rotation)"
+                (click)="showEqualityReport(rotation, rotIdx)"
+                [title]="'AM_LABEL_LANE_EQUALITY' | translate"
+              >
+                @if (isRotationEqual(rotation)) {
+                  <i class="fas fa-check-circle"></i>
+                } @else {
+                  <i class="fas fa-times-circle"></i>
+                }
+                {{ "AM_LABEL_LANE_EQUALITY" | translate }}
+              </button>
+              <button
+                class="delete-btn"
+                (click)="removeRotation(rotIdx)"
+                [title]="'AM_BTN_REMOVE_ROTATION' | translate"
+              >
+                <span class="delete-x">X</span>
+              </button>
+            </div>
+
+            <div class="heats-list">
+              <table class="heats-table">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>{{ "AM_LABEL_HEAT" | translate }}</th>
+                    @for (
+                      lane of selectedTrack?.lanes;
+                      track $index;
+                      let lIdx = $index
+                    ) {
+                      <th
+                        [style.backgroundColor]="
+                          $any(lane).background_color || lane.backgroundColor
+                        "
+                        [style.color]="
+                          $any(lane).foreground_color || lane.foregroundColor
+                        "
+                      >
+                        {{ "AM_LABEL_LANE" | translate }} {{ lIdx + 1 }}
+                      </th>
+                    }
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody
+                  cdkDropList
+                  (cdkDropListDropped)="dropHeat(rotation, $event)"
+                  [cdkDropListData]="rotation.heats || []"
+                >
+                  @for (
+                    heat of rotation.heats;
+                    track $index;
+                    let heatIdx = $index
+                  ) {
+                    <tr
+                      cdkDrag
+                      [class.heat-error]="heatHasError(rotation, heatIdx)"
+                    >
+                      <td class="drag-handle" cdkDragHandle>
+                        <i class="fas fa-grip-vertical"></i>
+                      </td>
+                      <td class="heat-num">{{ heatIdx + 1 }}</td>
+                      @for (
+                        lane of selectedTrack?.lanes;
+                        track $index;
+                        let lIdx = $index
+                      ) {
+                        <td
+                          [style.backgroundColor]="
+                            $any(lane).background_color || lane.backgroundColor
+                          "
+                        >
+                          <input
+                            type="number"
+                            [(ngModel)]="heat.driverIndices![lIdx]"
+                            min="0"
+                            max="99"
+                            class="driver-idx-input"
+                            [style.color]="
+                              $any(lane).foreground_color ||
+                              lane.foregroundColor
+                            "
+                            style="
+                              width: 100%;
+                              text-align: center;
+                              font-weight: bold;
+                            "
+                          />
+                        </td>
+                      }
+                      <td class="delete-col">
+                        <button
+                          class="mini-delete-btn"
+                          (click)="removeHeat(rotation, heatIdx)"
+                          [title]="'AM_BTN_REMOVE_HEAT' | translate"
+                        >
+                          <span class="delete-x">X</span>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+              <button class="add-heat-btn" (click)="addHeat(rotation)">
+                <i class="fas fa-plus"></i> {{ "AM_BTN_ADD_HEAT" | translate }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="editor-footer">
+      <button class="cancel-btn" (click)="cancel()">
+        {{ "AM_BTN_CANCEL" | translate }}
+      </button>
+      <button
+        class="save-btn"
+        (click)="save()"
+        [disabled]="!internalAssetName || isSaving || hasValidationErrors()"
+      >
+        @if (!isSaving) {
+          <span>{{ "AM_BTN_SAVE" | translate }}</span>
+        } @else {
+          <span class="spinner"></span>
+        }
+      </button>
+    </div>
+  </div>
+</div>
+
+@if (equalityReport) {
+  <div class="equality-report-overlay" (click)="closeReport()">
+    <div class="equality-report-modal" (click)="$event.stopPropagation()">
+      <div class="report-header">
+        <h4>
+          {{ "AM_REPORT_TITLE" | translate }} ({{
+            "AM_LABEL_NUM_DRIVERS" | translate
+          }}: {{ internalRotations[reportRotationIdx].numDrivers }})
+        </h4>
+        <button class="close-btn" (click)="closeReport()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="report-content">
+        <ul class="report-list">
+          @for (item of equalityReport; track $index) {
+            <li
+              class="report-item"
+              [class.success]="
+                isRotationEqual(internalRotations[reportRotationIdx])
+              "
+              [class.error]="
+                !isRotationEqual(internalRotations[reportRotationIdx])
+              "
+            >
+              @if (isRotationEqual(internalRotations[reportRotationIdx])) {
+                <i class="fas fa-check-circle"></i>
+              } @else {
+                <i class="fas fa-exclamation-triangle"></i>
+              }
+              <span>{{ item.key | translate: item.params }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+      <div class="report-footer">
+        <button (click)="closeReport()">{{ "GEN_OK" | translate }}</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (importSummary) {
+  <div class="equality-report-overlay" (click)="closeImportSummary()">
+    <div class="equality-report-modal" (click)="$event.stopPropagation()">
+      <div class="report-header">
+        <h4>{{ "AM_IMPORT_SUMMARY_TITLE" | translate }}</h4>
+        <button class="close-btn" (click)="closeImportSummary()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="report-content">
+        <ul class="report-list">
+          @for (item of importSummary; track $index) {
+            <li
+              class="report-item"
+              [class.success]="item.success"
+              [class.error]="!item.success"
+            >
+              @if (item.success) {
+                <i class="fas fa-check-circle"></i>
+              } @else {
+                <i class="fas fa-exclamation-triangle"></i>
+              }
+              <span>{{ item.key | translate: item.params }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+      <div class="report-footer">
+        <button (click)="closeImportSummary()">
+          {{ "GEN_OK" | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

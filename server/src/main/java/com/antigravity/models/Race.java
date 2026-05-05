@@ -1,5 +1,6 @@
 package com.antigravity.models;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
@@ -83,42 +84,78 @@ public class Race extends Model {
 
   @BsonProperty("solo_lane_index")
   @JsonProperty("solo_lane_index")
+  @JsonAlias("soloLaneIndex")
   private final int soloLaneIndex;
 
   @BsonProperty("custom_rotation_sequence")
   @JsonProperty("custom_rotation_sequence")
+  @JsonAlias("customRotationSequence")
   private final List<Integer> customRotationSequence;
+
+  @BsonProperty("custom_rotation_asset_id")
+  @JsonProperty("custom_rotation_asset_id")
+  @JsonAlias("customRotationAssetId")
+  private final String customRotationAssetId;
 
   @BsonCreator
   @JsonCreator
   public Race(
       @BsonProperty("name") @JsonProperty("name") String name,
-      @BsonProperty("track_entity_id") @JsonProperty("track_entity_id") String trackEntityId,
-      @BsonProperty("heat_rotation_type") @JsonProperty("heat_rotation_type")
+      @BsonProperty("track_entity_id") @JsonProperty("track_entity_id") @JsonAlias("trackEntityId")
+          String trackEntityId,
+      @BsonProperty("heat_rotation_type")
+          @JsonProperty("heat_rotation_type")
+          @JsonAlias("heatRotationType")
           HeatRotationType heatRotationType,
-      @BsonProperty("heat_scoring") @JsonProperty("heat_scoring") HeatScoring heatScoring,
+      @BsonProperty("heat_scoring") @JsonProperty("heat_scoring") @JsonAlias("heatScoring")
+          HeatScoring heatScoring,
       @BsonProperty("race_scoring") @JsonProperty("race_scoring") HeatScoring oldHeatScoring,
-      @BsonProperty("overall_scoring") @JsonProperty("overall_scoring")
+      @BsonProperty("overall_scoring") @JsonProperty("overall_scoring") @JsonAlias("overallScoring")
           OverallScoring overallScoring,
-      @BsonProperty("min_lap_time") @JsonProperty("min_lap_time") Double minLapTime,
-      @BsonProperty("fuel_options") @JsonProperty("fuel_options") AnalogFuelOptions fuelOptions,
-      @BsonProperty("digital_fuel_options") @JsonProperty("digital_fuel_options")
+      @BsonProperty("min_lap_time") @JsonProperty("min_lap_time") @JsonAlias("minLapTime")
+          Double minLapTime,
+      @BsonProperty("fuel_options") @JsonProperty("fuel_options") @JsonAlias("fuelOptions")
+          AnalogFuelOptions fuelOptions,
+      @BsonProperty("digital_fuel_options")
+          @JsonProperty("digital_fuel_options")
+          @JsonAlias("digitalFuelOptions")
           DigitalFuelOptions digitalFuelOptions,
-      @BsonProperty("team_options") @JsonProperty("team_options") TeamOptions teamOptions,
-      @BsonProperty("auto_advance_time") @JsonProperty("auto_advance_time") Double autoAdvanceTime,
-      @BsonProperty("auto_start_time") @JsonProperty("auto_start_time") Double autoStartTime,
-      @BsonProperty("auto_advance_warmup_time") @JsonProperty("auto_advance_warmup_time")
+      @BsonProperty("team_options") @JsonProperty("team_options") @JsonAlias("teamOptions")
+          TeamOptions teamOptions,
+      @BsonProperty("auto_advance_time")
+          @JsonProperty("auto_advance_time")
+          @JsonAlias("autoAdvanceTime")
+          Double autoAdvanceTime,
+      @BsonProperty("auto_start_time") @JsonProperty("auto_start_time") @JsonAlias("autoStartTime")
+          Double autoStartTime,
+      @BsonProperty("auto_advance_warmup_time")
+          @JsonProperty("auto_advance_warmup_time")
+          @JsonAlias("autoAdvanceWarmupTime")
           Double autoAdvanceWarmupTime,
-      @BsonProperty("auto_start_warmup_time") @JsonProperty("auto_start_warmup_time")
+      @BsonProperty("auto_start_warmup_time")
+          @JsonProperty("auto_start_warmup_time")
+          @JsonAlias("autoStartWarmupTime")
           Double autoStartWarmupTime,
-      @BsonProperty("drift_time") @JsonProperty("drift_time") Double driftTime,
-      @BsonProperty("start_time") @JsonProperty("start_time") Double startTime,
-      @BsonProperty("restart_time") @JsonProperty("restart_time") Double restartTime,
-      @BsonProperty("start_delay") @JsonProperty("start_delay") Double startDelay,
-      @BsonProperty("restart_delay") @JsonProperty("restart_delay") Double restartDelay,
-      @BsonProperty("solo_lane_index") @JsonProperty("solo_lane_index") Integer soloLaneIndex,
-      @BsonProperty("custom_rotation_sequence") @JsonProperty("custom_rotation_sequence")
+      @BsonProperty("drift_time") @JsonProperty("drift_time") @JsonAlias("driftTime")
+          Double driftTime,
+      @BsonProperty("start_time") @JsonProperty("start_time") @JsonAlias("startTime")
+          Double startTime,
+      @BsonProperty("restart_time") @JsonProperty("restart_time") @JsonAlias("restartTime")
+          Double restartTime,
+      @BsonProperty("start_delay") @JsonProperty("start_delay") @JsonAlias("startDelay")
+          Double startDelay,
+      @BsonProperty("restart_delay") @JsonProperty("restart_delay") @JsonAlias("restartDelay")
+          Double restartDelay,
+      @BsonProperty("solo_lane_index") @JsonProperty("solo_lane_index") @JsonAlias("soloLaneIndex")
+          Integer soloLaneIndex,
+      @BsonProperty("custom_rotation_sequence")
+          @JsonProperty("custom_rotation_sequence")
+          @JsonAlias("customRotationSequence")
           List<Integer> customRotationSequence,
+      @BsonProperty("custom_rotation_asset_id")
+          @JsonProperty("custom_rotation_asset_id")
+          @JsonAlias("customRotationAssetId")
+          String customRotationAssetId,
       @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
       @BsonId @JsonProperty("_id") ObjectId id) {
     super(id, entityId);
@@ -147,6 +184,7 @@ public class Race extends Model {
     this.soloLaneIndex = soloLaneIndex != null ? soloLaneIndex : 0;
     this.customRotationSequence =
         customRotationSequence != null ? customRotationSequence : new ArrayList<>();
+    this.customRotationAssetId = customRotationAssetId;
   }
 
   public static class Builder {
@@ -171,6 +209,7 @@ public class Race extends Model {
     private double restartDelay = 0.0;
     private int soloLaneIndex = 0;
     private List<Integer> customRotationSequence = new ArrayList<>();
+    private String customRotationAssetId;
     private String entityId;
     private ObjectId id;
 
@@ -274,6 +313,11 @@ public class Race extends Model {
       return this;
     }
 
+    public Builder withCustomRotationAssetId(String customRotationAssetId) {
+      this.customRotationAssetId = customRotationAssetId;
+      return this;
+    }
+
     public Builder withEntityId(String entityId) {
       this.entityId = entityId;
       return this;
@@ -307,6 +351,7 @@ public class Race extends Model {
           restartDelay,
           soloLaneIndex,
           customRotationSequence,
+          customRotationAssetId,
           entityId,
           id);
     }
@@ -390,5 +435,9 @@ public class Race extends Model {
 
   public List<Integer> getCustomRotationSequence() {
     return customRotationSequence;
+  }
+
+  public String getCustomRotationAssetId() {
+    return customRotationAssetId;
   }
 }

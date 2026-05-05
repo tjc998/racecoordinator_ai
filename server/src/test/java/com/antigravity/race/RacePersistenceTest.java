@@ -73,7 +73,7 @@ public class RacePersistenceTest {
             .build();
 
     // Execute
-    List<Heat> heats = HeatBuilder.buildHeats(race, drivers);
+    List<Heat> heats = HeatBuilder.buildHeats(race, drivers, new ArrayList<>());
 
     // Verify
     assertNotNull(heats);

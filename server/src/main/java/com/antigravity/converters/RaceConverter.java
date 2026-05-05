@@ -145,6 +145,9 @@ public class RaceConverter {
       if (race.getCustomRotationSequence() != null) {
         builder.addAllCustomRotationSequence(race.getCustomRotationSequence());
       }
+      if (race.getCustomRotationAssetId() != null) {
+        builder.setCustomRotationAssetId(race.getCustomRotationAssetId());
+      }
       return builder.build();
     }
   }

@@ -13,6 +13,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import {
   IAssetMessage,
   IAudioSetEntry,
+  ICustomRotation,
   IImageSetEntry,
   ISaveAudioSetEntry,
   ISaveImageSetEntry,
@@ -28,19 +29,22 @@ import { TranslationService } from "@app/services/translation.service";
 import { mockTTSContext, playSound } from "@app/utils/audio";
 
 import { AudioSetEditorComponent } from "./audio-set-editor/audio-set-editor.component";
+import { CustomRotationEditorComponent } from "./custom-rotation-editor/custom-rotation-editor.component";
 import { ImageSetEditorComponent } from "./image-set-editor/image-set-editor.component";
 
 // Interface matching the mock/view needs, mapped from Protobuf
 export interface AssetView {
   id: string;
   name: string;
-  type: "image" | "sound" | "image_set" | "audio_set";
+  type: "image" | "sound" | "image_set" | "audio_set" | "custom_rotation";
   size: string;
   url: string;
   editMode?: boolean;
   selected?: boolean;
   images?: IImageSetEntry[];
   audioEntries?: IAudioSetEntry[];
+  numLanes?: number;
+  customRotations?: ICustomRotation[];
   currentPreviewIndex?: number;
 }
 
@@ -54,6 +58,7 @@ export interface AssetView {
     FormsModule,
     ImageSetEditorComponent,
     AudioSetEditorComponent,
+    CustomRotationEditorComponent,
     ConfirmationModalComponent,
     TranslatePipe,
   ],
@@ -64,7 +69,13 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   assets: AssetView[] = [];
 
   // Filtering
-  filterType: "all" | "image" | "sound" | "image_set" | "audio_set" = "all";
+  filterType:
+    | "all"
+    | "image"
+    | "sound"
+    | "image_set"
+    | "audio_set"
+    | "custom_rotation" = "all";
 
   filterName: string = "";
   isUploading: boolean = false;
@@ -83,6 +94,13 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   editingAudioAssetName: string = "";
   editingAudioAssetEntries: ISaveAudioSetEntry[] = [];
   lastSelectedIndex: number = -1;
+
+  // Custom Rotation Editor
+  showCustomRotationEditor: boolean = false;
+  editingRotationAssetId?: string;
+  editingRotationAssetName: string = "";
+  editingRotationNumLanes: number = 4;
+  editingRotations: ICustomRotation[] = [];
 
   // Delete Confirmation
   showDeleteConfirm: boolean = false;
@@ -198,7 +216,8 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
                 a.type === "image" ||
                 a.type === "sound" ||
                 a.type === "image_set" ||
-                a.type === "audio_set"
+                a.type === "audio_set" ||
+                a.type === "custom_rotation"
                   ? (a.type as any)
                   : "image",
               size: a.size || "0 B",
@@ -207,6 +226,8 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
               selected: false,
               images: a.images || [],
               audioEntries: a.audioEntries || [],
+              numLanes: a.numLanes ?? undefined,
+              customRotations: a.customRotations || [],
               currentPreviewIndex: 0,
             };
           });
@@ -309,36 +330,69 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     );
   }
 
-  get imageUsagePercent(): number {
-    if (this.totalBytes === 0) return 0;
-    const imageBytes = this.assets
-      .filter((a) => a.type === "image")
+  private getBytesByType(type: AssetView["type"]): number {
+    return this.assets
+      .filter((a) => a.type === type)
       .reduce((sum, a) => sum + this.parseSize(a.size), 0);
-    return (imageBytes / this.totalBytes) * 100;
+  }
+
+  get imageBytes(): number {
+    return this.getBytesByType("image");
+  }
+  get imageSetBytes(): number {
+    return this.getBytesByType("image_set");
+  }
+  get soundBytes(): number {
+    return this.getBytesByType("sound");
+  }
+  get audioSetBytes(): number {
+    return this.getBytesByType("audio_set");
+  }
+  get customRotationBytes(): number {
+    return this.getBytesByType("custom_rotation");
+  }
+
+  get imageUsagePercent(): number {
+    return this.totalBytes === 0
+      ? 0
+      : (this.imageBytes / this.totalBytes) * 100;
+  }
+
+  get imageSetUsagePercent(): number {
+    return this.totalBytes === 0
+      ? 0
+      : (this.imageSetBytes / this.totalBytes) * 100;
   }
 
   get soundUsagePercent(): number {
-    if (this.totalBytes === 0) return 0;
-    const soundBytes = this.assets
-      .filter((a) => a.type === "sound")
-      .reduce((sum, a) => sum + this.parseSize(a.size), 0);
-    return (soundBytes / this.totalBytes) * 100;
+    return this.totalBytes === 0
+      ? 0
+      : (this.soundBytes / this.totalBytes) * 100;
+  }
+
+  get audioSetUsagePercent(): number {
+    return this.totalBytes === 0
+      ? 0
+      : (this.audioSetBytes / this.totalBytes) * 100;
+  }
+
+  get customRotationUsagePercent(): number {
+    return this.totalBytes === 0
+      ? 0
+      : (this.customRotationBytes / this.totalBytes) * 100;
+  }
+
+  formatAssetTooltip(bytes: number): string {
+    const mb = (bytes / (1024 * 1024)).toFixed(2);
+    return `${bytes.toLocaleString()} bytes (${mb} MB)`;
   }
 
   get imageCount(): number {
-    const singleImages = this.assets.filter((a) => a.type === "image").length;
-    const setImages = this.assets
-      .filter((a) => a.type === "image_set")
-      .reduce((sum, a) => sum + (a.images?.length || 0), 0);
-    return singleImages + setImages;
+    return this.assets.filter((a) => a.type === "image").length;
   }
 
   get soundCount(): number {
-    const singleSounds = this.assets.filter((a) => a.type === "sound").length;
-    const setSounds = this.assets
-      .filter((a) => a.type === "audio_set")
-      .reduce((sum, a) => sum + (a.audioEntries?.length || 0), 0);
-    return singleSounds + setSounds;
+    return this.assets.filter((a) => a.type === "sound").length;
   }
 
   get imageSetCount(): number {
@@ -349,7 +403,19 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     return this.assets.filter((a) => a.type === "audio_set").length;
   }
 
-  setFilterType(type: "all" | "image" | "sound" | "image_set" | "audio_set") {
+  get customRotationCount(): number {
+    return this.assets.filter((a) => a.type === "custom_rotation").length;
+  }
+
+  setFilterType(
+    type:
+      | "all"
+      | "image"
+      | "sound"
+      | "image_set"
+      | "audio_set"
+      | "custom_rotation",
+  ) {
     this.filterType = type;
   }
 
@@ -543,6 +609,8 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
         this.openEditImageSetEditor(asset);
       } else if (asset.type === "audio_set") {
         this.openEditAudioSetEditor(asset);
+      } else if (asset.type === "custom_rotation") {
+        this.openEditCustomRotationEditor(asset);
       } else {
         this.startEditing(asset.id);
       }
@@ -661,6 +729,31 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   }
 
   onAudioSetSaved(_asset: IAssetMessage) {
+    this.showAudioSetEditor = false;
+    this.loadAssets();
+  }
+
+  // Custom Rotation Editor Methods
+  openNewCustomRotationEditor() {
+    this.editingRotationAssetId = undefined;
+    this.editingRotationAssetName = "";
+    this.editingRotationNumLanes = 4;
+    this.editingRotations = [];
+    this.showCustomRotationEditor = true;
+  }
+
+  openEditCustomRotationEditor(asset: AssetView) {
+    this.editingRotationAssetId = asset.id;
+    this.editingRotationAssetName = asset.name;
+    this.editingRotationNumLanes = asset.numLanes || 4;
+    this.editingRotations = JSON.parse(
+      JSON.stringify(asset.customRotations || []),
+    );
+    this.showCustomRotationEditor = true;
+  }
+
+  onCustomRotationSaved(_asset: IAssetMessage) {
+    this.showCustomRotationEditor = false;
     this.loadAssets();
   }
 

@@ -682,6 +682,40 @@ export class TestSetupHelper {
             type: "image",
             url: "/api/assets/download?filename=yellow.png",
           },
+          {
+            model: { entityId: "audioset1" },
+            name: "Test Audio Set",
+            type: "audio_set",
+            size: "200 KB",
+            audioEntries: [
+              {
+                name: "Entry 1",
+                timeSeconds: 1,
+                url: "/api/assets/download?filename=snd1.mp3",
+              },
+              {
+                name: "Entry 2",
+                timeSeconds: 2,
+                url: "/api/assets/download?filename=snd2.mp3",
+              },
+            ],
+          },
+          {
+            model: { entityId: "rotation1" },
+            name: "4-Lane Rotation",
+            type: "custom_rotation",
+            size: "10 KB",
+            numLanes: 4,
+            customRotations: [
+              {
+                numDrivers: 4,
+                heats: [
+                  { driverIndices: [0, 1, 2, 3] },
+                  { driverIndices: [1, 2, 3, 0] },
+                ],
+              },
+            ],
+          },
         ];
 
         const response = ListAssetsResponse.create({ assets });

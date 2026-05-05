@@ -2,6 +2,8 @@ package com.antigravity.service;
 
 import com.antigravity.proto.AssetMessage;
 import com.antigravity.proto.AudioSetEntry;
+import com.antigravity.proto.CustomHeat;
+import com.antigravity.proto.CustomRotation;
 import com.antigravity.proto.ImageSetEntry;
 import com.antigravity.proto.Model;
 import com.antigravity.proto.SaveAudioSetEntry;
@@ -534,6 +536,40 @@ public class AssetService {
     return documentToAsset(doc);
   }
 
+  public AssetMessage saveCustomRotation(
+      String id, String name, int numLanes, List<CustomRotation> rotations) {
+    boolean isNew = (id == null || id.isEmpty());
+    if (isNew) {
+      id = UUID.randomUUID().toString();
+    }
+
+    List<Document> rotationDocs = new ArrayList<>();
+    for (CustomRotation rot : rotations) {
+      List<Document> heatDocs = new ArrayList<>();
+      for (CustomHeat heat : rot.getHeatsList()) {
+        heatDocs.add(new Document("driver_indices", heat.getDriverIndicesList()));
+      }
+      rotationDocs.add(new Document("num_drivers", rot.getNumDrivers()).append("heats", heatDocs));
+    }
+
+    Document doc =
+        new Document("_id", id)
+            .append("name", name)
+            .append("type", "custom_rotation")
+            .append("num_lanes", numLanes)
+            .append("custom_rotations", rotationDocs)
+            .append("size", "0 B")
+            .append("url", "");
+
+    if (isNew) {
+      collection.insertOne(doc);
+    } else {
+      collection.replaceOne(Filters.eq("_id", id), doc);
+    }
+
+    return documentToAsset(doc);
+  }
+
   private AssetMessage documentToAsset(Document doc) {
     AssetMessage.Builder builder =
         AssetMessage.newBuilder()
@@ -571,6 +607,31 @@ public class AssetService {
                 .setName(audioDoc.getString("name"))
                 .setSize(audioDoc.getString("size"))
                 .build());
+      }
+    }
+
+    if (doc.containsKey("num_lanes")) {
+      builder.setNumLanes(doc.getInteger("num_lanes"));
+    }
+
+    @SuppressWarnings("unchecked")
+    List<Document> rotationList = (List<Document>) doc.get("custom_rotations");
+    if (rotationList != null) {
+      for (Document rotDoc : rotationList) {
+        CustomRotation.Builder rotBuilder =
+            CustomRotation.newBuilder().setNumDrivers(rotDoc.getInteger("num_drivers"));
+
+        @SuppressWarnings("unchecked")
+        List<Document> heatList = (List<Document>) rotDoc.get("heats");
+        if (heatList != null) {
+          for (Document heatDoc : heatList) {
+            rotBuilder.addHeats(
+                CustomHeat.newBuilder()
+                    .addAllDriverIndices((List<Integer>) heatDoc.get("driver_indices"))
+                    .build());
+          }
+        }
+        builder.addCustomRotations(rotBuilder.build());
       }
     }
 

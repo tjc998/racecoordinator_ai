@@ -47,8 +47,16 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   races: any[] = [];
   driverCount: number = 10;
   generatedHeats: any[] = [];
+  customRotationAssets: any[] = [];
+  selectedCustomRotationAssetId: string = "";
 
-  heatRotationTypes = ["RoundRobin", "Bracket", "Swiss", "CustomRoundRobin"];
+  heatRotationTypes = [
+    "RoundRobin",
+    "Bracket",
+    "Swiss",
+    "CustomRoundRobin",
+    "Custom",
+  ];
   raceScoringTypes = ["Points", "Time"];
 
   private static readonly EMPTY_LABELS: string[] = [];
@@ -140,27 +148,35 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   }
 
   get isRotationInvalid(): boolean {
-    if (
-      !this.editingRace ||
-      this.editingRace.heat_rotation_type !== "CustomRoundRobin"
-    )
-      return false;
-    const seq = this.editingRace.custom_rotation_sequence;
-    if (!seq || seq.length === 0) return true;
+    if (!this.editingRace) return false;
 
-    const track = this.tracks.find(
-      (t) => t.entity_id === this.editingRace.track_entity_id,
-    );
-    const numLanes = track?.lanes?.length || 0;
+    if (this.editingRace.heat_rotation_type === "CustomRoundRobin") {
+      const seq = this.editingRace.custom_rotation_sequence;
+      if (!seq || seq.length === 0) return true;
 
-    const uniqueLanes = new Set<number>();
-    for (const lane of seq) {
-      if (lane < 0 || (numLanes > 0 && lane > numLanes)) return true;
-      if (lane > 0) {
-        if (uniqueLanes.has(lane)) return true;
-        uniqueLanes.add(lane);
+      const track = this.tracks.find(
+        (t) => t.entity_id === this.editingRace.track_entity_id,
+      );
+      const numLanes = track?.lanes?.length || 0;
+
+      const uniqueLanes = new Set<number>();
+      for (const lane of seq) {
+        if (lane < 0 || (numLanes > 0 && lane > numLanes)) return true;
+        if (lane > 0) {
+          if (uniqueLanes.has(lane)) return true;
+          uniqueLanes.add(lane);
+        }
       }
+      return false;
     }
+
+    if (this.editingRace.heat_rotation_type === "Custom") {
+      return (
+        !this.editingRace.custom_rotations ||
+        this.editingRace.custom_rotations.length === 0
+      );
+    }
+
     return false;
   }
 
@@ -210,6 +226,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     }
     this.loadTracks();
     this.loadRaces();
+    this.loadCustomRotationAssets();
 
     this.undoManager.stateCommitted$.subscribe(() => {
       this.autoSaveRace();
@@ -353,6 +370,81 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     });
   }
 
+  loadCustomRotationAssets() {
+    this.dataService.listAssets().subscribe({
+      next: (assets) => {
+        this.customRotationAssets = assets.filter(
+          (a) => a.type === "custom_rotation",
+        );
+        // Safe to call here - triggered by async data load, not user input
+        setTimeout(() => {
+          this.syncSelectedCustomRotationAsset();
+          this.cdr.detectChanges();
+        }, 0);
+      },
+      error: (err) => this.logger.error("Failed to load assets", err),
+    });
+  }
+
+  get filteredCustomRotationAssets() {
+    const track = this.tracks.find(
+      (t) => t.entity_id === this.editingRace?.track_entity_id,
+    );
+    const numLanes = track?.lanes?.length || 0;
+    return this.customRotationAssets.filter((a) => a.numLanes === numLanes);
+  }
+
+  syncSelectedCustomRotationAsset() {
+    if (!this.editingRace || this.editingRace.heat_rotation_type !== "Custom") {
+      this.selectedCustomRotationAssetId = "";
+      return;
+    }
+
+    if (this.editingRace.custom_rotation_asset_id) {
+      this.selectedCustomRotationAssetId =
+        this.editingRace.custom_rotation_asset_id;
+      return;
+    }
+
+    const filtered = this.filteredCustomRotationAssets;
+
+    // Try to find an asset that matches the current custom_rotations
+    const currentRotationsJson = JSON.stringify(
+      this.editingRace.custom_rotations || [],
+    );
+    let match = this.customRotationAssets.find(
+      (a) => JSON.stringify(a.customRotations || []) === currentRotationsJson,
+    );
+
+    // If no match or match doesn't belong to filtered (lane count mismatch), try to auto-select
+    if (
+      !match ||
+      !filtered.some((a) => a.model?.entityId === match.model?.entityId)
+    ) {
+      if (filtered.length > 0) {
+        match = filtered[0];
+        this.editingRace.custom_rotation_asset_id = match.model?.entityId || "";
+        this.selectedCustomRotationAssetId = match.model?.entityId || "";
+      } else {
+        this.selectedCustomRotationAssetId = "";
+        this.editingRace.custom_rotation_asset_id = "";
+      }
+    } else {
+      this.selectedCustomRotationAssetId = match.model?.entityId || "";
+      this.editingRace.custom_rotation_asset_id = match.model?.entityId || "";
+    }
+  }
+
+  onCustomRotationAssetChange() {
+    if (this.editingRace) {
+      this.editingRace.custom_rotation_asset_id =
+        this.selectedCustomRotationAssetId;
+      // We can clear the old custom_rotations list to reduce payload size
+      delete this.editingRace.custom_rotations;
+      this.captureState();
+    }
+  }
+
   createNewRace() {
     this.editingRace = {
       entity_id: "new",
@@ -406,6 +498,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       restart_delay: 0.0,
       solo_lane_index: 0,
       custom_rotation_sequence: [],
+      custom_rotations: [],
       team_options: {
         heat_lap_limit: 0,
         heat_time_limit: 0,
@@ -450,6 +543,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   captureState() {
     this.validateWarmupTimes();
     this.enforceFuelRules();
+    this.syncSelectedCustomRotationAsset();
     this.undoManager.captureState();
     // Regenerate heats when rotation type changes (even for new races)
     if (this.driverCount > 0) {
@@ -568,6 +662,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         this.driverCount,
         this.editingRace.solo_lane_index,
         this.editingRace.custom_rotation_sequence,
+        this.editingRace.custom_rotation_asset_id,
+        this.editingRace.custom_rotations,
       )
       .subscribe({
         next: (response) => {
@@ -724,6 +820,15 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     return JSON.parse(JSON.stringify(obj));
   }
 
+  private transformCustomRotationsToSnakeCase(rotations: any[]): any[] {
+    return (rotations || []).map((rot) => ({
+      num_drivers: rot.numDrivers ?? rot.num_drivers,
+      heats: (rot.heats || []).map((h: any) => ({
+        driver_indices: h.driverIndices ?? h.driver_indices,
+      })),
+    }));
+  }
+
   loadRaces() {
     this.dataService.getRaces().subscribe({
       next: (races) => {
@@ -792,7 +897,9 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       return "RE_TOOLTIP_NAME_EXISTS";
     }
     if (this.isRotationInvalid) {
-      return "RE_TOOLTIP_INVALID_ROTATION";
+      return this.editingRace.heat_rotation_type === "Custom"
+        ? "RE_TOOLTIP_INVALID_CUSTOM_ROTATION"
+        : "RE_TOOLTIP_INVALID_ROTATION";
     }
     return "";
   }

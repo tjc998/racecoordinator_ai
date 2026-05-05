@@ -1,6 +1,8 @@
 package com.antigravity.handlers;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.models.CustomHeat;
+import com.antigravity.models.CustomRotation;
 import com.antigravity.models.Driver;
 import com.antigravity.models.GlobalStatistics;
 import com.antigravity.models.HeatRotationType;
@@ -595,6 +597,7 @@ public class DatabaseTaskHandler {
               .withRestartDelay(race.getRestartDelay())
               .withSoloLaneIndex(race.getSoloLaneIndex())
               .withCustomRotationSequence(race.getCustomRotationSequence())
+              .withCustomRotationAssetId(race.getCustomRotationAssetId())
               .withEntityId(nextId)
               .build();
     }
@@ -656,6 +659,7 @@ public class DatabaseTaskHandler {
             .withRestartDelay(race.getRestartDelay())
             .withSoloLaneIndex(race.getSoloLaneIndex())
             .withCustomRotationSequence(race.getCustomRotationSequence())
+            .withCustomRotationAssetId(race.getCustomRotationAssetId())
             .withEntityId(id)
             .withId(race.getId())
             .build();
@@ -748,6 +752,7 @@ public class DatabaseTaskHandler {
       raceMap.put("start_delay", race.getStartDelay());
       raceMap.put("restart_delay", race.getRestartDelay());
       raceMap.put("solo_lane_index", race.getSoloLaneIndex());
+      raceMap.put("custom_rotation_asset_id", race.getCustomRotationAssetId());
       response.add(raceMap);
     }
     ctx.json(response);
@@ -842,6 +847,29 @@ public class DatabaseTaskHandler {
     Number soloLaneIndexNum = (Number) body.get("soloLaneIndex");
     int soloLaneIndex = soloLaneIndexNum != null ? soloLaneIndexNum.intValue() : 0;
     List<Integer> customRotationSequence = (List<Integer>) body.get("customRotationSequence");
+    if (customRotationSequence == null) {
+      customRotationSequence = (List<Integer>) body.get("custom_rotation_sequence");
+    }
+
+    String customRotationAssetId = (String) body.get("custom_rotation_asset_id");
+    if (customRotationAssetId == null) {
+      customRotationAssetId = (String) body.get("customRotationAssetId");
+    }
+
+    List<CustomRotation> customRotations = null;
+    if (customRotationAssetId != null && !customRotationAssetId.isEmpty()) {
+      customRotations = resolveCustomRotations(customRotationAssetId);
+    } else {
+      // Fallback to manual list if provided
+      List<Map<String, Object>> customRotationsRaw =
+          (List<Map<String, Object>>) body.get("custom_rotations");
+      if (customRotationsRaw == null) {
+        customRotationsRaw = (List<Map<String, Object>>) body.get("customRotations");
+      }
+      if (customRotationsRaw != null) {
+        customRotations = parseCustomRotations(customRotationsRaw);
+      }
+    }
 
     if (driverCount <= 0) {
       ctx.status(400).result("driverCount must be greater than 0");
@@ -921,6 +949,7 @@ public class DatabaseTaskHandler {
             .withAutoStartWarmupTime(0.0)
             .withSoloLaneIndex(soloLaneIndex)
             .withCustomRotationSequence(customRotationSequence)
+            .withCustomRotationAssetId(customRotationAssetId)
             .build();
 
     // Create mock RaceParticipant list
@@ -934,6 +963,7 @@ public class DatabaseTaskHandler {
     com.antigravity.race.Race tempRace = // fqn-collision
         new com.antigravity.race.Race.Builder() // fqn-collision
             .model(tempRaceConfig)
+            .customRotations(customRotations)
             .drivers(mockDrivers)
             .track(track)
             .isDemoMode(true) // Use demo mode to avoid protocol initialization
@@ -1110,6 +1140,120 @@ public class DatabaseTaskHandler {
               "Lane number " + lane + " appears more than once in rotation sequence");
         }
       }
+    } else if (race.getHeatRotationType() == HeatRotationType.Custom) {
+      String assetId = race.getCustomRotationAssetId();
+      if (assetId == null || assetId.isEmpty()) {
+        throw new IllegalArgumentException("Custom rotation asset is required");
+      }
+      List<CustomRotation> rotations = resolveCustomRotations(assetId);
+      if (rotations == null || rotations.isEmpty()) {
+        throw new IllegalArgumentException("Custom rotation asset not found or empty");
+      }
+      Track track =
+          getTrackCollection().find(Filters.eq("entity_id", race.getTrackEntityId())).first();
+      int numLanes = track != null ? track.getLanes().size() : 0;
+
+      Set<Integer> driverCounts = new HashSet<>();
+      for (CustomRotation rot : rotations) {
+        if (rot.getNumDrivers() <= 0) {
+          throw new IllegalArgumentException("Driver count must be greater than 0");
+        }
+        if (!driverCounts.add(rot.getNumDrivers())) {
+          throw new IllegalArgumentException(
+              "Duplicate driver count in custom rotations: " + rot.getNumDrivers());
+        }
+        if (rot.getHeats() == null || rot.getHeats().isEmpty()) {
+          throw new IllegalArgumentException(
+              "At least one heat is required for custom rotation with "
+                  + rot.getNumDrivers()
+                  + " drivers");
+        }
+        for (CustomHeat heat : rot.getHeats()) {
+          if (heat.getDriverIndices().size() != numLanes) {
+            throw new IllegalArgumentException(
+                "Heat must specify "
+                    + numLanes
+                    + " driver indices for a "
+                    + numLanes
+                    + " lane track");
+          }
+          for (Integer dIdx : heat.getDriverIndices()) {
+            if (dIdx < 0 || dIdx > rot.getNumDrivers()) {
+              throw new IllegalArgumentException(
+                  "Invalid driver index "
+                      + dIdx
+                      + " for custom rotation with "
+                      + rot.getNumDrivers()
+                      + " drivers");
+            }
+          }
+        }
+      }
     }
+  }
+
+  private List<CustomRotation> resolveCustomRotations(String assetId) {
+    if (assetId == null || assetId.isEmpty()) {
+      return null;
+    }
+    Document doc =
+        databaseContext
+            .getDatabase()
+            .getCollection("assets")
+            .find(Filters.eq("_id", assetId))
+            .first();
+    if (doc == null) {
+      return null;
+    }
+
+    List<Document> rotationList = (List<Document>) doc.get("custom_rotations");
+    return parseCustomRotationsFromDocs(rotationList);
+  }
+
+  private List<CustomRotation> parseCustomRotations(List<Map<String, Object>> customRotationsRaw) {
+    if (customRotationsRaw == null) {
+      return null;
+    }
+    List<CustomRotation> customRotations = new ArrayList<>();
+    for (Map<String, Object> rotMap : customRotationsRaw) {
+      Object numDriversObj = rotMap.get("numDrivers");
+      if (numDriversObj == null) {
+        numDriversObj = rotMap.get("num_drivers");
+      }
+      int numDrivers = ((Number) numDriversObj).intValue();
+      List<Map<String, Object>> heatsRaw = (List<Map<String, Object>>) rotMap.get("heats");
+      List<CustomHeat> heats = new ArrayList<>();
+      if (heatsRaw != null) {
+        for (Map<String, Object> heatMap : heatsRaw) {
+          Object driverIndicesObj = heatMap.get("driverIndices");
+          if (driverIndicesObj == null) {
+            driverIndicesObj = heatMap.get("driver_indices");
+          }
+          List<Integer> driverIndices = (List<Integer>) driverIndicesObj;
+          heats.add(new CustomHeat(driverIndices));
+        }
+      }
+      customRotations.add(new CustomRotation(numDrivers, heats));
+    }
+    return customRotations;
+  }
+
+  private List<CustomRotation> parseCustomRotationsFromDocs(List<Document> rotationList) {
+    if (rotationList == null) {
+      return null;
+    }
+    List<CustomRotation> result = new ArrayList<>();
+    for (Document rotDoc : rotationList) {
+      int numDrivers = rotDoc.getInteger("num_drivers");
+      List<CustomHeat> heats = new ArrayList<>();
+      List<Document> heatList = (List<Document>) rotDoc.get("heats");
+      if (heatList != null) {
+        for (Document heatDoc : heatList) {
+          heats.add(new CustomHeat((List<Integer>) heatDoc.get("driver_indices")));
+        }
+      }
+      result.add(new CustomRotation(numDrivers, heats));
+    }
+    return result;
   }
 }

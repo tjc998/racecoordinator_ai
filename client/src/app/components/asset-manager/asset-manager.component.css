@@ -7,6 +7,9 @@
   height: 100%;
   --neon-blue: #00f3ff;
   --neon-pink: #ff0099;
+  --neon-purple: #bc13fe;
+  --neon-green: #39ff14;
+  --neon-yellow: #fff01f;
   --panel-bg: rgba(10, 15, 30, 0.85);
   --border-color: rgba(0, 243, 255, 0.3);
   font-family: 'Rajdhani', sans-serif;
@@ -176,6 +179,7 @@
   border-radius: 3px;
   width: 100%;
   overflow: hidden;
+  cursor: help;
 }
 
 .fill {
@@ -188,9 +192,24 @@
   box-shadow: 0 0 8px var(--neon-blue);
 }
 
+.image-set-fill {
+  background: var(--neon-purple);
+  box-shadow: 0 0 8px var(--neon-purple);
+}
+
 .sound-fill {
   background: var(--neon-pink);
   box-shadow: 0 0 8px var(--neon-pink);
+}
+
+.audio-set-fill {
+  background: var(--neon-yellow);
+  box-shadow: 0 0 8px var(--neon-yellow);
+}
+
+.rotation-fill {
+  background: var(--neon-green);
+  box-shadow: 0 0 8px var(--neon-green);
 }
 
 .total-count {
@@ -649,4 +668,33 @@
 .btn-new-set:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.rotation-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  color: var(--neon-blue);
+  text-shadow: 0 0 8px var(--neon-blue);
+}
+
+.rotation-preview i {
+  font-size: 32px;
+  animation: rotation-spin 10s linear infinite;
+}
+
+@keyframes rotation-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.lane-count {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 1px;
 }

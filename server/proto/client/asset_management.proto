@@ -1,7 +1,8 @@
 syntax = "proto3";
 package com.antigravity;
 
-// No imports needed
+import "client/rotation_model.proto";
+import "client/asset_model.proto";
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
@@ -52,3 +53,16 @@ message SaveAudioSetEntry {
   bytes data = 4;  // Used if uploading a new sound as part of the set
 }
 
+
+message SaveCustomRotationRequest {
+  string id = 1; // Optional, for editing existing sets
+  string name = 2;
+  int32 num_lanes = 3;
+  repeated CustomRotation rotations = 4;
+}
+
+message SaveCustomRotationResponse {
+  bool success = 1;
+  string message = 2;
+  AssetMessage asset = 3;
+}

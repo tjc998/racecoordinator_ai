@@ -6,5 +6,6 @@ public enum HeatRotationType {
   EuropeanRoundRobin,
   SingleHeat,
   SingleHeatSolo,
-  CustomRoundRobin
+  CustomRoundRobin,
+  Custom
 }

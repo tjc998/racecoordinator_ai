@@ -11,6 +11,7 @@ import {
   DeleteAssetResponse,
   IAssetMessage,
   ICarData,
+  ICustomRotation,
   IInterfaceEvent,
   ILap,
   InitializeInterfaceRequest,
@@ -46,6 +47,8 @@ import {
   RgbLedState,
   SaveAudioSetRequest,
   SaveAudioSetResponse,
+  SaveCustomRotationRequest,
+  SaveCustomRotationResponse,
   SaveImageSetRequest,
   SaveImageSetResponse,
   SetInterfacePinStateRequest,
@@ -195,6 +198,8 @@ export class DataService {
     driverCount: number,
     soloLaneIndex: number = 0,
     customRotationSequence: number[] = [],
+    customRotationAssetId: string = "",
+    customRotations: any[] = [],
   ): Observable<any> {
     return this.http.post<any>(
       `http://${this.serverIp}:${this.serverPort}/api/heats/preview`,
@@ -204,6 +209,8 @@ export class DataService {
         driverCount,
         soloLaneIndex,
         customRotationSequence,
+        customRotationAssetId,
+        customRotations,
       },
     );
   }
@@ -867,6 +874,48 @@ export class DataService {
           if (!saveResponse.success) {
             throw new Error(
               saveResponse.message ?? "Unknown error saving audio set",
+            );
+          }
+          return saveResponse.asset!;
+        }),
+      );
+  }
+
+  saveCustomRotation(
+    name: string,
+    numLanes: number,
+    rotations: ICustomRotation[],
+    id?: string,
+  ): Observable<IAssetMessage> {
+    const request = SaveCustomRotationRequest.create({
+      id,
+      name,
+      numLanes,
+      rotations,
+    });
+    const buffer = SaveCustomRotationRequest.encode(request).finish();
+    const headers = new HttpHeaders().set(
+      "Content-Type",
+      "application/octet-stream",
+    );
+
+    return this.http
+      .post(
+        `${this.baseUrl}/api/assets/save-custom-rotation`,
+        new Blob([buffer as any]),
+        {
+          headers,
+          responseType: "arraybuffer",
+        },
+      )
+      .pipe(
+        map((response) => {
+          const saveResponse = SaveCustomRotationResponse.decode(
+            new Uint8Array(response as any),
+          );
+          if (!saveResponse.success) {
+            throw new Error(
+              saveResponse.message ?? "Unknown error saving custom rotation",
             );
           }
           return saveResponse.asset!;
