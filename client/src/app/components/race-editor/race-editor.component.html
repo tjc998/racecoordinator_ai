@@ -110,8 +110,10 @@
             <label>{{ "RE_CUSTOM_SEQUENCE_LABEL" | translate }}</label>
             <input
               type="text"
-              [(ngModel)]="customRotationSequenceString"
-              (ngModelChange)="onInputChange(); loadHeats()"
+              [(ngModel)]="customSequenceText"
+              (ngModelChange)="onCustomSequenceChange()"
+              (focus)="onInputFocus()"
+              (blur)="captureState()"
               placeholder="{{ 'RE_CUSTOM_SEQUENCE_HINT' | translate }}"
               autocomplete="off"
               data-lpignore="true"

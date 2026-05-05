@@ -49,6 +49,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   generatedHeats: any[] = [];
   customRotationAssets: any[] = [];
   selectedCustomRotationAssetId: string = "";
+  customSequenceText: string = "";
 
   heatRotationTypes = [
     "RoundRobin",
@@ -161,6 +162,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
 
       const uniqueLanes = new Set<number>();
       for (const lane of seq) {
+        if (isNaN(lane)) return true;
         if (lane < 0 || (numLanes > 0 && lane > numLanes)) return true;
         if (lane > 0) {
           if (uniqueLanes.has(lane)) return true;
@@ -202,6 +204,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
           if (currentId && this.editingRace) {
             this.editingRace.entity_id = currentId;
           }
+          this.syncSequenceTextFromModel();
         },
       },
       () => this.editingRace,
@@ -288,8 +291,31 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
             start_delay: race.start_delay ?? 0.0,
             restart_delay: race.restart_delay ?? 0.0,
             solo_lane_index: race.solo_lane_index ?? 0,
-            custom_rotation_sequence: race.custom_rotation_sequence || [],
+            custom_rotation_sequence:
+              race.custom_rotation_sequence ||
+              race.customRotationSequence ||
+              [],
+            custom_rotation_asset_id:
+              race.custom_rotation_asset_id || race.customRotationAssetId,
+            custom_rotations:
+              race.custom_rotations || race.customRotations || [],
           };
+          if (!this.editingRace.heat_scoring) {
+            this.editingRace.heat_scoring = {
+              finish_method: "Lap",
+              finish_value: 10,
+              heat_ranking: "LAP_COUNT",
+              heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
+              allow_finish: "None",
+            };
+          }
+          if (!this.editingRace.overall_scoring) {
+            this.editingRace.overall_scoring = {
+              dropped_heats: 0,
+              ranking_method: "LAP_COUNT",
+              tiebreaker: "FASTEST_LAP_TIME",
+            };
+          }
           if (!this.editingRace.fuel_options) {
             this.editingRace.fuel_options = {
               enabled: false,
@@ -342,6 +368,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         if (this.driverCount > 0) {
           this.loadHeats();
         }
+        this.syncSequenceTextFromModel();
         this.isLoading = false;
         // Safe to call here - triggered by async data load, not user input
         setTimeout(() => this.cdr.detectChanges(), 0);
@@ -430,22 +457,19 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     ) {
       if (filtered.length > 0) {
         match = filtered[0];
-        this.editingRace.custom_rotation_asset_id = match.model?.entityId || "";
-        this.selectedCustomRotationAssetId = match.model?.entityId || "";
-      } else {
+        this.editingRace.custom_rotation_asset_id = undefined;
         this.selectedCustomRotationAssetId = "";
-        this.editingRace.custom_rotation_asset_id = "";
       }
     } else {
       this.selectedCustomRotationAssetId = match.model?.entityId || "";
-      this.editingRace.custom_rotation_asset_id = match.model?.entityId || "";
+      this.editingRace.custom_rotation_asset_id = match.model?.entityId;
     }
   }
 
   onCustomRotationAssetChange() {
     if (this.editingRace) {
       this.editingRace.custom_rotation_asset_id =
-        this.selectedCustomRotationAssetId;
+        this.selectedCustomRotationAssetId || undefined;
       // We can clear the old custom_rotations list to reduce payload size
       delete this.editingRace.custom_rotations;
       this.captureState();
@@ -516,6 +540,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     };
     this.originalRace = this.deepCopy(this.editingRace);
     this.undoManager.initialize(this.editingRace);
+    this.syncSequenceTextFromModel();
     this.isLoading = false;
     // Safe to call here - triggered during initialization, not user input
     setTimeout(() => this.cdr.detectChanges(), 0);
@@ -537,14 +562,33 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     return (this.editingRace?.custom_rotation_sequence || []).join(", ");
   }
 
-  set customRotationSequenceString(value: string) {
+  syncSequenceTextFromModel() {
+    this.customSequenceText = this.customRotationSequenceString;
+    this.cdr.markForCheck();
+    this.cdr.detectChanges();
+  }
+
+  onCustomSequenceChange() {
     if (!this.editingRace) return;
-    this.editingRace.custom_rotation_sequence = value
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s) => s !== "")
-      .map((s) => parseInt(s, 10))
-      .filter((n) => !isNaN(n));
+    const value = this.customSequenceText;
+    const parts = value.split(",").map((s) => s.trim());
+    const sequence: number[] = [];
+
+    for (const part of parts) {
+      if (part === "") continue;
+      // Strict numeric check to catch "12abc" as invalid
+      if (!/^\d+$/.test(part)) {
+        sequence.push(NaN);
+      } else {
+        const n = parseInt(part, 10);
+        sequence.push(n);
+      }
+    }
+
+    this.editingRace.custom_rotation_sequence = sequence;
+    this.editingRace.customRotationSequence = sequence;
+    this.onInputChange();
+    this.loadHeats();
   }
 
   captureState() {
@@ -661,7 +705,13 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
 
     // Always use preview endpoint to show heats based on current form values
     // This allows users to see heat changes before saving the race
-    this.logger.debug("Calling previewHeats with current form values");
+    this.logger.debug("Calling previewHeats with:", {
+      trackId: this.editingRace.track_entity_id,
+      rotationType: this.editingRace.heat_rotation_type,
+      driverCount: this.driverCount,
+      soloLaneIndex: this.editingRace.solo_lane_index,
+      customSequence: this.editingRace.custom_rotation_sequence,
+    });
     this.dataService
       .previewHeats(
         this.editingRace.track_entity_id,
@@ -703,6 +753,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     this.isSaving = true;
     this.isAutoSaving = isAutoSave;
     const payload = this.buildRacePayload(this.editingRace);
+    this.logger.debug("Updating race with payload:", payload);
 
     if (this.editingRace.entity_id === "new") {
       this.dataService.createRace(payload).subscribe({
@@ -1484,7 +1535,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       restart_delay: race.restart_delay,
       solo_lane_index: race.solo_lane_index,
       custom_rotation_sequence: race.custom_rotation_sequence,
+      customRotationSequence: race.custom_rotation_sequence,
       custom_rotation_asset_id: race.custom_rotation_asset_id,
+      customRotationAssetId: race.custom_rotation_asset_id,
+      custom_rotations: race.custom_rotations,
+      customRotations: race.custom_rotations,
       team_options: race.team_options
         ? {
             heat_lap_limit: race.team_options.heat_lap_limit,

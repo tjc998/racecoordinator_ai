@@ -148,6 +148,30 @@ describe("RaceEditorComponent", () => {
     expect(component.editingRace?.entity_id).toBe("r1");
   }));
 
+  it("should correctly handle custom rotation fields from server with snake_case and camelCase fallbacks", fakeAsync(() => {
+    const raceWithMixedCases: any = {
+      entity_id: "r_custom",
+      name: "Custom Race",
+      track_entity_id: "t1",
+      customRotationSequence: [1, 2, 3], // camelCase from server
+      custom_rotation_asset_id: "asset-snake", // snake_case from server
+    };
+    dataService.getRaces.and.returnValue(of([raceWithMixedCases]));
+    dataService.getTracks.and.returnValue(of(MOCK_TRACKS));
+    dataService.previewHeats.and.returnValue(of({ heats: [] }));
+
+    activatedRoute.snapshot.queryParamMap.get.and.callFake((key: string) => {
+      if (key === "id") return "r_custom";
+      return null;
+    });
+
+    component.ngOnInit();
+    tick();
+
+    expect(component.editingRace.custom_rotation_sequence).toEqual([1, 2, 3]);
+    expect(component.editingRace.custom_rotation_asset_id).toBe("asset-snake");
+  }));
+
   it("should initialize drift_time to 0.5 for new race", fakeAsync(() => {
     activatedRoute.snapshot.queryParamMap.get.and.callFake((key: string) => {
       if (key === "id") return "new";

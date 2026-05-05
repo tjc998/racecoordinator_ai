@@ -28,6 +28,12 @@ export class Race implements Model {
 
   readonly heat_rotation_type: string;
   readonly solo_lane_index: number;
+  readonly custom_rotation_sequence: number[];
+  readonly customRotationSequence?: number[];
+  readonly custom_rotation_asset_id?: string;
+  readonly customRotationAssetId?: string;
+  readonly custom_rotations: any[];
+  readonly customRotations?: any[];
 
   constructor(
     entity_id: string,
@@ -50,6 +56,9 @@ export class Race implements Model {
     start_delay: number = 0.0,
     restart_delay: number = 0.0,
     solo_lane_index: number = 0,
+    custom_rotation_sequence: number[] = [],
+    custom_rotation_asset_id?: string,
+    custom_rotations: any[] = [],
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -71,6 +80,9 @@ export class Race implements Model {
     this.start_delay = start_delay;
     this.restart_delay = restart_delay;
     this.solo_lane_index = solo_lane_index;
+    this.custom_rotation_sequence = custom_rotation_sequence;
+    this.custom_rotation_asset_id = custom_rotation_asset_id;
+    this.custom_rotations = custom_rotations;
   }
 
   get objectId(): string {

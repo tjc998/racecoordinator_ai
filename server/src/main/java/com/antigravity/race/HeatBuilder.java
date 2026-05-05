@@ -103,6 +103,9 @@ public class HeatBuilder {
     if (rotationSequence != null) {
       Set<Integer> uniqueLanes = new HashSet<>();
       for (Integer lane : rotationSequence) {
+        if (lane == null) {
+          throw new IllegalArgumentException("Lane number in rotationSequence cannot be null");
+        }
         if (lane > 0 && !uniqueLanes.add(lane)) {
           throw new IllegalArgumentException(
               "Lane number " + lane + " appears more than once in rotationSequence");

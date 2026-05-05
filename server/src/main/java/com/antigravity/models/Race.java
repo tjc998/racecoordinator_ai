@@ -97,6 +97,11 @@ public class Race extends Model {
   @JsonAlias("customRotationAssetId")
   private final String customRotationAssetId;
 
+  @BsonProperty("custom_rotations")
+  @JsonProperty("custom_rotations")
+  @JsonAlias("customRotations")
+  private final List<CustomRotation> customRotations;
+
   @BsonCreator
   @JsonCreator
   public Race(
@@ -156,6 +161,10 @@ public class Race extends Model {
           @JsonProperty("custom_rotation_asset_id")
           @JsonAlias("customRotationAssetId")
           String customRotationAssetId,
+      @BsonProperty("custom_rotations")
+          @JsonProperty("custom_rotations")
+          @JsonAlias("customRotations")
+          List<CustomRotation> customRotations,
       @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
       @BsonId @JsonProperty("_id") ObjectId id) {
     super(id, entityId);
@@ -185,6 +194,7 @@ public class Race extends Model {
     this.customRotationSequence =
         customRotationSequence != null ? customRotationSequence : new ArrayList<>();
     this.customRotationAssetId = customRotationAssetId;
+    this.customRotations = customRotations != null ? customRotations : new ArrayList<>();
   }
 
   public static class Builder {
@@ -210,6 +220,7 @@ public class Race extends Model {
     private int soloLaneIndex = 0;
     private List<Integer> customRotationSequence = new ArrayList<>();
     private String customRotationAssetId;
+    private List<CustomRotation> customRotations = new ArrayList<>();
     private String entityId;
     private ObjectId id;
 
@@ -318,6 +329,11 @@ public class Race extends Model {
       return this;
     }
 
+    public Builder withCustomRotations(List<CustomRotation> customRotations) {
+      this.customRotations = customRotations;
+      return this;
+    }
+
     public Builder withEntityId(String entityId) {
       this.entityId = entityId;
       return this;
@@ -352,6 +368,7 @@ public class Race extends Model {
           soloLaneIndex,
           customRotationSequence,
           customRotationAssetId,
+          customRotations,
           entityId,
           id);
     }
@@ -433,11 +450,18 @@ public class Race extends Model {
     return soloLaneIndex;
   }
 
+  @BsonProperty("custom_rotation_sequence")
   public List<Integer> getCustomRotationSequence() {
     return customRotationSequence;
   }
 
+  @BsonProperty("custom_rotation_asset_id")
   public String getCustomRotationAssetId() {
     return customRotationAssetId;
+  }
+
+  @BsonProperty("custom_rotations")
+  public List<CustomRotation> getCustomRotations() {
+    return customRotations;
   }
 }

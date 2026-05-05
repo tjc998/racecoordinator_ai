@@ -598,6 +598,7 @@ public class DatabaseTaskHandler {
               .withSoloLaneIndex(race.getSoloLaneIndex())
               .withCustomRotationSequence(race.getCustomRotationSequence())
               .withCustomRotationAssetId(race.getCustomRotationAssetId())
+              .withCustomRotations(race.getCustomRotations())
               .withEntityId(nextId)
               .build();
     }
@@ -608,7 +609,8 @@ public class DatabaseTaskHandler {
   public void handleUpdateRace(Context ctx) {
     try {
       String id = ctx.pathParam("id");
-      Race race = bodyAsClassWithId(ctx.body(), Race.class);
+      String body = ctx.body();
+      Race race = bodyAsClassWithId(body, Race.class);
       try {
         validateRace(race);
         Race updated = updateRace(id, race);
@@ -660,10 +662,10 @@ public class DatabaseTaskHandler {
             .withSoloLaneIndex(race.getSoloLaneIndex())
             .withCustomRotationSequence(race.getCustomRotationSequence())
             .withCustomRotationAssetId(race.getCustomRotationAssetId())
+            .withCustomRotations(race.getCustomRotations())
             .withEntityId(id)
             .withId(race.getId())
             .build();
-
     UpdateResult result = col.replaceOne(Filters.eq("entity_id", id), race);
     if (result.getMatchedCount() == 0) {
       throw new IllegalArgumentException("Race not found");
@@ -753,6 +755,8 @@ public class DatabaseTaskHandler {
       raceMap.put("restart_delay", race.getRestartDelay());
       raceMap.put("solo_lane_index", race.getSoloLaneIndex());
       raceMap.put("custom_rotation_asset_id", race.getCustomRotationAssetId());
+      raceMap.put("custom_rotation_sequence", race.getCustomRotationSequence());
+      raceMap.put("custom_rotations", race.getCustomRotations());
       response.add(raceMap);
     }
     ctx.json(response);
@@ -905,8 +909,8 @@ public class DatabaseTaskHandler {
         int numLanes = track.getLanes().size();
         Set<Integer> uniqueLanes = new HashSet<>();
         for (Integer lane : customRotationSequence) {
-          if (lane < 0) {
-            ctx.status(400).result("Lane numbers must be greater than or equal to 0");
+          if (lane == null || lane < 0) {
+            ctx.status(400).result("Lane numbers must be greater than or equal to 0 and not null");
             return;
           }
           if (lane > numLanes) {
@@ -1128,8 +1132,9 @@ public class DatabaseTaskHandler {
 
       Set<Integer> uniqueLanes = new HashSet<>();
       for (Integer lane : seq) {
-        if (lane < 0) {
-          throw new IllegalArgumentException("Lane numbers must be greater than or equal to 0");
+        if (lane == null || lane < 0) {
+          throw new IllegalArgumentException(
+              "Lane numbers must be greater than or equal to 0 and not null");
         }
         if (lane > numLanes) {
           throw new IllegalArgumentException(

@@ -125,6 +125,39 @@ public class DatabaseTaskHandlerTest {
 
   @Test
   @SuppressWarnings("unchecked")
+  public void testCreateRace_CustomRotation() {
+    Race raceRequest =
+        new Race.Builder()
+            .withName("Custom Race")
+            .withTrackEntityId("track-1")
+            .withHeatRotationType(HeatRotationType.CustomRoundRobin)
+            .withCustomRotationSequence(java.util.Arrays.asList(1, 2, 3))
+            .withCustomRotationAssetId("asset-123")
+            .withEntityId("new")
+            .build();
+
+    // Mock uniqueness check
+    FindIterable<Race> findIterable = mock(FindIterable.class);
+    when(raceCollection.find(any(Bson.class))).thenReturn(findIterable);
+    when(findIterable.first()).thenReturn(null);
+
+    // Mock sequence generation
+    Document counterDoc = new Document("seq", 102);
+    when(countersCollection.findOneAndUpdate(any(Bson.class), any(Bson.class), any()))
+        .thenReturn(counterDoc);
+
+    Race created = handler.createRace(raceRequest);
+
+    assertNotNull(created);
+    assertEquals("102", created.getEntityId());
+    assertEquals(HeatRotationType.CustomRoundRobin, created.getHeatRotationType());
+    assertEquals(java.util.Arrays.asList(1, 2, 3), created.getCustomRotationSequence());
+    assertEquals("asset-123", created.getCustomRotationAssetId());
+    verify(raceCollection).insertOne(any(Race.class));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
   public void testCreateRace_DuplicateName() {
     Race raceRequest =
         new Race.Builder()

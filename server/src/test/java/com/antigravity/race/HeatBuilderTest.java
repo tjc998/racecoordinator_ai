@@ -555,6 +555,21 @@ public class HeatBuilderTest {
     HeatBuilder.buildHeats(race, participants, new ArrayList<>());
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testCustomRoundRobin_NullLane() {
+    when(raceModel.getHeatRotationType()).thenReturn(HeatRotationType.CustomRoundRobin);
+    List<Integer> customSequence = Arrays.asList(1, null, 3);
+    when(raceModel.getCustomRotationSequence()).thenReturn(customSequence);
+
+    List<RaceParticipant> participants = new ArrayList<>();
+    participants.add(
+        new RaceParticipant(
+            new Driver(
+                "D1", "d1", null, null, null, null, null, null, null, null, null, "1", null)));
+
+    HeatBuilder.buildHeats(race, participants, new ArrayList<>());
+  }
+
   @Test
   public void testCustomRoundRobin_MultipleZeros() {
     when(raceModel.getHeatRotationType()).thenReturn(HeatRotationType.CustomRoundRobin);
