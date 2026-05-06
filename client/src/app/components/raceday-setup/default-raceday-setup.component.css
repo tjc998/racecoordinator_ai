@@ -84,6 +84,13 @@
   right: 0;
 }
 
+.help-menu-container .menu-dropdown.submenu {
+  left: auto;
+  right: 100%;
+  margin-left: 0;
+  margin-right: 2px;
+}
+
 .menu-dropdown-item {
   padding: 10px 15px;
   color: #fff;

@@ -782,17 +782,12 @@ export class DefaultRacedaySetupComponent implements OnInit {
   toggleLocalizationDropdown(event: Event) {
     event.stopPropagation();
     this.isLocalizationDropdownOpen = !this.isLocalizationDropdownOpen;
-    if (this.isLocalizationDropdownOpen) {
-      this.isLogDropdownOpen = false;
-    }
     this.cdr.detectChanges();
   }
   toggleLogDropdown(event: Event) {
     event.stopPropagation();
     this.isLogDropdownOpen = !this.isLogDropdownOpen;
-    if (this.isLogDropdownOpen) {
-      this.isLocalizationDropdownOpen = false;
-    } else {
+    if (!this.isLogDropdownOpen) {
       this.isClientLogOpen = false;
       this.isServerLogOpen = false;
     }
@@ -820,9 +815,6 @@ export class DefaultRacedaySetupComponent implements OnInit {
   closeOptionsDropdown() {
     this.isOptionsDropdownOpen = false;
     this.isLocalizationDropdownOpen = false;
-    this.isLogDropdownOpen = false;
-    this.isClientLogOpen = false;
-    this.isServerLogOpen = false;
   }
 
   selectLanguage(code: string) {
@@ -850,7 +842,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
     this.settingsService.saveSettings(settings);
     this.currentClientLogLevel = level;
     this.logger.setLevel(level as any);
-    this.closeOptionsDropdown();
+    this.closeHelpDropdown();
   }
   setServerLogLevel(level: string) {
     const settings = this.settingsService.getSettings();
@@ -862,7 +854,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       next: () => this.logger.info(`Server log level set to ${level}`),
       error: (err) => this.logger.error("Failed to set server log level", err),
     });
-    this.closeOptionsDropdown();
+    this.closeHelpDropdown();
   }
 
   configureCustomUI() {
@@ -949,13 +941,18 @@ export class DefaultRacedaySetupComponent implements OnInit {
       this.isOptionsDropdownOpen = false;
       this.isDropdownOpen = false;
       this.isLocalizationDropdownOpen = false;
+      this.isHelpDropdownOpen = true;
+    } else {
+      this.closeHelpDropdown();
     }
-    this.isHelpDropdownOpen = newState;
     this.cdr.detectChanges();
   }
 
   closeHelpDropdown() {
     this.isHelpDropdownOpen = false;
+    this.isLogDropdownOpen = false;
+    this.isClientLogOpen = false;
+    this.isServerLogOpen = false;
   }
 
   openAbout() {
