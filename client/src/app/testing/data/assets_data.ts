@@ -65,4 +65,23 @@ export const MOCK_ASSETS = [
     editMode: false,
     selected: false,
   },
+  {
+    id: "cr1",
+    name: "Standard 4-Lane Rotation",
+    type: "custom_rotation",
+    size: "0 B",
+    url: "",
+    numLanes: 4,
+    customRotations: [
+      {
+        numDrivers: 4,
+        heats: [
+          { driverIndices: [1, 2, 3, 4] },
+          { driverIndices: [4, 1, 2, 3] },
+        ],
+      },
+    ],
+    editMode: false,
+    selected: false,
+  },
 ];

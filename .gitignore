@@ -27,6 +27,8 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*.log
+
 
 # Mongodb
 server/mongodb_data
@@ -94,3 +96,7 @@ build_cache
 
 # Analytics
 server/src/main/resources/analytics.properties
+
+# Scratch folder for AI scripts
+/scratch/
+

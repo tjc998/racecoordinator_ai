@@ -209,17 +209,22 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
       next: (serverAssets) => {
         if (serverAssets) {
           this.assets = serverAssets.map((a) => {
+            // Determine type more robustly
+            let type: any = a.type;
+            if (a.customRotations && a.customRotations.length > 0) {
+              type = "custom_rotation";
+            } else if (a.audioEntries && a.audioEntries.length > 0) {
+              type = "audio_set";
+            } else if (a.images && a.images.length > 0) {
+              type = "image_set";
+            } else if (!type) {
+              type = "image";
+            }
+
             return {
               id: a.model?.entityId || "",
               name: a.name || "Unknown",
-              type:
-                a.type === "image" ||
-                a.type === "sound" ||
-                a.type === "image_set" ||
-                a.type === "audio_set" ||
-                a.type === "custom_rotation"
-                  ? (a.type as any)
-                  : "image",
+              type: type,
               size: a.size || "0 B",
               url: this.getAssetUrl(a),
               editMode: false,
@@ -261,27 +266,26 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
 
   get filteredAssets(): AssetView[] {
     return this.assets.filter((asset) => {
-      let typeMatch = false;
-      if (this.filterType === "all") {
-        typeMatch = true;
-      } else if (this.filterType === "image") {
-        typeMatch = asset.type === "image";
-      } else {
-        typeMatch = asset.type === this.filterType;
-      }
+      const typeMatch =
+        this.filterType === "all" || asset.type === this.filterType;
       const nameMatch =
         !this.filterName ||
         asset.name.toLowerCase().includes(this.filterName.toLowerCase());
+
       return typeMatch && nameMatch;
     });
   }
 
   get allImages(): AssetView[] {
-    return this.assets.filter((a) => a.type === "image");
+    return this.assets.filter(
+      (a) => a.type === "image" || a.type === "image_set",
+    );
   }
 
   get allAudio(): AssetView[] {
-    return this.assets.filter((a) => a.type === "sound");
+    return this.assets.filter(
+      (a) => a.type === "sound" || a.type === "audio_set",
+    );
   }
 
   get totalSize(): string {

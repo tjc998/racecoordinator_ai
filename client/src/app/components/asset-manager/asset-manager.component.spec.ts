@@ -475,5 +475,31 @@ describe("AssetManagerComponent", () => {
       expect(component.audioSetCount).toBe(1);
       expect(component.customRotationCount).toBe(1);
     });
+    it("should filter custom rotations correctly", () => {
+      component.assets = JSON.parse(JSON.stringify(MOCK_ASSETS));
+      const customRotationId = "cr1";
+
+      // Select Audio Sets filter
+      component.setFilterType("audio_set");
+      expect(
+        component.filteredAssets.some((a) => a.id === customRotationId),
+      ).toBeFalse();
+
+      // Select Custom Rotations filter
+      component.setFilterType("custom_rotation");
+      expect(
+        component.filteredAssets.some((a) => a.id === customRotationId),
+      ).toBeTrue();
+      // Only custom rotations should be present
+      expect(
+        component.filteredAssets.every((a) => a.type === "custom_rotation"),
+      ).toBeTrue();
+
+      // Select All filter
+      component.setFilterType("all");
+      expect(
+        component.filteredAssets.some((a) => a.id === customRotationId),
+      ).toBeTrue();
+    });
   });
 });
