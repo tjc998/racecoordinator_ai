@@ -25,6 +25,8 @@ export class Race implements Model {
   readonly restart_time: number;
   readonly start_delay: number;
   readonly restart_delay: number;
+  readonly heat_times_through: number;
+  readonly reverse_heats: boolean;
 
   readonly heat_rotation_type: string;
   readonly solo_lane_index: number;
@@ -59,6 +61,8 @@ export class Race implements Model {
     custom_rotation_sequence: number[] = [],
     custom_rotation_asset_id?: string,
     custom_rotations: any[] = [],
+    heat_times_through: number = 1,
+    reverse_heats: boolean = false,
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -83,6 +87,8 @@ export class Race implements Model {
     this.custom_rotation_sequence = custom_rotation_sequence;
     this.custom_rotation_asset_id = custom_rotation_asset_id;
     this.custom_rotations = custom_rotations;
+    this.heat_times_through = heat_times_through;
+    this.reverse_heats = reverse_heats;
   }
 
   get objectId(): string {

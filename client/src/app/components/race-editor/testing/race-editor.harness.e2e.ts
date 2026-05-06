@@ -1,17 +1,35 @@
-import { Locator } from '@playwright/test';
+import { Locator } from "@playwright/test";
 
-import { RaceEditorHarnessBase } from './race-editor.harness.base';
+import { RaceEditorHarnessBase } from "./race-editor.harness.base";
 
 export class RaceEditorHarnessE2e implements RaceEditorHarnessBase {
   constructor(private locator: Locator) {}
 
-  private get base() { return RaceEditorHarnessBase; }
+  private get base() {
+    return RaceEditorHarnessBase;
+  }
 
-  private get nameInput() { return this.locator.locator(this.base.selectors.nameInput); }
-  private get copyBtn() { return this.locator.locator(this.base.selectors.copyBtn); }
-  private get driverCountInput() { return this.locator.locator(this.base.selectors.driverCountInput); }
-  private get rotationSelect() { return this.locator.locator(this.base.selectors.rotationSelect); }
-  private get trackSelect() { return this.locator.locator(this.base.selectors.trackSelect); }
+  private get nameInput() {
+    return this.locator.locator(this.base.selectors.nameInput);
+  }
+  private get copyBtn() {
+    return this.locator.locator(this.base.selectors.copyBtn);
+  }
+  private get driverCountInput() {
+    return this.locator.locator(this.base.selectors.driverCountInput);
+  }
+  private get rotationSelect() {
+    return this.locator.locator(this.base.selectors.rotationSelect);
+  }
+  private get trackSelect() {
+    return this.locator.locator(this.base.selectors.trackSelect);
+  }
+  private get heatTimesThroughInput() {
+    return this.locator.locator(this.base.selectors.heatTimesThroughInput);
+  }
+  private get reverseHeatsCheckbox() {
+    return this.locator.locator(this.base.selectors.reverseHeatsCheckbox);
+  }
 
   async getName(): Promise<string> {
     return await this.nameInput.inputValue();
@@ -40,5 +58,22 @@ export class RaceEditorHarnessE2e implements RaceEditorHarnessBase {
 
   async setTrack(trackId: string): Promise<void> {
     await this.trackSelect.selectOption(trackId);
+  }
+
+  async getHeatTimesThrough(): Promise<number> {
+    const val = await this.heatTimesThroughInput.inputValue();
+    return Number(val);
+  }
+
+  async setHeatTimesThrough(count: number): Promise<void> {
+    await this.heatTimesThroughInput.fill(String(count));
+  }
+
+  async getReverseHeats(): Promise<boolean> {
+    return await this.reverseHeatsCheckbox.isChecked();
+  }
+
+  async setReverseHeats(reverse: boolean): Promise<void> {
+    await this.reverseHeatsCheckbox.setChecked(reverse);
   }
 }

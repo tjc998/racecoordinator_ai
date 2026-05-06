@@ -3,6 +3,7 @@ package com.antigravity.handlers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -158,6 +159,36 @@ public class DatabaseTaskHandlerTest {
 
   @Test
   @SuppressWarnings("unchecked")
+  public void testCreateRace_WithHeatTimesThroughAndReverse() {
+    Race raceRequest =
+        new Race.Builder()
+            .withName("Repeated Race")
+            .withTrackEntityId("track-1")
+            .withHeatTimesThrough(3)
+            .withReverseHeats(true)
+            .withEntityId("new")
+            .build();
+
+    // Mock uniqueness check
+    FindIterable<Race> findIterable = mock(FindIterable.class);
+    when(raceCollection.find(any(Bson.class))).thenReturn(findIterable);
+    when(findIterable.first()).thenReturn(null);
+
+    // Mock sequence generation
+    Document counterDoc = new Document("seq", 103);
+    when(countersCollection.findOneAndUpdate(any(Bson.class), any(Bson.class), any()))
+        .thenReturn(counterDoc);
+
+    Race created = handler.createRace(raceRequest);
+
+    assertNotNull(created);
+    assertEquals(3, created.getHeatTimesThrough());
+    assertTrue(created.isReverseHeats());
+    verify(raceCollection).insertOne(any(Race.class));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
   public void testCreateRace_DuplicateName() {
     Race raceRequest =
         new Race.Builder()
@@ -217,6 +248,36 @@ public class DatabaseTaskHandlerTest {
     assertNotNull(updated.getTeamOptions());
     assertEquals(20, updated.getTeamOptions().getHeatLapLimit());
     assertEquals(false, updated.getTeamOptions().isRequirePitStopChangeDriver());
+    verify(raceCollection).replaceOne(any(Bson.class), any(Race.class));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testUpdateRace_WithHeatTimesThroughAndReverse() {
+    String raceId = "race-456";
+    Race raceUpdate =
+        new Race.Builder()
+            .withName("Updated Repeated Race")
+            .withTrackEntityId("track-1")
+            .withHeatTimesThrough(2)
+            .withReverseHeats(true)
+            .withEntityId(raceId)
+            .build();
+
+    // Mock uniqueness check
+    FindIterable<Race> findIterable = mock(FindIterable.class);
+    when(raceCollection.find(any(Bson.class))).thenReturn(findIterable);
+    when(findIterable.first()).thenReturn(null);
+
+    UpdateResult updateResult = mock(UpdateResult.class);
+    when(updateResult.getMatchedCount()).thenReturn(1L);
+    when(raceCollection.replaceOne(any(Bson.class), any(Race.class))).thenReturn(updateResult);
+
+    Race updated = handler.updateRace(raceId, raceUpdate);
+
+    assertNotNull(updated);
+    assertEquals(2, updated.getHeatTimesThrough());
+    assertTrue(updated.isReverseHeats());
     verify(raceCollection).replaceOne(any(Bson.class), any(Race.class));
   }
 

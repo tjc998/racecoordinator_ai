@@ -148,6 +148,8 @@ public class RaceConverter {
       if (race.getCustomRotationAssetId() != null) {
         builder.setCustomRotationAssetId(race.getCustomRotationAssetId());
       }
+      builder.setHeatTimesThrough(race.getHeatTimesThrough());
+      builder.setReverseHeats(race.isReverseHeats());
       return builder.build();
     }
   }

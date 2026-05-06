@@ -102,6 +102,16 @@ public class Race extends Model {
   @JsonAlias("customRotations")
   private final List<CustomRotation> customRotations;
 
+  @BsonProperty("heat_times_through")
+  @JsonProperty("heat_times_through")
+  @JsonAlias("heatTimesThrough")
+  private final int heatTimesThrough;
+
+  @BsonProperty("reverse_heats")
+  @JsonProperty("reverse_heats")
+  @JsonAlias("reverseHeats")
+  private final boolean reverseHeats;
+
   @BsonCreator
   @JsonCreator
   public Race(
@@ -165,6 +175,12 @@ public class Race extends Model {
           @JsonProperty("custom_rotations")
           @JsonAlias("customRotations")
           List<CustomRotation> customRotations,
+      @BsonProperty("heat_times_through")
+          @JsonProperty("heat_times_through")
+          @JsonAlias("heatTimesThrough")
+          Integer heatTimesThrough,
+      @BsonProperty("reverse_heats") @JsonProperty("reverse_heats") @JsonAlias("reverseHeats")
+          Boolean reverseHeats,
       @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
       @BsonId @JsonProperty("_id") ObjectId id) {
     super(id, entityId);
@@ -195,6 +211,8 @@ public class Race extends Model {
         customRotationSequence != null ? customRotationSequence : new ArrayList<>();
     this.customRotationAssetId = customRotationAssetId;
     this.customRotations = customRotations != null ? customRotations : new ArrayList<>();
+    this.heatTimesThrough = heatTimesThrough != null ? heatTimesThrough : 1;
+    this.reverseHeats = reverseHeats != null ? reverseHeats : false;
   }
 
   public static class Builder {
@@ -221,6 +239,8 @@ public class Race extends Model {
     private List<Integer> customRotationSequence = new ArrayList<>();
     private String customRotationAssetId;
     private List<CustomRotation> customRotations = new ArrayList<>();
+    private int heatTimesThrough = 1;
+    private boolean reverseHeats = false;
     private String entityId;
     private ObjectId id;
 
@@ -334,6 +354,16 @@ public class Race extends Model {
       return this;
     }
 
+    public Builder withHeatTimesThrough(int heatTimesThrough) {
+      this.heatTimesThrough = heatTimesThrough;
+      return this;
+    }
+
+    public Builder withReverseHeats(boolean reverseHeats) {
+      this.reverseHeats = reverseHeats;
+      return this;
+    }
+
     public Builder withEntityId(String entityId) {
       this.entityId = entityId;
       return this;
@@ -369,6 +399,8 @@ public class Race extends Model {
           customRotationSequence,
           customRotationAssetId,
           customRotations,
+          heatTimesThrough,
+          reverseHeats,
           entityId,
           id);
     }
@@ -463,5 +495,15 @@ public class Race extends Model {
   @BsonProperty("custom_rotations")
   public List<CustomRotation> getCustomRotations() {
     return customRotations;
+  }
+
+  @BsonProperty("heat_times_through")
+  public int getHeatTimesThrough() {
+    return heatTimesThrough;
+  }
+
+  @BsonProperty("reverse_heats")
+  public boolean isReverseHeats() {
+    return reverseHeats;
   }
 }

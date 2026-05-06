@@ -501,6 +501,36 @@
                     />
                   </div>
                 </div>
+                <div class="config-row">
+                  <div class="config-section">
+                    <label>
+                      {{ "RE_HEAT_TIMES_THROUGH" | translate }}
+                    </label>
+                    <input
+                      id="heat-times-through-input"
+                      type="number"
+                      [(ngModel)]="editingRace.heat_times_through"
+                      (ngModelChange)="captureState()"
+                      min="1"
+                      max="100"
+                      step="1"
+                    />
+                  </div>
+                  <div class="config-section checkbox-section">
+                    <label class="checkbox-container">
+                      <input
+                        id="reverse-heats-checkbox"
+                        type="checkbox"
+                        [(ngModel)]="editingRace.reverse_heats"
+                        (ngModelChange)="captureState()"
+                      />
+                      <span class="checkmark"></span>
+                      <span class="checkbox-label">
+                        {{ "RE_REVERSE_HEATS" | translate }}
+                      </span>
+                    </label>
+                  </div>
+                </div>
               </div>
             }
           </div>

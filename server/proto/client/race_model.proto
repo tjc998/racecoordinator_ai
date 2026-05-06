@@ -103,6 +103,8 @@ message RaceModel {
   repeated int32 custom_rotation_sequence = 21;
   repeated CustomRotation custom_rotations = 22;
   string custom_rotation_asset_id = 23;
+  int32 heat_times_through = 24;
+  bool reverse_heats = 25;
 }
 
 // CustomRotation and CustomHeat moved to rotation_model.proto

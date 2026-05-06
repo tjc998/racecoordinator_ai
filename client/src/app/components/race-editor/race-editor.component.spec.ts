@@ -218,6 +218,8 @@ describe("RaceEditorComponent", () => {
       jasmine.any(Array),
       undefined,
       jasmine.any(Array),
+      1,
+      false,
     );
     expect(component.generatedHeats.length).toBeGreaterThan(0);
   }));
@@ -238,6 +240,8 @@ describe("RaceEditorComponent", () => {
       jasmine.any(Array),
       undefined,
       jasmine.any(Array),
+      1,
+      false,
     );
 
     component.driverCount = 12;
@@ -252,6 +256,8 @@ describe("RaceEditorComponent", () => {
       jasmine.any(Array),
       undefined,
       jasmine.any(Array),
+      1,
+      false,
     );
   }));
 
@@ -1131,6 +1137,8 @@ describe("RaceEditorComponent", () => {
         jasmine.any(Array),
         undefined,
         jasmine.any(Array),
+        1,
+        false,
       );
     }));
   });
@@ -1190,6 +1198,95 @@ describe("RaceEditorComponent", () => {
       expect(component.editingRace.custom_rotation_asset_id).toBe("new-asset");
       expect(component.editingRace.custom_rotations).toBeUndefined();
       expect(component.captureState).toHaveBeenCalled();
+    });
+  });
+
+  describe("Heat Times Through and Reverse Heats", () => {
+    beforeEach(fakeAsync(() => {
+      dataService.getRaces.and.returnValue(of(MOCK_RACES));
+      dataService.getTracks.and.returnValue(of(MOCK_TRACKS));
+      dataService.previewHeats.and.returnValue(of({ heats: [] }));
+      component.ngOnInit();
+      tick();
+      fixture.detectChanges();
+    }));
+
+    it("should update heatTimesThrough and trigger previewHeats", fakeAsync(async () => {
+      const harness = await TestbedHarnessEnvironment.harnessForFixture(
+        fixture,
+        RaceEditorHarness,
+      );
+      dataService.previewHeats.calls.reset();
+
+      await harness.setHeatTimesThrough(3);
+      fixture.detectChanges();
+      tick();
+
+      expect(component.editingRace.heat_times_through).toBe(3);
+      expect(dataService.previewHeats).toHaveBeenCalledWith(
+        jasmine.any(String),
+        jasmine.any(String),
+        jasmine.any(Number),
+        jasmine.any(Number),
+        jasmine.any(Array),
+        undefined,
+        jasmine.any(Array),
+        3, // heatTimesThrough
+        jasmine.any(Boolean),
+      );
+    }));
+
+    it("should update reverseHeats and trigger previewHeats", fakeAsync(async () => {
+      const harness = await TestbedHarnessEnvironment.harnessForFixture(
+        fixture,
+        RaceEditorHarness,
+      );
+      dataService.previewHeats.calls.reset();
+
+      await harness.setReverseHeats(true);
+      fixture.detectChanges();
+      tick();
+
+      expect(component.editingRace.reverse_heats).toBe(true);
+      expect(dataService.previewHeats).toHaveBeenCalledWith(
+        jasmine.any(String),
+        jasmine.any(String),
+        jasmine.any(Number),
+        jasmine.any(Number),
+        jasmine.any(Array),
+        undefined,
+        jasmine.any(Array),
+        jasmine.any(Number),
+        true, // reverseHeats
+      );
+    }));
+
+    it("should undo changes to heatTimesThrough", fakeAsync(async () => {
+      const harness = await TestbedHarnessEnvironment.harnessForFixture(
+        fixture,
+        RaceEditorHarness,
+      );
+
+      await harness.setHeatTimesThrough(2);
+      fixture.detectChanges();
+      tick();
+      expect(component.editingRace.heat_times_through).toBe(2);
+
+      component.undoManager.undo();
+      fixture.detectChanges();
+      tick();
+      expect(component.editingRace.heat_times_through).toBe(1);
+    }));
+
+    it("should include heatTimesThrough and reverseHeats in the payload", () => {
+      component.editingRace.heat_times_through = 5;
+      component.editingRace.reverse_heats = true;
+
+      const payload = (component as any).buildRacePayload(
+        component.editingRace,
+      );
+      expect(payload.heat_times_through).toBe(5);
+      expect(payload.reverse_heats).toBe(true);
     });
   });
 });

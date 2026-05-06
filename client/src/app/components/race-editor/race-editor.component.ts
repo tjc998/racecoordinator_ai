@@ -334,6 +334,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
               race.custom_rotation_asset_id || race.customRotationAssetId,
             custom_rotations:
               race.custom_rotations || race.customRotations || [],
+            heat_times_through: race.heat_times_through || 1,
+            reverse_heats: race.reverse_heats || false,
           };
           if (!this.editingRace.heat_scoring) {
             this.editingRace.heat_scoring = {
@@ -572,6 +574,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         overall_time_limit: 0,
         require_pit_stop_change_driver: false,
       },
+      heat_times_through: 1,
+      reverse_heats: false,
     };
     this.originalRace = this.deepCopy(this.editingRace);
     this.undoManager.initialize(this.editingRace);
@@ -628,12 +632,23 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
 
   captureState() {
     this.validateWarmupTimes();
+    this.validateHeatConfigurations();
     this.enforceFuelRules();
     this.syncSelectedCustomRotationAsset();
     this.undoManager.captureState();
     // Regenerate heats when rotation type changes (even for new races)
     if (this.driverCount > 0) {
       this.loadHeats();
+    }
+  }
+
+  private validateHeatConfigurations() {
+    if (!this.editingRace) return;
+    if (
+      this.editingRace.heat_times_through === null ||
+      this.editingRace.heat_times_through < 1
+    ) {
+      this.editingRace.heat_times_through = 1;
     }
   }
 
@@ -747,6 +762,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       driverCount: this.driverCount,
       soloLaneIndex: this.editingRace.solo_lane_index,
       customSequence: this.editingRace.custom_rotation_sequence,
+      heatTimesThrough: this.editingRace.heat_times_through,
+      reverseHeats: this.editingRace.reverse_heats,
     });
     this.dataService
       .previewHeats(
@@ -757,6 +774,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         this.editingRace.custom_rotation_sequence,
         this.editingRace.custom_rotation_asset_id,
         this.editingRace.custom_rotations,
+        this.editingRace.heat_times_through,
+        this.editingRace.reverse_heats,
       )
       .subscribe({
         next: (response) => {
@@ -1586,6 +1605,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
               race.team_options.require_pit_stop_change_driver,
           }
         : undefined,
+      heat_times_through: race.heat_times_through,
+      reverse_heats: race.reverse_heats,
     };
   }
 

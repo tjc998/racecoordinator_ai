@@ -756,6 +756,92 @@ public class HeatBuilderTest {
     assertEquals("2", heats.get(1).getDrivers().get(1).getActualDriver().getEntityId());
   }
 
+  @Test
+  public void testHeatTimesThrough() {
+    when(raceModel.getHeatTimesThrough()).thenReturn(2);
+
+    List<RaceParticipant> participants = createDrivers(2);
+    // 4 lanes -> 4 heats per rotation. 2 rotations = 8 heats.
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, new ArrayList<>());
+
+    assertEquals(8, heats.size());
+
+    // Verify numbering
+    for (int i = 0; i < 8; i++) {
+      assertEquals(i + 1, heats.get(i).getHeatNumber());
+    }
+
+    // Verify duplication (Heat 1 should be same as Heat 5 in terms of driver positions)
+    for (int i = 0; i < 4; i++) {
+      List<DriverHeatData> d1 = heats.get(i).getDrivers();
+      List<DriverHeatData> d2 = heats.get(i + 4).getDrivers();
+      assertEquals(d1.size(), d2.size());
+      for (int l = 0; l < d1.size(); l++) {
+        assertEquals(
+            d1.get(l).getActualDriver().getEntityId(), d2.get(l).getActualDriver().getEntityId());
+      }
+    }
+  }
+
+  @Test
+  public void testReverseHeats() {
+    when(raceModel.isReverseHeats()).thenReturn(true);
+
+    List<RaceParticipant> participants = createDrivers(4);
+    // 4 drivers, 4 lanes -> 4 heats.
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, new ArrayList<>());
+
+    assertEquals(4, heats.size());
+
+    // Heat 1 (originally Heat 4)
+    assertEquals(1, heats.get(0).getHeatNumber());
+    // In standard RoundRobin with 4 drivers/4 lanes, Heat 4 (index 3) has Driver 4 in Lane 1 (index
+    // 0)
+    // Rotation sequence: [1, 2, 3, 4]
+    // Driver 4 (index 3): (3+3)%4 = 2. Sequence[2] = 3. So Driver 4 in Lane 3?
+    // Wait, let's check getRoundRobinHeats logic:
+    // for (int d = 0; d < drivers.size(); d++) {
+    //   int v = (h + d) % numHeats;
+    //   int lane = rotationSequence.get(v);
+    // h=3 (Heat 4), d=3 (Driver 4). v=(3+3)%4 = 2. rotationSequence.get(2) = 3.
+    // So Driver 4 in Lane 3 (index 2).
+
+    // Let's check Driver 1 in Heat 1 vs Heat 4.
+    // Heat 1 (h=0), Driver 1 (d=0). v=0. lane=1 (index 0).
+    // Heat 4 (h=3), Driver 1 (d=0). v=3. lane=4 (index 3).
+
+    // If reversed, Heat 1 is old Heat 4.
+    assertEquals("1", heats.get(0).getDrivers().get(3).getActualDriver().getEntityId());
+  }
+
+  @Test
+  public void testHeatTimesThrough_WithTeam() {
+    when(raceModel.getHeatTimesThrough()).thenReturn(2);
+
+    // Create 1 team with 2 drivers
+    Team team = new Team("Team1", null, Arrays.asList("TD1", "TD2"), "t1", null);
+    RaceParticipant teamParticipant = new RaceParticipant(team);
+    List<Driver> teamDrivers = new ArrayList<>();
+    teamDrivers.add(new Driver("TD1", "TD1", "td1", null));
+    teamDrivers.add(new Driver("TD2", "TD2", "td2", null));
+    teamParticipant.setTeamDrivers(teamDrivers);
+
+    List<RaceParticipant> participants = Arrays.asList(teamParticipant);
+
+    // 4 lanes -> 4 heats per rotation. 2 rotations = 8 heats.
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, new ArrayList<>());
+
+    assertEquals(8, heats.size());
+
+    // Team driver rotation should continue
+    // Heat 1: td1 (0%2) in Lane 1 (index 0)
+    assertEquals("td1", heats.get(0).getDrivers().get(0).getActualDriver().getEntityId());
+    // Heat 2: td2 (1%2) in Lane 2 (index 1)
+    assertEquals("td2", heats.get(1).getDrivers().get(1).getActualDriver().getEntityId());
+    // Heat 5: td1 (4%2) in Lane 1 (index 0)
+    assertEquals("td1", heats.get(4).getDrivers().get(0).getActualDriver().getEntityId());
+  }
+
   private List<RaceParticipant> createDrivers(int count) {
     List<RaceParticipant> participants = new ArrayList<>();
     for (int i = 1; i <= count; i++) {

@@ -200,6 +200,8 @@ export class DataService {
     customRotationSequence: number[] = [],
     customRotationAssetId: string = "",
     customRotations: any[] = [],
+    heatTimesThrough: number = 1,
+    reverseHeats: boolean = false,
   ): Observable<any> {
     return this.http.post<any>(
       `http://${this.serverIp}:${this.serverPort}/api/heats/preview`,
@@ -211,6 +213,8 @@ export class DataService {
         customRotationSequence,
         customRotationAssetId,
         customRotations,
+        heatTimesThrough,
+        reverseHeats,
       },
     );
   }

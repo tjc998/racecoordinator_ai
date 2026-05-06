@@ -182,5 +182,10 @@ export const MOCK_RACE_INSTANCES = MOCK_RACES.map((r: any) => {
     r.start_delay ?? 0.0,
     r.restart_delay ?? 0.0,
     r.solo_lane_index || 0,
+    [], // custom_rotation_sequence
+    undefined, // custom_rotation_asset_id
+    [], // custom_rotations
+    1, // heat_times_through
+    false, // reverse_heats
   );
 });

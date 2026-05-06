@@ -599,6 +599,8 @@ public class DatabaseTaskHandler {
               .withCustomRotationSequence(race.getCustomRotationSequence())
               .withCustomRotationAssetId(race.getCustomRotationAssetId())
               .withCustomRotations(race.getCustomRotations())
+              .withHeatTimesThrough(race.getHeatTimesThrough())
+              .withReverseHeats(race.isReverseHeats())
               .withEntityId(nextId)
               .build();
     }
@@ -663,6 +665,8 @@ public class DatabaseTaskHandler {
             .withCustomRotationSequence(race.getCustomRotationSequence())
             .withCustomRotationAssetId(race.getCustomRotationAssetId())
             .withCustomRotations(race.getCustomRotations())
+            .withHeatTimesThrough(race.getHeatTimesThrough())
+            .withReverseHeats(race.isReverseHeats())
             .withEntityId(id)
             .withId(race.getId())
             .build();
@@ -757,6 +761,8 @@ public class DatabaseTaskHandler {
       raceMap.put("custom_rotation_asset_id", race.getCustomRotationAssetId());
       raceMap.put("custom_rotation_sequence", race.getCustomRotationSequence());
       raceMap.put("custom_rotations", race.getCustomRotations());
+      raceMap.put("heat_times_through", race.getHeatTimesThrough());
+      raceMap.put("reverse_heats", race.isReverseHeats());
       response.add(raceMap);
     }
     ctx.json(response);
@@ -848,6 +854,7 @@ public class DatabaseTaskHandler {
     int driverCount = driverCountNum != null ? driverCountNum.intValue() : 0;
     String trackId = (String) body.get("trackId");
     String rotationType = (String) body.get("rotationType");
+    logger.debug("previewHeats: body={}", body);
     Number soloLaneIndexNum = (Number) body.get("soloLaneIndex");
     int soloLaneIndex = soloLaneIndexNum != null ? soloLaneIndexNum.intValue() : 0;
     List<Integer> customRotationSequence = (List<Integer>) body.get("customRotationSequence");
@@ -874,6 +881,18 @@ public class DatabaseTaskHandler {
         customRotations = parseCustomRotations(customRotationsRaw);
       }
     }
+
+    Number heatTimesThroughNum = (Number) body.get("heatTimesThrough");
+    if (heatTimesThroughNum == null) {
+      heatTimesThroughNum = (Number) body.get("heat_times_through");
+    }
+    int heatTimesThrough = heatTimesThroughNum != null ? heatTimesThroughNum.intValue() : 1;
+
+    Boolean reverseHeats = (Boolean) body.get("reverseHeats");
+    if (reverseHeats == null) {
+      reverseHeats = (Boolean) body.get("reverse_heats");
+    }
+    boolean reverseHeatsBool = reverseHeats != null ? reverseHeats : false;
 
     if (driverCount <= 0) {
       ctx.status(400).result("driverCount must be greater than 0");
@@ -954,6 +973,8 @@ public class DatabaseTaskHandler {
             .withSoloLaneIndex(soloLaneIndex)
             .withCustomRotationSequence(customRotationSequence)
             .withCustomRotationAssetId(customRotationAssetId)
+            .withHeatTimesThrough(heatTimesThrough)
+            .withReverseHeats(reverseHeatsBool)
             .build();
 
     // Create mock RaceParticipant list
