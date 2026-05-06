@@ -151,6 +151,15 @@ export class TestSetupHelper {
       });
     });
 
+    // Mock Log Level API
+    await page.route("**/api/settings/log-level*", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "text/plain",
+        body: "OK",
+      });
+    });
+
     // Force load fonts only during tests to prevent flakiness without changing app code
     await page.addStyleTag({
       url: "https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;700&display=swap",
@@ -1174,6 +1183,14 @@ export class TestSetupHelper {
         name: name,
         getFile: async () => ({
           text: async () => content,
+          size: content.length,
+        }),
+        createWritable: async () => ({
+          seek: async () => {},
+          write: async (newContent: string) => {
+            files[name] += newContent;
+          },
+          close: async () => {},
         }),
       });
 
@@ -1183,8 +1200,12 @@ export class TestSetupHelper {
         name: "mock-custom-dir",
         queryPermission: async () => "granted",
         requestPermission: async () => "granted",
-        getFileHandle: async (name: string) => {
+        getFileHandle: async (name: string, options?: { create?: boolean }) => {
           if (files[name]) {
+            return createMockFileHandle(name, files[name]);
+          }
+          if (options?.create) {
+            files[name] = ""; // Create empty file
             return createMockFileHandle(name, files[name]);
           }
           throw new Error("File not found: " + name);

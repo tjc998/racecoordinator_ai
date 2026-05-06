@@ -62,12 +62,14 @@ export class AppComponent implements OnInit {
     this.logger.info("AppComponent: Initializing application...");
 
     // Initialize file logging if a handle is available
-    this.fileSystemService.getCustomDirectoryHandle().then((handle) => {
-      if (handle) {
-        this.logger.registerFileLogging(this.fileSystemService);
-        this.logger.info("AppComponent: File logging registered");
-      }
-    });
+    if (!(window as any).isPlaywright) {
+      this.fileSystemService.getCustomDirectoryHandle().then((handle) => {
+        if (handle) {
+          this.logger.registerFileLogging(this.fileSystemService);
+          this.logger.info("AppComponent: File logging registered");
+        }
+      });
+    }
 
     this.analyticsService.initTracking();
     this.dataService.connectToRaceDataSocket();
@@ -77,7 +79,7 @@ export class AppComponent implements OnInit {
     if (settings.clientLogLevel) {
       this.logger.setLevel(settings.clientLogLevel as any);
     }
-    if (settings.serverLogLevel) {
+    if (settings.serverLogLevel && !(window as any).isPlaywright) {
       this.dataService.setServerLogLevel(settings.serverLogLevel).subscribe({
         error: (err) =>
           this.logger.error("Failed to initialize server log level", err),
