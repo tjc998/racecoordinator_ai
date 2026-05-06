@@ -45,7 +45,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   undoManager: UndoManager<any>;
   tracks: Track[] = [];
   races: any[] = [];
-  driverCount: number = 10;
+  driverCount: number = 4;
   generatedHeats: any[] = [];
   customRotationAssets: any[] = [];
   selectedCustomRotationAssetId: string = "";
@@ -143,6 +143,33 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     }
   }
 
+  private saveDriverCount() {
+    try {
+      localStorage.setItem(
+        "race_editor_driver_count",
+        this.driverCount.toString(),
+      );
+    } catch (e) {
+      this.logger.error("Error saving driver count", e);
+    }
+  }
+
+  private loadDriverCount() {
+    try {
+      const saved = localStorage.getItem("race_editor_driver_count");
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed > 0) {
+          this.driverCount = parsed;
+          return;
+        }
+      }
+    } catch (e) {
+      this.logger.error("Error loading driver count defaulting to 4", e);
+    }
+    this.driverCount = 4; // Default fallback
+  }
+
   get isNameInvalid(): boolean {
     if (this.isLoading || !this.editingRace) return false;
     return !this.editingRace.name?.trim() || this.isNameDuplicate();
@@ -215,11 +242,19 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     this.updateScale();
     this.loadExpanderState();
 
-    // Get driver count from query param (from race day setup) or default to 10
+    // Get driver count from query param, then localStorage, then default to 4
     const driverCountParam =
       this.route.snapshot.queryParamMap.get("driverCount");
     if (driverCountParam) {
-      this.driverCount = parseInt(driverCountParam, 10);
+      const parsed = parseInt(driverCountParam, 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        this.driverCount = parsed;
+        this.saveDriverCount();
+      } else {
+        this.loadDriverCount();
+      }
+    } else {
+      this.loadDriverCount();
     }
 
     const id = this.route.snapshot.queryParamMap.get("id");
@@ -675,6 +710,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
 
   onDriverCountChange() {
     this.logger.debug("Driver count changed to:", this.driverCount);
+    this.saveDriverCount();
     // Update heats when driver count changes
     this.loadHeats();
   }

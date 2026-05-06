@@ -52,7 +52,7 @@ describe("RaceEditorComponent", () => {
       snapshot: {
         queryParamMap: {
           get: jasmine.createSpy("get").and.callFake((key: string) => {
-            if (key === "driverCount") return "10";
+            if (key === "driverCount") return null;
             if (key === "id") return "r1";
             return null;
           }),
@@ -213,7 +213,7 @@ describe("RaceEditorComponent", () => {
     expect(dataService.previewHeats).toHaveBeenCalledWith(
       "t1",
       "RoundRobin",
-      10,
+      4,
       0,
       jasmine.any(Array),
       undefined,
@@ -233,7 +233,7 @@ describe("RaceEditorComponent", () => {
     expect(dataService.previewHeats).toHaveBeenCalledWith(
       "t1",
       "RoundRobin",
-      10,
+      4,
       0,
       jasmine.any(Array),
       undefined,
@@ -816,6 +816,81 @@ describe("RaceEditorComponent", () => {
       expect(component.sectionsExpanded.fuel_analog).toBeFalse();
       expect(component.sectionsExpanded.fuel_digital).toBeFalse();
     });
+  });
+
+  describe("Driver Count Persistence", () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    it("should load driver count from localStorage if query param is missing", fakeAsync(() => {
+      spyOn(localStorage, "getItem").and.callFake((key: string) => {
+        if (key === "race_editor_driver_count") return "24";
+        return null;
+      });
+      activatedRoute.snapshot.queryParamMap.get.and.callFake((key: string) => {
+        if (key === "driverCount") return null;
+        if (key === "id") return "r1";
+        return null;
+      });
+
+      component.ngOnInit();
+      tick();
+
+      expect(component.driverCount).toBe(24);
+    }));
+
+    it("should prioritize query param over localStorage and sync it", fakeAsync(() => {
+      const setItemSpy = spyOn(localStorage, "setItem");
+      spyOn(localStorage, "getItem").and.returnValue("24");
+      activatedRoute.snapshot.queryParamMap.get.and.callFake((key: string) => {
+        if (key === "driverCount") return "32";
+        if (key === "id") return "r1";
+        return null;
+      });
+
+      component.ngOnInit();
+      tick();
+
+      expect(component.driverCount).toBe(32);
+      expect(setItemSpy).toHaveBeenCalledWith("race_editor_driver_count", "32");
+    }));
+
+    it("should save driver count to localStorage on change", () => {
+      const setItemSpy = spyOn(localStorage, "setItem");
+      component.driverCount = 15;
+      component.onDriverCountChange();
+
+      expect(setItemSpy).toHaveBeenCalledWith("race_editor_driver_count", "15");
+    });
+
+    it("should default to 4 if query param and localStorage are missing", fakeAsync(() => {
+      activatedRoute.snapshot.queryParamMap.get.and.callFake((key: string) => {
+        if (key === "driverCount") return null;
+        if (key === "id") return "r1";
+        return null;
+      });
+      spyOn(localStorage, "getItem").and.returnValue(null);
+
+      component.ngOnInit();
+      tick();
+
+      expect(component.driverCount).toBe(4);
+    }));
+
+    it("should default to 4 if query param is invalid and localStorage is missing", fakeAsync(() => {
+      activatedRoute.snapshot.queryParamMap.get.and.callFake((key: string) => {
+        if (key === "driverCount") return "abc";
+        if (key === "id") return "r1";
+        return null;
+      });
+      spyOn(localStorage, "getItem").and.returnValue(null);
+
+      component.ngOnInit();
+      tick();
+
+      expect(component.driverCount).toBe(4);
+    }));
   });
 
   describe("Auto-save on name change", () => {
