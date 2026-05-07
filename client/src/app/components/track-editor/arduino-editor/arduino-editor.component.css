@@ -314,6 +314,7 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
+  box-sizing: border-box;
 }
 
 .pin-item label {
@@ -327,6 +328,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 10px;
 }
 
 .status-badge.small {
@@ -355,6 +359,7 @@
 .custom-dropdown-container {
   position: relative;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .dropdown-trigger {
@@ -371,6 +376,7 @@
   align-items: center;
   transition: all 0.2s;
   min-height: 32px;
+  box-sizing: border-box;
 }
 
 .dropdown-trigger:hover {
@@ -747,9 +753,42 @@
 }
 
 .ls-settings-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.ls-settings-row .control-group {
+  width: 100%;
+  min-width: 0;
+}
+
+.ls-settings-row .control-group label {
+  height: 2.8em;
   display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  justify-content: flex-end;
+  font-size: 0.75rem;
+  line-height: 1.1;
+  margin-bottom: 4px;
+  white-space: normal;
+  overflow: visible;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.ls-settings-row .control-group input,
+.ls-settings-row .control-group select {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  box-sizing: border-box;
+}
+
+.ls-settings-row .control-group .unit-lowercase {
+  text-transform: none;
+  font-size: 0.7rem;
+  opacity: 0.8;
 }
 
 .lane-colors-editor {
@@ -805,6 +844,16 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
+  box-sizing: border-box;
+}
+
+.led-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 10px;
 }
 
 .led-item label {

@@ -674,10 +674,10 @@
                                   </div>
                                   <div class="control-group">
                                     <label
-                                      >{{
-                                        "AE_BRIGHTNESS" | translate
-                                      }}
-                                      [0-255]</label
+                                      >{{ "AE_BRIGHTNESS" | translate
+                                      }}<br /><span class="unit-lowercase"
+                                        >[0-255]</span
+                                      ></label
                                     >
                                     <input
                                       type="number"
@@ -691,10 +691,10 @@
                                   </div>
                                   <div class="control-group">
                                     <label
-                                      >{{
-                                        "AE_FLASH_RATE" | translate
-                                      }}
-                                      (rate/s)</label
+                                      >{{ "AE_FLASH_RATE" | translate
+                                      }}<br /><span class="unit-lowercase"
+                                        >(rate/s)</span
+                                      ></label
                                     >
                                     <input
                                       type="number"
@@ -785,14 +785,7 @@
                                     let ledIdx = $index
                                   ) {
                                     <div class="led-item">
-                                      <div
-                                        class="led-header"
-                                        style="
-                                          display: flex;
-                                          justify-content: space-between;
-                                          align-items: center;
-                                        "
-                                      >
+                                      <div class="led-header">
                                         <label>LED {{ ledIdx + 1 }}</label>
                                         <span
                                           class="status-badge small"
