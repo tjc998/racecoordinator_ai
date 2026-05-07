@@ -1,10 +1,14 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
-import { ViewChild } from "@angular/core";
+import {
+  ChangeDetectorRef,
+  Component,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { Router } from "@angular/router";
-import { ActivatedRoute } from "@angular/router";
-import { Subscription } from "rxjs";
-import { forkJoin } from "rxjs";
+import { ActivatedRoute, Router } from "@angular/router";
+import { forkJoin, Subscription } from "rxjs";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { ManagerHeaderComponent } from "@app/components/shared/manager-header/manager-header.component";
 import { ManagerHeaderComponent as ManagerHeaderComponent_1 } from "@app/components/shared/manager-header/manager-header.component";
@@ -101,6 +105,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   editingRotationAssetName: string = "";
   editingRotationNumLanes: number = 4;
   editingRotations: ICustomRotation[] = [];
+  scale: number = 1;
 
   // Delete Confirmation
   showDeleteConfirm: boolean = false;
@@ -121,10 +126,28 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   activeDatabaseName: string = "";
 
   ngOnInit() {
+    this.updateScale();
     this.connectionMonitor.startMonitoring();
     this.monitorConnection();
     this.loadActiveDatabase();
     this.loadAssets();
+  }
+
+  @HostListener("window:resize")
+  onResize() {
+    this.updateScale();
+  }
+
+  private updateScale() {
+    const targetWidth = 1600;
+    const targetHeight = 900;
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    const scaleX = windowWidth / targetWidth;
+    const scaleY = windowHeight / targetHeight;
+
+    this.scale = Math.min(scaleX, scaleY);
   }
 
   loadActiveDatabase() {
@@ -259,7 +282,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   getAssetUrl(asset: IAssetMessage): string {
     // If server provides a relative path, prepend base url
     if (asset.url && asset.url.startsWith("/")) {
-      return `http://localhost:7070${asset.url}`;
+      return `${this.dataService.serverUrl}${asset.url}`;
     }
     return asset.url || "";
   }
@@ -468,7 +491,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
 
   private getFullUrl(url: string): string {
     if (url && url.startsWith("/")) {
-      return `http://${this.dataService.serverUrl.split("//")[1].split(":")[0]}:${this.dataService.serverUrl.split(":")[2].split("/")[0]}${url}`;
+      return `${this.dataService.serverUrl}${url}`;
     }
     return url;
   }
@@ -769,9 +792,37 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
         position: "center",
       },
       {
-        selector: ".stats-panel",
+        selector: ".stats-content",
         title: this.translationService.translate("AM_HELP_STATS_TITLE"),
         content: this.translationService.translate("AM_HELP_STATS_CONTENT"),
+        position: "right",
+      },
+      {
+        selector: ".upload-zone",
+        title: this.translationService.translate("AM_HELP_UPLOAD_TITLE"),
+        content: this.translationService.translate("AM_HELP_UPLOAD_CONTENT"),
+        position: "right",
+      },
+      {
+        selector: ".btn-image-set",
+        title: this.translationService.translate("AM_HELP_IMAGE_SET_TITLE"),
+        content: this.translationService.translate("AM_HELP_IMAGE_SET_CONTENT"),
+        position: "right",
+      },
+      {
+        selector: ".btn-audio-set",
+        title: this.translationService.translate("AM_HELP_AUDIO_SET_TITLE"),
+        content: this.translationService.translate("AM_HELP_AUDIO_SET_CONTENT"),
+        position: "right",
+      },
+      {
+        selector: ".btn-custom-rotation",
+        title: this.translationService.translate(
+          "AM_HELP_CUSTOM_ROTATION_TITLE",
+        ),
+        content: this.translationService.translate(
+          "AM_HELP_CUSTOM_ROTATION_CONTENT",
+        ),
         position: "right",
       },
       {
@@ -779,6 +830,68 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
         title: this.translationService.translate("AM_HELP_LIBRARY_TITLE"),
         content: this.translationService.translate("AM_HELP_LIBRARY_CONTENT"),
         position: "left",
+      },
+      {
+        selector: ".filter-all",
+        title: this.translationService.translate("AM_HELP_FILTER_ALL_TITLE"),
+        content: this.translationService.translate(
+          "AM_HELP_FILTER_ALL_CONTENT",
+        ),
+        position: "bottom",
+      },
+      {
+        selector: ".filter-images",
+        title: this.translationService.translate("AM_HELP_FILTER_IMAGES_TITLE"),
+        content: this.translationService.translate(
+          "AM_HELP_FILTER_IMAGES_CONTENT",
+        ),
+        position: "bottom",
+      },
+      {
+        selector: ".filter-image-sets",
+        title: this.translationService.translate(
+          "AM_HELP_FILTER_IMAGE_SETS_TITLE",
+        ),
+        content: this.translationService.translate(
+          "AM_HELP_FILTER_IMAGE_SETS_CONTENT",
+        ),
+        position: "bottom",
+      },
+      {
+        selector: ".filter-sounds",
+        title: this.translationService.translate("AM_HELP_FILTER_SOUNDS_TITLE"),
+        content: this.translationService.translate(
+          "AM_HELP_FILTER_SOUNDS_CONTENT",
+        ),
+        position: "bottom",
+      },
+      {
+        selector: ".filter-audio-sets",
+        title: this.translationService.translate(
+          "AM_HELP_FILTER_AUDIO_SETS_TITLE",
+        ),
+        content: this.translationService.translate(
+          "AM_HELP_FILTER_AUDIO_SETS_CONTENT",
+        ),
+        position: "bottom",
+      },
+      {
+        selector: ".filter-custom-rotations",
+        title: this.translationService.translate(
+          "AM_HELP_FILTER_CUSTOM_ROTATIONS_TITLE",
+        ),
+        content: this.translationService.translate(
+          "AM_HELP_FILTER_CUSTOM_ROTATIONS_CONTENT",
+        ),
+        position: "bottom",
+      },
+      {
+        selector: ".filter-input",
+        title: this.translationService.translate("AM_HELP_FILTER_NAME_TITLE"),
+        content: this.translationService.translate(
+          "AM_HELP_FILTER_NAME_CONTENT",
+        ),
+        position: "bottom",
       },
     ];
   }

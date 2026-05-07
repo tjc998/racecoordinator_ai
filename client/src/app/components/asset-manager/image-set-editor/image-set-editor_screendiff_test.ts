@@ -2,8 +2,6 @@ import { expect, test } from "@playwright/test";
 import { AssetManagerHarnessE2e } from "@app/components/asset-manager/testing/asset-manager.harness.e2e";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
-import { ImageSetEditorHarnessE2e } from "./testing/image-set-editor.harness.e2e";
-
 test.describe("Image Set Editor Visuals", () => {
   test.beforeEach(async ({ page }) => {
     page.on("console", (msg) =>
@@ -25,7 +23,7 @@ test.describe("Image Set Editor Visuals", () => {
       page.goto("/asset-manager"),
     );
 
-    const container = page.locator(".am-container");
+    const container = page.locator("app-asset-manager");
     const amHarness = new AssetManagerHarnessE2e(container);
 
     // Click "IMAGE SETS" filter
@@ -35,10 +33,8 @@ test.describe("Image Set Editor Visuals", () => {
     await page.getByRole("button", { name: "New Image Set" }).click();
 
     const modalHost = page.locator("app-image-set-editor");
-    const _harness = new ImageSetEditorHarnessE2e(modalHost);
 
-    await expect(modalHost.locator(".modal-content")).toBeVisible();
-    // Title checked visually
+    // Modal display and content checked visually
 
     await expect(modalHost.locator(".modal-content")).toHaveScreenshot(
       "image-set-editor-new.png",
@@ -52,44 +48,20 @@ test.describe("Image Set Editor Visuals", () => {
       page.goto("/asset-manager"),
     );
 
-    const container = page.locator(".am-container");
-    const amHarness = new AssetManagerHarnessE2e(container);
-
     // Wait for assets to load visually
     await page.waitForTimeout(500);
 
     // Click edit on the 'Custom Dash' image set card
-    // We can use a helper or just locator for now if harness doesn't support "click edit by name"
-    // Wait, AssetManagerHarness has clickEditAsset(index)
-    // To find index of 'Custom Dash':
-    const count = await amHarness.getAssetCardsCount();
-    let editIndex = -1;
-    for (let i = 0; i < count; i++) {
-      if ((await amHarness.getAssetCardName(i)).includes("Custom Dash")) {
-        editIndex = i;
-        break;
-      }
-    }
-
-    expect(editIndex).toBeGreaterThan(-1);
-
-    // Click edit icon inside the card
+    // We use a robust locator that finds the card by text and clicks its edit icon
     await page
-      .locator(".asset-card")
-      .nth(editIndex)
+      .locator(".asset-card", { hasText: "Custom Dash" })
       .locator('.action-icon[title="Edit"]')
       .click();
 
     const modalHost = page.locator("app-image-set-editor");
-    const _harness = new ImageSetEditorHarnessE2e(modalHost);
-
-    await expect(modalHost.locator(".modal-content")).toBeVisible();
-    // Title checked visually
 
     // Custom Dash has 2 entries in setupAssetMocks
-    // Entry count checked visually
-    // expect(await harness.getEntryCount()).toBe(2); // Removed
-
+    // Validation is performed via screenshot comparison only
     await expect(modalHost.locator(".modal-content")).toHaveScreenshot(
       "image-set-editor-edit.png",
     );

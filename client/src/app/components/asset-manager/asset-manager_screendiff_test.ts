@@ -23,7 +23,7 @@ test.describe("Asset Manager Visuals", () => {
     );
     await page.locator(".active-db-name").waitFor({ state: "visible" });
 
-    const container = page.locator(".am-container");
+    const container = page.locator("app-asset-manager");
     const _harness = new AssetManagerHarnessE2e(container);
 
     // Wait for the asset list to appear
@@ -61,7 +61,7 @@ test.describe("Asset Manager Visuals", () => {
     );
     await page.locator(".asset-grid").waitFor({ state: "visible" });
 
-    const container = page.locator(".am-container");
+    const container = page.locator("app-asset-manager");
     const harness = new AssetManagerHarnessE2e(container);
 
     // Click Images Filter
@@ -86,7 +86,7 @@ test.describe("Asset Manager Visuals", () => {
     );
     await page.locator(".asset-grid").waitFor({ state: "visible" });
 
-    const container = page.locator(".am-container");
+    const container = page.locator("app-asset-manager");
     const harness = new AssetManagerHarnessE2e(container);
 
     // Filter by name "Fuel"
@@ -104,7 +104,7 @@ test.describe("Asset Manager Visuals", () => {
     );
     await page.locator(".asset-grid").waitFor({ state: "visible" });
 
-    const container = page.locator(".am-container");
+    const container = page.locator("app-asset-manager");
     const harness = new AssetManagerHarnessE2e(container);
 
     await harness.setFilterType("audio_set");
@@ -123,7 +123,7 @@ test.describe("Asset Manager Visuals", () => {
     );
     await page.locator(".asset-grid").waitFor({ state: "visible" });
 
-    const container = page.locator(".am-container");
+    const container = page.locator("app-asset-manager");
     const harness = new AssetManagerHarnessE2e(container);
 
     await harness.setFilterType("custom_rotation");
@@ -140,7 +140,7 @@ test.describe("Asset Manager Visuals", () => {
     );
     await page.locator(".asset-grid").waitFor({ state: "visible" });
 
-    const container = page.locator(".am-container");
+    const container = page.locator("app-asset-manager");
     const harness = new AssetManagerHarnessE2e(container);
 
     await harness.clickNewImageSet();
@@ -160,7 +160,7 @@ test.describe("Asset Manager Visuals", () => {
     );
     await page.locator(".asset-grid").waitFor({ state: "visible" });
 
-    const container = page.locator(".am-container");
+    const container = page.locator("app-asset-manager");
     const harness = new AssetManagerHarnessE2e(container);
 
     await harness.clickNewAudioSet();
@@ -180,7 +180,7 @@ test.describe("Asset Manager Visuals", () => {
     );
     await page.locator(".asset-grid").waitFor({ state: "visible" });
 
-    const container = page.locator(".am-container");
+    const container = page.locator("app-asset-manager");
     const harness = new AssetManagerHarnessE2e(container);
 
     await harness.clickNewCustomRotation();

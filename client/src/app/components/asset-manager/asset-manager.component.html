@@ -1,34 +1,28 @@
 <div
-  class="am-container"
+  class="page-container"
+  [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
   (dragover)="onContainerDragOver($event)"
   (drop)="onContainerDrop($event)"
 >
   <!-- Header -->
   <app-manager-header
-    title="AM_TITLE_LIBRARY"
+    title="AM_TITLE"
     [showActions]="true"
     [showAdd]="true"
-    [showEdit]="false"
-    [showDelete]="false"
+    [showEdit]="selectedAssets.length === 1"
+    [showDelete]="selectedAssets.length > 0"
     [isSaving]="isUploading"
     [helpSteps]="getHelpSteps()"
     [helpRecordName]="'assetManagerHelpShown'"
     (add)="fileInput.click()"
+    (edit)="onEditSelected()"
+    (delete)="onDeleteSelected()"
   >
   </app-manager-header>
 
   <div class="content-area">
     <!-- LEFT PANEL: STATS -->
-    <div class="panel stats-panel">
-      <div class="panel-header">
-        {{ "AM_DATABASE_STATUS" | translate }}
-        @if (activeDatabaseName) {
-          <div class="active-db-name">
-            {{ activeDatabaseName }}
-          </div>
-        }
-      </div>
-
+    <div class="sidebar-list stats-panel">
       <div class="stats-content">
         <!-- Database Icon -->
         <div class="db-icon-container">
@@ -37,6 +31,10 @@
             alt="Database"
             class="db-icon"
           />
+        </div>
+
+        <div class="active-db-name">
+          {{ activeDatabaseName }}
         </div>
 
         <div class="usage-text">
@@ -205,21 +203,21 @@
 
       <div class="new-set-zone">
         <button
-          class="btn-new-set"
+          class="btn-new-set btn-image-set"
           (click)="openNewImageSetEditor()"
           [disabled]="isUploading"
         >
           {{ "AM_BTN_NEW_IMAGE_SET" | translate }}
         </button>
         <button
-          class="btn-new-set"
+          class="btn-new-set btn-audio-set"
           (click)="openNewAudioSetEditor()"
           [disabled]="isUploading"
         >
           {{ "AM_BTN_NEW_AUDIO_SET" | translate }}
         </button>
         <button
-          class="btn-new-set"
+          class="btn-new-set btn-custom-rotation"
           (click)="openNewCustomRotationEditor()"
           [disabled]="isUploading"
         >
@@ -229,7 +227,7 @@
     </div>
 
     <!-- RIGHT PANEL: ASSET LIBRARY -->
-    <div class="panel library-panel">
+    <div class="detail-panel library-panel">
       <!-- Loading Overlay -->
       @if (isLoading) {
         <div class="loading-overlay">
@@ -239,48 +237,46 @@
       }
 
       <div class="panel-header library-header">
-        <span>{{ "AM_TITLE_LIBRARY" | translate }}</span>
-
         <!-- Filter Controls -->
         <div class="library-controls">
           <div class="filter-tabs">
             <div
-              class="tab"
+              class="tab filter-all"
               [class.active]="filterType === 'all'"
               (click)="setFilterType('all')"
             >
               {{ "AM_FILTER_ALL" | translate }}
             </div>
             <div
-              class="tab"
+              class="tab filter-images"
               [class.active]="filterType === 'image'"
               (click)="setFilterType('image')"
             >
               {{ "AM_FILTER_IMAGES" | translate }}
             </div>
             <div
-              class="tab"
+              class="tab filter-image-sets"
               [class.active]="filterType === 'image_set'"
               (click)="setFilterType('image_set')"
             >
               {{ "AM_FILTER_IMAGE_SETS" | translate }}
             </div>
             <div
-              class="tab"
+              class="tab filter-sounds"
               [class.active]="filterType === 'sound'"
               (click)="setFilterType('sound')"
             >
               {{ "AM_FILTER_SOUNDS" | translate }}
             </div>
             <div
-              class="tab"
+              class="tab filter-audio-sets"
               [class.active]="filterType === 'audio_set'"
               (click)="setFilterType('audio_set')"
             >
               {{ "AM_FILTER_AUDIO_SETS" | translate }}
             </div>
             <div
-              class="tab"
+              class="tab filter-custom-rotations"
               [class.active]="filterType === 'custom_rotation'"
               (click)="setFilterType('custom_rotation')"
             >
@@ -329,6 +325,10 @@
                   class="preview-img"
                   alt="preview"
                   [class.image-set]="asset.type === 'image_set'"
+                  (error)="
+                    $any($event.target).src =
+                      'assets/images/am_icon_image_placeholder.png'
+                  "
                 />
               }
               @if (asset.type === "sound" || asset.type === "audio_set") {
@@ -428,60 +428,60 @@
       </div>
     </div>
   </div>
-
-  <!-- Connection Lost Overlay -->
-  @if (isConnectionLost) {
-    <div class="connection-lost-overlay">
-      <div class="connection-spinner"></div>
-      <div class="connection-lost-text">
-        {{ "RDS_LOST_CONNECTION" | translate }}
-      </div>
-    </div>
-  }
-
-  <!-- Image Set Editor -->
-  <app-image-set-editor
-    [visible]="showImageSetEditor"
-    [assetId]="editingAssetId"
-    [initialName]="editingAssetName"
-    [initialEntries]="editingAssetEntries"
-    [allImages]="allImages"
-    (close)="showImageSetEditor = false"
-    (saved)="onImageSetSaved($event)"
-  >
-  </app-image-set-editor>
-
-  <app-audio-set-editor
-    [visible]="showAudioSetEditor"
-    [assetId]="editingAudioAssetId"
-    [initialName]="editingAudioAssetName"
-    [initialEntries]="editingAudioAssetEntries"
-    [allAudio]="allAudio"
-    (close)="showAudioSetEditor = false"
-    (saved)="onAudioSetSaved($event)"
-  >
-  </app-audio-set-editor>
-
-  @if (showCustomRotationEditor) {
-    <app-custom-rotation-editor
-      [assetId]="editingRotationAssetId"
-      [assetName]="editingRotationAssetName"
-      [numLanes]="editingRotationNumLanes"
-      [rotations]="editingRotations"
-      (cancelled)="showCustomRotationEditor = false"
-      (saved)="onCustomRotationSaved($event)"
-    >
-    </app-custom-rotation-editor>
-  }
-
-  <app-confirmation-modal
-    [visible]="showDeleteConfirm"
-    title="AM_CONFIRM_DELETE_TITLE"
-    message="AM_CONFIRM_DELETE"
-    confirmText="AM_BTN_DELETE"
-    cancelText="AM_BTN_CANCEL"
-    (confirm)="onConfirmDelete()"
-    (cancel)="onCancelDelete()"
-  >
-  </app-confirmation-modal>
 </div>
+
+<!-- Connection Lost Overlay -->
+@if (isConnectionLost) {
+  <div class="connection-lost-overlay">
+    <div class="connection-spinner"></div>
+    <div class="connection-lost-text">
+      {{ "RDS_LOST_CONNECTION" | translate }}
+    </div>
+  </div>
+}
+
+<!-- Image Set Editor -->
+<app-image-set-editor
+  [visible]="showImageSetEditor"
+  [assetId]="editingAssetId"
+  [initialName]="editingAssetName"
+  [initialEntries]="editingAssetEntries"
+  [allImages]="allImages"
+  (close)="showImageSetEditor = false"
+  (saved)="onImageSetSaved($event)"
+>
+</app-image-set-editor>
+
+<app-audio-set-editor
+  [visible]="showAudioSetEditor"
+  [assetId]="editingAudioAssetId"
+  [initialName]="editingAudioAssetName"
+  [initialEntries]="editingAudioAssetEntries"
+  [allAudio]="allAudio"
+  (close)="showAudioSetEditor = false"
+  (saved)="onAudioSetSaved($event)"
+>
+</app-audio-set-editor>
+
+@if (showCustomRotationEditor) {
+  <app-custom-rotation-editor
+    [assetId]="editingRotationAssetId"
+    [assetName]="editingRotationAssetName"
+    [numLanes]="editingRotationNumLanes"
+    [rotations]="editingRotations"
+    (cancelled)="showCustomRotationEditor = false"
+    (saved)="onCustomRotationSaved($event)"
+  >
+  </app-custom-rotation-editor>
+}
+
+<app-confirmation-modal
+  [visible]="showDeleteConfirm"
+  title="AM_CONFIRM_DELETE_TITLE"
+  message="AM_CONFIRM_DELETE"
+  confirmText="AM_BTN_DELETE"
+  cancelText="AM_BTN_CANCEL"
+  (confirm)="onConfirmDelete()"
+  (cancel)="onCancelDelete()"
+>
+</app-confirmation-modal>
