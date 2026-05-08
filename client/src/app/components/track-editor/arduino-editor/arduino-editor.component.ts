@@ -855,13 +855,19 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
         value: "3",
       },
       {
+        label: this.translationService.translate("AE_LED_TYPE_TM1809"),
+        value: "4",
+      },
+      {
         label: this.translationService.translate("AE_LED_TYPE_OTHER"),
         value: "12",
       },
     ];
     if (this.config()?.hardwareType === 0) {
-      // Uno/Nano - Only keep WS2811 and OTHER to save Flash/RAM in the sketch
-      this.ledTypes = allTypes.filter((t) => ["1", "12"].includes(t.value));
+      // Uno/Nano - Only keep WS2811, TM1809 and OTHER to save Flash/RAM in the sketch
+      this.ledTypes = allTypes.filter((t) =>
+        ["1", "4", "12"].includes(t.value),
+      );
     } else {
       this.ledTypes = allTypes;
     }
@@ -1125,9 +1131,23 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     const ledType = parseInt(val, 10);
     config.ledStrings[stringIdx].ledType = ledType;
 
+    // Change default color order based on LED type
+    // WS2811: RGB (0)
+    // WS2812: GRB (1)
+    // WS2812B: GRB (1)
+    // TM1809/Default: RGB (0)
+    let colorOrder = 0; // RGB
+    if (ledType === 2 || ledType === 3) {
+      colorOrder = 1; // GRB
+    }
+    config.ledStrings[stringIdx].colorOrder = colorOrder;
+
     if (this.isLedStringsLinked) {
       config.ledStrings.forEach((ls, i) => {
-        if (i !== stringIdx) ls.ledType = ledType;
+        if (i !== stringIdx) {
+          ls.ledType = ledType;
+          ls.colorOrder = colorOrder;
+        }
       });
     }
     this.updateArduinoConfig();

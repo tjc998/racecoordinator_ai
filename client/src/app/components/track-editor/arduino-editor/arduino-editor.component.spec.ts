@@ -969,12 +969,12 @@ describe("ArduinoEditorComponent", () => {
       expect(component.config()!.ledStrings.length).toBe(8); // Blocked
     });
 
-    it("should restrict LED types for Uno to WS2811 and OTHER", () => {
+    it("should restrict LED types for Uno to WS2811, TM1809 and OTHER", () => {
       component.onHardwareTypeChange(0); // Uno
       fixture.detectChanges();
 
-      expect(component.ledTypes.length).toBe(2);
-      expect(component.ledTypes.map((t) => t.value)).toEqual(["1", "12"]);
+      expect(component.ledTypes.length).toBe(3);
+      expect(component.ledTypes.map((t) => t.value)).toEqual(["1", "4", "12"]);
     });
 
     it("should default unsupported LED types to WS2811 when switching to Uno", () => {
@@ -993,16 +993,17 @@ describe("ArduinoEditorComponent", () => {
       expect(component.config()!.ledStrings[1].ledType).toBe(12);
     });
 
-    it("should support 5 LED types for Mega", () => {
+    it("should support 6 LED types for Mega", () => {
       component.onHardwareTypeChange(1); // Mega
       fixture.detectChanges();
 
-      expect(component.ledTypes.length).toBe(5);
+      expect(component.ledTypes.length).toBe(6);
       expect(component.ledTypes.map((t) => t.value)).toEqual([
         "0",
         "1",
         "2",
         "3",
+        "4",
         "12",
       ]);
     });
@@ -1116,6 +1117,62 @@ describe("ArduinoEditorComponent", () => {
       expect(noneGroup).toBeTruthy();
       expect(noneGroup!.actions[0].value).toBe(""); // Unused
       expect(noneGroup!.actions[1].value).toBe("reserved"); // Reserved
+    });
+  });
+
+  describe("LED Type and Color Order Defaults", () => {
+    beforeEach(() => {
+      fixture = TestBed.createComponent(ArduinoEditorComponent);
+      component = fixture.componentInstance;
+      fixture.componentRef.setInput("config", makeConfig());
+      fixture.componentRef.setInput("lanes", [
+        new Lane("l1", "#fff", "#ff0000", 10),
+      ]);
+
+      // Add a string
+      const rgbBehavior = (PinBehavior as any).BEHAVIOR_LED_RGB_STRING;
+      component.setPinBehavior(true, 5, rgbBehavior.toString());
+      fixture.detectChanges();
+    });
+
+    it("should default to RGB for WS2811", () => {
+      component.onLedStringLedTypeChange(0, 1); // WS2811
+      expect(component.config()!.ledStrings[0].colorOrder).toBe(0); // RGB
+    });
+
+    it("should default to GRB for WS2812", () => {
+      component.onLedStringLedTypeChange(0, 2); // WS2812
+      expect(component.config()!.ledStrings[0].colorOrder).toBe(1); // GRB
+    });
+
+    it("should default to GRB for WS2812B", () => {
+      component.onLedStringLedTypeChange(0, 3); // WS2812B
+      expect(component.config()!.ledStrings[0].colorOrder).toBe(1); // GRB
+    });
+
+    it("should default to RGB for TM1809", () => {
+      component.onLedStringLedTypeChange(0, 4); // TM1809
+      expect(component.config()!.ledStrings[0].colorOrder).toBe(0); // RGB
+    });
+
+    it("should default to RGB for Neopixel", () => {
+      component.onLedStringLedTypeChange(0, 0); // Neopixel
+      expect(component.config()!.ledStrings[0].colorOrder).toBe(0); // RGB
+    });
+
+    it("should sync color order across linked strings when type changes", () => {
+      // Add second string
+      const rgbBehavior = (PinBehavior as any).BEHAVIOR_LED_RGB_STRING;
+      component.setPinBehavior(true, 6, rgbBehavior.toString());
+      component.isLedStringsLinked = true;
+      fixture.detectChanges();
+
+      component.onLedStringLedTypeChange(0, 2); // Change first string to WS2812
+
+      expect(component.config()!.ledStrings[0].ledType).toBe(2);
+      expect(component.config()!.ledStrings[0].colorOrder).toBe(1);
+      expect(component.config()!.ledStrings[1].ledType).toBe(2);
+      expect(component.config()!.ledStrings[1].colorOrder).toBe(1);
     });
   });
 });
