@@ -85,4 +85,12 @@ public abstract class DefaultProtocol implements IProtocol {
   public int getInterfaceIndex() {
     return interfaceIndex;
   }
+
+  @Override
+  public boolean isHealthy() {
+    return true;
+  }
+
+  @Override
+  public void initializeHardwareState() {}
 }

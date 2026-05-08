@@ -83,4 +83,10 @@ public class RacePowerTest {
     verify(mockProtocols).setLanePower(true, 0);
     verify(mockProtocols).setLanePower(true, 1);
   }
+
+  @Test
+  public void testInitializeHardwareState() {
+    race.initializeHardwareState();
+    verify(mockProtocols, times(1)).initializeHardwareState();
+  }
 }

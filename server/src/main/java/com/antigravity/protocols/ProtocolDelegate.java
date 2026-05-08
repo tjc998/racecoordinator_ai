@@ -175,4 +175,11 @@ public class ProtocolDelegate implements IProtocol {
     }
     return true;
   }
+
+  @Override
+  public void initializeHardwareState() {
+    for (IProtocol protocol : protocols) {
+      protocol.initializeHardwareState();
+    }
+  }
 }

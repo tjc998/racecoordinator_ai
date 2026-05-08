@@ -21,10 +21,12 @@ import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import org.junit.Before;
 import org.junit.Test;
@@ -463,6 +465,16 @@ public class ArduinoProtocolTest {
   }
 
   @Test
+  public void testSchedulerStartsOnlyOnOpen() {
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    assertEquals("Should have no tasks scheduled initially", 0, scheduler.commands.size());
+
+    protocol.open();
+    // Should have 3 tasks: Status, Refuel, LED Flash
+    assertEquals("Should have 3 tasks scheduled after open", 3, scheduler.commands.size());
+  }
+
+  @Test
   @SuppressWarnings("unchecked")
   public void testHasPerLaneRelays_True_Analog() {
     // Set analog pin 0 to be a relay for lane 1
@@ -501,6 +513,50 @@ public class ArduinoProtocolTest {
     // 0x4F, 0x44 (Digital), 0x04 (Pin 4), 0x00 (Low), 0x3B
     byte[] expectedOff = {0x4F, 0x44, 0x04, 0x00, 0x3B};
     assertArrayEquals(expectedOff, serialConnection.lastWrittenData);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testSetPinStateCaching() throws Exception {
+    // Configure Pin 4 as Main Relay
+    config.digitalIds =
+        new ArrayList<>(Collections.nCopies(10, PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.digitalIds.set(4, PinBehavior.BEHAVIOR_RELAY.getNumber());
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.open();
+
+    // 0. Setup: verify version to allow messages
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+    serialConnection.allWrittenData.clear();
+
+    // 1. Set pin 4 to HIGH
+    protocol.setPinState(true, 4, true);
+    assertEquals("Should have sent 1 message", 1, serialConnection.allWrittenData.size());
+    byte[] expectedHigh = {0x4F, 0x44, 4, 1, 0x3B};
+    assertArrayEquals(expectedHigh, serialConnection.allWrittenData.get(0));
+
+    // 2. Set pin 4 to HIGH again (should be cached)
+    protocol.setPinState(true, 4, true);
+    assertEquals("Should be cached (size still 1)", 1, serialConnection.allWrittenData.size());
+
+    // 3. Set pin 4 to LOW
+    protocol.setPinState(true, 4, false);
+    assertEquals("Should have sent 2nd message", 2, serialConnection.allWrittenData.size());
+    byte[] expectedLow = {0x4F, 0x44, 4, 0, 0x3B};
+    assertArrayEquals(expectedLow, serialConnection.allWrittenData.get(1));
+
+    // 4. Force cache clear (simulating what heartbeat mismatch does)
+    Field cacheField = ArduinoProtocol.class.getDeclaredField("pinStateCache");
+    cacheField.setAccessible(true);
+    ((Map<?, ?>) cacheField.get(protocol)).clear();
+
+    // 5. Set pin 4 to LOW again (should NOT be cached anymore)
+    protocol.setPinState(true, 4, false);
+    assertEquals(
+        "Should have sent message after cache clear", 3, serialConnection.allWrittenData.size());
+    assertArrayEquals(expectedLow, serialConnection.allWrittenData.get(2));
   }
 
   @Test

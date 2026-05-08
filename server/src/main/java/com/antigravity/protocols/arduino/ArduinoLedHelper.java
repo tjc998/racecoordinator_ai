@@ -41,6 +41,12 @@ public class ArduinoLedHelper {
     this.protocol = protocol;
   }
 
+  public void initializeHardwareState() {
+    sendRgbLedMode();
+    refreshRaceState();
+    refreshThermometers();
+  }
+
   public void setLaneColors(List<String> colors) {
     this.laneColors = colors != null ? new ArrayList<>(colors) : new ArrayList<>();
   }

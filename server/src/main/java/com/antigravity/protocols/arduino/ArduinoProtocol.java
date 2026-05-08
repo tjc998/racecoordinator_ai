@@ -65,6 +65,7 @@ public class ArduinoProtocol extends DefaultProtocol {
   private int[] lastPitOutState;
   private int[] lastLapPinState;
   private Map<Integer, Integer> lastCallButtonState = new HashMap<>();
+  private Map<Integer, Boolean> pinStateCache = new HashMap<>();
   private ArduinoLedHelper ledHelper;
 
   private Boolean lastMainPower = null;
@@ -103,31 +104,33 @@ public class ArduinoProtocol extends DefaultProtocol {
     this.numLanes = numLanes;
     logger.info("ArduinoProtocol initialized with {} lanes", numLanes);
 
-    this.serialConnection = serialConnection != null ? serialConnection : createSerialConnection();
-    this.statusScheduler = statusScheduler;
-    rxBuffer = new CircularBuffer(4096);
-    buildPinLookup();
-
-    // Initialize the hardware timing.
-    hwLapTime = new HwTime[numLanes];
-    hwSegmentTime = new HwTime[numLanes];
-    for (int i = 0; i < numLanes; i++) {
-      hwLapTime[i] = new HwTime();
-      hwSegmentTime[i] = new HwTime();
-    }
-    hwReset = 1;
-    laneInPits = new boolean[numLanes];
-    lastRefuelTimeMs = new long[numLanes];
-    lastAnalogTimeMs = new long[numLanes];
-    lastPitOutState = new int[numLanes];
-    lastLapPinState = new int[numLanes];
-    for (int i = 0; i < numLanes; i++) {
-      lastRefuelTimeMs[i] = 0;
-      lastAnalogTimeMs[i] = 0;
-      lastPitOutState[i] = -1;
-      lastLapPinState[i] = -1;
-    }
+    this.serialConnection = serialConnection != null ? serialConnection : new SerialConnection();
+    this.statusScheduler =
+        statusScheduler != null ? statusScheduler : Executors.newScheduledThreadPool(1);
+    this.rxBuffer = new CircularBuffer(4096);
     this.ledHelper = new ArduinoLedHelper(this);
+
+    this.hwLapTime = new HwTime[numLanes];
+    this.hwSegmentTime = new HwTime[numLanes];
+    for (int i = 0; i < numLanes; i++) {
+      this.hwLapTime[i] = new HwTime();
+      this.hwSegmentTime[i] = new HwTime();
+    }
+    this.hwReset = 1;
+
+    this.laneInPits = new boolean[numLanes];
+    this.lastRefuelTimeMs = new long[numLanes];
+    this.lastAnalogTimeMs = new long[numLanes];
+    this.lastPitOutState = new int[numLanes];
+    this.lastLapPinState = new int[numLanes];
+    for (int i = 0; i < numLanes; i++) {
+      this.lastRefuelTimeMs[i] = 0;
+      this.lastAnalogTimeMs[i] = 0;
+      this.lastPitOutState[i] = -1;
+      this.lastLapPinState[i] = -1;
+    }
+
+    buildPinLookup();
   }
 
   protected SerialConnection createSerialConnection() {
@@ -166,7 +169,7 @@ public class ArduinoProtocol extends DefaultProtocol {
       int baudRateToUse = 115200;
       logger.info("Attempting to connect to {} at {} baud", config.commPort, baudRateToUse);
       serialConnection.connect(config.commPort, baudRateToUse);
-
+      pinStateCache.clear();
       serialConnection.addListener(
           new SerialPortDataListener() {
             @Override
@@ -174,6 +177,7 @@ public class ArduinoProtocol extends DefaultProtocol {
               return SerialPort.LISTENING_EVENT_DATA_RECEIVED;
             }
 
+            @Override
             public void serialEvent(SerialPortEvent event) {
               if (event.getEventType() != SerialPort.LISTENING_EVENT_DATA_RECEIVED) {
                 return;
@@ -399,6 +403,13 @@ public class ArduinoProtocol extends DefaultProtocol {
       return;
     }
 
+    int cacheKey = (isDigital ? 1000 : 2000) + pin;
+    Boolean lastState = pinStateCache.get(cacheKey);
+    if (lastState != null && lastState == isHigh) {
+      // Pin is already in the desired state, skip sending to hardware
+      return;
+    }
+
     // O D/A pin state ;
     // 0x4F, 0x44/0x41, pin, 0x01/0x00, 0x3B
     byte[] message = new byte[5];
@@ -409,11 +420,13 @@ public class ArduinoProtocol extends DefaultProtocol {
     message[4] = TERMINATOR;
 
     writeData(message);
+    pinStateCache.put(cacheKey, isHigh);
+
     logger.info(
-        "Sent Output Command - Type: {}, Pin: {}, State: {}",
-        (isDigital ? "Digital" : "Analog"),
+        "Sent PIN_STATE - Type: {}, Pin: {}, State: {}",
+        isDigital ? "Digital" : "Analog",
         pin,
-        (isHigh ? "High" : "Low"));
+        isHigh ? "HIGH" : "LOW");
   }
 
   private void processData() {
@@ -546,7 +559,12 @@ public class ArduinoProtocol extends DefaultProtocol {
         hwSegmentTime[i].add(timeInUse);
       }
     } else {
-      logger.warn("Received Heartbeat - Reset mismatch: got {}, expected {}", isReset, hwReset);
+      logger.warn(
+          "Received Heartbeat - Reset mismatch: got {}, expected {}. Clearing pin cache.",
+          isReset,
+          hwReset);
+      pinStateCache.clear();
+      hwReset = isReset;
     }
   }
 
@@ -1032,6 +1050,12 @@ public class ArduinoProtocol extends DefaultProtocol {
         }
       }
     }
+  }
+
+  @Override
+  public void initializeHardwareState() {
+    syncPower();
+    ledHelper.initializeHardwareState();
   }
 
   private void buildPinLookup() {

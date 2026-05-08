@@ -48,4 +48,6 @@ public interface IProtocol {
   int getInterfaceIndex();
 
   boolean isHealthy();
+
+  void initializeHardwareState();
 }

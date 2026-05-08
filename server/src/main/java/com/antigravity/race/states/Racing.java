@@ -99,6 +99,7 @@ public class Racing implements IRaceState {
     this.race = race;
     this.previousHeatProgress = -1.0;
     this.executionManager = race.getHeatExecutionManager();
+
     RaceFlag initialFlag = getFlagType(race);
     race.broadcastFlag(initialFlag);
     this.previousFlag = initialFlag;

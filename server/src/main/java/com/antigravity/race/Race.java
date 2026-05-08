@@ -474,6 +474,8 @@ public class Race implements ProtocolListener {
       return;
     }
 
+    this.protocols.initializeHardwareState();
+
     // 1. Race State and Flag
     this.protocols.setRaceState(
         getProtoState(state), state.getFlagType(this), getAutoStartRemaining());
@@ -748,6 +750,7 @@ public class Race implements ProtocolListener {
           protoState, protoFlag, getAutoStartRemaining() + getAutoAdvanceRemaining());
     }
 
+    // Power synchronization is now handled primarily here and in broadcastFlag
     updatePowerForFlag(protoFlag);
 
     if (previousState != null) {
