@@ -486,6 +486,10 @@ public class ArduinoProtocolTest {
     protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
     protocol.open();
 
+    // Verify version to allow power commands
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+
     // Turn ON
     protocol.setMainPower(true);
     // 0x4F, 0x44 (Digital), 0x04 (Pin 4), 0x01 (High), 0x3B
@@ -501,6 +505,42 @@ public class ArduinoProtocolTest {
 
   @Test
   @SuppressWarnings("unchecked")
+  public void testPowerSyncOnVersion() {
+    // Configure Pin 4 as Main Relay
+    config.digitalIds =
+        new ArrayList<>(Collections.nCopies(10, PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.digitalIds.set(4, PinBehavior.BEHAVIOR_RELAY.getNumber());
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.open();
+
+    // Verify no version verified yet
+    serialConnection.allWrittenData.clear();
+
+    // Call setMainPower - it should NOT send yet because version not verified
+    protocol.setMainPower(true);
+    assertEquals(
+        "Should NOT have sent power command yet", 0, serialConnection.allWrittenData.size());
+
+    // Now inject version message
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+
+    // Verify it sent the cached power state
+    // Sequence should include pin modes, led modes, then power sync
+    boolean foundPower = false;
+    byte[] expectedPower = {0x4F, 0x44, 0x04, 0x01, 0x3B};
+    for (byte[] data : serialConnection.allWrittenData) {
+      if (Arrays.equals(data, expectedPower)) {
+        foundPower = true;
+        break;
+      }
+    }
+    assertTrue("Should have synchronized power after version verification", foundPower);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
   public void testSetMainPower_NormallyClosed() {
     // Configure Pin 4 as Main Relay
     config.digitalIds =
@@ -510,6 +550,10 @@ public class ArduinoProtocolTest {
 
     protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
     protocol.open();
+
+    // Verify version to allow power commands
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
 
     // Turn ON (should be LOW)
     protocol.setMainPower(true);
@@ -535,6 +579,10 @@ public class ArduinoProtocolTest {
 
     protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
     protocol.open();
+
+    // Verify version to allow power commands
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
 
     // Turn Lane 0 ON
     protocol.setLanePower(true, 0);
@@ -568,6 +616,10 @@ public class ArduinoProtocolTest {
 
     protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
     protocol.open();
+
+    // Verify version to allow power commands
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
 
     // Turn Lane 0 ON (should be LOW)
     protocol.setLanePower(true, 0);

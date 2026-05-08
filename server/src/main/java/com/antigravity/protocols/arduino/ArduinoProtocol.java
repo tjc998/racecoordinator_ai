@@ -67,6 +67,9 @@ public class ArduinoProtocol extends DefaultProtocol {
   private Map<Integer, Integer> lastCallButtonState = new HashMap<>();
   private ArduinoLedHelper ledHelper;
 
+  private Boolean lastMainPower = null;
+  private Map<Integer, Boolean> lastLanePower = new HashMap<>();
+
   // Data sent from PC to Arduino
   private static final byte[] RESET_COMMAND = {0x52, 0x45, 0x53, 0x45, 0x54, 0x3B};
   private static final byte[] TIME_RESET_COMMAND = {0x54, 0x3B};
@@ -558,6 +561,7 @@ public class ArduinoProtocol extends DefaultProtocol {
         sendDebounce();
         sendTimeReset();
         ledHelper.sendRgbLedMode();
+        syncPower();
       } else {
         logger.error("Invalid firmware version: {}.{}.{}. Expected 2.1.0", major, minor, patch);
       }
@@ -1171,7 +1175,8 @@ public class ArduinoProtocol extends DefaultProtocol {
 
   @Override
   public void setMainPower(boolean on) {
-    if (pinLookup == null) {
+    lastMainPower = on;
+    if (!versionVerified || pinLookup == null) {
       return;
     }
 
@@ -1180,6 +1185,15 @@ public class ArduinoProtocol extends DefaultProtocol {
       if (pinConfig.behavior == InputBehavior.MAIN_RELAY) {
         setPinState(pinConfig.isDigital, pinConfig.pin, isHigh);
       }
+    }
+  }
+
+  private void syncPower() {
+    if (lastMainPower != null) {
+      setMainPower(lastMainPower);
+    }
+    for (Map.Entry<Integer, Boolean> entry : lastLanePower.entrySet()) {
+      setLanePower(entry.getValue(), entry.getKey());
     }
   }
 
@@ -1196,7 +1210,8 @@ public class ArduinoProtocol extends DefaultProtocol {
 
   @Override
   public void setLanePower(boolean on, int lane) {
-    if (pinLookup == null) {
+    lastLanePower.put(lane, on);
+    if (!versionVerified || pinLookup == null) {
       return;
     }
 

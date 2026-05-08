@@ -35,7 +35,6 @@ public class HeatOver implements IRaceState {
   @Override
   public void enter(Race race) {
     logger.info("HeatOver state entered.");
-    race.setMainPower(false);
 
     if (race.getCurrentHeat() != null) {
       race.getCurrentHeat().getStatistics().setEndTime(OffsetDateTime.now().toString());
@@ -143,17 +142,7 @@ public class HeatOver implements IRaceState {
 
                 // Handle warmup time power logic
                 double warmupTime = race.getRaceModel().getAutoAdvanceWarmupTime();
-                if (warmupTime > 0) {
-                  if (remaining <= warmupTime) {
-                    if (!race.isMainPower()) {
-                      race.setMainPower(true);
-                    }
-                  } else {
-                    if (race.isMainPower()) {
-                      race.setMainPower(false);
-                    }
-                  }
-                }
+                // Flag changes are handled by broadcastFlag
 
                 RaceFlag currentFlag = getFlagType(race);
                 if (currentFlag != lastFlag) {

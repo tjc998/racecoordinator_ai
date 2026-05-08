@@ -43,6 +43,7 @@ public class Racing implements IRaceState {
     HeatScoring scoring = race.getRaceModel().getHeatScoring();
     if (scoring == null) return RaceFlag.GREEN;
 
+    if (race.getCurrentHeat() == null) return RaceFlag.GREEN;
     List<DriverHeatData> heatDrivers = race.getCurrentHeat().getDrivers();
     if (heatDrivers == null) return RaceFlag.GREEN;
 
@@ -98,6 +99,9 @@ public class Racing implements IRaceState {
     this.race = race;
     this.previousHeatProgress = -1.0;
     this.executionManager = race.getHeatExecutionManager();
+    RaceFlag initialFlag = getFlagType(race);
+    race.broadcastFlag(initialFlag);
+    this.previousFlag = initialFlag;
 
     if (race.getStatistics().getStartTime() == null) {
       race.getStatistics().setStartTime(OffsetDateTime.now().toString());
@@ -108,8 +112,6 @@ public class Racing implements IRaceState {
       race.getCurrentHeat().getStatistics().setStartTime(OffsetDateTime.now().toString());
       race.getCurrentHeat().getStatistics().setStartMillis(System.currentTimeMillis());
     }
-
-    race.setMainPower(true);
 
     HeatScoring scoring = race.getRaceModel().getHeatScoring();
     if (scoring != null && scoring.getFinishMethod() == FinishMethod.Timed) {
@@ -124,9 +126,6 @@ public class Racing implements IRaceState {
     int laneCount = 0;
     if (race.getTrack() != null && race.getTrack().getLanes() != null) {
       laneCount = race.getTrack().getLanes().size();
-      for (int i = 0; i < laneCount; i++) {
-        race.setLanePower(true, i);
-      }
       previousRefuelingState = new boolean[laneCount];
       previousFuelLevels = new int[laneCount];
       for (int i = 0; i < laneCount; i++) {

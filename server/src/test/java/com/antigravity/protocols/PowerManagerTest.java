@@ -215,4 +215,22 @@ public class PowerManagerTest {
     powerManager.setLanePower(true, 0);
     verify(laneOnlyProtocol, never()).setLanePower(anyBoolean(), anyInt());
   }
+
+  @Test
+  public void testFirstMainPowerForceSync() {
+    List<IProtocol> protocols = Arrays.asList(mainOnlyProtocol);
+    ProtocolDelegate delegate = new ProtocolDelegate(protocols);
+    powerManager = new PowerManager(delegate);
+
+    // Initial state is mainPower=false.
+    // However, since it's the FIRST call, it should still trigger.
+    powerManager.setMainPower(false);
+
+    verify(mainOnlyProtocol, times(1)).setMainPower(false);
+
+    // Second call should be redundant
+    clearInvocations(mainOnlyProtocol);
+    powerManager.setMainPower(false);
+    verify(mainOnlyProtocol, never()).setMainPower(anyBoolean());
+  }
 }

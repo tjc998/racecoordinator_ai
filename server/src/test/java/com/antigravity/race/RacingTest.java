@@ -495,6 +495,6 @@ public class RacingTest {
 
     racing.enter(mockRace);
 
-    verify(mockRace).setMainPower(true);
+    verify(mockRace).broadcastFlag(com.antigravity.proto.RaceFlag.GREEN);
   }
 }

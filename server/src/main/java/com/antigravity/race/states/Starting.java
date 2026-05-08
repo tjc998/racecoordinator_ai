@@ -25,7 +25,7 @@ public class Starting implements IRaceState {
   @Override
   public void enter(Race race) {
     logger.info("Starting state entered. Countdown initiating.");
-    race.setMainPower(false);
+    race.broadcastFlag(getFlagType(race));
 
     if (!race.hasRacedInCurrentHeat()) {
       race.prepareHeat();

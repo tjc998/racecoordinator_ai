@@ -442,7 +442,9 @@ public class Race implements ProtocolListener {
 
   public void init() {
     if (this.protocols != null) {
-      this.protocols.open();
+      if (this.protocols.open()) {
+        initializeHardwareState();
+      }
     }
   }
 
@@ -509,6 +511,10 @@ public class Race implements ProtocolListener {
 
     // 4. Heat Progress
     this.protocols.setHeatProgress(0);
+
+    // 5. Power state
+    updatePowerForFlag(state.getFlagType(this));
+    forceMainPowerSync();
   }
 
   private void createProtocols(boolean isDemoMode) {
@@ -661,6 +667,7 @@ public class Race implements ProtocolListener {
   public void broadcastFlag(RaceFlag flag) {
     RaceData raceDataMsg = RaceData.newBuilder().setFlag(flag).build();
     this.broadcast(raceDataMsg);
+    updatePowerForFlag(flag);
     if (protocols != null) {
       protocols.setRaceState(getProtoState(state), flag, 0);
     }
@@ -741,6 +748,8 @@ public class Race implements ProtocolListener {
           protoState, protoFlag, getAutoStartRemaining() + getAutoAdvanceRemaining());
     }
 
+    updatePowerForFlag(protoFlag);
+
     if (previousState != null) {
       previousState.exit(this);
     }
@@ -789,11 +798,12 @@ public class Race implements ProtocolListener {
   }
 
   public void setMainPower(boolean on) {
-    if (this.mainPower == on) {
-      return;
-    }
     this.mainPower = on;
     protocols.setMainPower(on);
+  }
+
+  public void forceMainPowerSync() {
+    protocols.setMainPower(this.mainPower);
   }
 
   public boolean isMainPower() {
@@ -807,6 +817,26 @@ public class Race implements ProtocolListener {
       }
     } else {
       protocols.setLanePower(on, lane);
+    }
+  }
+
+  public void updatePowerForFlag(RaceFlag flag) {
+    switch (flag) {
+      case RED:
+      case YELLOW:
+        setMainPower(false);
+        break;
+      case GREEN_YELLOW:
+        setMainPower(true);
+        setLanePower(true, -1);
+        break;
+      case GREEN:
+      case WHITE:
+      case CHECKERED:
+        setMainPower(true);
+        break;
+      default:
+        break;
     }
   }
 
@@ -891,6 +921,7 @@ public class Race implements ProtocolListener {
       // Store the initial fuel level for this heat to support restarts
       heatData.setInitialFuelLevel(participant.getFuelLevel());
     }
+    setLanePower(true, -1);
   }
 
   public void restoreHeatFuel() {

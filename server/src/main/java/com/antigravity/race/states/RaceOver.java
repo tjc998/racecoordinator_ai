@@ -26,7 +26,7 @@ public class RaceOver implements IRaceState {
   @Override
   public void enter(Race race) {
     logger.info("RaceOver state entered.");
-    race.setMainPower(false);
+    race.broadcastFlag(getFlagType(race));
 
     race.getStatistics().setEndTime(OffsetDateTime.now().toString());
     long raceStart = race.getStatistics().getStartMillis();

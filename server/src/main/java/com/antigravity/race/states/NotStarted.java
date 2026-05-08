@@ -61,20 +61,9 @@ public class NotStarted implements IRaceState {
     this.executionManager = race.getHeatExecutionManager();
 
     if (autoStartTime > 0 && !race.isAutoStartFired()) {
-
-      // Handle initial power state to avoid transient flicker
-      if (autoStartWarmupTime > 0) {
-        race.setMainPower(true);
-      } else {
-        race.setMainPower(false);
-      }
-
-      race.setLanePower(true, -1);
       startAutoStartTimer(race);
     } else {
       race.setAutoStartRemaining(0);
-      race.setMainPower(false);
-      race.setLanePower(true, -1);
       broadcastTime(race);
     }
   }
@@ -124,7 +113,6 @@ public class NotStarted implements IRaceState {
     stopTimer();
     race.setAutoStartFired(true);
     race.clearAutoTimers();
-    race.setMainPower(false);
     race.broadcastFlag(getFlagType(race));
   }
 
@@ -314,16 +302,10 @@ public class NotStarted implements IRaceState {
                 race.setAutoStartRemaining(remaining);
 
                 if (autoStartWarmupTime > 0) {
-                  if (elapsed <= autoStartWarmupTime) {
-                    if (!race.isMainPower()) {
-                      race.setMainPower(true);
-                    }
-                  } else {
+                  if (elapsed > autoStartWarmupTime) {
                     if (race.isMainPower()) {
                       // Warmup just ended
-                      logger.info(
-                          "NotStarted: Warmup ended. Turning off power and resetting heat.");
-                      race.setMainPower(false);
+                      logger.info("NotStarted: Warmup ended. Resetting heat.");
                       race.resetCurrentHeat();
                       race.broadcastFlag(RaceFlag.RED);
                     }
