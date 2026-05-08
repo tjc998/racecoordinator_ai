@@ -51,7 +51,6 @@ public class NotStarted implements IRaceState {
     race.setHasRacedInCurrentHeat(false);
     race.prepareHeat();
     double autoStartTime = race.getRaceModel().getAutoStartTime();
-    double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
 
     if (autoStartTime > 0 && !race.isAutoStartFired()) {
       race.setAutoStartRemaining(autoStartTime);

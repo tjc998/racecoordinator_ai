@@ -141,7 +141,6 @@ public class HeatOver implements IRaceState {
                 race.setAutoAdvanceRemaining(remaining);
 
                 // Handle warmup time power logic
-                double warmupTime = race.getRaceModel().getAutoAdvanceWarmupTime();
                 // Flag changes are handled by broadcastFlag
 
                 RaceFlag currentFlag = getFlagType(race);
