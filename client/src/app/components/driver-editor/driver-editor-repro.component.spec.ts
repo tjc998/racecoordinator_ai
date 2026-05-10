@@ -88,16 +88,6 @@ class MockItemSelectorComponent {
 }
 
 @Component({
-  selector: "app-undo-redo-controls",
-  standalone: true,
-  template: "",
-  imports: [FormsModule],
-})
-class MockUndoRedoControlsComponent {
-  manager = input<any>();
-}
-
-@Component({
   selector: "app-editor-title",
   standalone: true,
   template: "",
@@ -226,7 +216,6 @@ describe("DriverEditorComponent Reproduction", () => {
         MockBackButtonComponent,
         MockAudioSelectorComponent,
         MockItemSelectorComponent,
-        MockUndoRedoControlsComponent,
         MockImageSelectorComponent,
         MockEditorTitleComponent,
         MockHelpOverlayComponent,

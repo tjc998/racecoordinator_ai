@@ -52,16 +52,6 @@ class MockBackButtonComponent {
 }
 
 @Component({
-  selector: "app-undo-redo-controls",
-  standalone: true,
-  template: "",
-  imports: [FormsModule, DragDropModule],
-})
-class MockUndoRedoControlsComponent {
-  manager = input<any>();
-}
-
-@Component({
   selector: "app-editor-title",
   standalone: true,
   template: "",
@@ -142,7 +132,6 @@ describe("TrackEditorComponent", () => {
         TrackEditorComponent,
         TranslatePipe,
         MockBackButtonComponent,
-        MockUndoRedoControlsComponent,
         MockEditorTitleComponent,
       ],
       schemas: [NO_ERRORS_SCHEMA],

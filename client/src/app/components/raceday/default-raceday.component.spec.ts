@@ -2,7 +2,6 @@ import { DragDropModule } from "@angular/cdk/drag-drop";
 import {
   ChangeDetectorRef,
   Component,
-  Directive,
   input,
   output,
   Pipe,
@@ -32,14 +31,6 @@ class MockTranslatePipe implements PipeTransform {
   }
 }
 
-@Directive({
-  selector: "[appSvgTextScaler]",
-  standalone: true,
-})
-class MockSvgTextScalerDirective {
-  maxWidth = input<number>(0);
-  scaleToFit = input<boolean>(false);
-}
 import { of, Subject } from "rxjs";
 import { THEME_SLOT_KEYS } from "@app/models/theme";
 import { RaceConnectionService } from "@app/services/race-connection.service";
@@ -181,7 +172,6 @@ describe("DefaultRacedayComponent", () => {
         DefaultRacedayMockAcknowledgementModalComponent,
         DefaultRacedayMockConfirmationModalComponent,
         MockTranslatePipe,
-        MockSvgTextScalerDirective,
       ],
       providers: [
         { provide: DataService, useValue: mockDataService },
