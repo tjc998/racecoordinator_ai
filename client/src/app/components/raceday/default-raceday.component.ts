@@ -507,6 +507,10 @@ export class DefaultRacedayComponent
               }
             }
 
+            if (lap.type === LapType.MIN_LAP_TIME) {
+              this.playThemedSound(THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME);
+            }
+
             // Halfway logic for lap-based races
             const scoring = this.race?.heat_scoring;
             if (
@@ -539,6 +543,8 @@ export class DefaultRacedayComponent
                 ttsContext,
                 this.logger,
               );
+            } else if (lap.isDrift) {
+              this.playThemedSound(THEME_SLOT_KEYS.AUDIO_DRIFT_LAP);
             } else if (
               driver.lapAudio.type !== "none" &&
               (driver.lapAudio.url ||

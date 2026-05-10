@@ -559,4 +559,19 @@ public class HeatExecutionManagerTest {
     executionManager.onSegment(0, 1.2, 1);
     assertEquals(1, dhd.getSegments().size());
   }
+
+  @Test
+  public void testDriftLapType() {
+    executionManager.initialize(1);
+    // Reaction
+    executionManager.onLap(0, 1.0, 1, false, true, false);
+
+    // Record a drift lap
+    // onLap(int lane, double lapTime, int interfaceId, boolean isWarmup, boolean checkFinish,
+    // boolean isDrift)
+    executionManager.onLap(0, 5.0, 1, false, true, true);
+
+    DriverHeatData.LapData lapData = race.getCurrentHeat().getDrivers().get(0).getLaps().get(0);
+    assertTrue(lapData.isDrift());
+  }
 }

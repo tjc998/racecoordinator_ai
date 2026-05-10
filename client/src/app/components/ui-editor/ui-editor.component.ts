@@ -151,6 +151,16 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       label: "UE_LABEL_SECONDS_LEFT_HALFWAY",
       mode: "single",
     },
+    {
+      key: "audio.min_lap_time",
+      label: "UE_LABEL_MIN_LAP_TIME_AUDIO",
+      mode: "single",
+    },
+    {
+      key: "audio.drift_lap",
+      label: "UE_LABEL_DRIFT_LAP_AUDIO",
+      mode: "single",
+    },
   ];
 
   constructor(

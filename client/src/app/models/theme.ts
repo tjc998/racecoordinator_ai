@@ -42,4 +42,6 @@ export const THEME_SLOT_KEYS = {
   AUDIO_YELLOW_FLAG: "audio.yellowflag",
   AUDIO_SECONDS_LEFT_HALFWAY: "audio.seconds_left.halfway",
   AUDIO_PENALTY: "audio.penalty",
+  AUDIO_MIN_LAP_TIME: "audio.min_lap_time",
+  AUDIO_DRIFT_LAP: "audio.drift_lap",
 } as const;

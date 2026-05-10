@@ -1309,6 +1309,20 @@ public class AssetService {
         changed = true;
       }
 
+      // 7. Migration: Ensure audio.min_lap_time and audio.drift_lap are present
+      if (!audioSlots.containsKey("audio.min_lap_time")) {
+        audioSlots.append(
+            "audio.min_lap_time",
+            new Document("type", "tts").append("text", "{driver.nickname} min lap time"));
+        changed = true;
+      }
+      if (!audioSlots.containsKey("audio.drift_lap")) {
+        audioSlots.append(
+            "audio.drift_lap",
+            new Document("type", "tts").append("text", "{driver.nickname} drift lap"));
+        changed = true;
+      }
+
       if (changed) {
         themes.updateOne(
             Filters.eq("_id", theme.get("_id")),
@@ -1363,6 +1377,12 @@ public class AssetService {
     audioSlots.append(
         "audio.seconds_left",
         new Document("type", "audio_set").append("url", "default_seconds-left-set"));
+    audioSlots.append(
+        "audio.min_lap_time",
+        new Document("type", "tts").append("text", "{driver.nickname} min lap time"));
+    audioSlots.append(
+        "audio.drift_lap",
+        new Document("type", "tts").append("text", "{driver.nickname} drift lap"));
 
     Document theme =
         new Document()

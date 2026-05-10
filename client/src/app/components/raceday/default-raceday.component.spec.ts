@@ -736,6 +736,41 @@ describe("DefaultRacedayComponent", () => {
     });
   });
 
+  describe("themed audio events", () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+    });
+
+    it("should play themed min lap time sound when receiving MIN_LAP_TIME lap", () => {
+      spyOn(component as any, "playThemedSound");
+
+      lapsSubject.next({
+        objectId: "hd1",
+        lapTime: 2.0,
+        type: LapType.MIN_LAP_TIME,
+      });
+
+      expect((component as any).playThemedSound).toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME,
+      );
+    });
+
+    it("should play themed drift lap sound when receiving drift lap", () => {
+      spyOn(component as any, "playThemedSound");
+
+      lapsSubject.next({
+        objectId: "hd1",
+        lapTime: 5.0,
+        type: LapType.LAP,
+        isDrift: true,
+      });
+
+      expect((component as any).playThemedSound).toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_DRIFT_LAP,
+      );
+    });
+  });
+
   describe("loadColumns and re-indexing", () => {
     it("should re-index column layout at runtime via loadColumns", () => {
       // Setup settings with "broken" indexing (e.g. segmentTime_2 and segmentTime_3 but no 0 or 1)

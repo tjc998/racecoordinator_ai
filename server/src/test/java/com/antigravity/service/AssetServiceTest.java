@@ -580,4 +580,34 @@ public class AssetServiceTest {
     assertTrue("Should set slots.flag.green", secondUpdate.contains("flag.green"));
     assertTrue("Should set slots.flag.red", secondUpdate.contains("flag.red"));
   }
+
+  @Test
+  public void testBackfillThemeSlots_AddsNewAudioSlots() {
+    // Mock an existing theme without the new audio slots
+    Document existingTheme =
+        new Document("_id", "theme_1")
+            .append("name", "Test Theme")
+            .append("is_default", false)
+            .append(
+                "audio_slots", new Document("audio.yellowflag", new Document("type", "preset")));
+
+    FindIterable<Document> findIterable = mock(FindIterable.class);
+    MongoCursor<Document> cursor = mock(MongoCursor.class);
+    when(themesCollection.find()).thenReturn(findIterable);
+    when(findIterable.iterator()).thenReturn(cursor);
+    when(cursor.hasNext()).thenReturn(true, false);
+    when(cursor.next()).thenReturn(existingTheme);
+
+    assetService.backfillThemeSlots();
+
+    // Verify update was called to add the new audio slots
+    ArgumentCaptor<Bson> updateCaptor = ArgumentCaptor.forClass(Bson.class);
+    verify(themesCollection, atLeastOnce()).updateOne(any(Bson.class), updateCaptor.capture());
+
+    String lastUpdate = updateCaptor.getValue().toString();
+    assertTrue("Should include audio.min_lap_time", lastUpdate.contains("audio.min_lap_time"));
+    assertTrue("Should include audio.drift_lap", lastUpdate.contains("audio.drift_lap"));
+    assertTrue("Should include default TTS text", lastUpdate.contains("min lap time"));
+    assertTrue("Should include default TTS text", lastUpdate.contains("drift lap"));
+  }
 }

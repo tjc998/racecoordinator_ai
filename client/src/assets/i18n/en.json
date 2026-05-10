@@ -995,6 +995,8 @@
   "UE_LABEL_SECONDS_LEFT_60": "Seconds Left -- 1 Minute",
   "UE_LABEL_SECONDS_LEFT_AUDIO": "Seconds Left Audio Set",
   "UE_LABEL_SECONDS_LEFT_HALFWAY": "Seconds Left -- Halfway",
+  "UE_LABEL_MIN_LAP_TIME_AUDIO": "MIN LAP TIME",
+  "UE_LABEL_DRIFT_LAP_AUDIO": "DRIFT LAP",
   "UE_LABEL_SELECTED": "Selected",
   "UE_LABEL_SORT_STANDINGS": "Sort Raceday by Standings",
   "UE_LABEL_THEME": "Theme",
