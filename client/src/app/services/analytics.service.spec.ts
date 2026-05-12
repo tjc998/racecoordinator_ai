@@ -7,7 +7,7 @@ import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 
 import { AnalyticsService } from "./analytics.service";
-import { DataService } from "./data.service";
+import { DataService } from "@app/data.service";
 
 describe("AnalyticsService", () => {
   let service: AnalyticsService;
