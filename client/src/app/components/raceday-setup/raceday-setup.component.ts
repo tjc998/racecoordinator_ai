@@ -188,7 +188,18 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     this.monitorConnection();
 
     try {
-      if (await this.fileSystem.hasCustomFiles()) {
+      if (
+        await this.fileSystem.hasCustomFiles(
+          "raceday-setup.component.html",
+          "raceday-setup",
+        )
+      ) {
+        // Found in 'raceday-setup/' folder
+        await this.loadCustomComponent("raceday-setup");
+      } else if (
+        await this.fileSystem.hasCustomFiles("raceday-setup.component.html")
+      ) {
+        // Fallback to root custom folder
         await this.loadCustomComponent();
       } else {
         this.loadDefaultComponent();
@@ -419,15 +430,17 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     });
   }
 
-  async loadCustomComponent() {
+  async loadCustomComponent(subfolder?: string) {
     try {
       const html = await this.fileSystem.getCustomFile(
         "raceday-setup.component.html",
+        subfolder,
       );
       let css = "";
       try {
         css = await this.fileSystem.getCustomFile(
           "raceday-setup.component.css",
+          subfolder,
         );
       } catch (e) {
         // CSS is optional
@@ -438,6 +451,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
       try {
         tsCode = await this.fileSystem.getCustomFile(
           "raceday-setup.component.ts",
+          subfolder,
         );
       } catch (e) {
         this.logger.debug("No custom TS found");

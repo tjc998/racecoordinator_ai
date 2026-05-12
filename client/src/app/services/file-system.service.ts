@@ -89,7 +89,10 @@ export class FileSystemService {
     });
   }
 
-  async hasCustomFiles(): Promise<boolean> {
+  async hasCustomFiles(
+    filename?: string,
+    subfolder?: string,
+  ): Promise<boolean> {
     const handle = await this.getCustomDirectoryHandle();
     if (!handle) return false;
 
@@ -97,28 +100,66 @@ export class FileSystemService {
     const permission = await this.verifyPermission(handle, false);
     if (!permission) return false;
 
+    let targetDir = handle;
+    if (subfolder) {
+      try {
+        targetDir = await handle.getDirectoryHandle(subfolder);
+      } catch {
+        return false;
+      }
+    }
+
+    if (filename) {
+      try {
+        await targetDir.getFileHandle(filename);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
     try {
-      // Check for required files
-      await handle.getFileHandle("raceday-setup.component.html");
-      return true;
+      // Check for any of the supported files
+      const supported = [
+        "raceday-setup.component.html",
+        "raceday.component.html",
+      ];
+      for (const file of supported) {
+        try {
+          await targetDir.getFileHandle(file);
+          return true;
+        } catch {
+          // Continue to next file
+        }
+      }
+      return false;
     } catch {
       return false;
     }
   }
 
-  async getCustomFile(filename: string): Promise<string> {
+  async getCustomFile(filename: string, subfolder?: string): Promise<string> {
     const handle = await this.getCustomDirectoryHandle();
     if (!handle) throw new Error("No custom directory configured");
 
     const permission = await this.verifyPermission(handle, false);
     if (!permission) throw new Error("Permission denied");
 
-    const fileHandle = await handle.getFileHandle(filename);
+    let targetDir = handle;
+    if (subfolder) {
+      targetDir = await handle.getDirectoryHandle(subfolder);
+    }
+
+    const fileHandle = await targetDir.getFileHandle(filename);
     const file = await fileHandle.getFile();
     return file.text();
   }
 
-  async appendToFile(filename: string, content: string): Promise<void> {
+  async appendToFile(
+    filename: string,
+    content: string,
+    subfolder?: string,
+  ): Promise<void> {
     const handle = await this.getCustomDirectoryHandle();
     if (!handle) return; // Silent fail if no directory configured
 
@@ -126,7 +167,16 @@ export class FileSystemService {
     if (!permission) return;
 
     try {
-      const fileHandle = await handle.getFileHandle(filename, { create: true });
+      let targetDir = handle;
+      if (subfolder) {
+        targetDir = await handle.getDirectoryHandle(subfolder, {
+          create: true,
+        });
+      }
+
+      const fileHandle = await targetDir.getFileHandle(filename, {
+        create: true,
+      });
       const writable = await fileHandle.createWritable({
         keepExistingData: true,
       });

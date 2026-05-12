@@ -85,17 +85,19 @@ export class RacedayComponent implements OnInit, CanComponentDeactivate {
     this.container.clear();
 
     try {
-      if (await this.fileSystem.hasCustomFiles()) {
-        // Check if a specific raceday override exists, or if we should use the same folder but look for raceday files?
-        // The requirement says: "use the same folder selected in the option customize ui".
-        // The fileSystem service uses 'raceday-setup-dir' handle.
-        // We should look for 'raceday.component.html' / .css / .ts in that same folder.
-
-        // Note: hasCustomFiles checks for 'raceday-setup.component.html'.
-        // We should probably check for 'raceday.component.html' specifically here.
-        // But the requirement says "if the custom files are not found in the custom folder, fallback".
-
-        // Let's try to load custom component.
+      if (
+        await this.fileSystem.hasCustomFiles(
+          "raceday.component.html",
+          "raceday",
+        )
+      ) {
+        // Found in 'raceday/' folder
+        await this.loadCustomComponent("raceday");
+        this.cdr.detectChanges();
+      } else if (
+        await this.fileSystem.hasCustomFiles("raceday.component.html")
+      ) {
+        // Fallback to root custom folder
         await this.loadCustomComponent();
         this.cdr.detectChanges();
       } else {
@@ -124,27 +126,29 @@ export class RacedayComponent implements OnInit, CanComponentDeactivate {
     this.childComponent = componentRef.instance;
   }
 
-  async loadCustomComponent() {
+  async loadCustomComponent(subfolder?: string) {
     try {
-      // We'll throw if the specific file 'raceday.component.html' is missing, triggering fallback.
-      // The 'hasCustomFiles' check in FS service checks for raceday-setup.html.
-      // We might have a setup file but not a raceday file.
-      // So we should try to get the file, and if it fails, we catch and fallback.
-
       const html = await this.fileSystem.getCustomFile(
         "raceday.component.html",
+        subfolder,
       );
 
       let css = "";
       try {
-        css = await this.fileSystem.getCustomFile("raceday.component.css");
+        css = await this.fileSystem.getCustomFile(
+          "raceday.component.css",
+          subfolder,
+        );
       } catch (e) {
         this.logger.debug("No custom CSS found for raceday");
       }
 
       let tsCode = "";
       try {
-        tsCode = await this.fileSystem.getCustomFile("raceday.component.ts");
+        tsCode = await this.fileSystem.getCustomFile(
+          "raceday.component.ts",
+          subfolder,
+        );
       } catch (e) {
         this.logger.debug("No custom TS found for raceday");
       }

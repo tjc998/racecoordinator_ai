@@ -292,4 +292,77 @@ describe("RacedaySetupComponent", () => {
     tick(6000);
     expect(mockContainer.createComponent).toHaveBeenCalled();
   }));
+
+  describe("Custom UI Folder Logic", () => {
+    it("should try to load from 'raceday-setup' subfolder first", fakeAsync(() => {
+      mockFileSystemService.hasCustomFiles.and.callFake(
+        (file?: string, subfolder?: string) => {
+          if (subfolder === "raceday-setup") return Promise.resolve(true);
+          return Promise.resolve(false);
+        },
+      );
+      mockFileSystemService.getCustomFile.and.returnValue(
+        Promise.resolve("<html></html>"),
+      );
+
+      component.ngOnInit();
+      tick(6000);
+
+      expect(mockFileSystemService.hasCustomFiles).toHaveBeenCalledWith(
+        "raceday-setup.component.html",
+        "raceday-setup",
+      );
+      expect(mockFileSystemService.getCustomFile).toHaveBeenCalledWith(
+        "raceday-setup.component.html",
+        "raceday-setup",
+      );
+    }));
+
+    it("should fall back to root custom folder if subfolder missing", fakeAsync(() => {
+      mockFileSystemService.hasCustomFiles.and.callFake(
+        (file?: string, subfolder?: string) => {
+          if (subfolder === "raceday-setup") return Promise.resolve(false);
+          if (!subfolder) return Promise.resolve(true);
+          return Promise.resolve(false);
+        },
+      );
+      mockFileSystemService.getCustomFile.and.returnValue(
+        Promise.resolve("<html></html>"),
+      );
+
+      component.ngOnInit();
+      tick(6000);
+
+      expect(mockFileSystemService.hasCustomFiles).toHaveBeenCalledWith(
+        "raceday-setup.component.html",
+        "raceday-setup",
+      );
+      expect(mockFileSystemService.hasCustomFiles).toHaveBeenCalledWith(
+        "raceday-setup.component.html",
+      );
+      expect(mockFileSystemService.getCustomFile).toHaveBeenCalledWith(
+        "raceday-setup.component.html",
+        undefined,
+      );
+    }));
+
+    it("should fall back to default component if both custom locations missing", fakeAsync(() => {
+      mockFileSystemService.hasCustomFiles.and.returnValue(
+        Promise.resolve(false),
+      );
+
+      component.ngOnInit();
+      tick(6000);
+
+      expect(mockFileSystemService.hasCustomFiles).toHaveBeenCalledWith(
+        "raceday-setup.component.html",
+        "raceday-setup",
+      );
+      expect(mockFileSystemService.hasCustomFiles).toHaveBeenCalledWith(
+        "raceday-setup.component.html",
+      );
+      // Verify loadDefaultComponent by checking that we don't call getCustomFile
+      expect(mockFileSystemService.getCustomFile).not.toHaveBeenCalled();
+    }));
+  });
 });
