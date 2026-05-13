@@ -89,4 +89,29 @@ $MvnArgs = @("test") + $args + @(
     "-Dmaven.repo.local=$ServerDir\.m2\repository"
 )
 
-& mvn @MvnArgs
+# Find mvn.cmd
+$MvnCmd = Get-Command mvn.cmd -ErrorAction SilentlyContinue
+if ($null -eq $MvnCmd) {
+    # Try common installation paths if not in PATH
+    $CommonPaths = @(
+        "$ProjectRoot\tools\maven\apache-maven-*\bin\mvn.cmd",
+        "$ProjectRoot\..\racecoordinator_ai\tools\maven\apache-maven-*\bin\mvn.cmd",
+        "C:\Maven\apache-maven-*\bin\mvn.cmd",
+        "C:\Program Files\apache-maven-*\bin\mvn.cmd",
+        "C:\maven\bin\mvn.cmd"
+    )
+    $MvnCmd = Get-Item $CommonPaths -ErrorAction SilentlyContinue | Select-Object -First 1
+}
+
+if ($null -eq $MvnCmd) {
+    Write-Warning "mvn.cmd not found in PATH or common locations. Falling back to 'mvn'."
+    $MvnExecutable = "mvn"
+} else {
+    if ($MvnCmd -is [System.IO.FileInfo]) {
+        $MvnExecutable = $MvnCmd.FullName
+    } else {
+        $MvnExecutable = "mvn.cmd"
+    }
+}
+
+& $MvnExecutable @MvnArgs

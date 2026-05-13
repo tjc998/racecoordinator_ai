@@ -49,6 +49,7 @@ if ($null -eq $MvnCmd) {
     # Try common installation paths if not in PATH
     $CommonPaths = @(
         "$PSScriptRoot\tools\maven\apache-maven-*\bin\mvn.cmd",
+        "$PSScriptRoot\..\racecoordinator_ai\tools\maven\apache-maven-*\bin\mvn.cmd",
         "C:\Maven\apache-maven-*\bin\mvn.cmd",
         "C:\Program Files\apache-maven-*\bin\mvn.cmd",
         "C:\maven\bin\mvn.cmd"
