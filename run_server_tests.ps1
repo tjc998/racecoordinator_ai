@@ -9,6 +9,35 @@ $ServerBuildDir = Join-Path $ServerTmp "target_test"
 Write-Host ""
 Write-Host "--- 🔹 Running Server Tests (PowerShell) 🔹 ---" -ForegroundColor Cyan
 
+# Setup Java Environment
+$TargetJavaHome = "C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot"
+
+if (-not $env:JAVA_HOME -or -not (Test-Path $env:JAVA_HOME)) {
+    if (Test-Path $TargetJavaHome) {
+        $env:JAVA_HOME = $TargetJavaHome
+    } else {
+        # Try to find any JDK in common locations
+        $PossiblePaths = @(
+            "$PSScriptRoot\tools\jdk\jdk-*",
+            "C:\Program Files\Eclipse Adoptium\jdk-*",
+            "C:\Program Files\Microsoft\jdk-*",
+            "C:\Program Files\Java\jdk-*",
+            "C:\Program Files\Android\openjdk\jdk-*"
+        )
+        $FoundPath = Get-ChildItem $PossiblePaths -ErrorAction SilentlyContinue | Sort-Object Name -Descending | Select-Object -First 1
+        if ($FoundPath) {
+            $env:JAVA_HOME = $FoundPath.FullName
+        }
+    }
+}
+
+if ($env:JAVA_HOME -and (Test-Path $env:JAVA_HOME)) {
+    $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
+    Write-Host "Using JAVA_HOME: $env:JAVA_HOME" -ForegroundColor Gray
+} else {
+    Write-Warning "JAVA_HOME not found. Maven tests may fail if JDK is not in PATH."
+}
+
 if (-not (Test-Path $ServerTmp)) {
     New-Item -ItemType Directory -Path $ServerTmp -Force | Out-Null
 }

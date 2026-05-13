@@ -36,7 +36,8 @@ if (-not $env:JAVA_HOME -or -not (Test-Path $env:JAVA_HOME)) {
             "$PSScriptRoot\tools\jdk\jdk-*",
             "C:\Program Files\Eclipse Adoptium\jdk-*",
             "C:\Program Files\Microsoft\jdk-*",
-            "C:\Program Files\Java\jdk-*"
+            "C:\Program Files\Java\jdk-*",
+            "C:\Program Files\Android\openjdk\jdk-*"
         )
         $FoundPath = Get-Item $PossiblePaths -ErrorAction SilentlyContinue | Sort-Object Name -Descending | Select-Object -First 1
         if ($FoundPath) {
