@@ -27,7 +27,7 @@ foreach ($Port in $Ports) {
 # Setup Java Environment
 $TargetJavaHome = "C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot"
 
-if (-not (Test-Path $env:JAVA_HOME)) {
+if (-not $env:JAVA_HOME -or -not (Test-Path $env:JAVA_HOME)) {
     if (Test-Path $TargetJavaHome) {
         $env:JAVA_HOME = $TargetJavaHome
     } else {
@@ -45,7 +45,7 @@ if (-not (Test-Path $env:JAVA_HOME)) {
     }
 }
 
-if (Test-Path $env:JAVA_HOME) {
+if ($env:JAVA_HOME -and (Test-Path $env:JAVA_HOME)) {
     $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
     Write-Host "Using JAVA_HOME: $env:JAVA_HOME" -ForegroundColor Gray
 } else {
