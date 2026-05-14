@@ -140,7 +140,6 @@ test.describe("Modify Heats Modal Visuals", () => {
             if (!item) return "NO_COMPONENT_YET";
 
             return JSON.stringify({
-              instanceId: item.instanceId,
               allDrivers: item.allDrivers?.length ?? -1,
               databaseParticipants: item.databaseParticipants?.length ?? -1,
               driverIds: item.allDrivers

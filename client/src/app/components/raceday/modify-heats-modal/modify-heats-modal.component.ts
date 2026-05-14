@@ -69,8 +69,6 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   raceState = input<RaceState>(RaceState.NOT_STARTED);
   close = output<boolean>();
 
-  public instanceId = Math.random();
-
   protected localHeats: Heat[] = [];
   protected localParticipants: RaceParticipant[] = [];
   protected driverPool: RaceParticipant[] = [];
