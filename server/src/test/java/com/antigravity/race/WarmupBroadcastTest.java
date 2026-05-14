@@ -56,15 +56,7 @@ public class WarmupBroadcastTest {
             .isDemoMode(true)
             .build();
 
-    // Inject mock protocols via reflection since there's no getter/setter
-    try {
-      java.lang.reflect.Field protocolsField =
-          com.antigravity.race.Race.class.getDeclaredField("protocols");
-      protocolsField.setAccessible(true);
-      protocolsField.set(race, mockProtocols);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    race.injectProtocols(mockProtocols);
   }
 
   @Test

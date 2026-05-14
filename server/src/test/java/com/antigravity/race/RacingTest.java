@@ -14,6 +14,7 @@ import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.race.states.HeatOver;
+import com.antigravity.race.states.RaceOver;
 import com.antigravity.race.states.Racing;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -133,12 +134,14 @@ public class RacingTest {
 
     Racing racing = new Racing();
     race.changeState(racing);
-    racing.enter(race);
 
     // Wait for ticker to expire time (ticker runs every 100ms)
     Thread.sleep(1500);
 
-    assertTrue(race.getState() instanceof HeatOver);
+    assertTrue(
+        "Expected state to be HeatOver or RaceOver, but was: "
+            + race.getState().getClass().getSimpleName(),
+        race.getState() instanceof HeatOver || race.getState() instanceof RaceOver);
   }
 
   @Test

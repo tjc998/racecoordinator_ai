@@ -7,7 +7,6 @@ import static org.mockito.Mockito.when;
 
 import com.antigravity.models.Track;
 import com.antigravity.protocols.ProtocolDelegate;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Before;
@@ -44,11 +43,9 @@ public class RacePowerTest {
     race =
         new Race.Builder().model(raceModel).track(track).drivers(drivers).isDemoMode(true).build();
 
-    // Use reflection to inject a mock ProtocolDelegate
+    // Inject a mock ProtocolDelegate
     mockProtocols = mock(ProtocolDelegate.class);
-    Field protocolsField = Race.class.getDeclaredField("protocols");
-    protocolsField.setAccessible(true);
-    protocolsField.set(race, mockProtocols);
+    race.injectProtocols(mockProtocols);
   }
 
   @Test

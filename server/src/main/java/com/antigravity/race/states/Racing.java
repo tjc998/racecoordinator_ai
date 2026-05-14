@@ -135,6 +135,9 @@ public class Racing implements IRaceState {
 
     race.startProtocols();
     initializeFalseStartTimePenalties();
+    if (scheduler != null) {
+      scheduler.shutdownNow();
+    }
     scheduler = Executors.newScheduledThreadPool(1);
     final Runnable ticker =
         new Runnable() {
@@ -295,15 +298,8 @@ public class Racing implements IRaceState {
       timerHandle.cancel(false);
     }
     if (scheduler != null) {
-      scheduler.shutdown();
-      try {
-        if (!scheduler.awaitTermination(2, TimeUnit.SECONDS)) {
-          scheduler.shutdownNow();
-        }
-      } catch (InterruptedException e) {
-        scheduler.shutdownNow();
-        Thread.currentThread().interrupt();
-      }
+      scheduler.shutdownNow();
+      scheduler = null;
     }
     race.stopProtocols();
     logger.info("Racing state exited.");
@@ -518,7 +514,6 @@ public class Racing implements IRaceState {
         if (newRemaining <= 0) {
           logger.info("Racing: False start penalty for lane {} expired. Turning power ON.", i);
           race.setLanePower(true, i);
-          race.syncLaneFlags();
         }
       }
     }

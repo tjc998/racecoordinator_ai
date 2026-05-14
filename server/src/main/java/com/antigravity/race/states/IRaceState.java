@@ -99,4 +99,8 @@ public interface IRaceState {
   void onCarData(CarData carData);
 
   void onCallbutton(Race race, int lane);
+
+  default boolean canChangeLane(Race race) {
+    return false;
+  }
 }

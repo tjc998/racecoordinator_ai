@@ -481,41 +481,71 @@ public class DatabaseService {
       stats.addLaps(totalLaps);
 
       // Save overall records from the runtime race object
-      stats.setFastestLapTime(runtimeRace.getOverallFastestLap());
-      stats.setFastestLapDriverName(runtimeRace.getOverallFastestLapHolder());
-      stats.setFastestLapDriverNickname(runtimeRace.getOverallFastestLapHolderNickname());
-      stats.setFastestLapTeamName(runtimeRace.getOverallFastestLapHolderTeamName());
-      stats.setFastestLapDate(runtimeRace.getOverallFastestLapDate());
+      com.antigravity.proto.RecordData recordData = runtimeRace.getRecordData(); // fqn-collision
+      com.antigravity.proto.OverallRecords overall = recordData.getOverall(); // fqn-collision
 
-      stats.setHighestScore(runtimeRace.getOverallHighestScoreValue());
-      stats.setHighestScoreHolderName(runtimeRace.getOverallHighestScoreHolder());
-      stats.setHighestScoreHolderNickname(runtimeRace.getOverallHighestScoreHolderNickname());
-      stats.setHighestScoreTeamName(runtimeRace.getOverallHighestScoreHolderTeamName());
-      stats.setHighestScoreDate(runtimeRace.getOverallHighestScoreDate());
+      if (overall.hasFastestLap()) {
+        com.antigravity.proto.RecordEntry fl = overall.getFastestLap(); // fqn-collision
+        stats.setFastestLapTime(fl.getValue());
+        stats.setFastestLapDriverName(fl.getHolderName());
+        stats.setFastestLapDriverNickname(fl.getHolderNickname());
+        stats.setFastestLapTeamName(fl.getHolderTeamName());
+        stats.setFastestLapDate(fl.getDate());
+      }
+
+      if (overall.hasHighestScore()) {
+        com.antigravity.proto.RecordEntry hs = overall.getHighestScore(); // fqn-collision
+        stats.setHighestScore(hs.getValue());
+        stats.setHighestScoreHolderName(hs.getHolderName());
+        stats.setHighestScoreHolderNickname(hs.getHolderNickname());
+        stats.setHighestScoreTeamName(hs.getHolderTeamName());
+        stats.setHighestScoreDate(hs.getDate());
+      }
 
       if (runtimeRace.getTrack() != null) {
         stats.setFastestLapTrackName(runtimeRace.getTrack().getName());
         stats.setHighestScoreTrackName(runtimeRace.getTrack().getName());
       }
 
-      // Save per-lane records
-      stats.setLaneFastestLapTimes(new ArrayList<>(runtimeRace.getOverallLaneFastestLapTimes()));
-      stats.setLaneFastestLapDriverNames(
-          new ArrayList<>(runtimeRace.getOverallLaneFastestLapHolders()));
-      stats.setLaneFastestLapDriverNicknames(
-          new ArrayList<>(runtimeRace.getOverallLaneFastestLapHolderNicknames()));
-      stats.setLaneFastestLapTeamNames(
-          new ArrayList<>(runtimeRace.getOverallLaneFastestLapHolderTeamNames()));
-      stats.setLaneFastestLapDates(new ArrayList<>(runtimeRace.getOverallLaneFastestLapDates()));
-      stats.setLaneHighestScores(new ArrayList<>(runtimeRace.getOverallLaneHighestScores()));
-      stats.setLaneHighestScoreHolderNames(
-          new ArrayList<>(runtimeRace.getOverallLaneHighestScoreHolders()));
-      stats.setLaneHighestScoreHolderNicknames(
-          new ArrayList<>(runtimeRace.getOverallLaneHighestScoreHolderNicknames()));
-      stats.setLaneHighestScoreTeamNames(
-          new ArrayList<>(runtimeRace.getOverallLaneHighestScoreHolderTeamNames()));
-      stats.setLaneHighestScoreDates(
-          new ArrayList<>(runtimeRace.getOverallLaneHighestScoreDates()));
+      // Per lane fastest lap
+      List<Double> laneFastestTimes = new ArrayList<>();
+      List<String> laneFastestHolders = new ArrayList<>();
+      List<String> laneFastestNicknames = new ArrayList<>();
+      List<String> laneFastestTeams = new ArrayList<>();
+      List<Long> laneFastestDates = new ArrayList<>();
+      for (com.antigravity.proto.RecordEntry entry : // fqn-collision
+          overall.getLaneFastestLapList()) {
+        laneFastestTimes.add(entry.getValue());
+        laneFastestHolders.add(entry.getHolderName());
+        laneFastestNicknames.add(entry.getHolderNickname());
+        laneFastestTeams.add(entry.getHolderTeamName());
+        laneFastestDates.add(entry.getDate());
+      }
+      stats.setLaneFastestLapTimes(laneFastestTimes);
+      stats.setLaneFastestLapDriverNames(laneFastestHolders);
+      stats.setLaneFastestLapDriverNicknames(laneFastestNicknames);
+      stats.setLaneFastestLapTeamNames(laneFastestTeams);
+      stats.setLaneFastestLapDates(laneFastestDates);
+
+      // Highest score per lane
+      List<Double> laneHighestScores = new ArrayList<>();
+      List<String> laneHighestHolders = new ArrayList<>();
+      List<String> laneHighestNicknames = new ArrayList<>();
+      List<String> laneHighestTeams = new ArrayList<>();
+      List<Long> laneHighestDates = new ArrayList<>();
+      for (com.antigravity.proto.RecordEntry entry : // fqn-collision
+          overall.getLaneHighestScoreList()) {
+        laneHighestScores.add(entry.getValue());
+        laneHighestHolders.add(entry.getHolderName());
+        laneHighestNicknames.add(entry.getHolderNickname());
+        laneHighestTeams.add(entry.getHolderTeamName());
+        laneHighestDates.add(entry.getDate());
+      }
+      stats.setLaneHighestScores(laneHighestScores);
+      stats.setLaneHighestScoreHolderNames(laneHighestHolders);
+      stats.setLaneHighestScoreHolderNicknames(laneHighestNicknames);
+      stats.setLaneHighestScoreTeamNames(laneHighestTeams);
+      stats.setLaneHighestScoreDates(laneHighestDates);
 
       statsCollection.replaceOne(
           Filters.eq("race_entity_id", raceId), stats, new ReplaceOptions().upsert(true));

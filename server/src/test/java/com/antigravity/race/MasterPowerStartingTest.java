@@ -48,14 +48,7 @@ public class MasterPowerStartingTest {
             .isDemoMode(true)
             .build();
 
-    // Use reflection to set the protocols field
-    try {
-      java.lang.reflect.Field field = com.antigravity.race.Race.class.getDeclaredField("protocols");
-      field.setAccessible(true);
-      field.set(race, protocols);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    race.injectProtocols(protocols);
   }
 
   @Test
@@ -122,14 +115,7 @@ public class MasterPowerStartingTest {
             .isDemoMode(true)
             .build();
 
-    // Re-inject protocols
-    try {
-      java.lang.reflect.Field field = com.antigravity.race.Race.class.getDeclaredField("protocols");
-      field.setAccessible(true);
-      field.set(race, protocols);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    race.injectProtocols(protocols);
 
     // Transition to Starting state
     race.changeState(new Starting());
@@ -155,14 +141,7 @@ public class MasterPowerStartingTest {
             .isDemoMode(true)
             .build();
 
-    // Re-inject protocols
-    try {
-      java.lang.reflect.Field field = com.antigravity.race.Race.class.getDeclaredField("protocols");
-      field.setAccessible(true);
-      field.set(race, protocols);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    race.injectProtocols(protocols);
 
     // Set that we HAVE raced in current heat (e.g. after a pause)
     race.setHasRacedInCurrentHeat(true);

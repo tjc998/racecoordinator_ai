@@ -47,15 +47,7 @@ public class MasterPowerCheckeredTest {
             .isDemoMode(true)
             .build();
 
-    // Use reflection to set the protocols field since it's private and created in
-    // constructor
-    try {
-      java.lang.reflect.Field field = com.antigravity.race.Race.class.getDeclaredField("protocols");
-      field.setAccessible(true);
-      field.set(race, protocols);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    race.injectProtocols(protocols);
   }
 
   @Test
@@ -102,13 +94,7 @@ public class MasterPowerCheckeredTest {
             .isDemoMode(true)
             .build();
 
-    try {
-      java.lang.reflect.Field field = com.antigravity.race.Race.class.getDeclaredField("protocols");
-      field.setAccessible(true);
-      field.set(noAllowRace, protocols);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    noAllowRace.injectProtocols(protocols);
 
     // When flag is GREEN, power should be ON
     noAllowRace.updatePowerForFlag(RaceFlag.GREEN);
@@ -150,11 +136,7 @@ public class MasterPowerCheckeredTest {
             .isDemoMode(true)
             .build();
 
-    // Inject protocols mock
-    java.lang.reflect.Field protocolsField =
-        com.antigravity.race.Race.class.getDeclaredField("protocols");
-    protocolsField.setAccessible(true);
-    protocolsField.set(resumeRace, protocols);
+    resumeRace.injectProtocols(protocols);
 
     // 2. Simulate Lane 0 having finished
     resumeRace.getHeatExecutionManager().getFinishedLanes().add(0);

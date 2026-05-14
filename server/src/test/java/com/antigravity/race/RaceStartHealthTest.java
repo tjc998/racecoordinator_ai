@@ -17,7 +17,6 @@ import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.race.states.NotStarted;
 import com.antigravity.race.states.Starting;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -83,9 +82,7 @@ public class RaceStartHealthTest {
 
   private void injectProtocols(com.antigravity.race.Race race, ProtocolDelegate protocols)
       throws Exception {
-    Field protocolsField = com.antigravity.race.Race.class.getDeclaredField("protocols");
-    protocolsField.setAccessible(true);
-    protocolsField.set(race, protocols);
+    race.injectProtocols(protocols);
   }
 
   @Test

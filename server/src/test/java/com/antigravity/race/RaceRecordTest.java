@@ -480,9 +480,15 @@ public class RaceRecordTest {
     baseStats.setHighestScoreDate(123456789L);
 
     // Inject into race using reflection since it's private and loaded on init
-    Field field = com.antigravity.race.Race.class.getDeclaredField("baseStatistics");
-    field.setAccessible(true);
-    field.set(race, baseStats);
+    Field recordsManagerField = com.antigravity.race.Race.class.getDeclaredField("recordsManager");
+    recordsManagerField.setAccessible(true);
+    com.antigravity.race.RaceRecords recordsManager =
+        (com.antigravity.race.RaceRecords) recordsManagerField.get(race);
+
+    Field baseStatsField =
+        com.antigravity.race.RaceRecords.class.getDeclaredField("baseStatistics");
+    baseStatsField.setAccessible(true);
+    baseStatsField.set(recordsManager, baseStats);
 
     // Sync overall with base records (normally happens on load/recalc)
     race.changeState(new RaceOver());

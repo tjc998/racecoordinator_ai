@@ -1,14 +1,8 @@
 package com.antigravity.race.states;
 
-import com.antigravity.models.Driver;
-import com.antigravity.proto.Lap;
-import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceFlag;
-import com.antigravity.proto.RaceState;
 import com.antigravity.protocols.CarData;
-import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Race;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -16,8 +10,171 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * State representing the countdown/pre-start period of a race. Handles the countdown ticker and
+ * transitions to Racing state.
+ */
 public class Starting implements IRaceState {
+
   private static final Logger logger = LoggerFactory.getLogger(Starting.class);
+
+  private final boolean isHotStart;
+  private Race race;
+  private ScheduledExecutorService scheduler;
+  private ScheduledFuture<?> timerHandle;
+
+  public Starting() {
+    this(false);
+  }
+
+  public Starting(boolean isHotStart) {
+    this.isHotStart = isHotStart;
+  }
+
+  @Override
+  public void enter(Race race) {
+    this.race = race;
+    logger.info("Starting state entered. Countdown initiating.");
+    race.broadcastFlag(getFlagType(race));
+
+    if ((race.getRaceModel().isHotStart() || isHotStart) && !race.hasRacedInCurrentHeat()) {
+      logger.info("Hot start detected. Transitioning to Racing immediately.");
+      race.changeState(new Racing());
+      return;
+    }
+
+    // Set auto-start fired to prevent re-triggering from NotStarted
+    race.setAutoStartFired(true);
+
+    double startTimeVal =
+        race.hasRacedInCurrentHeat()
+            ? race.getRaceModel().getRestartTime()
+            : race.getRaceModel().getStartTime();
+
+    double delayLimitVal = race.getRaceModel().getStartDelay();
+
+    final int randomTicks =
+        delayLimitVal > 0 ? new java.util.Random().nextInt((int) (delayLimitVal * 10)) + 1 : 0;
+
+    logger.info("Starting countdown: {}s + {} random ticks", startTimeVal, randomTicks);
+
+    if (scheduler != null) {
+      scheduler.shutdownNow();
+    }
+    scheduler =
+        Executors.newSingleThreadScheduledExecutor(
+            r -> {
+              Thread t = new Thread(r, "StartingTicker");
+              t.setDaemon(true);
+              return t;
+            });
+
+    final Runnable ticker =
+        new Runnable() {
+          private int countdown = (int) (startTimeVal * 10);
+          private int remainingRandomTicks = randomTicks;
+
+          @Override
+          public void run() {
+            try {
+              float displayTime = Math.max(0, countdown) / 10.0f;
+              race.setAutoStartRemaining(displayTime);
+
+              // Update hardware and broadcast time
+              race.setHeatProgress(0.0);
+              race.syncRaceState();
+              race.broadcastTime();
+
+              if (countdown > 0) {
+                countdown--;
+              } else if (remainingRandomTicks > 0) {
+                remainingRandomTicks--;
+              } else {
+                logger.info("Starting ticker: Transitioning to Racing.");
+                race.changeState(new Racing());
+              }
+            } catch (Throwable t) {
+              logger.error("Error in Starting timer", t);
+            }
+          }
+        };
+
+    timerHandle = scheduler.scheduleAtFixedRate(ticker, 0, 100, TimeUnit.MILLISECONDS);
+  }
+
+  @Override
+  public void exit(Race race) {
+    logger.info("Starting state exited.");
+    stopTimer();
+    race.setAutoStartRemaining(0);
+  }
+
+  private void stopTimer() {
+    if (timerHandle != null) {
+      timerHandle.cancel(false);
+      timerHandle = null;
+    }
+    if (scheduler != null) {
+      scheduler.shutdownNow();
+      scheduler = null;
+    }
+  }
+
+  @Override
+  public void nextHeat(Race race) {
+    throw new IllegalStateException("Cannot move to next heat while starting");
+  }
+
+  @Override
+  public void restartHeat(Race race) {
+    logger.info("Starting.restartHeat() called. Resetting current heat.");
+    race.resetCurrentHeat();
+    race.changeState(new NotStarted());
+  }
+
+  @Override
+  public void skipHeat(Race race) {
+    throw new IllegalStateException("Cannot skip heat while starting");
+  }
+
+  @Override
+  public void deferHeat(Race race) {
+    throw new IllegalStateException("Cannot defer heat while starting");
+  }
+
+  @Override
+  public void start(Race race) {
+    logger.info("Start called while already starting. Ignoring.");
+  }
+
+  @Override
+  public void pause(Race race) {
+    logger.info("Starting.pause() called. Transitioning to NotStarted or Paused.");
+    stopTimer();
+    if (race.hasRacedInCurrentHeat()) {
+      race.changeState(new Paused());
+    } else {
+      race.changeState(new NotStarted());
+    }
+  }
+
+  @Override
+  public boolean onLap(int lane, double lapTime, int interfaceId, boolean isDrift) {
+    logger.info("Lap detected in lane {} during starting. Potential false start.", lane);
+    return false;
+  }
+
+  @Override
+  public void onSegment(int lane, double segmentTime, int interfaceId) {}
+
+  @Override
+  public void onCarData(CarData carData) {}
+
+  @Override
+  public void onCallbutton(Race race, int lane) {
+    logger.info("Callbutton pressed during starting. Pausing race.");
+    pause(race);
+  }
 
   @Override
   public RaceFlag getFlagType(Race race) {
@@ -27,238 +184,15 @@ public class Starting implements IRaceState {
     return RaceFlag.RED;
   }
 
-  private ScheduledExecutorService scheduler;
-  private ScheduledFuture<?> timerHandle;
-  private Race race;
-
   @Override
-  public void enter(Race race) {
-    this.race = race;
-    logger.info("Starting state entered. Countdown initiating.");
-    race.broadcastFlag(getFlagType(race));
-
-    if (race.getRaceModel().isHotStart() && !race.hasRacedInCurrentHeat()) {
-      logger.info("Hot start enabled. Turning main power ON for countdown.");
-      race.setMainPower(true);
-    }
-
-    if (!race.hasRacedInCurrentHeat()) {
-      race.prepareHeat();
-    }
-    race.setAutoStartFired(true);
-
-    final double startTimeVal =
-        race.hasRacedInCurrentHeat()
-            ? race.getRaceModel().getRestartTime()
-            : race.getRaceModel().getStartTime();
-    final double delayLimitVal =
-        race.hasRacedInCurrentHeat()
-            ? race.getRaceModel().getRestartDelay()
-            : race.getRaceModel().getStartDelay();
-
-    final int randomTicks =
-        delayLimitVal > 0 ? new java.util.Random().nextInt((int) (delayLimitVal * 10)) + 1 : 0;
-
-    race.setAutoStartRemaining(startTimeVal);
-    logger.debug(
-        "Starting state: startTimeVal={}, delayLimitVal={}, randomTicks={}",
-        startTimeVal,
-        delayLimitVal,
-        randomTicks);
-
-    scheduler = Executors.newScheduledThreadPool(1);
-    final Runnable ticker =
-        new Runnable() {
-          int countdown = (int) (startTimeVal * 10);
-          int remainingRandomTicks = randomTicks;
-
-          @Override
-          public void run() {
-            try {
-              float displayTime = Math.max(0, countdown) / 10.0f;
-              race.setAutoStartRemaining(displayTime);
-              race.broadcastTime();
-              race.setHeatProgress(0.0);
-              race.setRaceState(RaceState.STARTING, getFlagType(race), (double) displayTime);
-
-              if (countdown > 0) {
-                countdown--;
-              } else if (remainingRandomTicks > 0) {
-                remainingRandomTicks--;
-              } else {
-                race.changeState(new Racing());
-              }
-            } catch (Exception e) {
-              logger.error("Error in Starting timer", e);
-            }
-          }
-        };
-    timerHandle = scheduler.scheduleAtFixedRate(ticker, 0, 100, TimeUnit.MILLISECONDS);
-  }
-
-  @Override
-  public void exit(Race race) {
-    if (timerHandle != null) {
-      timerHandle.cancel(false);
-    }
-    if (scheduler != null) {
-      scheduler.shutdown();
-    }
-    race.setAutoStartRemaining(0);
-    logger.info("Starting state exited.");
-  }
-
-  @Override
-  public void nextHeat(Race race) {
-    throw new IllegalStateException(
-        "Cannot move to next heat from state: " + this.getClass().getSimpleName());
-  }
-
-  @Override
-  public void start(Race race) {
-    throw new IllegalStateException("Cannot start race: Race is already in Starting state.");
-  }
-
-  @Override
-  public void pause(Race race) {
-    logger.info("Starting.pause() called. Cancelling start.");
-    race.clearAutoTimers();
-    if (race.hasRacedInCurrentHeat()) {
-      race.changeState(new Paused());
-    } else {
-      race.resetRaceTime();
-      race.changeState(new NotStarted());
-    }
-  }
-
-  @Override
-  public void restartHeat(Race race) {
-    throw new IllegalStateException(
-        "Cannot restart heat from state: " + this.getClass().getSimpleName());
-  }
-
-  @Override
-  public void skipHeat(Race race) {
-    throw new IllegalStateException(
-        "Cannot skip heat from state: " + this.getClass().getSimpleName());
-  }
-
-  @Override
-  public void deferHeat(Race race) {
-    throw new IllegalStateException(
-        "Cannot defer heat from state: " + this.getClass().getSimpleName());
-  }
-
-  @Override
-  public boolean onLap(int lane, double lapTime, int interfaceId, boolean isDrift) {
-    if (race == null || race.getCurrentHeat() == null) {
-      return false;
-    }
-
-    List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
-    if (lane < 0 || lane >= drivers.size()) {
-      return false;
-    }
-
-    DriverHeatData dhd = drivers.get(lane);
-    if (dhd == null
-        || dhd.getActualDriver() == null
-        || dhd.getActualDriver() == Driver.EMPTY_DRIVER) {
-      return false;
-    }
-
-    logger.info("False start detected on lane {}", lane);
-    dhd.incrementFalseStarts();
-    dhd.setPenaltyLaps(dhd.getPenaltyLaps() + race.getRaceModel().getFalseStartLapPenalty());
-    double timePenalty = race.getRaceModel().getFalseStartTimePenalty();
-    dhd.setRemainingFalseStartTimePenalty(timePenalty);
-
-    if (timePenalty > 0 && race.hasPerLaneRelays()) {
-      logger.info("False start recorded as 0.0 reaction time for lane {}", lane);
-      dhd.setReactionTime(0.0);
-      // Broadcast reaction time message
-      Lap rtMsg =
-          Lap.newBuilder()
-              .setObjectId(dhd.getObjectId())
-              .setLapTime(0.0)
-              .setDriverId(dhd.getActualDriver() != null ? dhd.getActualDriver().getEntityId() : "")
-              .setFuelLevel(dhd.getDriver().getFuelLevel())
-              .setType(Lap.LapType.REACTION_TIME)
-              .setFlag(getLaneFlagType(race, lane))
-              .build();
-      race.broadcast(RaceData.newBuilder().setLap(rtMsg).build());
-    } else {
-      dhd.addPendingLapTime(lapTime);
-    }
-
-    // Broadcast update so UI sees the false start
-    Lap lapMsg =
-        Lap.newBuilder()
-            .setObjectId(dhd.getObjectId())
-            .setLapNumber(dhd.getLapCount())
-            .setAdjustedLapCount(dhd.getAdjustedLapCount())
-            .setDriverId(dhd.getActualDriver() != null ? dhd.getActualDriver().getEntityId() : "")
-            .setFuelLevel(dhd.getDriver().getFuelLevel())
-            .setType(Lap.LapType.FALSE_START)
-            .setFlag(getLaneFlagType(race, lane))
-            .build();
-    dhd.setFlag(lapMsg.getFlag());
-    race.broadcast(RaceData.newBuilder().setLap(lapMsg).build());
-    race.updateAndBroadcastOverallStandings();
-
-    if (race.getRaceModel().isRestartOnFalseStart()) {
-      logger.info("Restart on false start enabled. Going back to NotStarted.");
-      race.changeState(new NotStarted());
-    }
-
-    return false;
-  }
-
-  @Override
-  public void onSegment(int lane, double segmentTime, int interfaceId) {
-    // Not while starting
-  }
-
-  @Override
-  public void onCarData(CarData carData) {
-    if (this.race == null) {
-      return;
-    }
-
-    int lane = carData.getLane();
-    // Broadcast the CarData to clients
-    com.antigravity.proto.CarData.Builder dataBuilder = // fqn-collision
-        com.antigravity.proto.CarData.newBuilder() // fqn-collision
-            .setLane(carData.getLane())
-            .setControllerThrottlePct(carData.getControllerThrottlePCT())
-            .setCarThrottlePct(carData.getCarThrottlePCT())
-            .setLocation(carData.getLocation().getValue())
-            .setLocationId(carData.getLocationId());
-
-    if (race.getCurrentHeat() != null && race.getCurrentHeat().getDrivers() != null) {
-      if (lane >= 0 && lane < race.getCurrentHeat().getDrivers().size()) {
-        DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(lane);
-        if (driverData != null) {
-          driverData.setCurrentLocation(carData.getLocation());
-          if (driverData.getDriver() != null) {
-            dataBuilder.setFuelLevel(driverData.getDriver().getFuelLevel());
-          }
-          RaceFlag laneFlag = getLaneFlagType(race, lane);
-          driverData.setFlag(laneFlag);
-          dataBuilder.setFlag(laneFlag);
-        }
+  public RaceFlag getLaneFlagType(Race race, int lane) {
+    if (race != null
+        && race.getCurrentHeat() != null
+        && lane < race.getCurrentHeat().getDrivers().size()) {
+      if (race.getCurrentHeat().getDrivers().get(lane).getRemainingFalseStartTimePenalty() > 0) {
+        return RaceFlag.BLACK;
       }
     }
-
-    com.antigravity.proto.CarData protoCarData = dataBuilder.build(); // fqn-collision
-    RaceData raceDataMsg = RaceData.newBuilder().setCarData(protoCarData).build();
-
-    race.broadcast(raceDataMsg);
-  }
-
-  @Override
-  public void onCallbutton(Race race, int lane) {
-    logger.info("Starting.onCallbutton() called. Pausing race start.");
-    pause(race);
+    return getFlagType(race);
   }
 }

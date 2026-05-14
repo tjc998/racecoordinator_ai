@@ -43,6 +43,16 @@ public class HeatExecutionManager {
     this.race = race;
   }
 
+  public boolean isAllowFinishEnabled() {
+    if (race == null
+        || race.getRaceModel() == null
+        || race.getRaceModel().getHeatScoring() == null) {
+      return false;
+    }
+    AllowFinish allowFinish = race.getRaceModel().getHeatScoring().getAllowFinish();
+    return allowFinish == AllowFinish.Allow || allowFinish == AllowFinish.SingleLap;
+  }
+
   public void initialize(int laneCount) {
     this.finishedLanes.clear();
     this.refuelDelayRemaining = new double[laneCount];

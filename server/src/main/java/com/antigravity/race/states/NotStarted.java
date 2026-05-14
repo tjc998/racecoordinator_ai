@@ -1,6 +1,7 @@
 package com.antigravity.race.states;
 
 import com.antigravity.converters.HeatConverter;
+import com.antigravity.models.HeatRotationType;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceState;
@@ -343,5 +344,12 @@ public class NotStarted implements IRaceState {
   public void onCallbutton(Race race, int lane) {
     logger.info("NotStarted.onCallbutton() called. Starting race.");
     race.startRace();
+  }
+
+  @Override
+  public boolean canChangeLane(Race race) {
+    if (race == null || race.getRaceModel() == null) return false;
+    HeatRotationType type = race.getRaceModel().getHeatRotationType();
+    return type == HeatRotationType.SingleHeat || type == HeatRotationType.SingleHeatSolo;
   }
 }

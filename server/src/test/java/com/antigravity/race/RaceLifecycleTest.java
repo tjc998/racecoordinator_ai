@@ -82,9 +82,15 @@ public class RaceLifecycleTest {
 
   private void injectProtocols(com.antigravity.race.Race race, ProtocolDelegate protocols)
       throws Exception {
-    Field protocolsField = com.antigravity.race.Race.class.getDeclaredField("protocols");
+    Field managerField = com.antigravity.race.Race.class.getDeclaredField("hardwareManager");
+    managerField.setAccessible(true);
+    com.antigravity.race.RaceHardwareManager manager =
+        (com.antigravity.race.RaceHardwareManager) managerField.get(race);
+
+    Field protocolsField =
+        com.antigravity.race.RaceHardwareManager.class.getDeclaredField("protocols");
     protocolsField.setAccessible(true);
-    protocolsField.set(race, protocols);
+    protocolsField.set(manager, protocols);
   }
 
   @Test
