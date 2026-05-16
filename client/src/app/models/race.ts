@@ -1,5 +1,6 @@
 import { AnalogFuelOptions } from "./analog_fuel_options";
 import { DigitalFuelOptions } from "./digital_fuel_options";
+import { GroupOptions } from "./group_options";
 import { HeatScoring } from "./heat_scoring";
 import { Model } from "./model";
 import { OverallScoring } from "./overall_scoring";
@@ -31,6 +32,7 @@ export class Race implements Model {
   readonly restart_on_false_start: boolean;
   readonly false_start_lap_penalty: number;
   readonly false_start_time_penalty: number;
+  readonly group_options: GroupOptions;
 
   readonly heat_rotation_type: string;
   readonly solo_lane_index: number;
@@ -71,6 +73,7 @@ export class Race implements Model {
     restart_on_false_start: boolean = false,
     false_start_lap_penalty: number = 0,
     false_start_time_penalty: number = 0,
+    group_options: GroupOptions = new GroupOptions(),
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -101,6 +104,7 @@ export class Race implements Model {
     this.restart_on_false_start = restart_on_false_start;
     this.false_start_lap_penalty = false_start_lap_penalty;
     this.false_start_time_penalty = false_start_time_penalty;
+    this.group_options = group_options;
   }
 
   get objectId(): string {

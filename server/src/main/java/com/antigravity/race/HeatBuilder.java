@@ -3,6 +3,7 @@ package com.antigravity.race;
 import com.antigravity.models.CustomHeat;
 import com.antigravity.models.CustomRotation;
 import com.antigravity.models.Driver;
+import com.antigravity.models.GroupOptions;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import java.util.ArrayList;
@@ -19,63 +20,47 @@ public class HeatBuilder {
   public static List<Heat> buildHeats(
       Race race, List<RaceParticipant> drivers, List<CustomRotation> customRotations) {
     int numLanes = race.getTrack().getLanes().size();
-    HeatRotationType rotationType = race.getRaceModel().getHeatRotationType();
-    List<Heat> heatList;
-    switch (rotationType) {
-      case RoundRobin:
-        heatList =
-            getRoundRobinHeats(
-                drivers,
-                numLanes,
-                getRoundRobinRotationSequence(numLanes),
-                false,
-                race.getRaceModel().getHeatScoring());
-        break;
-      case FriendlyRoundRobin:
-        heatList =
-            getRoundRobinHeats(
-                drivers,
-                numLanes,
-                getRoundRobinRotationSequence(numLanes),
-                true,
-                race.getRaceModel().getHeatScoring());
-        break;
-      case EuropeanRoundRobin:
-        heatList =
-            getRoundRobinHeats(
-                drivers,
-                numLanes,
-                getEuroRoundRobinRotationSequence(numLanes),
-                false,
-                race.getRaceModel().getHeatScoring());
-        break;
-      case SingleHeat:
-        heatList = getSingleHeatHeats(drivers, numLanes, race.getRaceModel().getHeatScoring());
-        break;
-      case SingleHeatSolo:
-        heatList =
-            getSingleHeatSoloHeats(
-                drivers,
-                numLanes,
-                race.getRaceModel().getHeatScoring(),
-                race.getRaceModel().getSoloLaneIndex());
-        break;
-      case CustomRoundRobin:
-        heatList =
-            getRoundRobinHeats(
-                drivers,
-                numLanes,
-                race.getRaceModel().getCustomRotationSequence(),
-                false,
-                race.getRaceModel().getHeatScoring());
-        break;
-      case Custom:
-        heatList =
-            getCustomHeats(
-                drivers, numLanes, customRotations, race.getRaceModel().getHeatScoring());
-        break;
-      default:
-        throw new IllegalArgumentException("Unknown HeatRotationType: " + rotationType);
+    GroupOptions groupOptions = race.getRaceModel().getGroupOptions();
+    List<Heat> heatList = new ArrayList<>();
+
+    if (groupOptions != null && groupOptions.isEnabled()) {
+      List<Integer> driverGroups =
+          getGroups(
+              drivers,
+              numLanes,
+              groupOptions.getMaxGroups(),
+              groupOptions.isBalance(),
+              groupOptions.isAllowEmptyLanes(),
+              groupOptions.isForceMultipleOfMax());
+
+      int numGroups = 0;
+      for (int g : driverGroups) {
+        if (g >= numGroups) {
+          numGroups = g + 1;
+        }
+      }
+
+      for (int g = 0; g < numGroups; g++) {
+        List<RaceParticipant> groupDrivers = new ArrayList<>();
+        for (int i = 0; i < drivers.size(); i++) {
+          if (driverGroups.get(i) == g) {
+            groupDrivers.add(drivers.get(i));
+          }
+        }
+
+        if (groupDrivers.isEmpty()) {
+          continue;
+        }
+
+        List<Heat> groupHeats = buildHeatsForGroup(race, groupDrivers, g, customRotations);
+        heatList.addAll(groupHeats);
+      }
+
+      if (groupOptions.isRotateGroupHeats()) {
+        heatList = resortGroupHeats(heatList);
+      }
+    } else {
+      heatList = buildHeatsForGroup(race, drivers, 0, customRotations);
     }
 
     // Heat Times Through
@@ -107,7 +92,11 @@ public class HeatBuilder {
             clonedDrivers.add(newDhd);
           }
           heatList.add(
-              new Heat(totalHeatIdx + 1, clonedDrivers, race.getRaceModel().getHeatScoring()));
+              new Heat(
+                  totalHeatIdx + 1,
+                  clonedDrivers,
+                  h.getGroup(),
+                  race.getRaceModel().getHeatScoring()));
         }
       }
     }
@@ -404,5 +393,168 @@ public class HeatBuilder {
     }
 
     return heatList;
+  }
+
+  private static List<Heat> buildHeatsForGroup(
+      Race race,
+      List<RaceParticipant> drivers,
+      int groupNumber,
+      List<CustomRotation> customRotations) {
+    int numLanes = race.getTrack().getLanes().size();
+    HeatRotationType rotationType = race.getRaceModel().getHeatRotationType();
+    List<Heat> heatList;
+    switch (rotationType) {
+      case RoundRobin:
+        heatList =
+            getRoundRobinHeats(
+                drivers,
+                numLanes,
+                getRoundRobinRotationSequence(numLanes),
+                false,
+                race.getRaceModel().getHeatScoring());
+        break;
+      case FriendlyRoundRobin:
+        heatList =
+            getRoundRobinHeats(
+                drivers,
+                numLanes,
+                getRoundRobinRotationSequence(numLanes),
+                true,
+                race.getRaceModel().getHeatScoring());
+        break;
+      case EuropeanRoundRobin:
+        heatList =
+            getRoundRobinHeats(
+                drivers,
+                numLanes,
+                getEuroRoundRobinRotationSequence(numLanes),
+                false,
+                race.getRaceModel().getHeatScoring());
+        break;
+      case SingleHeat:
+        heatList = getSingleHeatHeats(drivers, numLanes, race.getRaceModel().getHeatScoring());
+        break;
+      case SingleHeatSolo:
+        heatList =
+            getSingleHeatSoloHeats(
+                drivers,
+                numLanes,
+                race.getRaceModel().getHeatScoring(),
+                race.getRaceModel().getSoloLaneIndex());
+        break;
+      case CustomRoundRobin:
+        heatList =
+            getRoundRobinHeats(
+                drivers,
+                numLanes,
+                race.getRaceModel().getCustomRotationSequence(),
+                false,
+                race.getRaceModel().getHeatScoring());
+        break;
+      case Custom:
+        heatList =
+            getCustomHeats(
+                drivers, numLanes, customRotations, race.getRaceModel().getHeatScoring());
+        break;
+      default:
+        throw new IllegalArgumentException("Unknown HeatRotationType: " + rotationType);
+    }
+
+    for (Heat heat : heatList) {
+      heat.setGroup(groupNumber);
+    }
+
+    return heatList;
+  }
+
+  public static List<Integer> getGroups(
+      List<RaceParticipant> drivers,
+      int numLanes,
+      int groupMaxGroups,
+      boolean groupBalanceSeeds,
+      boolean groupEmptyLanes,
+      boolean groupForceMultiple) {
+    List<Integer> groups = new ArrayList<>();
+    int numGroups = (int) Math.ceil((double) drivers.size() / (double) numLanes);
+    if (numGroups <= 0) {
+      numGroups = 1;
+    }
+
+    if (numGroups > groupMaxGroups) {
+      numGroups = groupMaxGroups;
+    }
+
+    if (numGroups > 1) {
+      if (!groupEmptyLanes) {
+        while ((int) (drivers.size() / numGroups) < numLanes) {
+          numGroups--;
+        }
+      }
+    }
+
+    if (groupForceMultiple) {
+      while (numGroups > 0 && (groupMaxGroups % numGroups) != 0) {
+        numGroups--;
+      }
+    }
+
+    if (numGroups <= 0) {
+      numGroups = 1;
+    }
+
+    int extraDrivers = drivers.size() % numGroups;
+
+    if (groupBalanceSeeds) {
+      int groupNum = 0;
+      for (int i = 0; i < drivers.size() - extraDrivers; i++) {
+        groups.add(groupNum);
+        groupNum++;
+        if (groupNum % numGroups == 0) {
+          groupNum = 0;
+        }
+      }
+      groupNum = 0;
+      for (int i = 0; i < extraDrivers; i++) {
+        groups.add(groupNum);
+        groupNum++;
+      }
+    } else {
+      int numInGroup = drivers.size() / numGroups;
+      int groupNum = 0;
+      int count = 0;
+      for (int i = 0; i < drivers.size(); i++) {
+        groups.add(groupNum);
+        count++;
+        if (count >= numInGroup) {
+          if (groupNum >= extraDrivers || count > numInGroup) {
+            count = 0;
+            groupNum++;
+          }
+        }
+      }
+    }
+    return groups;
+  }
+
+  private static List<Heat> resortGroupHeats(List<Heat> heats) {
+    List<Heat> newHeats = new ArrayList<>();
+    for (Heat heat : heats) {
+      int insertion = -1;
+      for (int i = newHeats.size() - 1; i >= 0; i--) {
+        if ((newHeats.get(i).getGroup() == heat.getGroup() + 1)
+            || (newHeats.get(i).getGroup() == heat.getGroup() - 1)) {
+          insertion = i;
+        } else if (newHeats.get(i).getGroup() == heat.getGroup()) {
+          break;
+        }
+      }
+
+      if (insertion >= 0 && insertion < newHeats.size() - 1) {
+        newHeats.add(insertion + 1, heat);
+      } else {
+        newHeats.add(heat);
+      }
+    }
+    return newHeats;
   }
 }

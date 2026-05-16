@@ -1,8 +1,14 @@
-import { Component, input, output, ViewChild } from "@angular/core";
+import {
+  AfterViewChecked,
+  ChangeDetectorRef,
+  Component,
+  input,
+  output,
+  ViewChild,
+} from "@angular/core";
 import { Router } from "@angular/router";
 import { BackButtonComponent } from "@app/components/shared/back-button/back-button.component";
 import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.component";
-import { ToolbarComponent as ToolbarComponent_1 } from "@app/components/shared/toolbar/toolbar.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { Settings } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -13,9 +19,9 @@ import { GuideStep } from "@app/services/help.service";
   selector: "app-editor-title",
   templateUrl: "./editor-title.component.html",
   styleUrls: ["./editor-title.component.css"],
-  imports: [BackButtonComponent, ToolbarComponent_1, TranslatePipe],
+  imports: [BackButtonComponent, ToolbarComponent, TranslatePipe],
 })
-export class EditorTitleComponent {
+export class EditorTitleComponent implements AfterViewChecked {
   @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;
   titleKey = input("");
   backRoute = input("");
@@ -44,7 +50,15 @@ export class EditorTitleComponent {
   delete = output<void>();
   regenerate = output<void>();
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private cdr: ChangeDetectorRef,
+  ) {}
+
+  ngAfterViewChecked() {
+    // This can help with NG0100 when translations load late
+    this.cdr.detectChanges();
+  }
 
   onHelp() {
     this.help.emit();

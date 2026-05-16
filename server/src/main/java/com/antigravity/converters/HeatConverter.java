@@ -22,7 +22,8 @@ public class HeatConverter {
             .setHeatNumber(heat.getHeatNumber())
             .addAllStandings(
                 heat.getStandings() != null ? heat.getStandings() : Collections.emptyList())
-            .setStarted(heat.isStarted());
+            .setStarted(heat.isStarted())
+            .setGroup(heat.getGroup());
 
     if (heat.getDrivers() != null) {
       builder.addAllHeatDrivers(

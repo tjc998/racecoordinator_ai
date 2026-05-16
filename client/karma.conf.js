@@ -104,9 +104,9 @@ module.exports = function (config) {
       subdir: ".",
       reporters: [{ type: "html" }, { type: "text-summary" }],
     },
-    port: 9876,
-    hostname: "localhost",
-    listenAddress: "localhost",
+    port: 9888,
+    hostname: "127.0.0.1",
+    listenAddress: "127.0.0.1",
     colors: true,
     browserConsoleLogOptions: {
       level: "error",

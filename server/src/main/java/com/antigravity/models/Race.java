@@ -132,6 +132,11 @@ public class Race extends Model {
   @JsonAlias("falseStartTimePenalty")
   private final double falseStartTimePenalty;
 
+  @BsonProperty("group_options")
+  @JsonProperty("group_options")
+  @JsonAlias("groupOptions")
+  private final GroupOptions groupOptions;
+
   @BsonCreator
   @JsonCreator
   public Race(
@@ -214,6 +219,8 @@ public class Race extends Model {
           @JsonProperty("false_start_time_penalty")
           @JsonAlias("falseStartTimePenalty")
           Double falseStartTimePenalty,
+      @BsonProperty("group_options") @JsonProperty("group_options") @JsonAlias("groupOptions")
+          GroupOptions groupOptions,
       @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
       @BsonId @JsonProperty("_id") ObjectId id) {
     super(id, entityId);
@@ -250,6 +257,7 @@ public class Race extends Model {
     this.restartOnFalseStart = restartOnFalseStart != null ? restartOnFalseStart : false;
     this.falseStartLapPenalty = falseStartLapPenalty != null ? falseStartLapPenalty : 0.0;
     this.falseStartTimePenalty = falseStartTimePenalty != null ? falseStartTimePenalty : 0.0;
+    this.groupOptions = groupOptions != null ? groupOptions : new GroupOptions();
   }
 
   public static class Builder {
@@ -282,6 +290,7 @@ public class Race extends Model {
     private boolean restartOnFalseStart = false;
     private double falseStartLapPenalty = 0.0;
     private double falseStartTimePenalty = 0.0;
+    private GroupOptions groupOptions = new GroupOptions();
     private String entityId;
     private ObjectId id;
 
@@ -314,6 +323,7 @@ public class Race extends Model {
       this.restartOnFalseStart = other.isRestartOnFalseStart();
       this.falseStartLapPenalty = other.getFalseStartLapPenalty();
       this.falseStartTimePenalty = other.getFalseStartTimePenalty();
+      this.groupOptions = other.getGroupOptions();
       this.entityId = other.getEntityId();
       this.id = other.getId();
       return this;
@@ -459,6 +469,11 @@ public class Race extends Model {
       return this;
     }
 
+    public Builder withGroupOptions(GroupOptions groupOptions) {
+      this.groupOptions = groupOptions;
+      return this;
+    }
+
     public Builder withEntityId(String entityId) {
       this.entityId = entityId;
       return this;
@@ -500,6 +515,7 @@ public class Race extends Model {
           restartOnFalseStart,
           falseStartLapPenalty,
           falseStartTimePenalty,
+          groupOptions,
           entityId,
           id);
     }
@@ -624,5 +640,10 @@ public class Race extends Model {
   @BsonProperty("false_start_time_penalty")
   public double getFalseStartTimePenalty() {
     return falseStartTimePenalty;
+  }
+
+  @BsonProperty("group_options")
+  public GroupOptions getGroupOptions() {
+    return groupOptions;
   }
 }

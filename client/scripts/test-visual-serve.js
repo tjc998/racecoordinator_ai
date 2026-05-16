@@ -17,7 +17,7 @@ if (!fs.existsSync(distPath)) {
 console.log("Starting sirv...");
 try {
   // Use npx to ensure sirv is available even if not globally installed, though we added it to devDependencies
-  execSync("npx sirv dist/client --port 4200 --host 0.0.0.0 --single", {
+  execSync("npx sirv dist/client --port 4200 --host 127.0.0.1 --single", {
     stdio: "inherit",
   });
 } catch (e) {

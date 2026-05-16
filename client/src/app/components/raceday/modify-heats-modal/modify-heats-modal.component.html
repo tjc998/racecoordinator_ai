@@ -136,7 +136,19 @@
             <div class="heat-header">
               <div class="header-title" cdkDragHandle>
                 <i class="fas fa-grip-vertical drag-handle-icon"></i>
-                <h4>{{ "RD_HEAT" | translate }} {{ heat.heatNumber }}</h4>
+                <h4>
+                  {{ "RD_HEAT" | translate }} {{ heat.heatNumber }}
+                  @if (race().group_options.enabled) {
+                    - {{ "RE_GROUPS_LABEL" | translate }}:
+                    <input
+                      type="number"
+                      class="group-input"
+                      [ngModel]="heat.group + 1"
+                      (ngModelChange)="onGroupChange(heat, $event)"
+                      min="1"
+                    />
+                  }
+                </h4>
               </div>
               <div class="header-actions">
                 @if (isHeatStarted(heat)) {

@@ -739,6 +739,16 @@
   }
 }
 
+/* Group Config Section */
+.group-options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: slideDown 0.3s ease-out;
+  transition: opacity 0.3s ease;
+  margin-top: 10px;
+}
+
 .checkbox-section {
   flex-direction: row;
   align-items: center;

@@ -12,6 +12,7 @@ public class Heat extends ServerToClientObject {
   private RaceHeatStatistics statistics = new RaceHeatStatistics();
   @org.bson.codecs.pojo.annotations.BsonIgnore private HeatStandings heatStandings;
   private boolean started = false;
+  private int group = 0;
 
   public Heat(int heatNumber, List<DriverHeatData> drivers, HeatScoring scoring) {
     super();
@@ -25,6 +26,11 @@ public class Heat extends ServerToClientObject {
 
   public Heat(int heatNumber, List<DriverHeatData> drivers) {
     this(heatNumber, drivers, null);
+  }
+
+  public Heat(int heatNumber, List<DriverHeatData> drivers, int group, HeatScoring scoring) {
+    this(heatNumber, drivers, scoring);
+    this.group = group;
   }
 
   public Heat() {
@@ -93,5 +99,13 @@ public class Heat extends ServerToClientObject {
 
   public void setStarted(boolean started) {
     this.started = started;
+  }
+
+  public int getGroup() {
+    return group;
+  }
+
+  public void setGroup(int group) {
+    this.group = group;
   }
 }

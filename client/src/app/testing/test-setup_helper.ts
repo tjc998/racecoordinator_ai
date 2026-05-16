@@ -391,7 +391,43 @@ export class TestSetupHelper {
       { timeout: 15000 },
     );
 
-    // 3. Ensure fonts and layout have settled after text swap
+    // 3. Wait for any visible keys to be replaced by text (e.g. RD_TITLE -> "Modify Heats")
+    // This is more robust than just waiting for the flag, as Angular's change detection
+    // might still be catching up.
+    await page
+      .waitForFunction(
+        () => {
+          const walk = document.createTreeWalker(
+            document.body,
+            NodeFilter.SHOW_TEXT,
+            null,
+          );
+          let node;
+          while ((node = walk.nextNode())) {
+            const text = node.textContent?.trim() || "";
+            // If the text looks like one of our common localization keys, it hasn't been replaced yet.
+            if (
+              /^[A-Z][A-Z0-9_]+$/.test(text) &&
+              (text.startsWith("RD_") ||
+                text.startsWith("DE_") ||
+                text.startsWith("RE_") ||
+                text.startsWith("RDS_"))
+            ) {
+              return false;
+            }
+          }
+          return true;
+        },
+        { timeout: 5000 },
+      )
+      .catch(() => {
+        // Log a warning but don't fail, as some text might legitimately look like a key
+        console.warn(
+          "TestSetupHelper: Some potential localization keys (RD_/DE_/RE_/RDS_) might still be visible in the DOM after timeout.",
+        );
+      });
+
+    // 4. Ensure fonts and layout have settled after text swap
     await page.evaluate(async () => {
       // Explicitly load fonts used in UI to ensure they're ready for screenshots
       await Promise.all([
@@ -403,7 +439,7 @@ export class TestSetupHelper {
       return document.fonts.ready;
     });
 
-    // 4. Wait for a paint cycle to ensure DOM updates are flushed
+    // 5. Wait for a paint cycle to ensure DOM updates are flushed
     await page.evaluate(
       () =>
         new Promise((res) =>
@@ -411,7 +447,7 @@ export class TestSetupHelper {
         ),
     );
 
-    // 5. Final safety wait for complex components (like SVGs) to stabilize
+    // 6. Final safety wait for complex components (like SVGs) to stabilize
     // Increased to 500ms to ensure stability with 18 workers and production rendering
     await page.waitForTimeout(500);
   }
@@ -936,6 +972,39 @@ export class TestSetupHelper {
       } else {
         await route.continue();
       }
+    });
+
+    // Mock heats modification endpoints
+    await page.route("**/api/modify-heats", async (route) => {
+      console.log("Mocking **/api/modify-heats");
+      // Return a successful ModifyHeatsResponse (success: true)
+      // Tag 1 (success) = true (1) -> 08 01
+      const buffer = new Uint8Array([0x08, 0x01]);
+      await route.fulfill({
+        status: 200,
+        contentType: "application/octet-stream",
+        body: Buffer.from(buffer),
+      });
+    });
+
+    await page.route("**/api/regenerate-heats", async (route) => {
+      console.log("Mocking **/api/regenerate-heats");
+      // Return a successful RegenerateHeatsResponse (success: true)
+      // Tag 1 (success) = true (1) -> 08 01
+      const buffer = new Uint8Array([0x08, 0x01]);
+      await route.fulfill({
+        status: 200,
+        contentType: "application/octet-stream",
+        body: Buffer.from(buffer),
+      });
+    });
+
+    await page.route("**/api/heats/preview", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ heats: [] }),
+      });
     });
   }
 

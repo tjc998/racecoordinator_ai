@@ -9,9 +9,12 @@ import com.antigravity.proto.RegenerateHeatsRequest;
 import com.antigravity.proto.RegenerateHeatsResponse;
 import com.antigravity.race.states.RaceOver;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,7 +92,65 @@ public class RaceHeatManager {
     if (duplicateParticipantError != null) return duplicateParticipantError;
 
     // 4. Validate No Duplicate Drivers in a Heat
+    String groupError = validateGroups(request);
+    if (groupError != null) return groupError;
+
     return validateHeatDrivers(request);
+  }
+
+  String validateGroups(ModifyHeatsRequest request) {
+    if (this.race.getRaceModel().getGroupOptions() == null
+        || !this.race.getRaceModel().getGroupOptions().isEnabled()) {
+      return null;
+    }
+
+    Set<Integer> uniqueGroups = new TreeSet<>(); // Sorted set
+    Map<String, Integer> participantToGroup = new HashMap<>();
+    for (com.antigravity.proto.Heat protoHeat : request.getHeatsList()) { // fqn-collision
+      int group = protoHeat.getGroup();
+      if (group < 0) {
+        return "RD_ERR_GROUP_MIN_VALUE";
+      }
+      uniqueGroups.add(group);
+
+      for (com.antigravity.proto.DriverHeatData protoDhd : // fqn-collision
+          protoHeat.getHeatDriversList()) {
+        String participantObjectId = protoDhd.getDriver().getObjectId();
+        if (participantObjectId == null || participantObjectId.isEmpty()) {
+          continue;
+        }
+
+        if (participantToGroup.containsKey(participantObjectId)) {
+          if (participantToGroup.get(participantObjectId) != group) {
+            RaceParticipant p = findParticipantByObjectId(participantObjectId);
+            if (p == null) {
+              p = findParticipantInProtoRequest(request, participantObjectId);
+            }
+            String name =
+                (p != null && p.getDriver() != null) ? p.getDriver().getName() : "Unknown";
+            return "RD_ERR_PARTICIPANT_MULTIPLE_GROUPS|"
+                + name
+                + "|"
+                + (participantToGroup.get(participantObjectId) + 1)
+                + "|"
+                + (group + 1);
+          }
+        } else {
+          participantToGroup.put(participantObjectId, group);
+        }
+      }
+    }
+
+    // Sequential check
+    int expected = 0;
+    for (int group : uniqueGroups) {
+      if (group != expected) {
+        return "RD_ERR_GROUP_NON_SEQUENTIAL|" + (expected + 1) + "|" + (group + 1);
+      }
+      expected++;
+    }
+
+    return null;
   }
 
   private String validateParticipantRemoval(ModifyHeatsRequest request) {
@@ -221,6 +282,7 @@ public class RaceHeatManager {
       if (oldHeat != null && oldHeat.isStarted()) {
         String error = validateStartedHeatModification(protoHeat, oldHeat);
         if (error != null) return error;
+        oldHeat.setGroup(protoHeat.getGroup());
         newHeats.add(oldHeat);
       } else {
         newHeats.add(createNewHeat(request, protoHeat));
@@ -285,6 +347,7 @@ public class RaceHeatManager {
             protoHeat.getHeatNumber(), newHeatDrivers, this.race.getRaceModel().getHeatScoring());
     newHeat.setObjectId(protoHeat.getObjectId());
     newHeat.setStarted(protoHeat.getStarted());
+    newHeat.setGroup(protoHeat.getGroup());
     return newHeat;
   }
 

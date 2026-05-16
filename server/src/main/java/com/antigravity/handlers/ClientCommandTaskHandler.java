@@ -873,7 +873,9 @@ public class ClientCommandTaskHandler {
       synchronized (race) {
         OverallStandings standings =
             new OverallStandings(
-                race.getRaceModel().getHeatScoring(), race.getRaceModel().getOverallScoring());
+                race.getRaceModel().getHeatScoring(),
+                race.getRaceModel().getOverallScoring(),
+                race.getRaceModel().getGroupOptions());
         standings.recalculate(race.getDrivers(), race.getHeats());
         csv = CsvExporter.export(race);
       }

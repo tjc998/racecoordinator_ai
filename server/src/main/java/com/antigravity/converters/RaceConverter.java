@@ -151,6 +151,20 @@ public class RaceConverter {
       }
       builder.setHeatTimesThrough(race.getHeatTimesThrough());
       builder.setReverseHeats(race.isReverseHeats());
+
+      if (race.getGroupOptions() != null) {
+        com.antigravity.models.GroupOptions groups = race.getGroupOptions(); // fqn-collision
+        builder.setGroupOptions(
+            com.antigravity.proto.GroupOptions.newBuilder() // fqn-collision
+                .setEnabled(groups.isEnabled())
+                .setMaxGroups(groups.getMaxGroups())
+                .setBalance(groups.isBalance())
+                .setAllowEmptyLanes(groups.isAllowEmptyLanes())
+                .setForceMultipleOfMax(groups.isForceMultipleOfMax())
+                .setRotateGroupHeats(groups.isRotateGroupHeats())
+                .build());
+      }
+
       return builder.build();
     }
   }

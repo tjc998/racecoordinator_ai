@@ -219,9 +219,12 @@
           <span class="value-text">{{ race.name }}</span>
         </div>
         <div class="info-section">
-          <span class="value-text"
-            >Heat {{ heat.heatNumber }} of {{ totalHeats }}</span
-          >
+          <span class="value-text">
+            Heat {{ heat.heatNumber }} of {{ totalHeats }}
+            @if (race.group_options && race.group_options.enabled) {
+              - {{ "RE_GROUPS_LABEL" | translate }}: {{ heat.group + 1 }}
+            }
+          </span>
         </div>
         <div class="info-section">
           <span class="label-text">Track:</span>

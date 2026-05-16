@@ -21,7 +21,6 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
-import { EditorTitleComponent as EditorTitleComponent_1 } from "@app/components/shared/editor-title/editor-title.component";
 import { InputDialogComponent } from "@app/components/shared/input-dialog/input-dialog.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { ArduinoEditorComponent } from "@app/components/track-editor/arduino-editor/arduino-editor.component";
@@ -47,7 +46,7 @@ import { TranslationService } from "@app/services/translation.service";
   templateUrl: "./track-editor.component.html",
   styleUrls: ["./track-editor.component.css"],
   imports: [
-    EditorTitleComponent_1,
+    EditorTitleComponent,
     FormsModule,
     CdkDropList,
     CdkDrag,

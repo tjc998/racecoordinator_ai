@@ -12,6 +12,9 @@
             {{
               "RM_LABEL_HEAT_NUMBER" | translate: { number: heat.heatNumber }
             }}
+            @if (showGroups()) {
+              - {{ "RE_GROUPS_LABEL" | translate }}: {{ heat.group + 1 }}
+            }
           </div>
           <div
             class="heat-lanes"

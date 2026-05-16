@@ -1,5 +1,6 @@
 package com.antigravity.race;
 
+import com.antigravity.models.GroupOptions;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.OverallScoring;
 import java.util.ArrayList;
@@ -13,10 +14,13 @@ public class OverallStandings {
 
   private final HeatScoring heatScoring;
   private final OverallScoring overallScoring;
+  private final GroupOptions groupOptions;
 
-  public OverallStandings(HeatScoring heatScoring, OverallScoring overallScoring) {
+  public OverallStandings(
+      HeatScoring heatScoring, OverallScoring overallScoring, GroupOptions groupOptions) {
     this.heatScoring = heatScoring;
     this.overallScoring = overallScoring;
+    this.groupOptions = groupOptions;
   }
 
   public int getDroppedHeats() {
@@ -90,7 +94,11 @@ public class OverallStandings {
     }
 
     // 3. Rank drivers
-    drivers.sort(getComparator());
+    if (groupOptions != null && groupOptions.isEnabled() && groupOptions.getMinAdvancing() > 0) {
+      rankWithMinAdvancing(drivers, heats);
+    } else {
+      drivers.sort(getComparator());
+    }
 
     // 4. Assign ranks
     int currentRank = 1;
@@ -199,6 +207,53 @@ public class OverallStandings {
                   d -> d.getTotalTime() == 0 ? Double.MAX_VALUE : d.getTotalTime());
     }
     return comparator;
+  }
+
+  private void rankWithMinAdvancing(List<RaceParticipant> drivers, List<Heat> heats) {
+    Map<String, Integer> driverToGroup = new HashMap<>();
+    for (Heat heat : heats) {
+      for (DriverHeatData dhd : heat.getDrivers()) {
+        if (dhd.getDriver() != null) {
+          driverToGroup.put(dhd.getDriver().getStableId(), heat.getGroup());
+        }
+      }
+    }
+
+    Map<Integer, List<RaceParticipant>> groupedDrivers = new HashMap<>();
+    List<RaceParticipant> emptyDrivers = new ArrayList<>();
+
+    for (RaceParticipant driver : drivers) {
+      if (driver.getDriver() != null && driver.getDriver().isEmpty()) {
+        emptyDrivers.add(driver);
+      } else {
+        int group = driverToGroup.getOrDefault(driver.getStableId(), 0);
+        groupedDrivers.computeIfAbsent(group, k -> new ArrayList<>()).add(driver);
+      }
+    }
+
+    List<RaceParticipant> forcedTop = new ArrayList<>();
+    List<RaceParticipant> theRest = new ArrayList<>();
+
+    Comparator<RaceParticipant> comparator = getComparator();
+
+    for (List<RaceParticipant> group : groupedDrivers.values()) {
+      group.sort(comparator);
+      int toAdvance = Math.min(group.size(), groupOptions.getMinAdvancing());
+      for (int i = 0; i < toAdvance; i++) {
+        forcedTop.add(group.get(i));
+      }
+      for (int i = toAdvance; i < group.size(); i++) {
+        theRest.add(group.get(i));
+      }
+    }
+
+    forcedTop.sort(comparator);
+    theRest.sort(comparator);
+
+    drivers.clear();
+    drivers.addAll(forcedTop);
+    drivers.addAll(theRest);
+    drivers.addAll(emptyDrivers);
   }
 
   private Comparator<RaceParticipant> getComparator() {

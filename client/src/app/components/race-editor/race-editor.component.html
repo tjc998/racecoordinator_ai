@@ -148,6 +148,7 @@
           <app-heat-list
             [heats]="generatedHeats"
             [showHeader]="false"
+            [showGroups]="editingRace.group_options.enabled"
             [canDragLanes]="
               editingRace?.heat_rotation_type === 'SingleHeatSolo' ||
               editingRace?.heat_rotation_type === 'SingleHeat'
@@ -602,6 +603,146 @@
                         {{ "RE_REVERSE_HEATS" | translate }}
                       </span>
                     </label>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+          <!-- Group Section -->
+          <div id="group-section" class="config-section">
+            <div class="section-header" (click)="toggleSection('groups')">
+              <span
+                class="expander-icon"
+                [class.collapsed]="!sectionsExpanded.groups"
+                >▼</span
+              >
+              <h1>{{ "RE_GROUPS_HEADER" | translate }}</h1>
+            </div>
+            @if (sectionsExpanded.groups) {
+              <div class="section-content">
+                <div class="config-row">
+                  <div class="config-section checkbox-section">
+                    <label class="checkbox-container">
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="editingRace.group_options.enabled"
+                        (ngModelChange)="captureState()"
+                      />
+                      <span class="checkmark"></span>
+                      <span class="checkbox-label">
+                        {{ "RE_GROUPS_ENABLED" | translate }}
+                      </span>
+                    </label>
+                  </div>
+                </div>
+                <div
+                  class="group-options-grid"
+                  [class.options-disabled]="!editingRace.group_options.enabled"
+                >
+                  <div class="config-row">
+                    <div class="config-section">
+                      <label>{{ "RE_GROUPS_MAX" | translate }}</label>
+                      <input
+                        type="number"
+                        [(ngModel)]="editingRace.group_options.max_groups"
+                        (ngModelChange)="captureState()"
+                        min="1"
+                        max="100"
+                        [disabled]="!editingRace.group_options.enabled"
+                      />
+                    </div>
+                    <div class="config-section checkbox-section">
+                      <label
+                        class="checkbox-container"
+                        [class.disabled]="!editingRace.group_options.enabled"
+                      >
+                        <input
+                          type="checkbox"
+                          [(ngModel)]="editingRace.group_options.balance"
+                          (ngModelChange)="captureState()"
+                          [disabled]="!editingRace.group_options.enabled"
+                        />
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">
+                          {{ "RE_GROUPS_BALANCE" | translate }}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="config-row">
+                    <div class="config-section checkbox-section">
+                      <label
+                        class="checkbox-container"
+                        [class.disabled]="!editingRace.group_options.enabled"
+                      >
+                        <input
+                          type="checkbox"
+                          [(ngModel)]="
+                            editingRace.group_options.allow_empty_lanes
+                          "
+                          (ngModelChange)="captureState()"
+                          [disabled]="!editingRace.group_options.enabled"
+                        />
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">
+                          {{ "RE_GROUPS_ALLOW_EMPTY" | translate }}
+                        </span>
+                      </label>
+                    </div>
+                    <div class="config-section checkbox-section">
+                      <label
+                        class="checkbox-container"
+                        [class.disabled]="!editingRace.group_options.enabled"
+                      >
+                        <input
+                          type="checkbox"
+                          [(ngModel)]="
+                            editingRace.group_options.force_multiple_of_max
+                          "
+                          (ngModelChange)="captureState()"
+                          [disabled]="!editingRace.group_options.enabled"
+                        />
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">
+                          {{ "RE_GROUPS_FORCE_MULTIPLE" | translate }}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="config-row">
+                    <div class="config-section checkbox-section">
+                      <label
+                        class="checkbox-container"
+                        [class.disabled]="!editingRace.group_options.enabled"
+                      >
+                        <input
+                          type="checkbox"
+                          [(ngModel)]="
+                            editingRace.group_options.rotate_group_heats
+                          "
+                          (ngModelChange)="captureState()"
+                          [disabled]="!editingRace.group_options.enabled"
+                        />
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">
+                          {{ "RE_GROUPS_ROTATE_HEATS" | translate }}
+                        </span>
+                      </label>
+                    </div>
+                    <div class="config-section">
+                      <label
+                        [class.disabled]="!editingRace.group_options.enabled"
+                        >{{ "RE_GROUPS_MIN_ADVANCING" | translate }}</label
+                      >
+                      <input
+                        type="number"
+                        [(ngModel)]="editingRace.group_options.min_advancing"
+                        (ngModelChange)="captureState()"
+                        min="0"
+                        max="10"
+                        [disabled]="!editingRace.group_options.enabled"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

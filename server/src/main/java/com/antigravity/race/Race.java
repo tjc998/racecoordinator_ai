@@ -123,7 +123,9 @@ public class Race implements ProtocolListener {
     this.autoAdvanceFired = builder.autoAdvanceFired;
     this.statistics = builder.statistics != null ? builder.statistics : new RaceStatistics();
 
-    this.overallStandings = new OverallStandings(model.getHeatScoring(), model.getOverallScoring());
+    this.overallStandings =
+        new OverallStandings(
+            model.getHeatScoring(), model.getOverallScoring(), model.getGroupOptions());
     this.demoConfig = builder.demoConfig;
     this.hardwareManager.createProtocols(builder.isDemoMode, builder.demoConfig);
     this.isDemoMode = builder.isDemoMode;

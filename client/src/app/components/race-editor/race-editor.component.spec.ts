@@ -94,6 +94,11 @@ describe("RaceEditorComponent", () => {
     component.editingRace = JSON.parse(JSON.stringify(MOCK_RACE_INSTANCES[0]));
     Object.setPrototypeOf(component.editingRace, Race.prototype);
     if (component.editingRace) {
+      component.editingRace.track_entity_id =
+        component.editingRace.track_entity_id ||
+        component.editingRace.track?.entity_id;
+      component.editingRace.heat_rotation_type =
+        component.editingRace.heat_rotation_type || "RoundRobin";
       component.editingRace.custom_rotation_sequence =
         component.editingRace.custom_rotation_sequence || [];
       component.editingRace.custom_rotations =
@@ -220,6 +225,7 @@ describe("RaceEditorComponent", () => {
       jasmine.any(Array),
       1,
       false,
+      jasmine.any(Object),
     );
     expect(component.generatedHeats.length).toBeGreaterThan(0);
   }));
@@ -242,6 +248,7 @@ describe("RaceEditorComponent", () => {
       jasmine.any(Array),
       1,
       false,
+      jasmine.any(Object),
     );
 
     component.driverCount = 12;
@@ -258,6 +265,7 @@ describe("RaceEditorComponent", () => {
       jasmine.any(Array),
       1,
       false,
+      jasmine.any(Object),
     );
   }));
 
@@ -464,6 +472,7 @@ describe("RaceEditorComponent", () => {
         overall_time_limit: 0,
         require_pit_stop_change_driver: false,
       },
+      group_options: { enabled: false },
     };
     spyOn(component, "isDirtyState").and.returnValue(false);
     expect(component.canUpdate()).toBeFalse();
@@ -590,6 +599,76 @@ describe("RaceEditorComponent", () => {
     });
   });
 
+  describe("Group Options", () => {
+    it("should initialize with default group options if not present", fakeAsync(() => {
+      const raceWithoutGroups: any = JSON.parse(JSON.stringify(MOCK_RACES[0]));
+      delete raceWithoutGroups.group_options;
+
+      dataService.getRaces.and.returnValue(of([raceWithoutGroups]));
+
+      component.ngOnInit();
+      tick();
+
+      expect(component.editingRace.group_options).toBeDefined();
+      expect(component.editingRace.group_options?.enabled).toBeFalse();
+    }));
+
+    it("should detect changes when group settings modify", () => {
+      component.editingRace.group_options!.enabled = true;
+      expect(component.isDirtyState()).toBeTrue();
+
+      component.editingRace.group_options!.enabled = false;
+      expect(component.isDirtyState()).toBeFalse();
+
+      component.editingRace.group_options!.max_groups = 5;
+      expect(component.isDirtyState()).toBeTrue();
+
+      component.editingRace.group_options!.max_groups = 1;
+      component.editingRace.group_options!.min_advancing = 2;
+      expect(component.isDirtyState()).toBeTrue();
+    });
+
+    it("should include min_advancing in previewHeats payload", fakeAsync(() => {
+      component.editingRace.group_options = {
+        enabled: true,
+        max_groups: 3,
+        min_advancing: 2,
+      } as any;
+      dataService.previewHeats.calls.reset();
+
+      component.loadHeats();
+      tick();
+
+      expect(dataService.previewHeats).toHaveBeenCalled();
+      const payload = dataService.previewHeats.calls.mostRecent().args[9];
+      expect(payload).toBeDefined();
+      expect(payload.enabled).toBeTrue();
+      expect(payload.max_groups).toBe(3);
+      expect(payload.min_advancing).toBe(2);
+    }));
+
+    it("should include min_advancing in updateRace payload", fakeAsync(() => {
+      component.editingRace.group_options = {
+        enabled: true,
+        max_groups: 4,
+        min_advancing: 3,
+      } as any;
+      spyOn(component, "isDirtyState").and.returnValue(true);
+      dataService.updateRace.and.returnValue(of({}));
+      dataService.getRaces.and.returnValue(of([]));
+
+      component.updateRace();
+      tick();
+
+      expect(dataService.updateRace).toHaveBeenCalled();
+      const payload = dataService.updateRace.calls.mostRecent().args[1];
+      expect(payload.group_options).toBeDefined();
+      expect(payload.group_options.enabled).toBeTrue();
+      expect(payload.group_options.max_groups).toBe(4);
+      expect(payload.group_options.min_advancing).toBe(3);
+    }));
+  });
+
   it("should call updateRace API", fakeAsync(() => {
     component.editingRace = JSON.parse(JSON.stringify(MOCK_RACES[0]));
     spyOn(component, "isDirtyState").and.returnValue(true);
@@ -618,6 +697,7 @@ describe("RaceEditorComponent", () => {
         overall_time_limit: 600,
         require_pit_stop_change_driver: true,
       },
+      group_options: { enabled: false },
     } as any;
 
     spyOn(component, "isDirtyState").and.returnValue(true);
@@ -687,6 +767,7 @@ describe("RaceEditorComponent", () => {
         overall_time_limit: 0,
         require_pit_stop_change_driver: false,
       },
+      group_options: { enabled: false },
     };
     component.originalRace = JSON.parse(JSON.stringify(component.editingRace));
     component.driverCount = 10;
@@ -939,6 +1020,7 @@ describe("RaceEditorComponent", () => {
         },
         digital_fuel_options: { enabled: false },
         team_options: { require_pit_stop_change_driver: false },
+        group_options: { enabled: false },
       };
       component.originalRace = JSON.parse(
         JSON.stringify(component.editingRace),
@@ -992,6 +1074,7 @@ describe("RaceEditorComponent", () => {
         },
         digital_fuel_options: { enabled: false },
         team_options: { require_pit_stop_change_driver: false },
+        group_options: { enabled: false },
       };
       component.originalRace = JSON.parse(
         JSON.stringify(component.editingRace),
@@ -1042,6 +1125,7 @@ describe("RaceEditorComponent", () => {
         },
         digital_fuel_options: { enabled: false },
         team_options: { require_pit_stop_change_driver: false },
+        group_options: { enabled: false },
       };
       component.originalRace = JSON.parse(
         JSON.stringify(component.editingRace),
@@ -1087,6 +1171,7 @@ describe("RaceEditorComponent", () => {
         },
         digital_fuel_options: { enabled: false },
         team_options: { require_pit_stop_change_driver: false },
+        group_options: { enabled: false },
       };
       component.originalRace = JSON.parse(
         JSON.stringify(component.editingRace),
@@ -1139,6 +1224,7 @@ describe("RaceEditorComponent", () => {
         jasmine.any(Array),
         1,
         false,
+        jasmine.any(Object),
       );
     }));
   });
@@ -1151,6 +1237,7 @@ describe("RaceEditorComponent", () => {
         heat_rotation_type: "Custom",
         heat_scoring: { finish_method: "Lap" },
         overall_scoring: { dropped_heats: 0 },
+        group_options: { enabled: false },
         custom_rotations: [],
       } as any;
     });
@@ -1233,6 +1320,7 @@ describe("RaceEditorComponent", () => {
         jasmine.any(Array),
         3, // heatTimesThrough
         jasmine.any(Boolean),
+        jasmine.any(Object),
       );
     }));
 
@@ -1258,6 +1346,7 @@ describe("RaceEditorComponent", () => {
         jasmine.any(Array),
         jasmine.any(Number),
         true, // reverseHeats
+        jasmine.any(Object),
       );
     }));
 

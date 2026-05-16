@@ -76,6 +76,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     fuel_analog: true,
     fuel_digital: true,
     team: true,
+    groups: true,
   };
 
   isConfigValid(): boolean {
@@ -343,6 +344,17 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
             restart_on_false_start: race.restart_on_false_start || false,
             false_start_lap_penalty: race.false_start_lap_penalty || 0,
             false_start_time_penalty: race.false_start_time_penalty || 0,
+            group_options: {
+              enabled: race.group_options?.enabled ?? false,
+              max_groups: race.group_options?.max_groups ?? 2,
+              balance: race.group_options?.balance ?? true,
+              allow_empty_lanes: race.group_options?.allow_empty_lanes ?? false,
+              force_multiple_of_max:
+                race.group_options?.force_multiple_of_max ?? false,
+              rotate_group_heats:
+                race.group_options?.rotate_group_heats ?? false,
+              min_advancing: race.group_options?.min_advancing ?? 0,
+            },
           };
           if (!this.editingRace.heat_scoring) {
             this.editingRace.heat_scoring = {
@@ -587,6 +599,15 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       restart_on_false_start: false,
       false_start_lap_penalty: 0,
       false_start_time_penalty: 0,
+      group_options: {
+        enabled: false,
+        max_groups: 2,
+        balance: true,
+        allow_empty_lanes: false,
+        force_multiple_of_max: false,
+        rotate_group_heats: false,
+        min_advancing: 0,
+      },
     };
     this.originalRace = this.deepCopy(this.editingRace);
     this.undoManager.initialize(this.editingRace);
@@ -775,6 +796,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       customSequence: this.editingRace.custom_rotation_sequence,
       heatTimesThrough: this.editingRace.heat_times_through,
       reverseHeats: this.editingRace.reverse_heats,
+      groupOptions: this.editingRace.group_options,
     });
     this.dataService
       .previewHeats(
@@ -787,6 +809,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         this.editingRace.custom_rotations,
         this.editingRace.heat_times_through,
         this.editingRace.reverse_heats,
+        this.editingRace.group_options,
       )
       .subscribe({
         next: (response) => {
@@ -1622,6 +1645,17 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       restart_on_false_start: race.restart_on_false_start,
       false_start_lap_penalty: race.false_start_lap_penalty,
       false_start_time_penalty: race.false_start_time_penalty,
+      group_options: race.group_options
+        ? {
+            enabled: race.group_options.enabled,
+            max_groups: race.group_options.max_groups,
+            balance: race.group_options.balance,
+            allow_empty_lanes: race.group_options.allow_empty_lanes,
+            force_multiple_of_max: race.group_options.force_multiple_of_max,
+            rotate_group_heats: race.group_options.rotate_group_heats,
+            min_advancing: race.group_options.min_advancing,
+          }
+        : undefined,
     };
   }
 

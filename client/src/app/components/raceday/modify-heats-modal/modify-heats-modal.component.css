@@ -487,3 +487,27 @@
     from { transform: translate(-50%, 20px); opacity: 0; }
     to { transform: translate(-50%, 0); opacity: 1; }
 }
+
+.group-input {
+  width: 40px;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 4px;
+  color: #fff;
+  padding: 2px 4px;
+  font-size: 0.9rem;
+  margin-left: 5px;
+  text-align: center;
+}
+
+.group-input:focus {
+  outline: none;
+  border-color: #38bdf8;
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.group-input::-webkit-outer-spin-button,
+.group-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}

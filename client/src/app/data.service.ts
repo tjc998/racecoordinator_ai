@@ -225,6 +225,7 @@ export class DataService {
     customRotations: any[] = [],
     heatTimesThrough: number = 1,
     reverseHeats: boolean = false,
+    groupOptions: any = null,
   ): Observable<any> {
     return this.http.post<any>(
       `http://${this.serverIp}:${this.serverPort}/api/heats/preview`,
@@ -238,6 +239,7 @@ export class DataService {
         customRotations,
         heatTimesThrough,
         reverseHeats,
+        groupOptions,
       },
     );
   }

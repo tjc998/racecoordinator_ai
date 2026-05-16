@@ -105,13 +105,15 @@ export class HeatConverter {
         (d): d is DriverHeatData => d !== null,
       );
 
-      return new Heat(
+      const h = new Heat(
         objectId || "",
         heatNumber !== -1 ? heatNumber : proto.heatNumber || 0,
         validHeatDrivers,
         proto.standings || [],
         !!proto.started,
       );
+      h.group = proto.group || 0;
+      return h;
     });
   }
 }

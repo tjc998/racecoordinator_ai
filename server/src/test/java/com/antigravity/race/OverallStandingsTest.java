@@ -3,6 +3,7 @@ package com.antigravity.race;
 import static org.junit.Assert.assertEquals;
 
 import com.antigravity.models.Driver;
+import com.antigravity.models.GroupOptions;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.HeatScoring.FinishMethod;
 import com.antigravity.models.HeatScoring.HeatRanking;
@@ -62,7 +63,7 @@ public class OverallStandingsTest {
             FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
     OverallScoring overallScoring =
         new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.FASTEST_LAP_TIME);
-    OverallStandings os = new OverallStandings(heatScoring, overallScoring);
+    OverallStandings os = new OverallStandings(heatScoring, overallScoring, new GroupOptions());
 
     RaceParticipant p1 = createDriver("D1", "id1");
     RaceParticipant p2 = createDriver("D2", "id2");
@@ -89,7 +90,7 @@ public class OverallStandingsTest {
             FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.MEDIAN_LAP_TIME);
     OverallScoring overallScoring =
         new OverallScoring(1, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.MEDIAN_LAP_TIME);
-    OverallStandings os = new OverallStandings(heatScoring, overallScoring);
+    OverallStandings os = new OverallStandings(heatScoring, overallScoring, new GroupOptions());
 
     RaceParticipant p1 = createDriver("D1", "id1");
     List<RaceParticipant> drivers = new ArrayList<>();
@@ -121,7 +122,7 @@ public class OverallStandingsTest {
             FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.AVERAGE_LAP_TIME);
     OverallScoring overallScoring =
         new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.AVERAGE_LAP_TIME);
-    OverallStandings os = new OverallStandings(heatScoring, overallScoring);
+    OverallStandings os = new OverallStandings(heatScoring, overallScoring, new GroupOptions());
 
     RaceParticipant p1 = createDriver("D1", "id1");
     RaceParticipant p2 = createDriver("D2", "id2");
@@ -146,7 +147,7 @@ public class OverallStandingsTest {
             FinishMethod.Lap, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.MEDIAN_LAP_TIME);
     overallScoring =
         new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.MEDIAN_LAP_TIME);
-    os = new OverallStandings(heatScoring, overallScoring);
+    os = new OverallStandings(heatScoring, overallScoring, new GroupOptions());
 
     p1 = createDriver("D1", "id1");
     p2 = createDriver("D2", "id2");
@@ -189,7 +190,7 @@ public class OverallStandingsTest {
             FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.AVERAGE_LAP_TIME);
     OverallScoring overallScoring =
         new OverallScoring(0, OverallRanking.AVERAGE_LAP, OverallRankingTiebreaker.TOTAL_TIME);
-    OverallStandings os = new OverallStandings(heatScoring, overallScoring);
+    OverallStandings os = new OverallStandings(heatScoring, overallScoring, new GroupOptions());
 
     RaceParticipant p1 = createDriver("D1", "id1");
     RaceParticipant p2 = createDriver("D2", "id2");
@@ -217,7 +218,7 @@ public class OverallStandingsTest {
             FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
     OverallScoring overallScoring =
         new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.FASTEST_LAP_TIME);
-    OverallStandings os = new OverallStandings(heatScoring, overallScoring);
+    OverallStandings os = new OverallStandings(heatScoring, overallScoring, new GroupOptions());
 
     RaceParticipant p1 = createDriver("D1", "id1");
     RaceParticipant p2 = new RaceParticipant(Driver.EMPTY_DRIVER, "empty");
@@ -247,7 +248,7 @@ public class OverallStandingsTest {
             FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
     OverallScoring overallScoring =
         new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.FASTEST_LAP_TIME);
-    OverallStandings os = new OverallStandings(heatScoring, overallScoring);
+    OverallStandings os = new OverallStandings(heatScoring, overallScoring, new GroupOptions());
 
     RaceParticipant p1 = createDriver("D1", "id1");
     List<RaceParticipant> drivers = new ArrayList<>();
@@ -280,7 +281,7 @@ public class OverallStandingsTest {
             FinishMethod.Timed, 10, HeatRanking.TOTAL_TIME, HeatRankingTiebreaker.FASTEST_LAP_TIME);
     OverallScoring overallScoring =
         new OverallScoring(0, OverallRanking.TOTAL_TIME, OverallRankingTiebreaker.FASTEST_LAP_TIME);
-    OverallStandings os = new OverallStandings(heatScoring, overallScoring);
+    OverallStandings os = new OverallStandings(heatScoring, overallScoring, new GroupOptions());
 
     RaceParticipant p1 = createDriver("D1", "id1");
     RaceParticipant p2 = createDriver("D2", "id2");
@@ -298,5 +299,132 @@ public class OverallStandingsTest {
 
     assertEquals(1, p2.getRank());
     assertEquals(2, p1.getRank());
+  }
+
+  @Test
+  public void testMinAdvancingSimple() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.FASTEST_LAP_TIME);
+    // Enable min advancing 1
+    GroupOptions groupOptions = new GroupOptions(true, 1, false, true, false, true, 1);
+    OverallStandings os = new OverallStandings(heatScoring, overallScoring, groupOptions);
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    RaceParticipant p2 = createDriver("D2", "id2");
+    List<RaceParticipant> drivers = new ArrayList<>();
+    drivers.add(p1);
+    drivers.add(p2);
+
+    List<Heat> heats = new ArrayList<>();
+    // P1: 10 laps, P2: 12 laps. Normally P2 is #1.
+    heats.add(createHeat(1, p1, 10, 100.0, p2, 12, 120.0));
+
+    os.recalculate(drivers, heats);
+
+    // With minAdvancing 1, D1 and D2 are in group 0 (default).
+    // Top 1 advances. Since D2 is better, D2 is forced top.
+    // Result should be D2, D1.
+    assertEquals(1, p2.getRank());
+    assertEquals(2, p1.getRank());
+  }
+
+  @Test
+  public void testMinAdvancingMultipleGroups() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.FASTEST_LAP_TIME);
+    // Enable min advancing 1
+    GroupOptions groupOptions = new GroupOptions(true, 2, false, true, false, true, 1);
+    OverallStandings os = new OverallStandings(heatScoring, overallScoring, groupOptions);
+
+    RaceParticipant g1_p1 = createDriver("G1P1", "g1p1");
+    RaceParticipant g1_p2 = createDriver("G1P2", "g1p2");
+    RaceParticipant g2_p1 = createDriver("G2P1", "g2p1");
+    RaceParticipant g2_p2 = createDriver("G2P2", "g2p2");
+
+    List<RaceParticipant> drivers = new ArrayList<>();
+    drivers.add(g1_p1);
+    drivers.add(g1_p2);
+    drivers.add(g2_p1);
+    drivers.add(g2_p2);
+
+    List<Heat> heats = new ArrayList<>();
+    // Group 1: P2 wins (20 laps), P1 second (10 laps) -> P2 advances
+    Heat h1 = createHeat(1, g1_p1, 10, 100.0, g1_p2, 20, 200.0);
+    h1.setGroup(1);
+    heats.add(h1);
+
+    // Group 2: P1 wins (15 laps), P2 second (5 laps) -> P1 advances
+    Heat h2 = createHeat(2, g2_p1, 15, 150.0, g2_p2, 5, 50.0);
+    h2.setGroup(2);
+    heats.add(h2);
+
+    os.recalculate(drivers, heats);
+
+    // Forced Top: g1_p2 (20 laps) and g2_p1 (15 laps).
+    // Sorted: g1_p2 (Rank 1), g2_p1 (Rank 2)
+    // The Rest: g1_p1 (10 laps) and g2_p2 (5 laps)
+    // Sorted: g1_p1 (Rank 3), g2_p2 (Rank 4)
+
+    assertEquals(1, g1_p2.getRank());
+    assertEquals(2, g2_p1.getRank());
+    assertEquals(3, g1_p1.getRank());
+    assertEquals(4, g2_p2.getRank());
+  }
+
+  @Test
+  public void testMinAdvancingNotEnoughDrivers() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.FASTEST_LAP_TIME);
+    // min advancing 2, but group only has 1
+    GroupOptions groupOptions = new GroupOptions(true, 1, false, true, false, true, 2);
+    OverallStandings os = new OverallStandings(heatScoring, overallScoring, groupOptions);
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    List<RaceParticipant> drivers = new ArrayList<>();
+    drivers.add(p1);
+
+    List<Heat> heats = new ArrayList<>();
+    heats.add(createHeat(1, p1, 10, 100.0, createDriver("Dummy", "dummy"), 0, 0));
+
+    os.recalculate(drivers, heats);
+
+    assertEquals(1, p1.getRank());
+    assertEquals(10.0, p1.getTotalLaps(), 0.001);
+  }
+
+  @Test
+  public void testMinAdvancingWithEmptyDrivers() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.FASTEST_LAP_TIME);
+    GroupOptions groupOptions = new GroupOptions(true, 1, false, true, false, true, 1);
+    OverallStandings os = new OverallStandings(heatScoring, overallScoring, groupOptions);
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    RaceParticipant empty = new RaceParticipant(Driver.EMPTY_DRIVER, "empty");
+    List<RaceParticipant> drivers = new ArrayList<>();
+    drivers.add(p1);
+    drivers.add(empty);
+
+    List<Heat> heats = new ArrayList<>();
+    heats.add(createHeat(1, p1, 10, 100.0, empty, 0, 0));
+
+    os.recalculate(drivers, heats);
+
+    assertEquals(1, p1.getRank());
+    assertEquals(99, empty.getRank());
+    assertEquals(p1, drivers.get(0));
+    assertEquals(empty, drivers.get(1));
   }
 }

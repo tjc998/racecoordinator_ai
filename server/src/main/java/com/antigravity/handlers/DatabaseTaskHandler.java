@@ -5,6 +5,7 @@ import com.antigravity.models.CustomHeat;
 import com.antigravity.models.CustomRotation;
 import com.antigravity.models.Driver;
 import com.antigravity.models.GlobalStatistics;
+import com.antigravity.models.GroupOptions;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.Lane;
@@ -619,6 +620,7 @@ public class DatabaseTaskHandler {
               .withRestartOnFalseStart(race.isRestartOnFalseStart())
               .withFalseStartLapPenalty(race.getFalseStartLapPenalty())
               .withFalseStartTimePenalty(race.getFalseStartTimePenalty())
+              .withGroupOptions(race.getGroupOptions())
               .withEntityId(nextId)
               .build();
     }
@@ -659,39 +661,7 @@ public class DatabaseTaskHandler {
       throw new IllegalArgumentException("Race name already exists");
     }
 
-    race =
-        new Race.Builder()
-            .withName(race.getName())
-            .withTrackEntityId(race.getTrackEntityId())
-            .withHeatRotationType(race.getHeatRotationType())
-            .withHeatScoring(race.getHeatScoring())
-            .withOverallScoring(race.getOverallScoring())
-            .withMinLapTime(race.getMinLapTime())
-            .withFuelOptions(race.getFuelOptions())
-            .withDigitalFuelOptions(race.getDigitalFuelOptions())
-            .withTeamOptions(race.getTeamOptions())
-            .withAutoAdvanceTime(race.getAutoAdvanceTime())
-            .withAutoStartTime(race.getAutoStartTime())
-            .withAutoAdvanceWarmupTime(race.getAutoAdvanceWarmupTime())
-            .withAutoStartWarmupTime(race.getAutoStartWarmupTime())
-            .withDriftTime(race.getDriftTime())
-            .withStartTime(race.getStartTime())
-            .withRestartTime(race.getRestartTime())
-            .withStartDelay(race.getStartDelay())
-            .withRestartDelay(race.getRestartDelay())
-            .withSoloLaneIndex(race.getSoloLaneIndex())
-            .withCustomRotationSequence(race.getCustomRotationSequence())
-            .withCustomRotationAssetId(race.getCustomRotationAssetId())
-            .withCustomRotations(race.getCustomRotations())
-            .withHeatTimesThrough(race.getHeatTimesThrough())
-            .withReverseHeats(race.isReverseHeats())
-            .withHotStart(race.isHotStart())
-            .withRestartOnFalseStart(race.isRestartOnFalseStart())
-            .withFalseStartLapPenalty(race.getFalseStartLapPenalty())
-            .withFalseStartTimePenalty(race.getFalseStartTimePenalty())
-            .withEntityId(id)
-            .withId(race.getId())
-            .build();
+    race = new Race.Builder().from(race).withEntityId(id).withId(race.getId()).build();
     UpdateResult result = col.replaceOne(Filters.eq("entity_id", id), race);
     if (result.getMatchedCount() == 0) {
       throw new IllegalArgumentException("Race not found");
@@ -789,6 +759,7 @@ public class DatabaseTaskHandler {
       raceMap.put("restart_on_false_start", race.isRestartOnFalseStart());
       raceMap.put("false_start_lap_penalty", race.getFalseStartLapPenalty());
       raceMap.put("false_start_time_penalty", race.getFalseStartTimePenalty());
+      raceMap.put("group_options", race.getGroupOptions());
       response.add(raceMap);
     }
     ctx.json(response);
@@ -844,6 +815,7 @@ public class DatabaseTaskHandler {
     for (Heat heat : heats) {
       Map<String, Object> heatMap = new HashMap<>();
       heatMap.put("heatNumber", heat.getHeatNumber());
+      heatMap.put("group", heat.getGroup());
 
       List<Map<String, Object>> lanes = new ArrayList<>();
       List<DriverHeatData> drivers = heat.getDrivers();
@@ -985,6 +957,42 @@ public class DatabaseTaskHandler {
             HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
     OverallScoring defaultOverallScoring = new OverallScoring();
 
+    Map<String, Object> groupOptionsMap = (Map<String, Object>) body.get("groupOptions");
+    if (groupOptionsMap == null) {
+      groupOptionsMap = (Map<String, Object>) body.get("group_options");
+    }
+    GroupOptions groupOptions = null;
+    if (groupOptionsMap != null) {
+      Boolean enabled = (Boolean) groupOptionsMap.get("enabled");
+      Number maxGroupsNum = (Number) groupOptionsMap.get("max_groups");
+      if (maxGroupsNum == null) {
+        maxGroupsNum = (Number) groupOptionsMap.get("maxGroups");
+      }
+      Integer maxGroups = maxGroupsNum != null ? maxGroupsNum.intValue() : null;
+      Boolean balance = (Boolean) groupOptionsMap.get("balance");
+      Boolean allowEmpty = (Boolean) groupOptionsMap.get("allow_empty_lanes");
+      if (allowEmpty == null) {
+        allowEmpty = (Boolean) groupOptionsMap.get("allowEmptyLanes");
+      }
+      Boolean forceMultiple = (Boolean) groupOptionsMap.get("force_multiple_of_max");
+      if (forceMultiple == null) {
+        forceMultiple = (Boolean) groupOptionsMap.get("forceMultipleOfMax");
+      }
+      Boolean rotateHeats = (Boolean) groupOptionsMap.get("rotate_group_heats");
+      if (rotateHeats == null) {
+        rotateHeats = (Boolean) groupOptionsMap.get("rotateGroupHeats");
+      }
+      Number minAdvancingNum = (Number) groupOptionsMap.get("min_advancing");
+      if (minAdvancingNum == null) {
+        minAdvancingNum = (Number) groupOptionsMap.get("minAdvancing");
+      }
+      Integer minAdvancing = minAdvancingNum != null ? minAdvancingNum.intValue() : 0;
+
+      groupOptions =
+          new GroupOptions(
+              enabled, maxGroups, balance, allowEmpty, forceMultiple, rotateHeats, minAdvancing);
+    }
+
     // Create a temporary race configuration
     Race tempRaceConfig =
         new Race.Builder()
@@ -1002,6 +1010,7 @@ public class DatabaseTaskHandler {
             .withCustomRotationAssetId(customRotationAssetId)
             .withHeatTimesThrough(heatTimesThrough)
             .withReverseHeats(reverseHeatsBool)
+            .withGroupOptions(groupOptions)
             .build();
 
     // Create mock RaceParticipant list
@@ -1029,6 +1038,7 @@ public class DatabaseTaskHandler {
     for (Heat heat : heats) {
       Map<String, Object> heatMap = new HashMap<>();
       heatMap.put("heatNumber", heat.getHeatNumber());
+      heatMap.put("group", heat.getGroup());
 
       List<Map<String, Object>> lanes = new ArrayList<>();
       List<DriverHeatData> drivers = heat.getDrivers();

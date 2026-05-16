@@ -1,3 +1,4 @@
+import { GroupOptions } from "@app/models/group_options";
 import {
   AllowFinish,
   FinishMethod,
@@ -179,6 +180,44 @@ export class RaceConverter {
           p.startDelay || p.start_delay || 0.0,
           p.restartDelay || p.restart_delay || 0.0,
           proto.soloLaneIndex || 0,
+          p.customRotationSequence || p.custom_rotation_sequence || [],
+          p.customRotationAssetId || p.custom_rotation_asset_id,
+          p.customRotations || p.custom_rotations || [],
+          p.heatTimesThrough || p.heat_times_through || 1,
+          p.reverseHeats || p.reverse_heats || false,
+          p.hotStart || p.hot_start || false,
+          p.restartOnFalseStart || p.restart_on_false_start || false,
+          p.falseStartLapPenalty || p.false_start_lap_penalty || 0,
+          p.falseStartTimePenalty || p.false_start_time_penalty || 0,
+          p.groupOptions || p.group_options
+            ? new GroupOptions(
+                !!(p.groupOptions?.enabled || p.group_options?.enabled),
+                p.groupOptions?.maxGroups || p.group_options?.max_groups || 1,
+                !!(
+                  p.groupOptions?.balance ??
+                  p.group_options?.balance ??
+                  false
+                ),
+                !!(
+                  p.groupOptions?.allowEmptyLanes ??
+                  p.group_options?.allow_empty_lanes ??
+                  true
+                ),
+                !!(
+                  p.groupOptions?.forceMultipleOfMax ??
+                  p.group_options?.force_multiple_of_max ??
+                  false
+                ),
+                !!(
+                  p.groupOptions?.rotateGroupHeats ??
+                  p.group_options?.rotate_group_heats ??
+                  true
+                ),
+                p.groupOptions?.minAdvancing ||
+                  p.group_options?.min_advancing ||
+                  0,
+              )
+            : new GroupOptions(),
         );
       },
       () => {

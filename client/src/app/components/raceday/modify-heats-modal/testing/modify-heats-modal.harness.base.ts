@@ -9,6 +9,9 @@ export abstract class ModifyHeatsModalHarnessBase {
     driverPool: "#driver-pool",
     heatGrid: ".heats-grid",
     driverName: ".driver-name",
+    undoBtn: "#undo-btn",
+    redoBtn: "#redo-btn",
+    loaderOverlay: ".loader-overlay",
   };
 
   abstract getDriverItemCount(): Promise<number>;
@@ -16,4 +19,11 @@ export abstract class ModifyHeatsModalHarnessBase {
   abstract getLockedOverlayCount(): Promise<number>;
   abstract isDriverVisibleInDatabase(name: string): Promise<boolean>;
   abstract isDriverVisibleInPool(name: string): Promise<boolean>;
+  abstract clickUndo(): Promise<void>;
+  abstract clickRedo(): Promise<void>;
+  abstract waitForLoaderToBeHidden(): Promise<void>;
+  abstract dragDriverToHeat(
+    driverName: string,
+    heatIndex: number,
+  ): Promise<void>;
 }

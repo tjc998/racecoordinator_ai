@@ -412,4 +412,79 @@ public class RaceModifyHeatsTest {
     assertFalse("Should fail if two teams share a driver", response.getSuccess());
     assertTrue(response.getErrorMessage().contains("Overlap detected"));
   }
+
+  @Test
+  public void testModifyHeats_DriverInMultipleGroups_Fails() {
+    // 1. Enable groups in race model
+    com.antigravity.models.GroupOptions groupOptions =
+        new com.antigravity.models.GroupOptions(true, 2, true, false, false, false, 0);
+    com.antigravity.models.Race groupRaceModel =
+        new com.antigravity.models.Race.Builder()
+            .from(raceModel)
+            .withGroupOptions(groupOptions)
+            .build();
+
+    com.antigravity.race.Race groupRace =
+        new com.antigravity.race.Race.Builder()
+            .model(groupRaceModel)
+            .drivers(participants)
+            .track(track)
+            .heats(testRace.getHeats())
+            .isDemoMode(true)
+            .build();
+
+    // 2. Set Heat 1 to Group 0 (Group 1) and Heat 2 to Group 1 (Group 2)
+    Heat heat1 = groupRace.getHeats().get(0);
+    Heat heat2 = groupRace.getHeats().get(1);
+    heat1.setGroup(0);
+    heat2.setGroup(1);
+
+    // 3. Put Driver 1 (p1) in both Heat 1 (Group 0) and Heat 2 (Group 1)
+    // p1 is already in Heat 1 from setUp()
+    List<DriverHeatData> heat2Drivers = new ArrayList<>();
+    heat2Drivers.add(new DriverHeatData(participants.get(0))); // p1
+    heat2Drivers.add(new DriverHeatData(new RaceParticipant(Driver.EMPTY_DRIVER)));
+    Heat modifiedHeat2 = new Heat(2, heat2Drivers, raceModel.getHeatScoring());
+    modifiedHeat2.setObjectId(heat2.getObjectId());
+    modifiedHeat2.setGroup(1);
+
+    ModifyHeatsRequest request = createRequest(participants, Arrays.asList(heat1, modifiedHeat2));
+    ModifyHeatsResponse response = groupRace.modifyHeats(request);
+
+    assertFalse("Should fail if driver is in multiple groups", response.getSuccess());
+    assertTrue(response.getErrorMessage().contains("RD_ERR_PARTICIPANT_MULTIPLE_GROUPS"));
+  }
+
+  @Test
+  public void testModifyHeats_NonSequentialGroup_Fails() {
+    // 1. Enable groups
+    com.antigravity.models.GroupOptions groupOptions =
+        new com.antigravity.models.GroupOptions(true, 2, true, false, false, false, 0);
+    com.antigravity.models.Race groupRaceModel =
+        new com.antigravity.models.Race.Builder()
+            .from(raceModel)
+            .withGroupOptions(groupOptions)
+            .build();
+
+    com.antigravity.race.Race groupRace =
+        new com.antigravity.race.Race.Builder()
+            .model(groupRaceModel)
+            .drivers(participants)
+            .track(track)
+            .heats(testRace.getHeats())
+            .isDemoMode(true)
+            .build();
+
+    // 2. Set Heat 1 to Group 0 and Heat 2 to Group 2 (GAP!)
+    Heat heat1 = groupRace.getHeats().get(0);
+    Heat heat2 = groupRace.getHeats().get(1);
+    heat1.setGroup(0);
+    heat2.setGroup(2);
+
+    ModifyHeatsRequest request = createRequest(participants, Arrays.asList(heat1, heat2));
+    ModifyHeatsResponse response = groupRace.modifyHeats(request);
+
+    assertFalse("Should fail if group sequence has a gap", response.getSuccess());
+    assertEquals("RD_ERR_GROUP_NON_SEQUENTIAL|2|3", response.getErrorMessage());
+  }
 }

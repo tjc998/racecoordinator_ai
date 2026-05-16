@@ -20,7 +20,7 @@ test.describe("Modify Heats Modal Visuals", () => {
       page.goto("/default-raceday"),
     );
 
-    await expect(page.locator(".dashboard-wrapper")).toBeVisible();
+    await page.locator(".dashboard-wrapper").waitFor();
   });
 
   test("should show initial state with available and racing drivers, along with a few heats V2", async ({
@@ -123,56 +123,27 @@ test.describe("Modify Heats Modal Visuals", () => {
     const modalHarness = new ModifyHeatsModalHarnessE2e(
       page.locator("app-modify-heats-modal"),
     );
-    await expect(page.locator("app-modify-heats-modal")).toBeVisible();
+    await page.locator("app-modify-heats-modal").waitFor();
+
+    // CRITICAL: Wait for localization to be applied to the newly opened modal
+    await TestSetupHelper.waitForLocalization(page);
 
     // Wait for data to settle
-    await expect
-      .poll(
-        async () => {
-          const count = await modalHarness.getDatabaseDriverCount();
-          const badges = await page.locator(".badge").allTextContents();
-          const headers = await page
-            .locator(".section-header h3")
-            .allTextContents();
+    await page.waitForFunction(
+      async () => {
+        const dbCount =
+          (await (window as any).tempModifyHeats?.databaseDrivers?.length) ?? 0;
+        return dbCount > 0;
+      },
+      { timeout: 15000 },
+    );
 
-          const internalState = await page.evaluate(() => {
-            const item = (window as any).tempModifyHeats;
-            if (!item) return "NO_COMPONENT_YET";
+    // Wait for Charlie to be visible in the racing pool
+    await page
+      .locator('#driver-pool .driver-item:has-text("Charlie")')
+      .waitFor({ state: "visible", timeout: 15000 });
 
-            return JSON.stringify({
-              allDrivers: item.allDrivers?.length ?? -1,
-              databaseParticipants: item.databaseParticipants?.length ?? -1,
-              driverIds: item.allDrivers
-                ?.map((d: any) => d.entity_id || d.objectId)
-                .slice(0, 5),
-              participantIds: item.localParticipants
-                ?.map(
-                  (p: any) =>
-                    p.driver?.entity_id || p.driver?.objectId || p.objectId,
-                )
-                .slice(0, 5),
-              databaseDriverIds: item.databaseDrivers
-                ?.map((d: any) => d.entity_id || d.objectId)
-                .slice(0, 5),
-            });
-          });
-
-          console.log(
-            `POLL: dbCount=${count}, badges=[${badges}], headers=[${headers}], internal=${internalState}, responses=[${apiResponses.join(" | ")}]`,
-          );
-          return count > 0;
-        },
-        { timeout: 15000 },
-      )
-      .toBeTruthy();
-
-    // Verify Charlie is visible in the racing pool (as a participant)
-    await expect
-      .poll(async () => await modalHarness.isDriverVisibleInPool("Charlie"), {
-        timeout: 15000,
-      })
-      .toBeTruthy();
-
+    await modalHarness.waitForLoaderToBeHidden();
     await expect(page).toHaveScreenshot("modify-heats-initial-state.png");
   });
 
@@ -260,14 +231,142 @@ test.describe("Modify Heats Modal Visuals", () => {
     const modalHarness = new ModifyHeatsModalHarnessE2e(
       page.locator("app-modify-heats-modal"),
     );
-    await expect(page.locator("app-modify-heats-modal")).toBeVisible();
+    await page.locator("app-modify-heats-modal").waitFor();
 
-    await expect
-      .poll(async () => await modalHarness.getLockedOverlayCount(), {
-        timeout: 15000,
-      })
-      .toBe(3);
+    // CRITICAL: Wait for localization to be applied to the newly opened modal
+    await TestSetupHelper.waitForLocalization(page);
 
+    await page.waitForFunction(
+      async () => {
+        const overlays = document.querySelectorAll(".locked-overlay");
+        return overlays.length === 3;
+      },
+      { timeout: 15000 },
+    );
+
+    await modalHarness.waitForLoaderToBeHidden();
     await expect(page).toHaveScreenshot("modify-heats-started-state.png");
+  });
+
+  async function setupUndoRedoTest(page: any) {
+    const racedayHarness = new DefaultRacedayHarnessE2e(
+      page.locator(".dashboard-wrapper"),
+    );
+
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Undo/Redo Race",
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: [
+              {
+                objectId: "l1",
+                backgroundColor: "#ff0000",
+                foregroundColor: "#ffffff",
+                length: 10,
+              },
+            ],
+          },
+        },
+        drivers: [
+          {
+            objectId: "rp1",
+            seed: 1,
+            driver: { model: { entityId: "d1" }, name: "Alice" },
+          },
+        ],
+        heats: [{ objectId: "h1", heatNumber: 1, heatDrivers: [] }],
+        currentHeat: { objectId: "h1", heatNumber: 1 },
+        state: RaceState.NOT_STARTED,
+      },
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+
+    await racedayHarness.clickMenuButton("Race Director");
+    await racedayHarness.clickMenuItem("Modify Heats");
+
+    const modalHarness = new ModifyHeatsModalHarnessE2e(
+      page.locator("app-modify-heats-modal"),
+    );
+    await page.locator("app-modify-heats-modal").waitFor();
+
+    // CRITICAL: Wait for modal localization
+    await TestSetupHelper.waitForLocalization(page);
+
+    const firstHeatCard = page.locator(".heat-card").first();
+
+    return { modalHarness, firstHeatCard };
+  }
+
+  test("should show state after moving a driver to a heat", async ({
+    page,
+  }) => {
+    const { modalHarness, firstHeatCard } = await setupUndoRedoTest(page);
+
+    // Move Alice to Heat 1
+    await modalHarness.dragDriverToHeat("Alice", 0);
+
+    // Wait for Alice to be in heat
+    await firstHeatCard
+      .locator('.driver-item:has-text("Alice")')
+      .waitFor({ state: "visible" });
+
+    // Screenshot after move
+    await modalHarness.waitForLoaderToBeHidden();
+    await expect(page).toHaveScreenshot("modify-heats-after-move.png");
+  });
+
+  test("should show state after undoing a driver move", async ({ page }) => {
+    const { modalHarness, firstHeatCard } = await setupUndoRedoTest(page);
+
+    // Move Alice to Heat 1
+    await modalHarness.dragDriverToHeat("Alice", 0);
+    await firstHeatCard
+      .locator('.driver-item:has-text("Alice")')
+      .waitFor({ state: "visible" });
+
+    // Undo
+    await modalHarness.clickUndo();
+
+    // Wait for Alice to NOT be in heat anymore
+    await firstHeatCard
+      .locator('.driver-item:has-text("Alice")')
+      .waitFor({ state: "hidden" });
+
+    // Screenshot after undo
+    await modalHarness.waitForLoaderToBeHidden();
+    await expect(page).toHaveScreenshot("modify-heats-after-undo.png");
+  });
+
+  test("should show state after redoing a driver move", async ({ page }) => {
+    const { modalHarness, firstHeatCard } = await setupUndoRedoTest(page);
+
+    // Move Alice to Heat 1
+    await modalHarness.dragDriverToHeat("Alice", 0);
+    await firstHeatCard
+      .locator('.driver-item:has-text("Alice")')
+      .waitFor({ state: "visible" });
+
+    // Undo
+    await modalHarness.clickUndo();
+    await firstHeatCard
+      .locator('.driver-item:has-text("Alice")')
+      .waitFor({ state: "hidden" });
+
+    // Redo
+    await modalHarness.clickRedo();
+
+    // Wait for Alice to be in heat again
+    await firstHeatCard
+      .locator('.driver-item:has-text("Alice")')
+      .waitFor({ state: "visible" });
+
+    // Screenshot after redo
+    await modalHarness.waitForLoaderToBeHidden();
+    await expect(page).toHaveScreenshot("modify-heats-after-redo.png");
   });
 });

@@ -12,7 +12,6 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, Subscription } from "rxjs";
 import { AudioSelectorComponent } from "@app/components/shared/audio-selector/audio-selector.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
-import { EditorTitleComponent as EditorTitleComponent_1 } from "@app/components/shared/editor-title/editor-title.component";
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
@@ -34,7 +33,7 @@ import { createTTSContext, mockTTSContext } from "@app/utils/audio";
   templateUrl: "./driver-editor.component.html",
   styleUrls: ["./driver-editor.component.css"],
   imports: [
-    EditorTitleComponent_1,
+    EditorTitleComponent,
     ImageSelectorComponent,
     FormsModule,
     AudioSelectorComponent,

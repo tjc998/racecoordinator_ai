@@ -9,6 +9,16 @@ option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
 option java_outer_classname = "RaceModelProto";
 
+message GroupOptions {
+  bool enabled = 1;
+  int32 max_groups = 2;
+  bool balance = 3;
+  bool allow_empty_lanes = 4;
+  bool force_multiple_of_max = 5;
+  bool rotate_group_heats = 6;
+  int32 min_advancing = 7;
+}
+
 message HeatScoring {
   enum FinishMethod {
     Lap = 0;
@@ -109,6 +119,7 @@ message RaceModel {
   bool restart_on_false_start = 27;
   double false_start_lap_penalty = 28;
   double false_start_time_penalty = 29;
+  GroupOptions group_options = 30;
 }
 
 // CustomRotation and CustomHeat moved to rotation_model.proto

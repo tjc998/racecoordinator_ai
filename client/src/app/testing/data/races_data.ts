@@ -187,5 +187,17 @@ export const MOCK_RACE_INSTANCES = MOCK_RACES.map((r: any) => {
     [], // custom_rotations
     1, // heat_times_through
     false, // reverse_heats
+    false, // hot_start
+    false, // restart_on_false_start
+    0, // false_start_lap_penalty
+    0, // false_start_time_penalty
+    r.group_options || {
+      enabled: false,
+      max_groups: 2,
+      balance: true,
+      allow_empty_lanes: false,
+      force_multiple_of_max: false,
+      rotate_group_heats: false,
+    },
   );
 });

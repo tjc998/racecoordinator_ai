@@ -433,4 +433,45 @@ test.describe("Race Editor Visuals", () => {
       { timeout: 15000, maxDiffPixelRatio: 0.05 },
     );
   });
+
+  test("should display Group Configuration section expanded", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+    await page.waitForTimeout(200);
+    await expect(page.locator(".editor-panel")).toBeAttached({
+      timeout: 10000,
+    });
+
+    // Collapse sections to isolate Group Configuration
+    await ensureSectionState(page, "General", false);
+    await ensureSectionState(page, "Scoring", false);
+    await ensureSectionState(page, "Analog Fuel Configuration", false);
+    await ensureSectionState(page, "Digital Fuel Configuration", false);
+    await ensureSectionState(page, "Team Options", false);
+    await ensureSectionState(page, "Heat Configuration", false);
+    await page.waitForTimeout(50);
+
+    // Expand Group Configuration
+    await ensureSectionState(page, "Group Configuration", true);
+    await page.waitForTimeout(50);
+
+    // Enable groups to show all options - find the first checkbox in the section
+    const groupEnabledLabel = page
+      .locator('#group-section label:has-text("Enable Groups")')
+      .first();
+    await groupEnabledLabel.scrollIntoViewIfNeeded();
+    await groupEnabledLabel.click();
+    await page.waitForTimeout(50);
+
+    await TestSetupHelper.disableAnimations(page);
+    await expect(page.locator("#group-section")).toHaveScreenshot(
+      "race-editor-groups-expanded.png",
+      { timeout: 15000, maxDiffPixelRatio: 0.05 },
+    );
+  });
 });

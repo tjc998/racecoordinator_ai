@@ -27,6 +27,7 @@ export class HeatListComponent {
   showHeader = input(true);
   columns = input(2);
   canDragLanes = input(false);
+  showGroups = input(false);
   laneSelected = output<number>();
 
   constructor(private logger: LoggerService) {

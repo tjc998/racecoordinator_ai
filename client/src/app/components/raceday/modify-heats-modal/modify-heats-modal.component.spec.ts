@@ -454,4 +454,174 @@ describe("ModifyHeatsModalComponent", () => {
       expect(error).toBeNull();
     });
   });
+
+  describe("group validation", () => {
+    it("should prevent dropping a driver into a heat with a different group assignment", () => {
+      const p1 = new RaceParticipant(
+        "p1",
+        new Driver("d1", "D1", "D1"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      const heat1 = new Heat("h1", 1, [new DriverHeatData("dhd1", p1, 0)]);
+      heat1.group = 0; // Group 1
+      const heat2 = new Heat("h2", 2, []);
+      heat2.group = 1; // Group 2
+
+      const track = createMockTrack();
+      const race = createMockRace(track);
+      race.group_options.enabled = true;
+
+      fixture.componentRef.setInput("race", race);
+      fixture.componentRef.setInput("heats", [heat1, heat2]);
+      fixture.componentRef.setInput("participants", [p1]);
+      fixture.detectChanges();
+
+      // Mock event for dropping p1 into heat 2 lane 0
+      const event: any = {
+        container: { id: "heat-1-lane-0" }, // toHIdx = 1, toLIdx = 0
+        previousContainer: { id: "driver-pool" },
+        item: { data: p1 },
+      };
+
+      component["onDrop"](event);
+
+      expect(component["showAckModal"]).toBeTrue();
+      expect(component["ackModalMessage"]).toBe(
+        "RD_ERR_PARTICIPANT_MULTIPLE_GROUPS",
+      );
+    });
+  });
+
+  describe("Group modifications and Undo/Redo", () => {
+    let p1: RaceParticipant;
+    let heat1: Heat, heat2: Heat;
+
+    beforeEach(() => {
+      p1 = new RaceParticipant(
+        "p1",
+        new Driver("d1", "D1", "D1"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      heat1 = new Heat("h1", 1, [new DriverHeatData("dhd1", p1, 0)]);
+      heat1.group = 0; // Group 1
+      heat2 = new Heat("h2", 2, []);
+      heat2.group = 0; // Group 1
+
+      const track = createMockTrack();
+      const race = createMockRace(track);
+      race.group_options.enabled = true;
+
+      fixture.componentRef.setInput("race", race);
+      fixture.componentRef.setInput("track", track);
+      fixture.componentRef.setInput("heats", [heat1, heat2]);
+      component["localHeats"] = [heat1, heat2];
+      component["undoManager"].initialize({
+        heats: [heat1, heat2],
+        participants: [p1],
+      });
+      fixture.detectChanges();
+    });
+
+    it("should allow valid sequential group change", () => {
+      component["onGroupChange"](heat2, 2);
+      expect(heat2.group).toBe(1);
+      expect(component["errorMessage"]).toBeUndefined();
+    });
+
+    it("should prevent non-sequential group change", () => {
+      component["onGroupChange"](component["localHeats"][1], 3); // Group 1 exists, Group 3 is too far
+      expect(component["localHeats"][1].group).toBe(2);
+      expect(component["errorMessage"]).toBe("RD_ERR_GROUP_NON_SEQUENTIAL");
+    });
+
+    it("should prevent group change that causes participant to be in multiple groups", () => {
+      // p1 is in heat1 (G0) and we add p1 to heat2
+      const targetHeat = component["localHeats"][1];
+      targetHeat.heatDrivers = [new DriverHeatData("dhd2", p1, 0)];
+      component["onGroupChange"](targetHeat, 2);
+      expect(component["localHeats"][1].group).toBe(1);
+      expect(component["errorMessage"]).toBe(
+        "RD_ERR_PARTICIPANT_MULTIPLE_GROUPS",
+      );
+    });
+
+    it("should prevent group change to less than 1", () => {
+      component["onGroupChange"](component["localHeats"][1], 0);
+      expect(component["localHeats"][1].group).toBe(-1);
+      expect(component["errorMessage"]).toBe("RD_ERR_GROUP_MIN_VALUE");
+    });
+
+    it("should undo group change correctly", () => {
+      component["onGroupChange"](component["localHeats"][1], 2);
+      expect(component["localHeats"][1].group).toBe(1);
+
+      component["undoManager"].undo();
+      expect(component["localHeats"][1].group).toBe(0);
+    });
+
+    it("should redo group change correctly", () => {
+      component["onGroupChange"](component["localHeats"][1], 2);
+      component["undoManager"].undo();
+      component["undoManager"].redo();
+      expect(component["localHeats"][1].group).toBe(1);
+    });
+
+    it("should revert state on server save failure", () => {
+      mockDataService.modifyHeats.and.returnValue(of({ success: false }));
+
+      component["onGroupChange"](component["localHeats"][1], 2);
+      // Server failure should trigger undo
+      expect(component["localHeats"][1].group).toBe(0);
+    });
+  });
+
+  describe("validateGroupSequence", () => {
+    it("should be valid for empty heats", () => {
+      const result = component["validateGroupSequence"]([]);
+      expect(result.isValid).toBeTrue();
+    });
+
+    it("should be valid for single group", () => {
+      const heat1 = new Heat("h1", 1, []);
+      heat1.group = 0;
+      const result = component["validateGroupSequence"]([heat1]);
+      expect(result.isValid).toBeTrue();
+    });
+
+    it("should be invalid if starting from non-zero", () => {
+      const heat1 = new Heat("h1", 1, []);
+      heat1.group = 1;
+      const result = component["validateGroupSequence"]([heat1]);
+      expect(result.isValid).toBeFalse();
+      expect(result.expected).toBe(1);
+      expect(result.found).toBe(2);
+    });
+
+    it("should be invalid if there is a gap", () => {
+      const h1 = new Heat("h1", 1, []);
+      h1.group = 0;
+      const h2 = new Heat("h2", 2, []);
+      h2.group = 2;
+      const result = component["validateGroupSequence"]([h1, h2]);
+      expect(result.isValid).toBeFalse();
+      expect(result.expected).toBe(2);
+      expect(result.found).toBe(3);
+    });
+  });
 });
