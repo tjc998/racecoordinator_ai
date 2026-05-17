@@ -149,7 +149,7 @@ public class App {
                               });
                       closeThread.start();
                       try {
-                        closeThread.join(2000); // Wait up to 2 seconds
+                        closeThread.join(3000); // Wait up to 3 seconds
                         if (closeThread.isAlive()) {
                           logger.warn("MongoClient.close() timed out. Proceeding with shutdown.");
                         }
@@ -204,7 +204,7 @@ public class App {
           MongoClientSettings.builder()
               .applyConnectionString(new ConnectionString("mongodb://localhost:" + MONGO_PORT))
               .codecRegistry(pojoCodecRegistry)
-              .applyToClusterSettings(b -> b.serverSelectionTimeout(30000, TimeUnit.MILLISECONDS))
+              .applyToClusterSettings(b -> b.serverSelectionTimeout(1000, TimeUnit.MILLISECONDS))
               .build();
 
       mongoClient = MongoClients.create(settings);

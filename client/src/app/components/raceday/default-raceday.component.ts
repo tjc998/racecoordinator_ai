@@ -183,6 +183,33 @@ export class DefaultRacedayComponent
     return pos >= 0 ? pos : 0;
   }
 
+  protected getLeaderboardScoreFormat(entry: any): string {
+    if (!entry) return "1.0-0";
+    if (entry.isTime) {
+      return "1.3-3";
+    }
+    // Calculate the maximum number of decimal places among all non-time entries
+    let maxDecimals = 0;
+    for (const e of this.leaderboardEntries) {
+      if (!e.isTime && e.score != null && typeof e.score === "number") {
+        const score = e.score;
+        const str = score.toString();
+        // Handle scientific notation just in case, though highly unlikely for laps
+        if (!str.includes("e") && str.includes(".")) {
+          const decimalStr = str.split(".")[1];
+          if (decimalStr) {
+            // Cap at 3 decimal places to avoid float issues like 12.333333333333
+            const len = Math.min(decimalStr.length, 3);
+            if (len > maxDecimals) {
+              maxDecimals = len;
+            }
+          }
+        }
+      }
+    }
+    return `1.${maxDecimals}-${maxDecimals}`;
+  }
+
   protected get autoStatusLabel(): string {
     if (this.autoStartRemaining > 0) {
       return "RD_AUTO_STARTING";
@@ -2115,10 +2142,7 @@ export class DefaultRacedayComponent
         (value === 0 && hd.reactionTime === 0)
       )
         return "--";
-      if (value % 1 === 0) {
-        return value.toString();
-      }
-      return value.toFixed(2).replace(/\.?0+$/, "");
+      return value.toFixed(2);
     } else if (baseKey === "driver.name") {
       if (this.isEmptyDriver(hd)) {
         return this.translationService.translate("RD_EMPTY_LANE");

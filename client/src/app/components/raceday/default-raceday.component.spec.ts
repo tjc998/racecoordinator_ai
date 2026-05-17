@@ -1289,6 +1289,57 @@ describe("DefaultRacedayComponent", () => {
       );
       expect(parseInt(scrollContent.style.height)).toBeGreaterThan(1000);
     });
+
+    it("should return correct leaderboard score format dynamically based on entries", () => {
+      // 1. All scores are integers
+      component["leaderboardEntries"] = [
+        { isTime: false, score: 10, entityId: "1" },
+        { isTime: false, score: 8, entityId: "2" },
+      ];
+      expect(
+        component["getLeaderboardScoreFormat"](
+          component["leaderboardEntries"][0],
+        ),
+      ).toBe("1.0-0");
+
+      // 2. One score has 1 decimal place
+      component["leaderboardEntries"] = [
+        { isTime: false, score: 10.5, entityId: "1" },
+        { isTime: false, score: 8, entityId: "2" },
+      ];
+      expect(
+        component["getLeaderboardScoreFormat"](
+          component["leaderboardEntries"][0],
+        ),
+      ).toBe("1.1-1");
+
+      // 3. One score has 2 decimal places
+      component["leaderboardEntries"] = [
+        { isTime: false, score: 10.25, entityId: "1" },
+        { isTime: false, score: 8.5, entityId: "2" },
+      ];
+      expect(
+        component["getLeaderboardScoreFormat"](
+          component["leaderboardEntries"][0],
+        ),
+      ).toBe("1.2-2");
+
+      // 4. One score has 3 or more decimal places (should cap at 3)
+      component["leaderboardEntries"] = [
+        { isTime: false, score: 10.3333, entityId: "1" },
+        { isTime: false, score: 8, entityId: "2" },
+      ];
+      expect(
+        component["getLeaderboardScoreFormat"](
+          component["leaderboardEntries"][0],
+        ),
+      ).toBe("1.3-3");
+
+      // 5. If isTime is true, always 3 decimal places
+      expect(
+        component["getLeaderboardScoreFormat"]({ isTime: true, score: 10 }),
+      ).toBe("1.3-3");
+    });
   });
 
   describe("Timer Formatting", () => {
@@ -2589,11 +2640,11 @@ describe("DefaultRacedayComponent", () => {
   });
 
   describe("fractional lap adjustments", () => {
-    it("should format fractional lap counts with up to 2 decimal places", () => {
+    it("should format fractional lap counts with exactly 2 decimal places", () => {
       const hd: any = { reactionTime: 1.0 };
-      expect(component.formatValue("lapCount", 10, hd)).toBe("10");
+      expect(component.formatValue("lapCount", 10, hd)).toBe("10.00");
       expect(component.formatValue("lapCount", 10.25, hd)).toBe("10.25");
-      expect(component.formatValue("lapCount", 10.5, hd)).toBe("10.5");
+      expect(component.formatValue("lapCount", 10.5, hd)).toBe("10.50");
       expect(component.formatValue("lapCount", 10.75, hd)).toBe("10.75");
       expect(component.formatValue("lapCount", 10.123, hd)).toBe("10.12"); // Rounded to 2
     });
