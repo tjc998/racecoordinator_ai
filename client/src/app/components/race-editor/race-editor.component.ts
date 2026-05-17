@@ -474,6 +474,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         this.enforceFuelRules();
         this.originalRace = deepCopy(this.editingRace);
         this.undoManager.initialize(this.editingRace);
+        this.syncSelectedCustomRotationAsset();
         // Load heats if we have a valid race
         if (this.driverCount > 0) {
           this.loadHeats();
@@ -545,9 +546,18 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     }
 
     if (this.editingRace.custom_rotation_asset_id) {
-      this.selectedCustomRotationAssetId =
-        this.editingRace.custom_rotation_asset_id;
-      return;
+      const filtered = this.filteredCustomRotationAssets;
+      if (
+        this.customRotationAssets.length === 0 ||
+        filtered.some(
+          (a) =>
+            a.model?.entityId === this.editingRace.custom_rotation_asset_id,
+        )
+      ) {
+        this.selectedCustomRotationAssetId =
+          this.editingRace.custom_rotation_asset_id;
+        return;
+      }
     }
 
     const filtered = this.filteredCustomRotationAssets;
@@ -567,6 +577,9 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     ) {
       if (filtered.length > 0) {
         match = filtered[0];
+        this.editingRace.custom_rotation_asset_id = match.model?.entityId;
+        this.selectedCustomRotationAssetId = match.model?.entityId || "";
+      } else {
         this.editingRace.custom_rotation_asset_id = undefined;
         this.selectedCustomRotationAssetId = "";
       }
@@ -665,6 +678,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     };
     this.originalRace = deepCopy(this.editingRace);
     this.undoManager.initialize(this.editingRace);
+    this.syncSelectedCustomRotationAsset();
     this.syncSequenceTextFromModel();
     this.isLoading = false;
     // Safe to call here - triggered during initialization, not user input

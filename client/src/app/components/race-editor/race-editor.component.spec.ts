@@ -1322,6 +1322,62 @@ describe("RaceEditorComponent", () => {
       expect(component.editingRace.custom_rotations).toBeUndefined();
       expect(component.captureState).toHaveBeenCalled();
     });
+
+    it("should default to the first available custom rotation asset with matching lane count when rotation type is changed to Custom", () => {
+      component.tracks = [{ entity_id: "t1", lanes: [{}, {}, {}, {}] } as any];
+      component.customRotationAssets = [
+        { model: { entityId: "asset-2lanes" }, numLanes: 2 },
+        { model: { entityId: "asset-4lanes-1" }, numLanes: 4 },
+        { model: { entityId: "asset-4lanes-2" }, numLanes: 4 },
+      ] as any;
+      component.editingRace.track_entity_id = "t1";
+      component.editingRace.heat_rotation_type = "Custom";
+      component.editingRace.custom_rotation_asset_id = undefined;
+
+      component.syncSelectedCustomRotationAsset();
+
+      expect(component.editingRace.custom_rotation_asset_id).toBe(
+        "asset-4lanes-1",
+      );
+      expect(component.selectedCustomRotationAssetId).toBe("asset-4lanes-1");
+    });
+
+    it("should preserve the saved custom rotation asset ID when race is loaded", () => {
+      component.tracks = [{ entity_id: "t1", lanes: [{}, {}, {}, {}] } as any];
+      component.customRotationAssets = [
+        { model: { entityId: "asset-4lanes-1" }, numLanes: 4 },
+        { model: { entityId: "asset-4lanes-2" }, numLanes: 4 },
+      ] as any;
+      component.editingRace.track_entity_id = "t1";
+      component.editingRace.heat_rotation_type = "Custom";
+      component.editingRace.custom_rotation_asset_id = "asset-4lanes-2";
+
+      component.syncSelectedCustomRotationAsset();
+
+      expect(component.editingRace.custom_rotation_asset_id).toBe(
+        "asset-4lanes-2",
+      );
+      expect(component.selectedCustomRotationAssetId).toBe("asset-4lanes-2");
+    });
+
+    it("should fall back to the first available custom rotation asset if saved ID has lane count mismatch", () => {
+      component.tracks = [{ entity_id: "t1", lanes: [{}, {}, {}, {}] } as any];
+      component.customRotationAssets = [
+        { model: { entityId: "asset-2lanes" }, numLanes: 2 },
+        { model: { entityId: "asset-4lanes-1" }, numLanes: 4 },
+        { model: { entityId: "asset-4lanes-2" }, numLanes: 4 },
+      ] as any;
+      component.editingRace.track_entity_id = "t1";
+      component.editingRace.heat_rotation_type = "Custom";
+      component.editingRace.custom_rotation_asset_id = "asset-2lanes"; // saved but wrong lane count now
+
+      component.syncSelectedCustomRotationAsset();
+
+      expect(component.editingRace.custom_rotation_asset_id).toBe(
+        "asset-4lanes-1",
+      );
+      expect(component.selectedCustomRotationAssetId).toBe("asset-4lanes-1");
+    });
   });
 
   describe("Heat Times Through and Reverse Heats", () => {
