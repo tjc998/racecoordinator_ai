@@ -1,5 +1,5 @@
 import { TestBed } from "@angular/core/testing";
-import { BehaviorSubject, of } from "rxjs";
+import { BehaviorSubject, of, Subject } from "rxjs";
 import { DataService } from "@app/data.service";
 import { RaceFlag } from "@app/proto/antigravity";
 
@@ -31,6 +31,7 @@ describe("RaceFlagService", () => {
     ]);
     const dataServiceSpy = jasmine.createSpyObj("DataService", ["listAssets"]);
     dataServiceSpy.listAssets.and.returnValue(of([]));
+    dataServiceSpy.socketConnected$ = of(true);
 
     TestBed.configureTestingModule({
       providers: [
@@ -153,6 +154,60 @@ describe("RaceFlagService", () => {
 
       const url = service.getFlagUrl("unknown-type" as any);
       expect(url).toBe("/assets/images/flags/red.png");
+    });
+  });
+
+  describe("Connection recovery", () => {
+    it("should reload assets when socketConnected$ emits true", () => {
+      const socketSubject = new Subject<boolean>();
+      const assetsSubject = new Subject<any[]>();
+
+      const customDataServiceSpy = jasmine.createSpyObj("DataService", [
+        "listAssets",
+      ]);
+      customDataServiceSpy.socketConnected$ = socketSubject.asObservable();
+      customDataServiceSpy.listAssets.and.returnValue(
+        assetsSubject.asObservable(),
+      );
+
+      const customRaceConnectionSpy = jasmine.createSpyObj(
+        "RaceConnectionService",
+        [],
+        {
+          raceFlag$: of(RaceFlag.RED),
+        },
+      );
+      const customThemeServiceSpy = jasmine.createSpyObj("ThemeService", [
+        "resolveAssetId",
+      ]);
+      const customSettingsServiceSpy = jasmine.createSpyObj("SettingsService", [
+        "getSettings",
+      ]);
+      customSettingsServiceSpy.getSettings.and.returnValue({
+        serverIp: "localhost",
+        serverPort: 7070,
+      });
+
+      const customService = new RaceFlagService(
+        customRaceConnectionSpy as any,
+        customThemeServiceSpy as any,
+        customSettingsServiceSpy as any,
+        customDataServiceSpy as any,
+      );
+
+      expect(customDataServiceSpy.listAssets).not.toHaveBeenCalled();
+
+      socketSubject.next(true);
+
+      expect(customDataServiceSpy.listAssets).toHaveBeenCalled();
+
+      const mockAssets = [
+        { entity_id: "asset-green-id", url: "/assets/green.png" },
+      ];
+      assetsSubject.next(mockAssets);
+
+      customThemeServiceSpy.resolveAssetId.and.returnValue("asset-green-id");
+      expect(customService.getFlagUrl(RaceFlag.GREEN)).toContain("green.png");
     });
   });
 });

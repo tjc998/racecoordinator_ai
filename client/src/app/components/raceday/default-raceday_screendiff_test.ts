@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { RaceData } from "@app/proto/antigravity";
+import { ListAssetsResponse, RaceData } from "@app/proto/antigravity";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 import { DefaultRacedayHarnessE2e } from "./testing/default-raceday.harness.e2e";
@@ -708,5 +708,104 @@ test.describe("Raceday Visuals for Fuel", () => {
         maxDiffPixels: 0,
       },
     );
+  });
+
+  test("should recover and display flag assets after offline startup", async ({
+    page,
+  }) => {
+    let assetsCallCount = 0;
+    await page.route("**/api/assets", async (route) => {
+      assetsCallCount++;
+      if (assetsCallCount === 1) {
+        const response = ListAssetsResponse.create({ assets: [] });
+        const buffer = ListAssetsResponse.encode(response).finish();
+        await route.fulfill({
+          status: 200,
+          contentType: "application/octet-stream",
+          body: Buffer.from(buffer),
+        });
+      } else {
+        const assets = [
+          {
+            model: { entityId: "1" },
+            name: "Green Flag",
+            type: "image",
+            url: "/api/assets/download?filename=green.png",
+            filename: "green.png",
+          },
+        ];
+        const response = ListAssetsResponse.create({ assets });
+        const buffer = ListAssetsResponse.encode(response).finish();
+        await route.fulfill({
+          status: 200,
+          contentType: "application/octet-stream",
+          body: Buffer.from(buffer),
+        });
+      }
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Connection Recovery GP",
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: [
+              {
+                objectId: "l1",
+                length: 10,
+                backgroundColor: "#550000",
+                foregroundColor: "#ffffff",
+              },
+            ],
+          },
+        },
+        drivers: [
+          {
+            objectId: "rp1",
+            driver: {
+              model: { entityId: "d1" },
+              name: "Recovered Driver",
+            },
+          },
+        ],
+        currentHeat: {
+          objectId: "h1",
+          heatNumber: 1,
+          heatDrivers: [
+            {
+              objectId: "hd1",
+              laneIndex: 0,
+              driver: {
+                objectId: "rp1",
+                driver: {
+                  model: { entityId: "d1" },
+                  name: "Recovered Driver",
+                },
+              },
+            },
+          ],
+        },
+      },
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page.waitForTimeout(500);
+
+    expect(assetsCallCount).toBeGreaterThanOrEqual(2);
+
+    await expect(page).toHaveScreenshot("raceday-connection-recovery.png", {
+      maxDiffPixelRatio: 0.001,
+      maxDiffPixels: 0,
+    });
   });
 });

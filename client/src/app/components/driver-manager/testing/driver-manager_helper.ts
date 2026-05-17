@@ -84,6 +84,7 @@ export class DriverManagerHelper {
       of({ ...driver, entity_id: "d-new-id" }),
     );
     spy.listAssets.and.returnValue(of([]));
+    spy.socketConnected$ = of(true);
 
     return spy;
   }

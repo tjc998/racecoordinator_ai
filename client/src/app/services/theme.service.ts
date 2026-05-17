@@ -31,7 +31,18 @@ export class ThemeService {
     private dataService: DataService,
     private settingsService: SettingsService,
     private logger: LoggerService,
-  ) {}
+  ) {
+    this.dataService.socketConnected$.subscribe((connected) => {
+      if (connected) {
+        this.logger.info(
+          "ThemeService: Socket connected, initializing themes...",
+        );
+        this.initialize().catch((err) => {
+          this.logger.error("ThemeService: Error in auto-initialization", err);
+        });
+      }
+    });
+  }
 
   /**
    * Fetch all themes from the server and set the active theme.

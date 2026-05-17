@@ -1090,6 +1090,8 @@ export class DataService {
   private flagSubject = new BehaviorSubject<RaceFlag>(RaceFlag.UNKNOWN_FLAG);
   private recordDataSubject = new ReplaySubject<IRecordData>(1);
   private heatSubject = new Subject<IHeat>();
+  private socketConnectedSubject = new BehaviorSubject<boolean>(false);
+  public socketConnected$ = this.socketConnectedSubject.asObservable();
 
   private shouldSubscribeToRaceData = false;
 
@@ -1149,6 +1151,7 @@ export class DataService {
 
     this.raceDataSocket.onopen = () => {
       this.logger.info("Connected to Race Data WebSocket");
+      this.socketConnectedSubject.next(true);
       // If we had pending subscriptions or state, we might need to resend.
       if (this.shouldSubscribeToRaceData) {
         this.sendRaceSubscriptionRequest(true);
@@ -1214,6 +1217,7 @@ export class DataService {
       this.logger.info(
         "Race Data WebSocket closed. Reconnecting in 2 seconds...",
       );
+      this.socketConnectedSubject.next(false);
       this.raceDataSocket = undefined;
       setTimeout(() => {
         this.connectToRaceDataSocket();

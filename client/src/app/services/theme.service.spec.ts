@@ -1,5 +1,5 @@
 import { TestBed } from "@angular/core/testing";
-import { of, throwError } from "rxjs";
+import { of, Subject, throwError } from "rxjs";
 import { DataService } from "@app/data.service";
 import { Settings } from "@app/models/settings";
 import { Theme } from "@app/models/theme";
@@ -39,6 +39,7 @@ describe("ThemeService", () => {
       "duplicateTheme",
       "deleteTheme",
     ]);
+    dataSpy.socketConnected$ = of(true);
     const settingsSpy = jasmine.createSpyObj("SettingsService", [
       "getSettings",
       "saveSettings",
@@ -159,5 +160,37 @@ describe("ThemeService", () => {
 
     expect(dataServiceSpy.deleteTheme).toHaveBeenCalledWith("theme-1");
     expect(dataServiceSpy.getThemes).toHaveBeenCalled();
+  });
+
+  it("should auto-initialize themes when socketConnected$ emits true", () => {
+    const socketSubject = new Subject<boolean>();
+    const customDataSpy = jasmine.createSpyObj("DataService", ["getThemes"]);
+    customDataSpy.socketConnected$ = socketSubject.asObservable();
+    customDataSpy.getThemes.and.returnValue(of(mockThemes));
+
+    const customSettingsSpy = jasmine.createSpyObj("SettingsService", [
+      "getSettings",
+      "saveSettings",
+    ]);
+    customSettingsSpy.getSettings.and.returnValue(new Settings());
+
+    const customLoggerSpy = jasmine.createSpyObj("LoggerService", [
+      "info",
+      "error",
+    ]);
+
+    spyOn(ThemeService.prototype, "initialize").and.callThrough();
+
+    new ThemeService(
+      customDataSpy as any,
+      customSettingsSpy as any,
+      customLoggerSpy as any,
+    );
+
+    expect(ThemeService.prototype.initialize).not.toHaveBeenCalled();
+
+    socketSubject.next(true);
+
+    expect(ThemeService.prototype.initialize).toHaveBeenCalled();
   });
 });

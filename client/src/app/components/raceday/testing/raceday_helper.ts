@@ -97,6 +97,7 @@ export function createRacedayMocks(overrides: any = {}) {
     (id: string) => `/api/assets/download/${id}`,
   );
   mockDataService.serverUrl = "http://localhost/";
+  mockDataService.socketConnected$ = of(true);
 
   const mockRaceConnectionService = jasmine.createSpyObj(
     "RaceConnectionService",

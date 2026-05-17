@@ -23,6 +23,7 @@ export class RaceFlagService implements OnDestroy {
   private currentFlag: RaceFlag = RaceFlag.UNKNOWN_FLAG;
   private assets: any[] = [];
   private subscriptions: Subscription = new Subscription();
+  private assetsSubscription?: Subscription;
 
   constructor(
     private raceConnectionService: RaceConnectionService,
@@ -37,8 +38,23 @@ export class RaceFlagService implements OnDestroy {
     );
 
     this.subscriptions.add(
-      this.dataService.listAssets().subscribe((assets: any[]) => {
-        this.assets = assets || [];
+      this.dataService.socketConnected$.subscribe((connected) => {
+        if (connected) {
+          if (this.assetsSubscription) {
+            this.assetsSubscription.unsubscribe();
+          }
+          this.assetsSubscription = this.dataService.listAssets().subscribe({
+            next: (assets: any[]) => {
+              this.assets = assets || [];
+            },
+            error: (err) => {
+              console.error(
+                "RaceFlagService: Failed to fetch assets on reconnect",
+                err,
+              );
+            },
+          });
+        }
       }),
     );
   }

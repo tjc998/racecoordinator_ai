@@ -45,6 +45,7 @@ describe("RaceConnectionService", () => {
       "getRecordData",
       "getHeats",
     ]);
+    mockDataService.socketConnected$ = of(true);
 
     mockDataService.getInterfaceEvents.and.returnValue(
       interfaceEventsSubject.asObservable(),
@@ -276,6 +277,23 @@ describe("RaceConnectionService", () => {
       });
 
       mockFlagSubject.next(RaceFlag.GREEN);
+    });
+  });
+
+  describe("Connection recovery", () => {
+    it("should hydrate drivers when socketConnected$ emits true", () => {
+      const socketSubject = new Subject<boolean>();
+      mockDataService.socketConnected$ = socketSubject.asObservable();
+
+      spyOn<any>(service, "hydrateDrivers").and.callThrough();
+
+      service.connect();
+
+      expect((service as any).hydrateDrivers).not.toHaveBeenCalled();
+
+      socketSubject.next(true);
+
+      expect((service as any).hydrateDrivers).toHaveBeenCalled();
     });
   });
 });

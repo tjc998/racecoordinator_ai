@@ -92,6 +92,7 @@ export class RaceConnectionService implements OnDestroy {
 
   private driversLoaded = false;
   private pendingUpdate: IRace | null = null;
+  private driverSubscription?: Subscription;
 
   // Test hook or configuration
   private get WATCHDOG_TIMEOUT(): number {
@@ -158,9 +159,19 @@ export class RaceConnectionService implements OnDestroy {
     this.pendingUpdate = null;
     this.hasInitiallyConnected = false;
     this.lastInterfaceStatus = -1;
-    this.hydrateDrivers();
 
     this.dataService.updateRaceSubscription(true);
+
+    this.subscriptions.push(
+      this.dataService.socketConnected$.subscribe((connected) => {
+        if (connected) {
+          this.logger.info(
+            "RaceConnectionService: Socket connected, hydrating drivers...",
+          );
+          this.hydrateDrivers();
+        }
+      }),
+    );
 
     this.subscriptions.push(
       this.dataService.getRaceUpdate().subscribe((update) => {
@@ -323,28 +334,33 @@ export class RaceConnectionService implements OnDestroy {
   }
 
   private hydrateDrivers() {
-    this.subscriptions.push(
-      this.dataService.getDrivers().subscribe({
-        next: (drivers) => {
-          drivers.forEach((d) => {
-            const driver = DriverConverter.fromJSON(d);
-            DriverConverter.register(driver);
-          });
-          this.driversLoaded = true;
-          if (this.pendingUpdate) {
-            this.processRaceUpdate(this.pendingUpdate);
-            this.pendingUpdate = null;
-          }
-        },
-        error: (_err) => {
-          this.driversLoaded = true;
-          if (this.pendingUpdate) {
-            this.processRaceUpdate(this.pendingUpdate);
-            this.pendingUpdate = null;
-          }
-        },
-      }),
-    );
+    if (this.driverSubscription) {
+      this.driverSubscription.unsubscribe();
+      this.subscriptions = this.subscriptions.filter(
+        (s) => s !== this.driverSubscription,
+      );
+    }
+    this.driverSubscription = this.dataService.getDrivers().subscribe({
+      next: (drivers) => {
+        drivers.forEach((d) => {
+          const driver = DriverConverter.fromJSON(d);
+          DriverConverter.register(driver);
+        });
+        this.driversLoaded = true;
+        if (this.pendingUpdate) {
+          this.processRaceUpdate(this.pendingUpdate);
+          this.pendingUpdate = null;
+        }
+      },
+      error: (_err) => {
+        this.driversLoaded = true;
+        if (this.pendingUpdate) {
+          this.processRaceUpdate(this.pendingUpdate);
+          this.pendingUpdate = null;
+        }
+      },
+    });
+    this.subscriptions.push(this.driverSubscription);
   }
 
   private processRaceUpdate(update: IRace) {

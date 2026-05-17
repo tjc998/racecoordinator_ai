@@ -409,11 +409,38 @@ export class DefaultRacedayComponent
     LaneConverter.clearCache();
 
     this.subscriptions.push(
-      this.dataService.listAssets().subscribe((assets) => {
-        this.assets = assets || [];
-        this.loadColumns(); // Refresh column definitions to pick up asset names and update formatters
-        if (!this.isDestroyed) {
-          this.cdr.markForCheck();
+      this.dataService.socketConnected$.subscribe((connected) => {
+        if (connected) {
+          this.dataService.listAssets().subscribe({
+            next: (assets) => {
+              this.assets = assets || [];
+              this.loadColumns();
+              if (!this.isDestroyed) {
+                this.cdr.markForCheck();
+              }
+            },
+            error: (err) => {
+              this.logger.error(
+                "DefaultRacedayComponent: Failed to fetch assets",
+                err,
+              );
+            },
+          });
+
+          this.dataService.getDrivers().subscribe({
+            next: (drivers) => {
+              this.allDrivers = drivers || [];
+              if (!this.isDestroyed) {
+                this.cdr.markForCheck();
+              }
+            },
+            error: (err) => {
+              this.logger.error(
+                "DefaultRacedayComponent: Failed to fetch drivers",
+                err,
+              );
+            },
+          });
         }
       }),
     );
@@ -431,15 +458,6 @@ export class DefaultRacedayComponent
     this.subscriptions.push(
       this.raceService.heats$.subscribe((heats) => {
         this.heats = heats || [];
-        if (!this.isDestroyed) {
-          this.cdr.markForCheck();
-        }
-      }),
-    );
-
-    this.subscriptions.push(
-      this.dataService.getDrivers().subscribe((drivers) => {
-        this.allDrivers = drivers || [];
         if (!this.isDestroyed) {
           this.cdr.markForCheck();
         }
