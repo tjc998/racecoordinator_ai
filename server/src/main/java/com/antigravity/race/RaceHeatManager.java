@@ -1,5 +1,6 @@
 package com.antigravity.race;
 
+import com.antigravity.converters.DriverConverter;
 import com.antigravity.converters.HeatConverter;
 import com.antigravity.models.Driver;
 import com.antigravity.models.Team;
@@ -398,12 +399,7 @@ public class RaceHeatManager {
           request.getParticipantsList()) {
         RaceParticipant p = findParticipantByObjectId(protoP.getObjectId());
         if (p == null) {
-          Driver d =
-              new Driver(
-                  protoP.getDriver().getName(),
-                  protoP.getDriver().getNickname(),
-                  protoP.getDriver().getModel().getEntityId(),
-                  null);
+          Driver d = DriverConverter.fromProto(protoP.getDriver());
           p = new RaceParticipant(d, protoP.getObjectId());
           p.setSeed(protoP.getSeed());
         }
@@ -465,12 +461,7 @@ public class RaceHeatManager {
           p.setSeed(protoP.getSeed());
           return p;
         } else if (protoP.hasDriver()) {
-          Driver d =
-              new Driver(
-                  protoP.getDriver().getName(),
-                  protoP.getDriver().getNickname(),
-                  protoP.getDriver().getModel().getEntityId(),
-                  null);
+          Driver d = DriverConverter.fromProto(protoP.getDriver());
           RaceParticipant p = new RaceParticipant(d, protoP.getObjectId());
           p.setSeed(protoP.getSeed());
           return p;

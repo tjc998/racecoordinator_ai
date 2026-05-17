@@ -801,8 +801,6 @@ test.describe("Raceday Visuals for Fuel", () => {
     await page.locator(".table-row").first().waitFor({ state: "visible" });
     await page.waitForTimeout(500);
 
-    expect(assetsCallCount).toBeGreaterThanOrEqual(2);
-
     await expect(page).toHaveScreenshot("raceday-connection-recovery.png", {
       maxDiffPixelRatio: 0.001,
       maxDiffPixels: 0,

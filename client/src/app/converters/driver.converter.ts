@@ -45,6 +45,37 @@ export class DriverConverter {
     // TODO(aufderheide): Here's a name check validating empty lane.  This isn't the worst
     // because it's looking for an empty string which is not a valid name, but it's not great.
     const finalId = objectId || (proto.name ? "" : EMPTY_DRIVER_ID);
+
+    if (finalId) {
+      const cached = this.cache.get(finalId);
+      if (cached) {
+        if (isReference) {
+          return cached;
+        }
+        // Update in place to preserve references
+        cached.name =
+          proto.name || (finalId === EMPTY_DRIVER_ID ? "Empty" : "Unknown");
+        cached.nickname = proto.nickname || "";
+        cached.avatarUrl = proto.avatarUrl || undefined;
+        cached.lapAudio = {
+          type: proto.lapAudio?.type === "tts" ? "tts" : "preset",
+          url: proto.lapAudio?.url || undefined,
+          text: proto.lapAudio?.text || undefined,
+        };
+        cached.bestLapAudio = {
+          type: (proto.bestLapAudio?.type as any) || "preset",
+          url: proto.bestLapAudio?.url || undefined,
+          text: proto.bestLapAudio?.text || undefined,
+        };
+        cached.penaltyAudio = {
+          type: (proto.penaltyAudio?.type as any) || "preset",
+          url: proto.penaltyAudio?.url || undefined,
+          text: proto.penaltyAudio?.text || undefined,
+        };
+        return cached;
+      }
+    }
+
     return this.cache.process(finalId, isReference, () => {
       return new Driver(
         finalId,
@@ -71,8 +102,19 @@ export class DriverConverter {
   }
 
   static fromJSON(json: any): Driver {
+    const id = json.entity_id || json.id || "";
+    const cached = this.cache.get(id);
+    if (cached) {
+      cached.name = json.name || "";
+      cached.nickname = json.nickname || "";
+      cached.avatarUrl = json.avatarUrl;
+      cached.lapAudio = json.lapAudio;
+      cached.bestLapAudio = json.bestLapAudio;
+      cached.penaltyAudio = json.penaltyAudio;
+      return cached;
+    }
     const d = new Driver(
-      json.entity_id || json.id || "", // Handle typical JSON id fields
+      id,
       json.name || "",
       json.nickname || "",
       json.avatarUrl,
@@ -80,6 +122,7 @@ export class DriverConverter {
       json.bestLapAudio,
       json.penaltyAudio,
     );
+    this.cache.process(id, false, () => d);
     return d;
   }
 

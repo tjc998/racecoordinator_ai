@@ -757,6 +757,10 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
           next: (res: any) => {
             if (res.success) {
               this.hasUnsavedChanges = false;
+              this.undoManager.resetTracking({
+                heats: this.localHeats,
+                participants: this.localParticipants,
+              });
             } else {
               this.handleSaveFailure(triggeredBy);
             }

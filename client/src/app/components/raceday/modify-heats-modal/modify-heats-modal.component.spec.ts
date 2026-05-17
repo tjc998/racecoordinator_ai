@@ -642,6 +642,16 @@ describe("ModifyHeatsModalComponent", () => {
       // Server failure should trigger undo
       expect(component["localHeats"][1].group).toBe(0);
     });
+
+    it("should reset tracking on successful save", () => {
+      mockDataService.modifyHeats.and.returnValue(of({ success: true }));
+
+      // Trigger a change (like changing a group index)
+      component["onGroupChange"](component["localHeats"][1], 2);
+
+      // Verify that after successful autosave, hasChanges() is false
+      expect(component["undoManager"].hasChanges()).toBeFalse();
+    });
   });
 
   describe("validateGroupSequence", () => {

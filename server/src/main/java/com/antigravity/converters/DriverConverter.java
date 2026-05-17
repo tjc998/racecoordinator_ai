@@ -66,4 +66,61 @@ public class DriverConverter {
                 .build())
         .build();
   }
+
+  public static Driver fromProto(DriverModel proto) {
+    if (proto == null) {
+      return null;
+    }
+
+    com.antigravity.models.AudioConfig lapAudio = null; // fqn-collision
+    if (proto.hasLapAudio()) {
+      lapAudio =
+          new com.antigravity.models.AudioConfig( // fqn-collision
+              proto.getLapAudio().getType(),
+              proto.getLapAudio().getUrl(),
+              proto.getLapAudio().getText());
+    }
+
+    com.antigravity.models.AudioConfig bestLapAudio = null; // fqn-collision
+    if (proto.hasBestLapAudio()) {
+      bestLapAudio =
+          new com.antigravity.models.AudioConfig( // fqn-collision
+              proto.getBestLapAudio().getType(),
+              proto.getBestLapAudio().getUrl(),
+              proto.getBestLapAudio().getText());
+    }
+
+    com.antigravity.models.AudioConfig penaltyAudio = null; // fqn-collision
+    if (proto.hasPenaltyAudio()) {
+      penaltyAudio =
+          new com.antigravity.models.AudioConfig( // fqn-collision
+              proto.getPenaltyAudio().getType(),
+              proto.getPenaltyAudio().getUrl(),
+              proto.getPenaltyAudio().getText());
+    }
+
+    String avatarUrl = proto.getAvatarUrl();
+    if (avatarUrl != null && avatarUrl.isEmpty()) {
+      avatarUrl = null;
+    }
+
+    return new Driver(
+        proto.getName(),
+        proto.getNickname(),
+        avatarUrl,
+        lapAudio,
+        bestLapAudio,
+        penaltyAudio,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        proto.getModel().getEntityId(),
+        null);
+  }
 }
