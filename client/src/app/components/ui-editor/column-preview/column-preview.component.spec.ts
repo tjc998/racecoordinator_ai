@@ -1,8 +1,9 @@
-import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { Pipe, PipeTransform } from "@angular/core";
-import { ColumnPreviewComponent } from "./column-preview.component";
+import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { AnchorPoint } from "@app/components/raceday/column_definition";
 import { ColumnVisibility } from "@app/models/settings";
+
+import { ColumnPreviewComponent } from "./column-preview.component";
 
 @Pipe({ name: "translate", standalone: true })
 class MockTranslatePipe implements PipeTransform {
@@ -17,10 +18,7 @@ describe("ColumnPreviewComponent", () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        ColumnPreviewComponent,
-        MockTranslatePipe,
-      ],
+      imports: [ColumnPreviewComponent, MockTranslatePipe],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ColumnPreviewComponent);
@@ -43,12 +41,14 @@ describe("ColumnPreviewComponent", () => {
     });
 
     it("should resolve imageset_fuel-gauge-builtin to RD_COL_FUEL_GAUGE", () => {
-      expect(component.getLabel("imageset_fuel-gauge-builtin")).toBe("RD_COL_FUEL_GAUGE");
+      expect(component.getLabel("imageset_fuel-gauge-builtin")).toBe(
+        "RD_COL_FUEL_GAUGE",
+      );
     });
 
     it("should find custom imagesets in columnSlots", () => {
       fixture.componentRef.setInput("columnSlots", [
-        { key: "imageset_my-set", label: "My Custom Set" }
+        { key: "imageset_my-set", label: "My Custom Set" },
       ]);
       fixture.detectChanges();
       expect(component.getLabel("imageset_my-set")).toBe("My Custom Set");
@@ -56,7 +56,7 @@ describe("ColumnPreviewComponent", () => {
 
     it("should match custom imagesets with index suffixes in columnSlots", () => {
       fixture.componentRef.setInput("columnSlots", [
-        { key: "imageset_my-set", label: "My Custom Set" }
+        { key: "imageset_my-set", label: "My Custom Set" },
       ]);
       fixture.detectChanges();
       expect(component.getLabel("imageset_my-set_1")).toBe("My Custom Set");
@@ -72,7 +72,7 @@ describe("ColumnPreviewComponent", () => {
   describe("getColumnLabel", () => {
     it("should return translated label of CenterCenter property if active", () => {
       fixture.componentRef.setInput("columnLayouts", {
-        slot1: { [AnchorPoint.CenterCenter]: "lapCount" }
+        slot1: { [AnchorPoint.CenterCenter]: "lapCount" },
       });
       fixture.detectChanges();
       expect(component.getColumnLabel("slot1")).toBe("RD_COL_LAP");
@@ -80,10 +80,10 @@ describe("ColumnPreviewComponent", () => {
 
     it("should fallback to slot label if CenterCenter is empty", () => {
       fixture.componentRef.setInput("columnSlots", [
-        { key: "slot1", label: "Fallback Slot Label" }
+        { key: "slot1", label: "Fallback Slot Label" },
       ]);
       fixture.componentRef.setInput("columnLayouts", {
-        slot1: { [AnchorPoint.TopLeft]: "lapCount" }
+        slot1: { [AnchorPoint.TopLeft]: "lapCount" },
       });
       fixture.detectChanges();
       expect(component.getColumnLabel("slot1")).toBe("Fallback Slot Label");
@@ -93,31 +93,37 @@ describe("ColumnPreviewComponent", () => {
   describe("getAnchorValue", () => {
     it("should return anchor value if configured in layout", () => {
       fixture.componentRef.setInput("columnLayouts", {
-        slot1: { [AnchorPoint.TopLeft]: "reactionTime" }
+        slot1: { [AnchorPoint.TopLeft]: "reactionTime" },
       });
       fixture.detectChanges();
-      expect(component.getAnchorValue("slot1", AnchorPoint.TopLeft)).toBe("reactionTime");
+      expect(component.getAnchorValue("slot1", AnchorPoint.TopLeft)).toBe(
+        "reactionTime",
+      );
     });
 
     it("should default CenterCenter to slotKey if no layout exists at all", () => {
       fixture.componentRef.setInput("columnLayouts", {});
       fixture.detectChanges();
-      expect(component.getAnchorValue("slot1", AnchorPoint.CenterCenter)).toBe("slot1");
+      expect(component.getAnchorValue("slot1", AnchorPoint.CenterCenter)).toBe(
+        "slot1",
+      );
     });
 
     it("should return undefined for CenterCenter if layout exists but CenterCenter is not defined", () => {
       fixture.componentRef.setInput("columnLayouts", {
-        slot1: { [AnchorPoint.TopLeft]: "reactionTime" }
+        slot1: { [AnchorPoint.TopLeft]: "reactionTime" },
       });
       fixture.detectChanges();
-      expect(component.getAnchorValue("slot1", AnchorPoint.CenterCenter)).toBeUndefined();
+      expect(
+        component.getAnchorValue("slot1", AnchorPoint.CenterCenter),
+      ).toBeUndefined();
     });
   });
 
   describe("isOptional", () => {
     it("should return true if columnVisibility is not Always", () => {
       fixture.componentRef.setInput("columnVisibility", {
-        slot1: ColumnVisibility.FuelRaceOnly
+        slot1: ColumnVisibility.FuelRaceOnly,
       });
       fixture.detectChanges();
       expect(component.isOptional("slot1")).toBeTrue();
@@ -125,7 +131,7 @@ describe("ColumnPreviewComponent", () => {
 
     it("should return false if columnVisibility is Always", () => {
       fixture.componentRef.setInput("columnVisibility", {
-        slot1: ColumnVisibility.Always
+        slot1: ColumnVisibility.Always,
       });
       fixture.detectChanges();
       expect(component.isOptional("slot1")).toBeFalse();

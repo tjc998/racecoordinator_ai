@@ -99,17 +99,21 @@ export class AppComponent implements OnInit {
     this.routeAnimationData = this.calculateRouteAnimationData();
 
     // Pick a random transition once per navigation to stabilize the animation
+    let lastPath = this.router.url.split("?")[0];
     this.router.events
-      .pipe(filter((event) => event instanceof NavigationEnd))
-      .subscribe(() => {
-        // Defer state update to next tick to avoid ExpressionChangedAfterItHasBeenCheckedError
-        // during query param only navigations (like saveAsNew in race-editor)
-        setTimeout(() => {
+      .pipe(
+        filter(
+          (event): event is NavigationEnd => event instanceof NavigationEnd,
+        ),
+      )
+      .subscribe((event) => {
+        const newPath = event.urlAfterRedirects.split("?")[0];
+        if (newPath !== lastPath) {
+          lastPath = newPath;
           this.navigationCounter++;
           this.selectRandomTransition();
           this.routeAnimationData = this.calculateRouteAnimationData();
-          this.cdr.detectChanges();
-        });
+        }
       });
   }
   private selectRandomTransition() {

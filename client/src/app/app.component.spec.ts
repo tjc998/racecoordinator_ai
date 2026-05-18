@@ -1,10 +1,5 @@
 import { CUSTOM_ELEMENTS_SCHEMA } from "@angular/core";
-import {
-  ComponentFixture,
-  fakeAsync,
-  TestBed,
-  tick,
-} from "@angular/core/testing";
+import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { NoopAnimationsModule } from "@angular/platform-browser/animations";
 import { ChildrenOutletContexts, NavigationEnd, Router } from "@angular/router";
 import { of, Subject } from "rxjs";
@@ -125,7 +120,7 @@ describe("AppComponent", () => {
     expect(data).toBeNull();
   });
 
-  it("should increment counter on NavigationEnd", fakeAsync(() => {
+  it("should increment counter on NavigationEnd", () => {
     mockSettingsService.getSettings.and.returnValue({
       pageTransition: "slide",
     });
@@ -133,15 +128,14 @@ describe("AppComponent", () => {
     const firstCounter = parseInt(firstData!.split(":")[3]);
 
     routerEvents.next(new NavigationEnd(1, "/new-page", "/new-page"));
-    tick(); // Wait for setTimeout in ngOnInit
 
     const secondData = component.calculateRouteAnimationData();
     const secondCounter = parseInt(secondData!.split(":")[3]);
 
     expect(secondCounter).toBe(firstCounter + 1);
-  }));
+  });
 
-  it("should handle random transition stably between navigations", fakeAsync(() => {
+  it("should handle random transition stably between navigations", () => {
     mockSettingsService.getSettings.and.returnValue({
       pageTransition: "random",
     });
@@ -154,13 +148,41 @@ describe("AppComponent", () => {
 
     // Trigger navigation
     routerEvents.next(new NavigationEnd(1, "/next", "/next"));
-    tick(); // Wait for setTimeout in ngOnInit
 
     const thirdCall = component.calculateRouteAnimationData();
 
     // Counter changes, and possibly type (though random could hit same type)
     expect(thirdCall).not.toBe(firstCall);
-  }));
+  });
+
+  it("should update routeAnimationData synchronously on a real path change", () => {
+    mockSettingsService.getSettings.and.returnValue({
+      pageTransition: "slide",
+    });
+    mockRouter.url = "/new-page";
+    routerEvents.next(new NavigationEnd(1, "/new-page", "/new-page"));
+
+    const animData = component["routeAnimationData"];
+    expect(animData).toMatch(/^slide:forward:new-page:\d+$/);
+  });
+
+  it("should NOT update routeAnimationData on query-parameter-only navigations", () => {
+    mockSettingsService.getSettings.and.returnValue({
+      pageTransition: "slide",
+    });
+    mockRouter.url = "/some-page";
+    routerEvents.next(new NavigationEnd(1, "/some-page", "/some-page"));
+    const initialAnimData = component["routeAnimationData"];
+
+    // Trigger query-param-only navigation
+    mockRouter.url = "/some-page?id=123";
+    routerEvents.next(
+      new NavigationEnd(2, "/some-page?id=123", "/some-page?id=123"),
+    );
+
+    const postQueryAnimData = component["routeAnimationData"];
+    expect(postQueryAnimData).toBe(initialAnimData);
+  });
 
   it("should include direction from NavigationService", () => {
     mockNavigationService.getDirection.and.returnValue("backward");
