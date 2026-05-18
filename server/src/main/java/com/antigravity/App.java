@@ -70,6 +70,7 @@ public class App {
   private static final int MONGO_PORT = 8085; // Default MongoDB port
   private static Javalin app;
   private static MongoClient mongoClient;
+  private static boolean flapdoodleRetried = false;
 
   static {
     // Ensure app.data.dir is set as a system property early for Logback
@@ -211,6 +212,7 @@ public class App {
 
       // Wait for MongoDB to be ready
       boolean mongoReady = false;
+      boolean retried = false;
       for (int i = 0; i < 30; i++) {
         try {
           mongoClient.listDatabaseNames().first();
@@ -220,7 +222,35 @@ public class App {
         } catch (Exception e) {
           logger.debug("Waiting for MongoDB... ({}/30)", i + 1);
           if (manualMongoProcess != null && !manualMongoProcess.isAlive()) {
-            logger.error("Bundled MongoDB process has stopped unexpectedly!");
+            int exitCode = manualMongoProcess.exitValue();
+            logger.error(
+                "Bundled MongoDB process has stopped unexpectedly with exit code: {}", exitCode);
+            if (exitCode == 62 && !retried) {
+              logger.warn(
+                  "MongoDB exited with code 62 (Wrong version / Upgrade compatibility problem).");
+              logger.warn(
+                  "This usually happens when upgrading the application to a newer MongoDB version.");
+              logger.warn(
+                  "Attempting to back up incompatible database files and start a fresh database...");
+
+              try {
+                String timestamp = String.valueOf(System.currentTimeMillis());
+                Path backupPath = backupIncompatibleDatabase(appDataDir, timestamp);
+                if (backupPath != null) {
+                  // Restart embedded Mongo
+                  logger.info("Restarting MongoDB with a clean data directory...");
+                  startEmbeddedMongo();
+
+                  // Reset loop variables to wait again
+                  retried = true;
+                  i = -1; // Next iteration will be 0
+                  continue;
+                }
+              } catch (IOException ioe) {
+                logger.error(
+                    "Failed to back up incompatible database directory: {}", ioe.getMessage(), ioe);
+              }
+            }
             break;
           }
           try {
@@ -637,8 +667,33 @@ public class App {
               .start(mongoVersion);
 
       logger.info("Embedded MongoDB started with storage at {}", dataDir);
-    } catch (IOException e) {
-      logger.error("Error starting MongoDB", e);
+    } catch (Exception e) {
+      logger.error("Error starting MongoDB: {}", e.getMessage(), e);
+      if (!flapdoodleRetried) {
+        String msg = e.getMessage();
+        if (msg != null
+            && (msg.contains("62") || msg.contains("compatibility") || msg.contains("exit code"))) {
+          logger.warn(
+              "Detected possible MongoDB version incompatibility or startup failure. Attempting to back up and start a fresh database...");
+          flapdoodleRetried = true;
+
+          String appDir = System.getProperty("user.dir");
+          String appDataDir =
+              System.getProperty("app.data.dir", Paths.get(appDir, "app_data").toString());
+          try {
+            String timestamp = String.valueOf(System.currentTimeMillis());
+            Path backupPath = backupIncompatibleDatabase(appDataDir, timestamp);
+            if (backupPath != null) {
+              // Try starting again
+              startEmbeddedMongo();
+              return;
+            }
+          } catch (IOException ioe) {
+            logger.error(
+                "Failed to back up incompatible database directory: {}", ioe.getMessage(), ioe);
+          }
+        }
+      }
       System.exit(1);
     }
   }
@@ -671,5 +726,18 @@ public class App {
     } catch (Exception e) {
       return "Unknown";
     }
+  }
+
+  /* package */ static Path backupIncompatibleDatabase(String appDataDir, String timestamp)
+      throws IOException {
+    Path dataPath = Paths.get(appDataDir, "mongodb_data");
+    if (Files.exists(dataPath)) {
+      Path backupPath = Paths.get(appDataDir, "mongodb_data_backup_4.4_" + timestamp);
+      logger.info("Moving incompatible database files from {} to {}", dataPath, backupPath);
+      Files.move(dataPath, backupPath);
+      logger.info("Backup created successfully at {}", backupPath);
+      return backupPath;
+    }
+    return null;
   }
 }
