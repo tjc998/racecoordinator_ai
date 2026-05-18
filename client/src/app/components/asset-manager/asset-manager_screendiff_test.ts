@@ -185,7 +185,7 @@ test.describe("Asset Manager Visuals", () => {
 
     await harness.clickNewCustomRotation();
     await page
-      .locator("app-custom-rotation-editor .modal-content")
+      .locator("app-custom-rotation-editor .page-container")
       .waitFor({ state: "visible" });
     await page.waitForTimeout(500);
 
@@ -209,14 +209,14 @@ test.describe("Asset Manager Visuals", () => {
 
     await harness.clickNewCustomRotation();
     await page
-      .locator("app-custom-rotation-editor .modal-content")
+      .locator("app-custom-rotation-editor .page-container")
       .waitFor({ state: "visible" });
     await page.waitForTimeout(500);
 
     // The editor auto-adds one rotation card with one heat on init when rotations are empty.
     // Wait for it to appear.
     await page
-      .locator("app-custom-rotation-editor .rotation-card")
+      .locator("app-custom-rotation-editor .rotation-expander-card")
       .first()
       .waitFor({ state: "visible" });
 
@@ -227,43 +227,66 @@ test.describe("Asset Manager Visuals", () => {
 
     // Add Heat 2 (Heat 1 was auto-added with the rotation)
     await page
-      .locator("app-custom-rotation-editor .add-heat-btn")
+      .locator("app-custom-rotation-editor .add-heat-card-btn")
       .first()
       .click();
 
     // Set first heat group to 2 (UI value)
     const firstGroupInput = page
-      .locator("app-custom-rotation-editor .group-idx-input")
+      .locator("app-custom-rotation-editor .group-input")
       .first();
     await firstGroupInput.fill("2");
 
     // Set second heat group to 3 (UI value)
     const lastGroupInput = page
-      .locator("app-custom-rotation-editor .group-idx-input")
+      .locator("app-custom-rotation-editor .group-input")
       .last();
     await lastGroupInput.fill("3");
 
-    // Fill driver indexes for Heat 1
-    const firstHeatInputs = page
-      .locator("app-custom-rotation-editor .heats-table tbody tr")
-      .first()
-      .locator(".driver-idx-input");
-    await firstHeatInputs.nth(0).fill("1");
-    await firstHeatInputs.nth(1).fill("2");
-    await firstHeatInputs.nth(2).fill("3");
-    await firstHeatInputs.nth(3).fill("4");
+    // Drag drivers 1-4 from the pool to Heat 1 (lane drop targets: #rot-0-heat-0-lane-X)
+    await page
+      .locator(".driver-pool .driver-item")
+      .nth(0)
+      .dragTo(page.locator("#rot-0-heat-0-lane-0"));
+    await page.waitForTimeout(100);
+    await page
+      .locator(".driver-pool .driver-item")
+      .nth(1)
+      .dragTo(page.locator("#rot-0-heat-0-lane-1"));
+    await page.waitForTimeout(100);
+    await page
+      .locator(".driver-pool .driver-item")
+      .nth(2)
+      .dragTo(page.locator("#rot-0-heat-0-lane-2"));
+    await page.waitForTimeout(100);
+    await page
+      .locator(".driver-pool .driver-item")
+      .nth(3)
+      .dragTo(page.locator("#rot-0-heat-0-lane-3"));
+    await page.waitForTimeout(100);
 
-    // Fill driver indexes for Heat 2
-    const secondHeatInputs = page
-      .locator("app-custom-rotation-editor .heats-table tbody tr")
-      .last()
-      .locator(".driver-idx-input");
-    await secondHeatInputs.nth(0).fill("4");
-    await secondHeatInputs.nth(1).fill("3");
-    await secondHeatInputs.nth(2).fill("2");
-    await secondHeatInputs.nth(3).fill("1");
+    // Drag drivers 4, 3, 2, 1 to Heat 2 (lane drop targets: #rot-0-heat-1-lane-X)
+    await page
+      .locator(".driver-pool .driver-item")
+      .nth(3)
+      .dragTo(page.locator("#rot-0-heat-1-lane-0"));
+    await page.waitForTimeout(100);
+    await page
+      .locator(".driver-pool .driver-item")
+      .nth(2)
+      .dragTo(page.locator("#rot-0-heat-1-lane-1"));
+    await page.waitForTimeout(100);
+    await page
+      .locator(".driver-pool .driver-item")
+      .nth(1)
+      .dragTo(page.locator("#rot-0-heat-1-lane-2"));
+    await page.waitForTimeout(100);
+    await page
+      .locator(".driver-pool .driver-item")
+      .nth(0)
+      .dragTo(page.locator("#rot-0-heat-1-lane-3"));
 
-    await page.waitForTimeout(500); // Settle inputs
+    await page.waitForTimeout(800); // Settle inputs and final layout transitions
 
     await expect(page).toHaveScreenshot(
       "asset-manager-custom-rotation-heats-groups.png",

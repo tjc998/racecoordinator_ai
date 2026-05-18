@@ -22,6 +22,16 @@
       [disabledRegenerate]="disabledRegenerate()"
       [showLaneCheck]="showLaneCheck()"
       [disabledLaneCheck]="disabledLaneCheck()"
+      [showImport]="showImport()"
+      [showImportRc1]="showImportRc1()"
+      [showExport]="showExport()"
+      [importTitleKey]="importTitleKey()"
+      [importRc1TitleKey]="importRc1TitleKey()"
+      [importRc1Icon]="importRc1Icon()"
+      [exportTitleKey]="exportTitleKey()"
+      [disabledImport]="disabledImport()"
+      [disabledImportRc1]="disabledImportRc1()"
+      [disabledExport]="disabledExport()"
       [isSaving]="isSaving()"
       [undoManager]="undoManager()"
       [helpSteps]="helpSteps()"
@@ -33,6 +43,9 @@
       (delete)="onDelete()"
       (regenerate)="onRegenerate()"
       (laneCheck)="onLaneCheck()"
+      (import)="onImport()"
+      (importRc1)="onImportRc1()"
+      (export)="onExport()"
     >
     </app-toolbar>
   </div>

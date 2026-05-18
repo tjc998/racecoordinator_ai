@@ -1,24 +1,44 @@
-<div class="editor-overlay modal-backdrop">
-  <div class="editor-container modal-content">
-    <div class="editor-header">
-      <h2>
-        {{
-          (assetId() ? "AM_EDIT_CUSTOM_ROTATION" : "AM_NEW_CUSTOM_ROTATION")
-            | translate
-        }}
-      </h2>
-      <button class="close-btn" (click)="cancel()">
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
+<div
+  class="page-container"
+  [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
+>
+  <!-- Sleek Premium Title Bar -->
+  <app-editor-title
+    [titleKey]="
+      internalAssetId ? 'AM_EDIT_CUSTOM_ROTATION' : 'AM_NEW_CUSTOM_ROTATION'
+    "
+    [undoManager]="undoManager"
+    [showAdd]="true"
+    [showRegenerate]="false"
+    [showLaneCheck]="false"
+    [showImport]="true"
+    [showImportRc1]="true"
+    [importRc1Icon]="rc1Icon"
+    [importRc1TitleKey]="'AM_BTN_IMPORT_RC1_ROTATION'"
+    [showExport]="true"
+    [importTitleKey]="'AM_BTN_IMPORT_ROTATION'"
+    [exportTitleKey]="'AM_BTN_EXPORT_ROTATION'"
+    [isSaving]="isSaving"
+    (add)="addRotation()"
+    (back)="cancel()"
+    (import)="fileInput.click()"
+    (importRc1)="rc1FileInput.click()"
+    (export)="exportRotations()"
+  >
+  </app-editor-title>
 
-    <div class="editor-content">
-      <div class="settings-row">
+  <div class="content-split">
+    <!-- Left Panel: Configurations & Virtual Drivers Pool -->
+    <div class="editor-panel">
+      <!-- Premium Config Selectors -->
+      <div class="config-section">
         <div class="input-group">
           <label>{{ "AM_LABEL_ASSET_NAME" | translate }}</label>
           <input
             type="text"
             [(ngModel)]="internalAssetName"
+            (change)="onAssetNameChange()"
+            (blur)="onAssetNameChange()"
             [placeholder]="'AM_PLACEHOLDER_ASSET_NAME' | translate"
           />
         </div>
@@ -39,280 +59,509 @@
         </div>
       </div>
 
-      <div class="rotations-list">
+      <!-- Virtual Drivers List -->
+      <div class="driver-pool-section">
         <div class="section-header">
-          <h3>{{ "AM_LABEL_ROTATIONS" | translate }}</h3>
-          <button class="add-btn" (click)="addRotation()">
-            <i class="fas fa-plus"></i> {{ "AM_BTN_ADD_ROTATION" | translate }}
-          </button>
-          <button class="import-btn" (click)="fileInput.click()">
-            <i class="fas fa-file-import"></i>
-            {{ "AM_BTN_IMPORT_ROTATION" | translate }}
-          </button>
-          <button
-            class="import-btn rc1-import-btn"
-            (click)="rc1FileInput.click()"
-          >
-            <i class="fas fa-file-import"></i>
-            {{ "AM_BTN_IMPORT_RC1_ROTATION" | translate }}
-          </button>
-          <button class="export-btn" (click)="exportRotations()">
-            <i class="fas fa-file-export"></i>
-            {{ "AM_BTN_EXPORT_ROTATION" | translate }}
-          </button>
-          <input
-            #fileInput
-            type="file"
-            multiple
-            accept=".json,.txt"
-            style="display: none"
-            (change)="onImportFiles($event, false)"
-          />
-          <input
-            #rc1FileInput
-            type="file"
-            multiple
-            accept=".json,.txt"
-            style="display: none"
-            (change)="onImportFiles($event, true)"
-          />
+          <h3>{{ "RDS_SECTION_RACING" | translate }}</h3>
+          <div class="drivers-count-input-container">
+            <span class="count-label">{{
+              "AM_LABEL_NUM_DRIVERS" | translate
+            }}</span>
+            <input
+              type="number"
+              class="drivers-count-input"
+              [(ngModel)]="numVirtualDrivers"
+              (change)="onNumVirtualDriversChange()"
+              min="1"
+              max="999"
+            />
+          </div>
         </div>
 
+        <div
+          id="driver-pool"
+          cdkDropList
+          [cdkDropListData]="virtualDrivers"
+          [cdkDropListConnectedTo]="heatDropListIds"
+          class="driver-pool"
+          (cdkDropListDropped)="onDrop($event)"
+        >
+          @for (driver of virtualDrivers; track driver.id) {
+            <div class="driver-item" cdkDrag [cdkDragData]="driver">
+              <div class="driver-seed">({{ driver.id }})</div>
+              <!-- Premium helmet graphic icon -->
+              <svg
+                class="graphic-icon driver-icon"
+                viewBox="0 0 100 100"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <defs>
+                  <linearGradient
+                    [id]="'driverGrad-' + driver.id"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stop-color="#38bdf8" />
+                    <stop offset="100%" stop-color="#0369a1" />
+                  </linearGradient>
+                  <linearGradient
+                    [id]="'visorGrad-' + driver.id"
+                    x1="0%"
+                    y1="0%"
+                    x2="0%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stop-color="#0f172a" />
+                    <stop offset="100%" stop-color="#1e293b" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M20,55 C20,30 35,15 50,15 C65,15 80,30 80,55 C80,68 72,75 65,75 L35,75 C28,75 20,68 20,55 Z"
+                  [attr.fill]="'url(#driverGrad-' + driver.id + ')'"
+                />
+                <path
+                  d="M25,72 L75,72 C75,72 80,78 75,82 L25,82 C20,78 25,72 25,72 Z"
+                  fill="#0f172a"
+                  opacity="0.4"
+                />
+                <path
+                  d="M32,38 L68,38 C75,38 78,42 76,52 L73,58 C71,62 65,65 58,65 L42,65 C35,65 29,62 27,58 L24,52 C22,42 25,38 32,38 Z"
+                  [attr.fill]="'url(#visorGrad-' + driver.id + ')'"
+                  stroke="#38bdf8"
+                  stroke-width="2"
+                />
+                <path
+                  d="M38,44 L48,44"
+                  stroke="#ffffff"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  opacity="0.6"
+                />
+              </svg>
+              <div class="driver-details">
+                <div class="driver-name">Driver {{ driver.id }}</div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel: Rotations Expanders -->
+    <div class="preview-panel">
+      <input
+        #fileInput
+        type="file"
+        multiple
+        accept=".json,.txt"
+        style="display: none"
+        (change)="onImportFiles($event, false)"
+      />
+      <input
+        #rc1FileInput
+        type="file"
+        multiple
+        accept=".json,.txt"
+        style="display: none"
+        (change)="onImportFiles($event, true)"
+      />
+
+      <!-- Expanders list -->
+      <div class="rotations-expanders">
         @for (
           rotation of internalRotations;
           track $index;
           let rotIdx = $index
         ) {
-          <div class="rotation-card">
-            <div class="card-header">
-              <div class="input-group mini">
-                <label>{{ "AM_LABEL_NUM_DRIVERS" | translate }}</label>
-                <input
-                  type="number"
-                  [(ngModel)]="rotation.numDrivers"
-                  min="1"
-                />
+          <div
+            class="rotation-expander-card"
+            [class.expanded]="rotation.isExpanded"
+          >
+            <!-- Header of expander -->
+            <div class="expander-header" (click)="toggleExpander(rotation)">
+              <div class="expander-title-section">
+                <span class="chevron-icon">
+                  <i
+                    class="fas"
+                    [class.fa-chevron-right]="!rotation.isExpanded"
+                    [class.fa-chevron-down]="rotation.isExpanded"
+                  ></i>
+                </span>
+                <span class="expander-title">
+                  {{ "AM_LABEL_NUM_DRIVERS" | translate }}:
+                </span>
+                <div
+                  class="drivers-count-inline"
+                  (click)="$event.stopPropagation()"
+                >
+                  <input
+                    type="number"
+                    [(ngModel)]="rotation.numDrivers"
+                    (change)="onNumDriversChange()"
+                    min="1"
+                    class="drivers-count-input"
+                  />
+                </div>
               </div>
-              <button
-                class="equality-btn"
-                [class.equal]="isRotationEqual(rotation)"
-                [class.unequal]="!isRotationEqual(rotation)"
-                (click)="showEqualityReport(rotation, rotIdx)"
-                [title]="'AM_LABEL_LANE_EQUALITY' | translate"
-              >
-                @if (isRotationEqual(rotation)) {
-                  <i class="fas fa-check-circle"></i>
-                } @else {
-                  <i class="fas fa-times-circle"></i>
-                }
-                {{ "AM_LABEL_LANE_EQUALITY" | translate }}
-              </button>
-              <button
-                class="delete-btn"
-                (click)="removeRotation(rotIdx)"
-                [title]="'AM_BTN_REMOVE_ROTATION' | translate"
-              >
-                <span class="delete-x">X</span>
-              </button>
+
+              <!-- Header Actions -->
+              <div class="expander-actions" (click)="$event.stopPropagation()">
+                <!-- Equality badge -->
+                <button
+                  class="equality-btn icon-only"
+                  (click)="showEqualityReport(rotation, rotIdx)"
+                  [title]="'AM_LABEL_LANE_EQUALITY' | translate"
+                >
+                  <span class="material-icons">check</span>
+                </button>
+
+                <!-- Add Heat -->
+                <button
+                  class="add-heat-card-btn icon-only"
+                  (click)="addHeat(rotation)"
+                  [title]="'AM_BTN_ADD_HEAT' | translate"
+                >
+                  <span class="material-icons">add</span>
+                </button>
+
+                <!-- Export Rotation -->
+                <button
+                  class="export-rotation-card-btn"
+                  (click)="exportSingleRotation(rotation)"
+                  [title]="'AM_BTN_EXPORT_ROTATION' | translate"
+                >
+                  <span class="material-icons">download</span>
+                </button>
+
+                <!-- Delete Rotation -->
+                <button
+                  class="delete-rotation-btn"
+                  (click)="removeRotation(rotIdx)"
+                >
+                  <span class="delete-x">X</span>
+                </button>
+              </div>
             </div>
 
-            <div class="heats-list">
-              <table class="heats-table">
-                <thead>
-                  <tr>
-                    <th></th>
-                    <th>{{ "AM_LABEL_HEAT" | translate }}</th>
-                    <th>{{ "RE_GROUPS_LABEL" | translate }}</th>
-                    @for (
-                      lane of selectedTrack?.lanes;
-                      track $index;
-                      let lIdx = $index
-                    ) {
-                      <th
-                        [style.backgroundColor]="
-                          $any(lane).background_color || lane.backgroundColor
-                        "
-                        [style.color]="
-                          $any(lane).foreground_color || lane.foregroundColor
-                        "
-                      >
-                        {{ "AM_LABEL_LANE" | translate }} {{ lIdx + 1 }}
-                      </th>
-                    }
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody
+            <!-- Body of expander -->
+            @if (rotation.isExpanded) {
+              <div class="expander-body">
+                <div
+                  class="heats-grid"
                   cdkDropList
-                  (cdkDropListDropped)="dropHeat(rotation, $event)"
+                  cdkDropListOrientation="horizontal"
                   [cdkDropListData]="rotation.heats || []"
+                  [cdkDropListAutoScrollDisabled]="true"
+                  [cdkDropListSortingDisabled]="true"
+                  (cdkDropListDropped)="dropHeat(rotation, $event)"
                 >
                   @for (
                     heat of rotation.heats;
                     track $index;
-                    let heatIdx = $index
+                    let hIdx = $index
                   ) {
-                    <tr
-                      cdkDrag
-                      [class.heat-error]="heatHasError(rotation, heatIdx)"
+                    <div
+                      class="heat-card"
+                      [class.heat-error]="
+                        heatHasError(rotation, hIdx) ||
+                        heatHasGroupConflict(rotation, hIdx)
+                      "
                     >
-                      <td class="drag-handle" cdkDragHandle>
-                        <i class="fas fa-grip-vertical"></i>
-                      </td>
-                      <td class="heat-num">{{ heatIdx + 1 }}</td>
-                      <td class="group-col">
-                        <input
-                          type="number"
-                          [ngModel]="(heat.group || 0) + 1"
-                          (ngModelChange)="heat.group = $event - 1"
-                          min="1"
-                          max="99"
-                          class="group-idx-input"
-                        />
-                      </td>
-                      @for (
-                        lane of selectedTrack?.lanes;
-                        track $index;
-                        let lIdx = $index
-                      ) {
-                        <td
-                          [style.backgroundColor]="
-                            $any(lane).background_color || lane.backgroundColor
-                          "
-                        >
-                          <input
-                            type="number"
-                            [(ngModel)]="heat.driverIndices![lIdx]"
-                            min="0"
-                            max="99"
-                            class="driver-idx-input"
-                            [style.color]="
-                              $any(lane).foreground_color ||
-                              lane.foregroundColor
+                      <div class="heat-header">
+                        <div class="header-title">
+                          <i class="fas fa-grip-vertical drag-handle-icon"></i>
+                          <h4>
+                            {{ "RD_HEAT" | translate }} {{ hIdx + 1 }} -
+                            {{ "RE_GROUPS_LABEL" | translate }}:
+                            <input
+                              type="number"
+                              class="group-input"
+                              [ngModel]="(heat.group || 0) + 1"
+                              (ngModelChange)="
+                                onHeatGroupChange(rotation, heat, $event)
+                              "
+                              min="1"
+                            />
+                          </h4>
+                        </div>
+                        <div class="header-actions">
+                          <button
+                            class="btn-remove"
+                            (click)="
+                              removeHeat(rotation, hIdx);
+                              $event.stopPropagation()
                             "
-                            style="
-                              width: 100%;
-                              text-align: center;
-                              font-weight: bold;
-                            "
-                          />
-                        </td>
-                      }
-                      <td class="delete-col">
-                        <button
-                          class="mini-delete-btn"
-                          (click)="removeHeat(rotation, heatIdx)"
-                          [title]="'AM_BTN_REMOVE_HEAT' | translate"
-                        >
-                          <span class="delete-x">X</span>
-                        </button>
-                      </td>
-                    </tr>
+                            [title]="'REMOVE' | translate"
+                          >
+                            <span class="delete-x">X</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="heat-lanes">
+                        @for (
+                          lane of selectedTrack?.lanes;
+                          track $index;
+                          let lIdx = $index
+                        ) {
+                          <div class="lane-row">
+                            <div
+                              [id]="
+                                'rot-' +
+                                rotIdx +
+                                '-heat-' +
+                                hIdx +
+                                '-lane-' +
+                                lIdx
+                              "
+                              cdkDropList
+                              [cdkDropListData]="{
+                                rotationIndex: rotIdx,
+                                heatIndex: hIdx,
+                                laneIndex: lIdx,
+                              }"
+                              [cdkDropListConnectedTo]="connectedTo"
+                              (cdkDropListDropped)="onDrop($event)"
+                              style="flex: 1; min-height: 40px"
+                            >
+                              @if (heat.driverIndices?.[lIdx]; as driverId) {
+                                <div
+                                  class="driver-item populated"
+                                  cdkDrag
+                                  [cdkDragData]="{ id: driverId }"
+                                  [style.background-color]="
+                                    $any(lane).background_color ||
+                                    lane.backgroundColor
+                                  "
+                                  [style.color]="
+                                    $any(lane).foreground_color ||
+                                    lane.foregroundColor
+                                  "
+                                >
+                                  <!-- Small helmet icon -->
+                                  <svg
+                                    class="graphic-icon driver-icon"
+                                    viewBox="0 0 100 100"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    style="width: 24px; height: 24px"
+                                  >
+                                    <defs>
+                                      <linearGradient
+                                        [id]="
+                                          'driverGradSmall-' +
+                                          rotIdx +
+                                          '-' +
+                                          hIdx +
+                                          '-' +
+                                          lIdx
+                                        "
+                                        x1="0%"
+                                        y1="0%"
+                                        x2="100%"
+                                        y2="100%"
+                                      >
+                                        <stop
+                                          offset="0%"
+                                          stop-color="#38bdf8"
+                                        />
+                                        <stop
+                                          offset="100%"
+                                          stop-color="#0369a1"
+                                        />
+                                      </linearGradient>
+                                      <linearGradient
+                                        [id]="
+                                          'visorGradSmall-' +
+                                          rotIdx +
+                                          '-' +
+                                          hIdx +
+                                          '-' +
+                                          lIdx
+                                        "
+                                        x1="0%"
+                                        y1="0%"
+                                        x2="0%"
+                                        y2="100%"
+                                      >
+                                        <stop
+                                          offset="0%"
+                                          stop-color="#0f172a"
+                                        />
+                                        <stop
+                                          offset="100%"
+                                          stop-color="#1e293b"
+                                        />
+                                      </linearGradient>
+                                    </defs>
+                                    <path
+                                      d="M20,55 C20,30 35,15 50,15 C65,15 80,30 80,55 C80,68 72,75 65,75 L35,75 C28,75 20,68 20,55 Z"
+                                      [attr.fill]="
+                                        'url(#driverGradSmall-' +
+                                        rotIdx +
+                                        '-' +
+                                        hIdx +
+                                        '-' +
+                                        lIdx +
+                                        ')'
+                                      "
+                                    />
+                                    <path
+                                      d="M32,38 L68,38 C75,38 78,42 76,52 L73,58 C71,62 65,65 58,65 L42,65 C35,65 29,62 27,58 L24,52 C22,42 25,38 32,38 Z"
+                                      [attr.fill]="
+                                        'url(#visorGradSmall-' +
+                                        rotIdx +
+                                        '-' +
+                                        hIdx +
+                                        '-' +
+                                        lIdx +
+                                        ')'
+                                      "
+                                      stroke="#38bdf8"
+                                      stroke-width="2"
+                                    />
+                                  </svg>
+                                  <div class="driver-details">
+                                    <div
+                                      class="driver-name"
+                                      [style.color]="
+                                        $any(lane).foreground_color ||
+                                        lane.foregroundColor
+                                      "
+                                    >
+                                      Driver {{ driverId }}
+                                      @if (
+                                        driverHasGroupConflict(
+                                          rotation,
+                                          driverId
+                                        )
+                                      ) {
+                                        <span
+                                          class="warning-icon"
+                                          title="Driver is assigned to multiple groups!"
+                                          ><i
+                                            class="fas fa-exclamation-triangle"
+                                          ></i
+                                        ></span>
+                                      }
+                                    </div>
+                                  </div>
+                                </div>
+                              } @else {
+                                <div
+                                  class="driver-item empty"
+                                  [style.border-color]="
+                                    $any(lane).background_color ||
+                                    lane.backgroundColor
+                                  "
+                                  [style.color]="
+                                    $any(lane).background_color ||
+                                    lane.backgroundColor
+                                  "
+                                >
+                                  {{ "RD_EMPTY_LANE" | translate }}
+                                </div>
+                              }
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
                   }
-                </tbody>
-              </table>
-              <button class="add-heat-btn" (click)="addHeat(rotation)">
-                <i class="fas fa-plus"></i> {{ "AM_BTN_ADD_HEAT" | translate }}
-              </button>
-            </div>
+                </div>
+              </div>
+            }
           </div>
         }
       </div>
     </div>
-
-    <div class="editor-footer">
-      <button class="cancel-btn" (click)="cancel()">
-        {{ "AM_BTN_CANCEL" | translate }}
-      </button>
-      <button
-        class="save-btn"
-        (click)="save()"
-        [disabled]="!internalAssetName || isSaving || hasValidationErrors()"
-      >
-        @if (!isSaving) {
-          <span>{{ "AM_BTN_SAVE" | translate }}</span>
-        } @else {
-          <span class="spinner"></span>
-        }
-      </button>
-    </div>
   </div>
+
+  <!-- Equality diagnostic report modal overlay -->
+  @if (equalityReport) {
+    <div class="equality-report-overlay" (click)="closeReport()">
+      <div class="equality-report-modal" (click)="$event.stopPropagation()">
+        <div class="report-header">
+          <h4>
+            {{ "AM_REPORT_TITLE" | translate }} ({{
+              "AM_LABEL_NUM_DRIVERS" | translate
+            }}: {{ internalRotations[reportRotationIdx].numDrivers }})
+          </h4>
+          <button class="close-btn" (click)="closeReport()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="report-content">
+          <ul class="report-list">
+            @for (item of equalityReport; track $index) {
+              <li
+                class="report-item"
+                [class.success]="
+                  isRotationEqual(internalRotations[reportRotationIdx])
+                "
+                [class.error]="
+                  !isRotationEqual(internalRotations[reportRotationIdx])
+                "
+              >
+                @if (isRotationEqual(internalRotations[reportRotationIdx])) {
+                  <i class="fas fa-check-circle"></i>
+                } @else {
+                  <i class="fas fa-exclamation-triangle"></i>
+                }
+                <span>{{ item.key | translate: item.params }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+        <div class="report-footer">
+          <button (click)="closeReport()">{{ "GEN_OK" | translate }}</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Import summary modal overlay -->
+  @if (importSummary) {
+    <div class="equality-report-overlay" (click)="closeImportSummary()">
+      <div class="equality-report-modal" (click)="$event.stopPropagation()">
+        <div class="report-header">
+          <h4>{{ "AM_IMPORT_SUMMARY_TITLE" | translate }}</h4>
+          <button class="close-btn" (click)="closeImportSummary()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="report-content">
+          <ul class="report-list">
+            @for (item of importSummary; track $index) {
+              <li
+                class="report-item"
+                [class.success]="item.success"
+                [class.error]="!item.success"
+              >
+                @if (item.success) {
+                  <i class="fas fa-check-circle"></i>
+                } @else {
+                  <i class="fas fa-exclamation-triangle"></i>
+                }
+                <span>{{ item.key | translate: item.params }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+        <div class="report-footer">
+          <button (click)="closeImportSummary()">
+            {{ "GEN_OK" | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Background saving loader overlay -->
+  @if (isSaving || isLoading) {
+    <div class="loader-overlay">
+      <div class="spinner"></div>
+    </div>
+  }
 </div>
-
-@if (equalityReport) {
-  <div class="equality-report-overlay" (click)="closeReport()">
-    <div class="equality-report-modal" (click)="$event.stopPropagation()">
-      <div class="report-header">
-        <h4>
-          {{ "AM_REPORT_TITLE" | translate }} ({{
-            "AM_LABEL_NUM_DRIVERS" | translate
-          }}: {{ internalRotations[reportRotationIdx].numDrivers }})
-        </h4>
-        <button class="close-btn" (click)="closeReport()">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      <div class="report-content">
-        <ul class="report-list">
-          @for (item of equalityReport; track $index) {
-            <li
-              class="report-item"
-              [class.success]="
-                isRotationEqual(internalRotations[reportRotationIdx])
-              "
-              [class.error]="
-                !isRotationEqual(internalRotations[reportRotationIdx])
-              "
-            >
-              @if (isRotationEqual(internalRotations[reportRotationIdx])) {
-                <i class="fas fa-check-circle"></i>
-              } @else {
-                <i class="fas fa-exclamation-triangle"></i>
-              }
-              <span>{{ item.key | translate: item.params }}</span>
-            </li>
-          }
-        </ul>
-      </div>
-      <div class="report-footer">
-        <button (click)="closeReport()">{{ "GEN_OK" | translate }}</button>
-      </div>
-    </div>
-  </div>
-}
-
-@if (importSummary) {
-  <div class="equality-report-overlay" (click)="closeImportSummary()">
-    <div class="equality-report-modal" (click)="$event.stopPropagation()">
-      <div class="report-header">
-        <h4>{{ "AM_IMPORT_SUMMARY_TITLE" | translate }}</h4>
-        <button class="close-btn" (click)="closeImportSummary()">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      <div class="report-content">
-        <ul class="report-list">
-          @for (item of importSummary; track $index) {
-            <li
-              class="report-item"
-              [class.success]="item.success"
-              [class.error]="!item.success"
-            >
-              @if (item.success) {
-                <i class="fas fa-check-circle"></i>
-              } @else {
-                <i class="fas fa-exclamation-triangle"></i>
-              }
-              <span>{{ item.key | translate: item.params }}</span>
-            </li>
-          }
-        </ul>
-      </div>
-      <div class="report-footer">
-        <button (click)="closeImportSummary()">
-          {{ "GEN_OK" | translate }}
-        </button>
-      </div>
-    </div>
-  </div>
-}

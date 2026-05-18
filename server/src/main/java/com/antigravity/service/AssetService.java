@@ -540,6 +540,35 @@ public class AssetService {
 
   public AssetMessage saveCustomRotation(
       String id, String name, int numLanes, List<CustomRotation> rotations) {
+    // Server-side validation
+    for (CustomRotation rot : rotations) {
+      java.util.Map<Integer, Set<Integer>> driverToGroups = new java.util.HashMap<>();
+      for (CustomHeat heat : rot.getHeatsList()) {
+        List<Integer> drivers = heat.getDriverIndicesList();
+        Set<Integer> uniqueDrivers = new HashSet<>();
+        for (Integer driver : drivers) {
+          if (driver != null && driver > 0) {
+            if (!uniqueDrivers.add(driver)) {
+              throw new IllegalArgumentException(
+                  "Driver " + driver + " is assigned to multiple lanes in the same heat.");
+            }
+          }
+        }
+        int group = heat.getGroup();
+        for (Integer driver : drivers) {
+          if (driver != null && driver > 0) {
+            driverToGroups.computeIfAbsent(driver, k -> new java.util.HashSet<>()).add(group);
+          }
+        }
+      }
+      for (java.util.Map.Entry<Integer, Set<Integer>> entry : driverToGroups.entrySet()) {
+        if (entry.getValue().size() > 1) {
+          throw new IllegalArgumentException(
+              "Driver " + entry.getKey() + " is assigned to heats in different groups.");
+        }
+      }
+    }
+
     boolean isNew = (id == null || id.isEmpty());
     if (isNew) {
       id = UUID.randomUUID().toString();

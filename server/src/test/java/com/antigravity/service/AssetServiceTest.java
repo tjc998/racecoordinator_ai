@@ -610,4 +610,65 @@ public class AssetServiceTest {
     assertTrue("Should include default TTS text", lastUpdate.contains("min lap time"));
     assertTrue("Should include default TTS text", lastUpdate.contains("drift lap"));
   }
+
+  @Test
+  public void testSaveCustomRotation_Valid() {
+    com.antigravity.proto.CustomHeat heat1 =
+        com.antigravity.proto.CustomHeat.newBuilder()
+            .addAllDriverIndices(Arrays.asList(1, 2, 0, 0))
+            .setGroup(0)
+            .build();
+    com.antigravity.proto.CustomHeat heat2 =
+        com.antigravity.proto.CustomHeat.newBuilder()
+            .addAllDriverIndices(Arrays.asList(3, 4, 0, 0))
+            .setGroup(0)
+            .build();
+    com.antigravity.proto.CustomRotation rotation =
+        com.antigravity.proto.CustomRotation.newBuilder()
+            .setNumDrivers(4)
+            .addHeats(heat1)
+            .addHeats(heat2)
+            .build();
+
+    AssetMessage result =
+        assetService.saveCustomRotation(null, "Valid Rotation", 4, Arrays.asList(rotation));
+    assertNotNull(result);
+    assertEquals("Valid Rotation", result.getName());
+    assertEquals("custom_rotation", result.getType());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSaveCustomRotation_DuplicateDriversInHeat() {
+    com.antigravity.proto.CustomHeat heat1 =
+        com.antigravity.proto.CustomHeat.newBuilder()
+            .addAllDriverIndices(Arrays.asList(1, 1, 0, 0))
+            .setGroup(0)
+            .build();
+    com.antigravity.proto.CustomRotation rotation =
+        com.antigravity.proto.CustomRotation.newBuilder().setNumDrivers(4).addHeats(heat1).build();
+
+    assetService.saveCustomRotation(null, "Invalid Duplicate Rotation", 4, Arrays.asList(rotation));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSaveCustomRotation_DriverInMultipleGroups() {
+    com.antigravity.proto.CustomHeat heat1 =
+        com.antigravity.proto.CustomHeat.newBuilder()
+            .addAllDriverIndices(Arrays.asList(1, 2, 0, 0))
+            .setGroup(0)
+            .build();
+    com.antigravity.proto.CustomHeat heat2 =
+        com.antigravity.proto.CustomHeat.newBuilder()
+            .addAllDriverIndices(Arrays.asList(1, 3, 0, 0))
+            .setGroup(1)
+            .build();
+    com.antigravity.proto.CustomRotation rotation =
+        com.antigravity.proto.CustomRotation.newBuilder()
+            .setNumDrivers(4)
+            .addHeats(heat1)
+            .addHeats(heat2)
+            .build();
+
+    assetService.saveCustomRotation(null, "Invalid Group Rotation", 4, Arrays.asList(rotation));
+  }
 }

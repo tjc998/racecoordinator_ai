@@ -43,9 +43,15 @@ export class ToolbarComponent implements OnInit {
   helpTitle = input("");
   helpRecordName = input<keyof Settings>();
   showImport = input(false);
+  showImportRc1 = input(false);
   showExport = input(false);
+  importTitleKey = input("DBM_BTN_IMPORT");
+  importRc1TitleKey = input("AM_BTN_IMPORT_RC1_ROTATION");
+  importRc1Icon = input("upload_file");
+  exportTitleKey = input("DBM_BTN_EXPORT");
   showReset = input(false);
   disabledImport = input(false);
+  disabledImportRc1 = input(false);
   disabledExport = input(false);
   disabledReset = input(false);
   showRegenerate = input(false);
@@ -96,6 +102,7 @@ export class ToolbarComponent implements OnInit {
 
   activate = output<void>();
   import = output<void>();
+  importRc1 = output<void>();
   export = output<void>();
   reset = output<void>();
   regenerate = output<void>();
@@ -107,6 +114,10 @@ export class ToolbarComponent implements OnInit {
 
   onImport() {
     this.import.emit();
+  }
+
+  onImportRc1() {
+    this.importRc1.emit();
   }
 
   onExport() {

@@ -37,7 +37,6 @@ import { TranslationService } from "@app/services/translation.service";
 import { mockTTSContext, playSound } from "@app/utils/audio";
 
 import { AudioSetEditorComponent } from "./audio-set-editor/audio-set-editor.component";
-import { CustomRotationEditorComponent } from "./custom-rotation-editor/custom-rotation-editor.component";
 import { ImageSetEditorComponent } from "./image-set-editor/image-set-editor.component";
 
 // Interface matching the mock/view needs, mapped from Protobuf
@@ -66,7 +65,6 @@ export interface AssetView {
     FormsModule,
     ImageSetEditorComponent,
     AudioSetEditorComponent,
-    CustomRotationEditorComponent,
     ConfirmationModalComponent,
     TranslatePipe,
   ],
@@ -103,12 +101,6 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   editingAudioAssetEntries: ISaveAudioSetEntry[] = [];
   lastSelectedIndex: number = -1;
 
-  // Custom Rotation Editor
-  showCustomRotationEditor: boolean = false;
-  editingRotationAssetId?: string;
-  editingRotationAssetName: string = "";
-  editingRotationNumLanes: number = 4;
-  editingRotations: ICustomRotation[] = [];
   scale: number = 1;
   private route = inject(ActivatedRoute);
   private params = toSignal(this.route.queryParams);
@@ -788,25 +780,26 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
 
   // Custom Rotation Editor Methods
   openNewCustomRotationEditor() {
-    this.editingRotationAssetId = undefined;
-    this.editingRotationAssetName = "";
-    this.editingRotationNumLanes = 4;
-    this.editingRotations = [];
-    this.showCustomRotationEditor = true;
+    this.router.navigate(["/custom-rotation-editor"], {
+      queryParams: {
+        id: "new",
+        from: this.route.snapshot.queryParamMap.get("from"),
+        returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
+      },
+    });
   }
 
   openEditCustomRotationEditor(asset: AssetView) {
-    this.editingRotationAssetId = asset.id;
-    this.editingRotationAssetName = asset.name;
-    this.editingRotationNumLanes = asset.numLanes || 4;
-    this.editingRotations = JSON.parse(
-      JSON.stringify(asset.customRotations || []),
-    );
-    this.showCustomRotationEditor = true;
+    this.router.navigate(["/custom-rotation-editor"], {
+      queryParams: {
+        id: asset.id,
+        from: this.route.snapshot.queryParamMap.get("from"),
+        returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
+      },
+    });
   }
 
   onCustomRotationSaved(_asset: IAssetMessage) {
-    this.showCustomRotationEditor = false;
     this.loadAssets();
   }
 

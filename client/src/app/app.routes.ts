@@ -1,5 +1,6 @@
 import { Routes } from "@angular/router";
 import { AssetManagerComponent } from "@app/components/asset-manager/asset-manager.component";
+import { CustomRotationEditorComponent } from "@app/components/asset-manager/custom-rotation-editor/custom-rotation-editor.component";
 import { DatabaseManagerComponent } from "@app/components/database-manager/database-manager.component";
 import { DriverEditorComponent } from "@app/components/driver-editor/driver-editor.component";
 import { DriverManagerComponent } from "@app/components/driver-manager/driver-manager.component";
@@ -42,6 +43,11 @@ export const routes: Routes = [
     path: "asset-manager",
     component: AssetManagerComponent,
     data: { animation: "AssetManagerPage" },
+  },
+  {
+    path: "custom-rotation-editor",
+    component: CustomRotationEditorComponent,
+    data: { animation: "CustomRotationEditorPage" },
   },
   {
     path: "driver-editor",

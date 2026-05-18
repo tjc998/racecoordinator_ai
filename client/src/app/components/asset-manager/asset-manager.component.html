@@ -465,18 +465,6 @@
 >
 </app-audio-set-editor>
 
-@if (showCustomRotationEditor) {
-  <app-custom-rotation-editor
-    [assetId]="editingRotationAssetId"
-    [assetName]="editingRotationAssetName"
-    [numLanes]="editingRotationNumLanes"
-    [rotations]="editingRotations"
-    (cancelled)="showCustomRotationEditor = false"
-    (saved)="onCustomRotationSaved($event)"
-  >
-  </app-custom-rotation-editor>
-}
-
 <app-confirmation-modal
   [visible]="showDeleteConfirm"
   title="AM_CONFIRM_DELETE_TITLE"
