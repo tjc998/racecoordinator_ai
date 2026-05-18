@@ -730,9 +730,6 @@ export class DefaultRacedaySetupComponent implements OnInit {
           } else {
             // Handle validation error
             this.errorTitle = "RDS_ERR_VALIDATION_TITLE";
-            const fixDescription = this.translationService.translate(
-              "RDS_ERR_START_RACE_FIX_DESCRIPTION",
-            );
 
             if (response.errorCode === "DUPE_INDIVIDUAL_TEAM") {
               this.errorMessage = "RDS_ERR_DRIVER_DUPE_IND_TEAM";
@@ -746,6 +743,9 @@ export class DefaultRacedaySetupComponent implements OnInit {
                 driver: response.driverName,
                 teams: response.teamNames.join(", "),
               };
+            } else if (response.errorCode === "NO_CUSTOM_ROTATIONS") {
+              this.errorMessage = "RDS_ERR_NO_CUSTOM_ROTATIONS";
+              this.errorMessageParams = {};
             } else {
               this.errorMessage = response.errorCode || "Unknown error";
               this.errorMessageParams = {};
@@ -757,6 +757,11 @@ export class DefaultRacedaySetupComponent implements OnInit {
                 this.errorMessage,
                 this.errorMessageParams,
               );
+              const fixKey =
+                response.errorCode === "NO_CUSTOM_ROTATIONS"
+                  ? "RDS_ERR_NO_CUSTOM_ROTATIONS_FIX"
+                  : "RDS_ERR_START_RACE_FIX_DESCRIPTION";
+              const fixDescription = this.translationService.translate(fixKey);
               this.errorMessage = translatedMessage + "\n\n" + fixDescription;
               // Clear messageParams since we've already done the translation for the main part
               this.errorMessageParams = {};

@@ -304,23 +304,46 @@ public class ClientCommandTaskHandler {
         DatabaseService.getInstance()
             .getTrack(databaseContext.getDatabase(), raceModel.getTrackEntityId());
 
-    com.antigravity.race.Race runtimeRace = // fqn-collision
-        new com.antigravity.race.Race.Builder() // fqn-collision
-            .model(raceModel)
-            .drivers(participants)
-            .track(raceTrack)
-            .databaseContext(databaseContext)
-            .isDemoMode(request.getIsDemoMode())
-            .demoConfig(request.getDemoConfig())
-            .build();
-
+    com.antigravity.race.Race runtimeRace = null; // fqn-collision
     try {
+      runtimeRace =
+          new com.antigravity.race.Race.Builder() // fqn-collision
+              .model(raceModel)
+              .drivers(participants)
+              .track(raceTrack)
+              .databaseContext(databaseContext)
+              .isDemoMode(request.getIsDemoMode())
+              .demoConfig(request.getDemoConfig())
+              .build();
+
       ClientSubscriptionManager.getInstance().setRace(runtimeRace);
       runtimeRace.init();
+    } catch (IllegalArgumentException e) {
+      logger.error("Validation failed during race initialization", e);
+      if (runtimeRace != null) {
+        runtimeRace.stop();
+      }
+      String errorCode = "UNKNOWN_ERROR";
+      if (e.getMessage() != null && e.getMessage().contains("No custom rotations defined")) {
+        errorCode = "NO_CUSTOM_ROTATIONS";
+      } else if (e.getMessage() != null) {
+        errorCode = e.getMessage();
+      }
+      InitializeRaceResponse response =
+          InitializeRaceResponse.newBuilder().setSuccess(false).setErrorCode(errorCode).build();
+      return TaskResult.success(response.toByteArray());
     } catch (Exception e) {
       logger.error("Failed to set or initialize race", e);
-      runtimeRace.stop(); // Ensure protocols are closed
-      return TaskResult.error(409, e.getMessage());
+      if (runtimeRace != null) {
+        runtimeRace.stop();
+      }
+      String errorCode = "INITIALIZATION_FAILED";
+      if (e.getMessage() != null) {
+        errorCode = e.getMessage();
+      }
+      InitializeRaceResponse response =
+          InitializeRaceResponse.newBuilder().setSuccess(false).setErrorCode(errorCode).build();
+      return TaskResult.success(response.toByteArray());
     }
 
     logger.info("Initialized race: {}", runtimeRace.getRaceModel().getName());

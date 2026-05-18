@@ -389,7 +389,7 @@ public class HeatBuilder {
           heatDrivers.add(new DriverHeatData(new RaceParticipant(Driver.EMPTY_DRIVER)));
         }
       }
-      heatList.add(new Heat(h + 1, heatDrivers, scoring));
+      heatList.add(new Heat(h + 1, heatDrivers, customHeat.getGroup(), scoring));
     }
 
     return heatList;
@@ -461,7 +461,9 @@ public class HeatBuilder {
     }
 
     for (Heat heat : heatList) {
-      heat.setGroup(groupNumber);
+      if (rotationType != HeatRotationType.Custom) {
+        heat.setGroup(groupNumber);
+      }
     }
 
     return heatList;

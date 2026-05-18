@@ -625,14 +625,14 @@ public class HeatBuilderTest {
         new CustomRotation(
             4,
             Arrays.asList(
-                new CustomHeat(Arrays.asList(1, 2, 3, 4)),
-                new CustomHeat(Arrays.asList(4, 3, 2, 1))));
+                new CustomHeat(Arrays.asList(1, 2, 3, 4), 1),
+                new CustomHeat(Arrays.asList(4, 3, 2, 1), 2)));
     CustomRotation rot6 =
         new CustomRotation(
             6,
             Arrays.asList(
-                new CustomHeat(Arrays.asList(1, 0, 2, 0)),
-                new CustomHeat(Arrays.asList(0, 3, 0, 4))));
+                new CustomHeat(Arrays.asList(1, 0, 2, 0), 0),
+                new CustomHeat(Arrays.asList(0, 3, 0, 4), 0)));
 
     List<CustomRotation> customRotations = Arrays.asList(rot4, rot6);
 
@@ -643,6 +643,8 @@ public class HeatBuilderTest {
     assertEquals("1", heats4.get(0).getDrivers().get(0).getActualDriver().getEntityId());
     assertEquals("2", heats4.get(0).getDrivers().get(1).getActualDriver().getEntityId());
     assertEquals("4", heats4.get(1).getDrivers().get(0).getActualDriver().getEntityId());
+    assertEquals(1, heats4.get(0).getGroup());
+    assertEquals(2, heats4.get(1).getGroup());
 
     // Test with 5 drivers (Closest above -> 6)
     List<RaceParticipant> drivers5 = createDrivers(5);
@@ -653,6 +655,8 @@ public class HeatBuilderTest {
         Driver.EMPTY_DRIVER.getEntityId(),
         heats5.get(0).getDrivers().get(1).getActualDriver().getEntityId()); // value 0
     assertEquals("2", heats5.get(0).getDrivers().get(2).getActualDriver().getEntityId()); // value 2
+    assertEquals(0, heats5.get(0).getGroup());
+    assertEquals(0, heats5.get(1).getGroup());
 
     // Test with 7 drivers (Closest below -> 6)
     List<RaceParticipant> drivers7 = createDrivers(7);

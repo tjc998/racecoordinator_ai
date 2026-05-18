@@ -13,6 +13,6 @@ cd "$(dirname "$0")/server"
 
 
 chmod +x generate_protos.sh
-mvn clean || true
+mvn clean -Dmaven.repo.local="$(pwd)/.m2/repository" || true
 ./generate_protos.sh
-mvn compile exec:java -Dexec.mainClass="com.antigravity.App" -Dapp.data.dir="$(pwd)/../data"
+mvn compile exec:java -Dexec.mainClass="com.antigravity.App" -Dapp.data.dir="$(pwd)/../data" -Dmaven.repo.local="$(pwd)/.m2/repository"

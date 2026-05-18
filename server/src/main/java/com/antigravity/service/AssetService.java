@@ -549,7 +549,9 @@ public class AssetService {
     for (CustomRotation rot : rotations) {
       List<Document> heatDocs = new ArrayList<>();
       for (CustomHeat heat : rot.getHeatsList()) {
-        heatDocs.add(new Document("driver_indices", heat.getDriverIndicesList()));
+        heatDocs.add(
+            new Document("driver_indices", heat.getDriverIndicesList())
+                .append("group", heat.getGroup()));
       }
       rotationDocs.add(new Document("num_drivers", rot.getNumDrivers()).append("heats", heatDocs));
     }
@@ -630,6 +632,7 @@ public class AssetService {
             rotBuilder.addHeats(
                 CustomHeat.newBuilder()
                     .addAllDriverIndices((List<Integer>) heatDoc.get("driver_indices"))
+                    .setGroup(heatDoc.getInteger("group") != null ? heatDoc.getInteger("group") : 0)
                     .build());
           }
         }

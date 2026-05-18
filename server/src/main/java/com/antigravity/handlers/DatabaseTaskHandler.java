@@ -1293,7 +1293,9 @@ public class DatabaseTaskHandler {
             driverIndicesObj = heatMap.get("driver_indices");
           }
           List<Integer> driverIndices = (List<Integer>) driverIndicesObj;
-          heats.add(new CustomHeat(driverIndices));
+          Object groupObj = heatMap.get("group");
+          int group = groupObj != null ? ((Number) groupObj).intValue() : 0;
+          heats.add(new CustomHeat(driverIndices, group));
         }
       }
       customRotations.add(new CustomRotation(numDrivers, heats));
@@ -1312,7 +1314,10 @@ public class DatabaseTaskHandler {
       List<Document> heatList = (List<Document>) rotDoc.get("heats");
       if (heatList != null) {
         for (Document heatDoc : heatList) {
-          heats.add(new CustomHeat((List<Integer>) heatDoc.get("driver_indices")));
+          Integer group = heatDoc.getInteger("group");
+          heats.add(
+              new CustomHeat(
+                  (List<Integer>) heatDoc.get("driver_indices"), group != null ? group : 0));
         }
       }
       result.add(new CustomRotation(numDrivers, heats));

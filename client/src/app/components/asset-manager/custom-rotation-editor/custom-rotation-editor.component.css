@@ -271,6 +271,22 @@
   width: 40px;
 }
 
+.group-col {
+  width: 60px;
+  text-align: center;
+}
+
+.group-idx-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 12px 4px;
+  color: #fff;
+  text-align: center;
+  font-size: 1.1rem;
+  outline: none;
+}
+
 .driver-idx-input {
   width: 100%;
   background: transparent;

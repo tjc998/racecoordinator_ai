@@ -14,19 +14,34 @@ public class CustomHeat {
   @JsonAlias("driverIndices")
   private final List<Integer> driverIndices;
 
+  @BsonProperty("group")
+  @JsonProperty("group")
+  private final int group;
+
   public CustomHeat() {
     this.driverIndices = new ArrayList<>();
+    this.group = 0;
+  }
+
+  public CustomHeat(List<Integer> driverIndices) {
+    this(driverIndices, 0);
   }
 
   @BsonCreator
   @JsonCreator
   public CustomHeat(
       @BsonProperty("driver_indices") @JsonProperty("driver_indices") @JsonAlias("driverIndices")
-          List<Integer> driverIndices) {
+          List<Integer> driverIndices,
+      @BsonProperty("group") @JsonProperty("group") Integer group) {
     this.driverIndices = driverIndices != null ? driverIndices : new ArrayList<>();
+    this.group = group != null ? group : 0;
   }
 
   public List<Integer> getDriverIndices() {
     return driverIndices;
+  }
+
+  public int getGroup() {
+    return group;
   }
 }

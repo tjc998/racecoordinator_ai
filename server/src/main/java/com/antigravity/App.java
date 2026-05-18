@@ -67,7 +67,7 @@ import org.slf4j.LoggerFactory;
 public class App {
 
   private static TransitionWalker.ReachedState<RunningMongodProcess> mongodProcess;
-  private static final int MONGO_PORT = 27017; // Default MongoDB port
+  private static final int MONGO_PORT = 8085; // Default MongoDB port
   private static Javalin app;
   private static MongoClient mongoClient;
 
@@ -202,7 +202,7 @@ public class App {
 
       MongoClientSettings settings =
           MongoClientSettings.builder()
-              .applyConnectionString(new ConnectionString("mongodb://localhost:" + MONGO_PORT))
+              .applyConnectionString(new ConnectionString("mongodb://127.0.0.1:" + MONGO_PORT))
               .codecRegistry(pojoCodecRegistry)
               .applyToClusterSettings(b -> b.serverSelectionTimeout(1000, TimeUnit.MILLISECONDS))
               .build();
@@ -508,6 +508,9 @@ public class App {
 
       // Look for bundled mongo in ./mongodb/bin/
       File bundledMongo = new File(appDir, "mongodb/bin/" + mongoBinName);
+      if (!bundledMongo.exists()) {
+        bundledMongo = new File(new File(appDir).getParentFile(), "mongodb/bin/" + mongoBinName);
+      }
       if (bundledMongo.exists()) {
         logger.info("Found bundled MongoDB: {}", bundledMongo.getAbsolutePath());
         List<String> command = new ArrayList<>();
@@ -517,7 +520,8 @@ public class App {
         command.add("--port");
         command.add(String.valueOf(MONGO_PORT));
         command.add("--bind_ip");
-        command.add("localhost");
+        command.add("127.0.0.1");
+        command.add("--nounixsocket");
 
         if (osName != null) {
           String lowerOsName = osName.toLowerCase();

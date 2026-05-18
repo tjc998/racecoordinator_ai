@@ -694,6 +694,86 @@ public class ClientCommandTaskHandlerTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
+  public void testInitializeRace_DeletedCustomRotation_ShouldFail() throws Exception {
+    // 1. Setup Data
+    String raceId = "race-1";
+    String driverId = "driver-1";
+
+    Race race =
+        new Race.Builder()
+            .withName("Test Race")
+            .withTrackEntityId("track-1")
+            .withHeatRotationType(HeatRotationType.Custom)
+            .withCustomRotationAssetId("deleted-asset-id")
+            .withEntityId(raceId)
+            .build();
+    Driver driver = new Driver("Dave", "D", driverId, null);
+
+    // 2. Mock Database interactions
+    FindIterable<Race> raceIterable = mock(FindIterable.class);
+    when(raceCollection.find(any(Bson.class))).thenReturn(raceIterable);
+    when(raceIterable.first()).thenReturn(race);
+
+    FindIterable<Driver> driverIterable = mock(FindIterable.class);
+    when(driverCollection.find(any(Bson.class))).thenReturn(driverIterable);
+    doAnswer(
+            invocation -> {
+              List<Driver> list = invocation.getArgument(0);
+              list.add(driver);
+              return list;
+            })
+        .when(driverIterable)
+        .into(any(List.class));
+
+    // Mock getAllTeams (empty)
+    FindIterable<Team> teamIterable = mock(FindIterable.class);
+    when(teamCollection.find()).thenReturn(teamIterable);
+
+    // Mock getTeams
+    FindIterable<Team> specificTeamIterable = mock(FindIterable.class);
+    when(teamCollection.find(any(Bson.class))).thenReturn(specificTeamIterable);
+    doAnswer(
+            invocation -> {
+              List<Team> list = invocation.getArgument(0);
+              return list;
+            })
+        .when(specificTeamIterable)
+        .into(any(List.class));
+
+    // Create Track
+    Lane lane = new Lane("red", "black", 100);
+    Track track = new Track("Test Track", Arrays.asList(lane), "track-1", null);
+
+    FindIterable<Track> trackIterable = mock(FindIterable.class);
+    when(trackCollection.find(any(Bson.class))).thenReturn(trackIterable);
+    when(trackIterable.first()).thenReturn(track);
+
+    // Mock assets collection returning null (deleted custom rotation)
+    MongoCollection<org.bson.Document> assetCollection = mock(MongoCollection.class);
+    when(mongoDatabase.getCollection(eq("assets"))).thenReturn(assetCollection);
+    FindIterable<org.bson.Document> assetIterable = mock(FindIterable.class);
+    when(assetCollection.find(any(Bson.class))).thenReturn(assetIterable);
+    when(assetIterable.first()).thenReturn(null);
+
+    // 3. Mock Request
+    InitializeRaceRequest request =
+        InitializeRaceRequest.newBuilder()
+            .setRaceId(raceId)
+            .addDriverIds("d_" + driverId)
+            .setIsDemoMode(true)
+            .build();
+
+    // 4. Execute
+    TaskResult result = handler.handleInitializeRace(request);
+
+    // 5. Verify
+    InitializeRaceResponse response = InitializeRaceResponse.parseFrom((byte[]) result.result);
+    assertFalse("Race initialization should fail", response.getSuccess());
+    assertEquals("NO_CUSTOM_ROTATIONS", response.getErrorCode());
+  }
+
+  @Test
   public void testUpdateUserLaps_Success() throws Exception {
     com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
     com.antigravity.race.Heat mockHeat = mock(com.antigravity.race.Heat.class);

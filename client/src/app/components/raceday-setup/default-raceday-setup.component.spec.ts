@@ -605,6 +605,30 @@ describe("DefaultRacedaySetupComponent", () => {
     expect(component.errorMessage).toContain("Team Beta");
   }));
 
+  it("should show error modal when server returns NO_CUSTOM_ROTATIONS", fakeAsync(() => {
+    component.selectedRace = { entity_id: "r1", name: "Grand Prix" } as any;
+    component.selectedParticipants = [
+      { entity_id: "d1", name: "Alice" },
+    ] as any;
+
+    mockDataService.getSavedRaces.and.returnValue(of([]));
+    mockDataService.initializeRace.and.returnValue(
+      of({
+        success: false,
+        errorCode: "NO_CUSTOM_ROTATIONS",
+      } as any),
+    );
+
+    component.startRace();
+    flush();
+
+    expect(component.showErrorModal).toBeTrue();
+    expect(component.errorTitle).toBe("RDS_ERR_VALIDATION_TITLE");
+    expect(component.errorMessage).toBe(
+      "RDS_ERR_NO_CUSTOM_ROTATIONS\n\nRDS_ERR_NO_CUSTOM_ROTATIONS_FIX",
+    );
+  }));
+
   describe("Natural Sorting", () => {
     it("should sort participants naturally using naturalSortParticipants method", () => {
       const participants = [

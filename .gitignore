@@ -39,6 +39,8 @@ server/data
 server/app_data/
 server/temp/
 /data/
+mongodb/
+server/mongodb/
 
 # Maven
 server/target

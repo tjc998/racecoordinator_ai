@@ -193,4 +193,84 @@ test.describe("Asset Manager Visuals", () => {
       "asset-manager-new-custom-rotation.png",
     );
   });
+
+  test("should add rotation and heats with groups in custom rotation editor", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/asset-manager"),
+    );
+    await page.locator(".asset-grid").waitFor({ state: "visible" });
+
+    const container = page.locator("app-asset-manager");
+    const harness = new AssetManagerHarnessE2e(container);
+
+    await harness.clickNewCustomRotation();
+    await page
+      .locator("app-custom-rotation-editor .modal-content")
+      .waitFor({ state: "visible" });
+    await page.waitForTimeout(500);
+
+    // The editor auto-adds one rotation card with one heat on init when rotations are empty.
+    // Wait for it to appear.
+    await page
+      .locator("app-custom-rotation-editor .rotation-card")
+      .first()
+      .waitFor({ state: "visible" });
+
+    // Select the 4-lane "Speedway" track (the default "Classic Circuit" only has 2 lanes)
+    const trackSelect = page.locator("app-custom-rotation-editor select");
+    await trackSelect.selectOption({ label: "Speedway" });
+    await page.waitForTimeout(300); // Wait for lane columns to update
+
+    // Add Heat 2 (Heat 1 was auto-added with the rotation)
+    await page
+      .locator("app-custom-rotation-editor .add-heat-btn")
+      .first()
+      .click();
+
+    // Set first heat group to 2 (UI value)
+    const firstGroupInput = page
+      .locator("app-custom-rotation-editor .group-idx-input")
+      .first();
+    await firstGroupInput.fill("2");
+
+    // Set second heat group to 3 (UI value)
+    const lastGroupInput = page
+      .locator("app-custom-rotation-editor .group-idx-input")
+      .last();
+    await lastGroupInput.fill("3");
+
+    // Fill driver indexes for Heat 1
+    const firstHeatInputs = page
+      .locator("app-custom-rotation-editor .heats-table tbody tr")
+      .first()
+      .locator(".driver-idx-input");
+    await firstHeatInputs.nth(0).fill("1");
+    await firstHeatInputs.nth(1).fill("2");
+    await firstHeatInputs.nth(2).fill("3");
+    await firstHeatInputs.nth(3).fill("4");
+
+    // Fill driver indexes for Heat 2
+    const secondHeatInputs = page
+      .locator("app-custom-rotation-editor .heats-table tbody tr")
+      .last()
+      .locator(".driver-idx-input");
+    await secondHeatInputs.nth(0).fill("4");
+    await secondHeatInputs.nth(1).fill("3");
+    await secondHeatInputs.nth(2).fill("2");
+    await secondHeatInputs.nth(3).fill("1");
+
+    await page.waitForTimeout(500); // Settle inputs
+
+    await expect(page).toHaveScreenshot(
+      "asset-manager-custom-rotation-heats-groups.png",
+      {
+        maxDiffPixelRatio: 0.1,
+        threshold: 0.2,
+      },
+    );
+  });
 });

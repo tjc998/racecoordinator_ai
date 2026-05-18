@@ -138,6 +138,7 @@ export class CustomRotationEditorComponent implements OnInit {
     const driverIndices = new Array(this.internalNumLanes).fill(0);
     rotation.heats.push({
       driverIndices,
+      group: 0,
     });
   }
 
@@ -263,7 +264,124 @@ export class CustomRotationEditorComponent implements OnInit {
     this.reportRotationIdx = -1;
   }
 
-  async onImportFiles(event: Event) {
+  private async parseAndValidateImportFile(
+    file: File,
+    isRc1: boolean,
+  ): Promise<any> {
+    try {
+      const text = await file.text();
+      let json: any;
+
+      try {
+        json = JSON.parse(text);
+      } catch (e) {
+        // Fallback: Handle single quotes or unquoted keys
+        // This allows for JS-style objects that aren't strictly valid JSON
+        try {
+          const sanitized = text
+            .replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, '"$1"') // Convert single quotes to double quotes
+            .replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":'); // Quote unquoted keys
+          json = JSON.parse(sanitized);
+        } catch (_) {
+          // If even the sanitized version fails, throw the original error
+          throw e;
+        }
+      }
+
+      // Validation
+      if (
+        json.NumDrivers === undefined ||
+        json.NumLanes === undefined ||
+        json.Heats === undefined
+      ) {
+        return {
+          success: false,
+          key: "AM_IMPORT_ERR_MISSING_FIELDS",
+          params: { file: file.name },
+        };
+      }
+
+      if (json.NumLanes !== this.internalNumLanes) {
+        return {
+          success: false,
+          key: "AM_IMPORT_ERR_LANES",
+          params: {
+            file: file.name,
+            expected: this.internalNumLanes,
+            found: json.NumLanes,
+          },
+        };
+      }
+
+      if (
+        this.internalRotations.some((r) => r.numDrivers === json.NumDrivers)
+      ) {
+        return {
+          success: false,
+          key: "AM_IMPORT_ERR_DUPLICATE",
+          params: { file: file.name, count: json.NumDrivers },
+        };
+      }
+
+      // Process Heats
+      const heats: ICustomHeat[] = json.Heats.map((h: any) => {
+        let drivers = h.Drivers || [];
+        if (isRc1) {
+          // Convert 0-based to 1-based drivers
+          drivers = drivers.map((d: any) => {
+            if (d === null || d === undefined || d < 0) {
+              return 0;
+            }
+            return d + 1;
+          });
+        } else {
+          // Keep 1-based drivers
+          drivers = drivers.map((d: any) => {
+            if (d === null || d === undefined || d < 0) {
+              return 0;
+            }
+            return d;
+          });
+        }
+
+        let group = 0;
+        if (h.Group !== undefined && h.Group !== null) {
+          if (isRc1) {
+            group = h.Group;
+          } else {
+            group = h.Group - 1;
+          }
+        }
+        if (group < 0) {
+          group = 0;
+        }
+
+        return {
+          driverIndices: drivers,
+          group: group,
+        };
+      });
+
+      this.internalRotations.push({
+        numDrivers: json.NumDrivers,
+        heats: heats,
+      });
+
+      return {
+        success: true,
+        key: "AM_IMPORT_SUCCESS",
+        params: { file: file.name },
+      };
+    } catch (e) {
+      return {
+        success: false,
+        key: "AM_IMPORT_ERR_INVALID_JSON",
+        params: { file: file.name },
+      };
+    }
+  }
+
+  async onImportFiles(event: Event, isRc1: boolean = false) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
 
@@ -271,99 +389,8 @@ export class CustomRotationEditorComponent implements OnInit {
     const results: any[] = [];
 
     for (const file of files) {
-      try {
-        const text = await file.text();
-        let json: any;
-
-        try {
-          json = JSON.parse(text);
-        } catch (e) {
-          // Fallback: Handle single quotes or unquoted keys
-          // This allows for JS-style objects that aren't strictly valid JSON
-          try {
-            const sanitized = text
-              .replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, '"$1"') // Convert single quotes to double quotes
-              .replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":'); // Quote unquoted keys
-            json = JSON.parse(sanitized);
-          } catch (_) {
-            // If even the sanitized version fails, throw the original error
-            throw e;
-          }
-        }
-
-        // Validation
-        if (
-          json.NumDrivers === undefined ||
-          json.NumLanes === undefined ||
-          json.Heats === undefined
-        ) {
-          results.push({
-            success: false,
-            key: "AM_IMPORT_ERR_MISSING_FIELDS",
-            params: { file: file.name },
-          });
-          continue;
-        }
-
-        if (json.NumLanes !== this.internalNumLanes) {
-          results.push({
-            success: false,
-            key: "AM_IMPORT_ERR_LANES",
-            params: {
-              file: file.name,
-              expected: this.internalNumLanes,
-              found: json.NumLanes,
-            },
-          });
-          continue;
-        }
-
-        if (
-          this.internalRotations.some((r) => r.numDrivers === json.NumDrivers)
-        ) {
-          results.push({
-            success: false,
-            key: "AM_IMPORT_ERR_DUPLICATE",
-            params: { file: file.name, count: json.NumDrivers },
-          });
-          continue;
-        }
-
-        // Process Heats
-        const heats: ICustomHeat[] = json.Heats.map((h: any) => {
-          let drivers = h.Drivers || [];
-          // If the file is 0-indexed, we need to convert to 1-indexed.
-          // We assume it's 0-indexed if max(drivers) < NumDrivers AND min(drivers) >= 0
-          // and we only increment if they don't already have a driver equal to NumDrivers.
-          // Actually, let's just look for '0'. If '0' is present, we increment everything by 1.
-          // This is a common convention in these JSON rotation files.
-          const hasZero = drivers.some((d: number) => d === 0);
-          if (hasZero) {
-            drivers = drivers.map((d: number) => d + 1);
-          }
-
-          return {
-            driverIndices: drivers,
-          };
-        });
-
-        this.internalRotations.push({
-          numDrivers: json.NumDrivers,
-          heats: heats,
-        });
-
-        results.push({
-          success: true,
-          key: "AM_IMPORT_SUCCESS",
-          params: { file: file.name },
-        });
-      } catch (e) {
-        results.push({
-          success: false,
-          key: "AM_IMPORT_ERR_INVALID_JSON",
-          params: { file: file.name },
-        });
-      }
+      const res = await this.parseAndValidateImportFile(file, isRc1);
+      results.push(res);
     }
 
     this.importSummary = results;
@@ -387,6 +414,7 @@ export class CustomRotationEditorComponent implements OnInit {
         Heats:
           rotation.heats?.map((h) => ({
             Drivers: h.driverIndices,
+            Group: h.group !== undefined && h.group !== null ? h.group + 1 : 1,
           })) || [],
       };
 

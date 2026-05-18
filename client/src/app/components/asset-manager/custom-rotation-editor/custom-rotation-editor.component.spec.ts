@@ -387,26 +387,50 @@ describe("CustomRotationEditorComponent", () => {
       expect(component.importSummary?.[0].success).toBeTrue();
     });
 
-    it("should automatically convert 0-indexed drivers to 1-indexed", async () => {
+    it("should convert 0-indexed drivers and groups to 1-indexed / 0-indexed internal for RC1 import", async () => {
       fixture.detectChanges();
       component.internalNumLanes = 4;
-      const zeroIndexedJson = JSON.stringify({
+      const rc1Json = JSON.stringify({
         NumDrivers: 4,
         NumLanes: 4,
-        Heats: [{ Drivers: [3, 0, 1, 2] }], // 0 is present
+        Heats: [{ Drivers: [3, 0, 1, 2], Group: 1 }], // 0-based drivers and groups
       });
 
-      const file = createMockFile(zeroIndexedJson, "zero.json");
+      const file = createMockFile(rc1Json, "rc1.json");
       const event = createImportEvent([file]);
 
       // Remove default rotation to avoid duplicate error
       component.internalRotations = [];
 
-      await component.onImportFiles(event);
+      await component.onImportFiles(event, true);
 
       expect(component.internalRotations[0].heats?.[0].driverIndices).toEqual([
         4, 1, 2, 3,
       ]);
+      expect(component.internalRotations[0].heats?.[0].group).toBe(1);
+    });
+
+    it("should import 1-based drivers and groups correctly for standard import", async () => {
+      fixture.detectChanges();
+      component.internalNumLanes = 4;
+      const standardJson = JSON.stringify({
+        NumDrivers: 4,
+        NumLanes: 4,
+        Heats: [{ Drivers: [4, 1, 2, 3], Group: 2 }], // 1-based drivers and groups
+      });
+
+      const file = createMockFile(standardJson, "standard.json");
+      const event = createImportEvent([file]);
+
+      // Remove default rotation to avoid duplicate error
+      component.internalRotations = [];
+
+      await component.onImportFiles(event, false);
+
+      expect(component.internalRotations[0].heats?.[0].driverIndices).toEqual([
+        4, 1, 2, 3,
+      ]);
+      expect(component.internalRotations[0].heats?.[0].group).toBe(1); // 2 - 1 = 1 internal 0-based group
     });
 
     it("should report error for invalid JSON", async () => {
@@ -556,24 +580,52 @@ describe("CustomRotationEditorComponent", () => {
       expect(revokeObjectURLSpy).toHaveBeenCalled();
     }));
 
-    it("should format exported JSON with correct property names", fakeAsync(() => {
+    it("should format exported JSON with correct property names and 1-based group indices", fakeAsync(() => {
       fixture.detectChanges();
       component.internalAssetName = "FormatTest";
       component.internalNumLanes = 2;
       component.internalRotations = [
-        { numDrivers: 2, heats: [{ driverIndices: [1, 2] }] },
+        { numDrivers: 2, heats: [{ driverIndices: [1, 2], group: 1 }] }, // internal group 1 (displayed / 1-based: 2)
       ];
+
+      const stringifySpy = spyOn(JSON, "stringify").and.callThrough();
 
       component.exportRotations();
 
       const blobCall = createObjectURLSpy.calls.mostRecent().args[0] as Blob;
       expect(blobCall.type).toBe("application/json");
 
-      // We verify the object creation by looking at what was passed to Blob
-      // Since we can't easily read blob content in fakeAsync, we can assume the logic is correct
-      // if the blob was created with the right type and the code paths were followed.
+      expect(stringifySpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          NumDrivers: 2,
+          NumLanes: 2,
+          Heats: [{ Drivers: [1, 2], Group: 2 }],
+        }),
+        null,
+        2,
+      );
 
       tick(500);
     }));
+  });
+
+  describe("Heat Groups", () => {
+    it("should initialize new heats with a default group index of 0", () => {
+      fixture.detectChanges();
+      const rotation = component.internalRotations[0];
+      component.addHeat(rotation);
+
+      const newHeat = rotation.heats![rotation.heats!.length - 1];
+      expect(newHeat.group).toBe(0);
+    });
+
+    it("should allow setting and updating a heat's group index", () => {
+      fixture.detectChanges();
+      const rotation = component.internalRotations[0];
+      const heat = rotation.heats![0];
+
+      heat.group = 1; // Group 2 (0-indexed)
+      expect(heat.group).toBe(1);
+    });
   });
 });
