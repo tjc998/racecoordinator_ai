@@ -40,7 +40,7 @@
         </div>
       }
       <div class="lamps-container">
-        @for (lamp of countdownLamps; track lamp) {
+        @for (lamp of countdownLamps; track $index) {
           <img
             [src]="lamp.url"
             class="start-lamp"

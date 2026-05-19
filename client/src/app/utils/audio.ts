@@ -34,7 +34,7 @@ export function playSound(
     } else if (url === "default_penalty") {
       playableUrl = `${serverUrl}/assets/default_penalty_Penalty`;
     }
-    if (logger) logger.info("Playing audio from URL:", playableUrl);
+    if (logger) logger.debug("Playing audio from URL:", playableUrl);
     const audio = new Audio(playableUrl);
     audio.play().catch((err) => {
       if (logger) logger.error("Error playing sound", err);
@@ -46,7 +46,7 @@ export function playSound(
     }
 
     if (!(window as any).SUPPRESS_AUDIO_LOGS && logger) {
-      logger.info("Playing TTS:", interpolatedText);
+      logger.debug("Playing TTS:", interpolatedText);
     }
     if (window.speechSynthesis) {
       // Cancel any current speech
@@ -57,7 +57,7 @@ export function playSound(
       if (logger) logger.warn("Text-to-speech not supported in this browser.");
     }
   } else {
-    if (logger) logger.info("No sound to play (missing type, url, or text)");
+    if (logger) logger.debug("No sound to play (missing type, url, or text)");
   }
 }
 
