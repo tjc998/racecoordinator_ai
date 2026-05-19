@@ -1,5 +1,6 @@
 package com.antigravity.race;
 
+import com.antigravity.models.FuelOptions;
 import com.antigravity.models.Lane;
 import com.antigravity.proto.DemoConfig;
 import com.antigravity.proto.RaceFlag;
@@ -94,7 +95,7 @@ public class RaceHardwareManager {
     }
 
     // 3. Fuel Levels
-    var fuelOptions = race.getFuelOptions();
+    FuelOptions fuelOptions = race.getFuelOptions();
     if (fuelOptions != null && fuelOptions.isEnabled() && fuelOptions.getCapacity() > 0) {
       double capacity = fuelOptions.getCapacity();
       for (int i = 0; i < race.getDrivers().size(); i++) {

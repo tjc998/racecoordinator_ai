@@ -99,6 +99,7 @@
           <consoleOutput>true</consoleOutput>
           <failsOnError>true</failsOnError>
           <linkXRef>false</linkXRef>
+          <includeTestSourceDirectory>false</includeTestSourceDirectory>
         </configuration>
       </plugin>
       <plugin>
@@ -136,6 +137,11 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.6.3</version>
       </plugin>
     </plugins>
   </build>
