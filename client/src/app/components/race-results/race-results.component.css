@@ -108,35 +108,35 @@
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   box-sizing: border-box;
 }
 
 .results-table-wrapper {
-  flex-grow: 1;
-  overflow-y: auto;
-  overflow-x: auto;
+  flex-shrink: 0;
+  overflow: visible;
   padding: 15px;
 }
 
 /* Custom Scrollbars */
-.results-table-wrapper::-webkit-scrollbar {
+.results-container::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-.results-table-wrapper::-webkit-scrollbar-track {
+.results-container::-webkit-scrollbar-track {
   background: rgba(10, 16, 26, 0.4);
   border-radius: 4px;
 }
 
-.results-table-wrapper::-webkit-scrollbar-thumb {
+.results-container::-webkit-scrollbar-thumb {
   background: rgba(0, 229, 255, 0.3);
   border-radius: 4px;
   border: 1px solid rgba(0, 229, 255, 0.1);
 }
 
-.results-table-wrapper::-webkit-scrollbar-thumb:hover {
+.results-container::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 229, 255, 0.6);
   box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
 }
@@ -660,4 +660,296 @@
   }
 }
 
+/* =============================================
+   RECORDS DASHBOARD — Cyberpunk Glassmorphism
+   ============================================= */
 
+.records-dashboard {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.12);
+  flex-shrink: 0;
+}
+
+/* Header */
+.records-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.records-title {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #00e5ff;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+  white-space: nowrap;
+}
+
+.records-subtitle-line {
+  flex-grow: 1;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(0, 229, 255, 0.4) 0%, transparent 100%);
+}
+
+/* Global Records Grid — 3 cards side by side */
+.global-records-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+/* Individual Record Card */
+.record-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: rgba(10, 16, 26, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 3px solid currentColor;
+  border-radius: 10px;
+  padding: 16px 18px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+
+.record-card:hover {
+  transform: translateY(-2px) scale(1.01);
+  background: rgba(10, 16, 26, 0.8);
+}
+
+/* Border color variants */
+.record-card.border-cyan {
+  border-left-color: #00e5ff;
+  box-shadow: inset 0 0 20px rgba(0, 229, 255, 0.04), 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+.record-card.border-cyan:hover {
+  box-shadow: inset 0 0 24px rgba(0, 229, 255, 0.08), 0 8px 24px rgba(0, 229, 255, 0.12);
+}
+
+.record-card.border-magenta {
+  border-left-color: #d500f9;
+  box-shadow: inset 0 0 20px rgba(213, 0, 249, 0.04), 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+.record-card.border-magenta:hover {
+  box-shadow: inset 0 0 24px rgba(213, 0, 249, 0.08), 0 8px 24px rgba(213, 0, 249, 0.12);
+}
+
+.record-card.border-amber {
+  border-left-color: #ff9100;
+  box-shadow: inset 0 0 20px rgba(255, 145, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+.record-card.border-amber:hover {
+  box-shadow: inset 0 0 24px rgba(255, 145, 0, 0.08), 0 8px 24px rgba(255, 145, 0, 0.12);
+}
+
+/* Card Icon */
+.card-icon {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 16, 26, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.card-icon .material-icons {
+  font-size: 22px;
+}
+
+.card-icon.cyan-glow {
+  color: #00e5ff;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.15);
+}
+.card-icon.magenta-glow {
+  color: #d500f9;
+  box-shadow: 0 0 10px rgba(213, 0, 249, 0.15);
+}
+.card-icon.amber-glow {
+  color: #ff9100;
+  box-shadow: 0 0 10px rgba(255, 145, 0, 0.15);
+}
+
+/* Card Content */
+.card-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.record-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.record-value {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  line-height: 1.1;
+  margin-bottom: 6px;
+  font-family: 'Inter', 'Tahoma', monospace;
+}
+
+.record-value.cyan-text {
+  color: #00e5ff;
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
+}
+.record-value.magenta-text {
+  color: #d500f9;
+  text-shadow: 0 0 12px rgba(213, 0, 249, 0.35);
+}
+.record-value.amber-text {
+  color: #ff9100;
+  text-shadow: 0 0 12px rgba(255, 145, 0, 0.35);
+}
+
+.record-holder {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.holder-label {
+  color: #475569;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.holder-name {
+  color: #94a3b8;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.record-date {
+  font-size: 11px;
+  color: #334155;
+  margin-top: 3px;
+  letter-spacing: 0.5px;
+}
+
+/* =============================================
+   LANE RECORDS
+   ============================================= */
+
+.lane-records-section {
+  margin-top: 4px;
+}
+
+.lane-records-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #475569;
+  margin-bottom: 10px;
+}
+
+.lane-cards-container {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.lane-record-card {
+  flex: 1 1 160px;
+  max-width: 220px;
+  min-width: 150px;
+  background: rgba(10, 16, 26, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 3px solid currentColor;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lane-record-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+.lane-card-header {
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #000000;
+  text-align: center;
+}
+
+.lane-card-body {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lane-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
+.lane-stat-info {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.lane-stat-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #475569;
+}
+
+.lane-stat-value {
+  font-size: 15px;
+  font-weight: 800;
+  font-family: 'Inter', 'Tahoma', monospace;
+}
+
+.lane-stat-holder {
+  font-size: 10px;
+  color: #64748b;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 80px;
+  text-align: right;
+}
+
+.lane-stat-date-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -4px;
+  margin-bottom: 2px;
+  padding-right: 2px;
+}
+
+.lane-stat-date {
+  font-size: 8px;
+  color: #475569;
+  letter-spacing: 0.5px;
+  font-family: 'Inter', 'Tahoma', monospace;
+  opacity: 0.8;
+}

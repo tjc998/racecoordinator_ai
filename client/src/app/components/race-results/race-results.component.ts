@@ -9,11 +9,13 @@ import {
 import { RouterModule } from "@angular/router";
 import { Subscription } from "rxjs";
 import { Driver } from "@app/models/driver";
+import { AllowFinish, FinishMethod } from "@app/models/heat_scoring";
 import { getOverallScoreFormat } from "@app/models/overall_scoring";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { AvatarUrlPipe } from "@app/pipes/avatar-url.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { IRecordData, IRecordEntry } from "@app/proto/antigravity";
 import { Heat } from "@app/race/heat";
 import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
@@ -86,6 +88,7 @@ export class RaceResultsComponent implements OnInit, OnDestroy {
   protected race?: Race;
   protected standingsRows: StandingsRow[] = [];
   protected driverLines: DriverLine[] = [];
+  protected recordData: IRecordData | null = null;
   private subscriptions: Subscription[] = [];
   protected hiddenDriverKeys = new Set<string>();
   protected hoveredDriverId: string | null = null;
@@ -245,6 +248,15 @@ export class RaceResultsComponent implements OnInit, OnDestroy {
         this.recalculateStandings();
       }),
     );
+
+    this.subscriptions.push(
+      this.raceConnectionService.recordData$.subscribe((records) => {
+        if (records) {
+          this.recordData = records;
+          this.cdr.detectChanges();
+        }
+      }),
+    );
   }
 
   ngOnDestroy() {
@@ -259,6 +271,36 @@ export class RaceResultsComponent implements OnInit, OnDestroy {
   @HostListener("window:resize")
   onResize() {
     this.updateScale();
+  }
+
+  protected getRecordDate(dateVal: any): Date | null {
+    if (!dateVal) return null;
+    let ms = 0;
+    if (typeof dateVal === "number") {
+      ms = dateVal;
+    } else if (dateVal.toNumber) {
+      ms = dateVal.toNumber();
+    } else if (typeof dateVal === "string") {
+      ms = parseInt(dateVal, 10);
+    } else {
+      ms = Number(dateVal);
+    }
+    return ms > 0 ? new Date(ms) : null;
+  }
+
+  protected getLaneColor(index: number): string {
+    if (this.race?.track?.lanes && index < this.race.track.lanes.length) {
+      return (
+        this.race.track.lanes[index].background_color ||
+        NEON_COLORS[index % NEON_COLORS.length].color
+      );
+    }
+    return NEON_COLORS[index % NEON_COLORS.length].color;
+  }
+
+  protected getHolderDisplay(entry: IRecordEntry | null | undefined): string {
+    if (!entry) return "---";
+    return entry.holderNickname || entry.holderName || "---";
   }
 
   private updateScale() {
@@ -381,6 +423,16 @@ export class RaceResultsComponent implements OnInit, OnDestroy {
     return getOverallScoreFormat(rankingMethod);
   }
 
+  protected isAllowFinishLapBasedRace(): boolean {
+    if (!this.race) return false;
+    const hs = this.race.heat_scoring;
+    if (!hs) return false;
+    return (
+      hs.finishMethod === FinishMethod.Lap &&
+      hs.allowFinish === AllowFinish.AF_ALLOW
+    );
+  }
+
   protected trackByDriver(index: number, row: StandingsRow): string {
     return row.driver.entity_id || row.driver.name || "";
   }
@@ -408,15 +460,19 @@ export class RaceResultsComponent implements OnInit, OnDestroy {
     const allHeats = Array.from(heatMap.values());
     const sortedHeats = allHeats.sort((a, b) => a.heatNumber - b.heatNumber);
 
-    // Safe helper to extract driver from any shape of HeatDriver (class instance or raw JSON/proto)
+    // Safe helper to extract the "identity" driver from any shape of HeatDriver.
+    // For graph matching we need the driver identity that corresponds to the
+    // standings (i.e. the RaceParticipant's driver, which in team races is the
+    // team entity).  actualDriver is only the individual who happened to drive
+    // in that heat, so we try participant.driver first.
     const getDriverFromHeatDriver = (d: any): any => {
       if (!d) return null;
-      if (d.actualDriver) return d.actualDriver;
+      if (d.participant?.driver) return d.participant.driver;
       if (d.driver) {
         if (d.driver.driver) return d.driver.driver; // d.driver is RaceParticipant
         return d.driver; // d.driver is Driver
       }
-      if (d.participant?.driver) return d.participant.driver;
+      if (d.actualDriver) return d.actualDriver;
       return null;
     };
 

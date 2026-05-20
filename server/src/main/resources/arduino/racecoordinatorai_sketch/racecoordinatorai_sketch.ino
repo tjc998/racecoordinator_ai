@@ -259,7 +259,7 @@ int allocateRgbSlotForPin(byte pin) {
 // below to the type you are using.
 //
 // Here's all the types of leds FastLed supports.  There may be others as this
-// list is pretty old.F
+// list is pretty old.
 //
 //  NEOPIXEL
 //  TM1803

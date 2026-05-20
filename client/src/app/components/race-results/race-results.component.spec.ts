@@ -109,6 +109,7 @@ describe("RaceResultsComponent", () => {
       standingsUpdate$: standingsUpdateSubject.asObservable(),
       overallStandingsUpdate$: overallStandingsUpdateSubject.asObservable(),
       laps$: lapsSubject.asObservable(),
+      recordData$: new BehaviorSubject(null).asObservable(),
     };
 
     mockRaceService = {

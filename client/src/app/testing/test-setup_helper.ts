@@ -524,11 +524,19 @@ export class TestSetupHelper {
     await Promise.race([fontsEvaluatePromise, fontsTimeoutPromise]);
 
     // 5. Wait for a paint cycle to ensure DOM updates are flushed
+    // Race with a setTimeout fallback in case the tab is throttled in the background
     await page.evaluate(
       () =>
-        new Promise((res) =>
-          requestAnimationFrame(() => requestAnimationFrame(res)),
-        ),
+        new Promise<void>((res) => {
+          let done = false;
+          const resolve = () => {
+            if (done) return;
+            done = true;
+            res();
+          };
+          setTimeout(resolve, 500);
+          requestAnimationFrame(() => requestAnimationFrame(resolve));
+        }),
     );
 
     // 6. Final safety wait for complex components (like SVGs) to stabilize
