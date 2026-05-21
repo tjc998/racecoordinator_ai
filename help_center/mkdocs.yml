@@ -1,0 +1,90 @@
+site_name: Race Coordinator AI Help Center
+site_url: https://daufderheide.github.io/racecoordinator_ai/
+repo_url: https://github.com/daufderheide/racecoordinator_ai
+repo_name: daufderheide/racecoordinator_ai
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: deep orange
+    accent: amber
+  features:
+    - navigation.tracking
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - toc.integrate
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: suffix
+      reconfigure_material: true
+      languages:
+        - locale: en
+          name: English
+          default: true
+          build: true
+        - locale: es
+          name: Español
+          build: true
+        - locale: fr
+          name: Français
+          build: true
+        - locale: de
+          name: Deutsch
+          build: true
+        - locale: nl
+          name: Nederlands
+          build: true
+        - locale: pt
+          name: Português
+          build: true
+        - locale: it
+          name: Italiano
+          build: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Introduction: introduction.md
+    - System Overview: system-overview.md
+    - Installation: installation.md
+  - Configuration:
+    - Driver Manager: driver-manager.md
+    - Driver Editor: driver-editor.md
+    - Team Manager: team-manager.md
+    - Team Editor: team-editor.md
+    - Track Manager: track-manager.md
+    - Track Editor: track-editor.md
+    - Race Manager: race-manager.md
+    - Race Editor: race-editor.md
+  - Racing:
+    - Race Day Setup: raceday-setup.md
+    - Race Day Operation: raceday-operation.md
+    - Heat Results: heat-results.md
+    - Race Results: race-results.md
+    - Driver Results: driver-results.md
+  - Customization:
+    - UI Editor: ui-editor.md
+    - Assets & Themes: assets-and-themes.md
+    - Custom Rotations: custom-rotations.md
+  - Data Management:
+    - Database Manager: database-manager.md
+    - Saving & Loading Races: saving-loading.md
+    - Exporting Data: exporting-data.md
+  - Reference:
+    - Race Formats: race-formats.md
+    - Keyboard Shortcuts: keyboard-shortcuts.md
+    - Troubleshooting: troubleshooting.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - attr_list
+  - toc:
+      permalink: true

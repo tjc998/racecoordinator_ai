@@ -118,6 +118,9 @@ null/
 en_orig.json
 pw-result.json
 
+# MkDocs help center build output
+help_center/site/
+
 # Build and Quality Reports
 client/lint_report.txt
 client/lint_report_debug.txt

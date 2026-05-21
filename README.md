@@ -194,6 +194,90 @@ The Angular client is configured to generate source maps in development mode, al
    - Install the **Debugger for Chrome** (or Edge) extension.
    - You can launch or attach to the browser directly from VS Code for an integrated debugging experience.
 
+## Help Center
+
+The project includes a built-in help center powered by [MkDocs Material](https://squidfunk.github.io/mkdocs-material/). Help articles are written in Markdown, stored in `help_center/docs/`, and automatically deployed to GitHub Pages on every push to `main`.
+
+### Viewing the Help Center
+
+- **Online**: [https://daufderheide.github.io/racecoordinator_ai/](https://daufderheide.github.io/racecoordinator_ai/)
+- **Offline** (when bundled): `http://localhost:7070/help/` (served by the Javalin server)
+- **On GitHub**: The Markdown source files are also readable directly at [help_center/docs/](help_center/docs/) on GitHub.
+
+### Developer Setup (Optional)
+
+**MkDocs is NOT required to build or run the application.** You only need it if you want to preview help center changes locally before pushing.
+
+To set up the local preview environment:
+
+```bash
+# Install MkDocs Material and the i18n plugin
+pip install mkdocs-material mkdocs-static-i18n
+
+# Start a local preview server (live-reloads on changes)
+mkdocs serve --config-file help_center/mkdocs.yml
+
+# Opens at http://127.0.0.1:8000
+```
+
+To build the static site without serving:
+
+```bash
+mkdocs build --config-file help_center/mkdocs.yml
+# Output goes to help_center/site/ (git-ignored)
+```
+
+### Adding or Editing Articles
+
+1. Edit or create Markdown files in `help_center/docs/`.
+2. If adding a new article, register it in the `nav` section of `help_center/mkdocs.yml`.
+3. Push to `main` — the GitHub Actions workflow (`.github/workflows/docs.yml`) will automatically rebuild and deploy to GitHub Pages.
+
+Article filenames must use lowercase with hyphens (e.g., `race-editor.md`, `track-manager.md`). Each article maps to one application screen.
+
+### Localization
+
+The help center supports 7 languages matching the application: English (default), Spanish, French, German, Dutch, Portuguese, and Italian.
+
+Translations use a **suffix-based** naming convention:
+
+| Language | Filename Example |
+|---|---|
+| English (default) | `race-editor.md` |
+| Spanish | `race-editor.es.md` |
+| French | `race-editor.fr.md` |
+| German | `race-editor.de.md` |
+| Dutch | `race-editor.nl.md` |
+| Portuguese | `race-editor.pt.md` |
+| Italian | `race-editor.it.md` |
+
+If a translated page doesn't exist, the site automatically falls back to the English version. The language switcher in the site header lets users change languages.
+
+### Adding "Learn More" Links in the App
+
+The `HelpLinkService` handles opening help articles from within the Angular application. It automatically selects the online or offline URL based on connectivity and applies the user's language setting.
+
+```typescript
+// 1. Inject the service
+constructor(public helpLink: HelpLinkService) {}
+
+// 2. Use in template
+<a (click)="helpLink.openHelp('race-editor')">Learn More</a>
+
+// With a section anchor:
+<a (click)="helpLink.openHelp('race-editor', 'heat-rotation-format')">Learn More</a>
+```
+
+### Offline Bundling (For Releases)
+
+When creating installers, build the help site into the server's web directory so it's available without internet:
+
+```bash
+mkdocs build --config-file help_center/mkdocs.yml --site-dir server/web/help
+```
+
+The Javalin server serves everything under `web/` as static files, so the offline help center becomes available at `http://localhost:7070/help/`.
+
 ## Packaging & Distribution
 
 You can create installable packages for macOS and Windows using the provided script.
