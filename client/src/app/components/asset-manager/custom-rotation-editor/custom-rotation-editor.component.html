@@ -19,6 +19,9 @@
     [importTitleKey]="'AM_BTN_IMPORT_ROTATION'"
     [exportTitleKey]="'AM_BTN_EXPORT_ROTATION'"
     [isSaving]="isSaving"
+    [backConfirm]="!isConfigValid() || isDirtyState()"
+    backConfirmTitle="AM_CONFIRM_DISCARD_TITLE"
+    backConfirmMessage="AM_CONFIRM_DISCARD_MESSAGE"
     (add)="addRotation()"
     (back)="cancel()"
     (import)="fileInput.click()"
@@ -32,7 +35,7 @@
     <div class="editor-panel">
       <!-- Premium Config Selectors -->
       <div class="config-section">
-        <div class="input-group">
+        <div class="input-group" [class.invalid]="isNameInvalid">
           <label>{{ "AM_LABEL_ASSET_NAME" | translate }}</label>
           <input
             type="text"
@@ -170,6 +173,20 @@
 
       <!-- Expanders list -->
       <div class="rotations-expanders">
+        @if (internalRotations.length === 0) {
+          <div class="empty-state-container animate-fade-in">
+            <div class="empty-state-card">
+              <div class="empty-state-icon-wrapper">
+                <span class="material-icons empty-state-icon">info</span>
+                <div class="empty-state-glow"></div>
+              </div>
+              <div class="empty-state-text">
+                {{ "AM_HELP_EMPTY_ROTATIONS" | translate }}
+              </div>
+            </div>
+          </div>
+        }
+
         @for (
           rotation of internalRotations;
           track $index;

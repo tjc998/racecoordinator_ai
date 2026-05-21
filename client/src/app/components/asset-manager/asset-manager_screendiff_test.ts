@@ -213,8 +213,13 @@ test.describe("Asset Manager Visuals", () => {
       .waitFor({ state: "visible" });
     await page.waitForTimeout(500);
 
-    // The editor auto-adds one rotation card with one heat on init when rotations are empty.
-    // Wait for it to appear.
+    // The editor empty state helper is shown on init. Click "Add Rotation" to add the first rotation.
+    await page
+      .locator("app-editor-title #add-item-btn")
+      .waitFor({ state: "visible" });
+    await page.locator("app-editor-title #add-item-btn").click();
+
+    // Wait for the rotation card to appear.
     await page
       .locator("app-custom-rotation-editor .rotation-expander-card")
       .first()

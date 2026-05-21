@@ -541,6 +541,25 @@ public class AssetService {
   public AssetMessage saveCustomRotation(
       String id, String name, int numLanes, List<CustomRotation> rotations) {
     // Server-side validation
+    if (name == null || name.trim().isEmpty()) {
+      throw new IllegalArgumentException("Asset name must not be empty.");
+    }
+    String trimmedName = name.trim();
+    Bson nameFilter =
+        Filters.and(
+            Filters.eq("name", trimmedName),
+            Filters.eq("type", "custom_rotation"),
+            Filters.ne("deleted", true));
+    if (id != null && !id.isEmpty()) {
+      nameFilter = Filters.and(nameFilter, Filters.ne("_id", id));
+    }
+    if (collection.find(nameFilter).first() != null) {
+      throw new IllegalArgumentException(
+          "An asset with the name '" + trimmedName + "' already exists.");
+    }
+    if (rotations == null || rotations.isEmpty()) {
+      throw new IllegalArgumentException("At least one rotation is required.");
+    }
     for (CustomRotation rot : rotations) {
       java.util.Map<Integer, Set<Integer>> driverToGroups = new java.util.HashMap<>();
       for (CustomHeat heat : rot.getHeatsList()) {

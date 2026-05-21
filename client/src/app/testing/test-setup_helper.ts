@@ -5,6 +5,7 @@ import {
   ListAssetsResponse,
   RaceData,
   RaceState,
+  SaveCustomRotationResponse,
   UpdateInterfaceConfigResponse,
 } from "@app/proto/antigravity";
 
@@ -879,6 +880,26 @@ export class TestSetupHelper {
         });
       },
     );
+
+    // Mock Custom Rotation Save API
+    await page.route("**/api/assets/save-custom-rotation", async (route) => {
+      const response = SaveCustomRotationResponse.create({
+        success: true,
+        asset: {
+          model: { entityId: "mock-new-rotation-id" },
+          name: "New Custom Rotation 1",
+          type: "custom_rotation",
+          numLanes: 4,
+          customRotations: [],
+        },
+      });
+      const buffer = SaveCustomRotationResponse.encode(response).finish();
+      await route.fulfill({
+        status: 200,
+        contentType: "application/octet-stream",
+        body: Buffer.from(buffer),
+      });
+    });
   }
 
   /**

@@ -67,10 +67,19 @@ describe("CustomRotationEditorComponent", () => {
     expect(component).toBeTruthy();
   });
 
-  it("should initialize with default rotation if none provided", () => {
+  it("should initialize with no rotations if none provided", () => {
     fixture.detectChanges();
-    expect(component.internalRotations.length).toBe(1);
-    expect(component.internalRotations[0].heats?.length).toBe(1);
+    expect(component.internalRotations.length).toBe(0);
+  });
+
+  it("should display empty state with translation key when no rotations exist", () => {
+    fixture.detectChanges();
+    expect(component.internalRotations.length).toBe(0);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const emptyStateText = compiled.querySelector(".empty-state-text");
+    expect(emptyStateText).toBeTruthy();
+    expect(emptyStateText?.textContent).toContain("AM_HELP_EMPTY_ROTATIONS");
   });
 
   it("should load tracks and select the first one by default", fakeAsync(() => {
@@ -85,6 +94,9 @@ describe("CustomRotationEditorComponent", () => {
     fixture.detectChanges();
     tick();
 
+    // Add a rotation so it exists
+    component.addRotation();
+
     // Change track to t2 (which has 4 lanes, t1 has 2)
     component.selectedTrackId = "t2";
     component.onTrackChange();
@@ -97,16 +109,21 @@ describe("CustomRotationEditorComponent", () => {
 
   it("should add and remove rotations", () => {
     fixture.detectChanges();
+    expect(component.internalRotations.length).toBe(0);
+
     component.addRotation();
-    expect(component.internalRotations.length).toBe(2);
+    expect(component.internalRotations.length).toBe(1);
 
     component.removeRotation(0);
-    expect(component.internalRotations.length).toBe(1);
+    expect(component.internalRotations.length).toBe(0);
   });
 
   it("should add and remove heats", () => {
     fixture.detectChanges();
+    component.addRotation();
     const rotation = component.internalRotations[0];
+    expect(rotation.heats?.length).toBe(1);
+
     component.addHeat(rotation);
     expect(rotation.heats?.length).toBe(2);
 
@@ -117,6 +134,8 @@ describe("CustomRotationEditorComponent", () => {
   it("should call saveCustomRotation and emit saved output on save", fakeAsync(() => {
     fixture.detectChanges();
     component.internalAssetName = "Test Rotation";
+    component.addRotation(); // Ensure at least 1 rotation exists
+    mockDataService.saveCustomRotation.calls.reset(); // Reset calls from autoSave inside addRotation
 
     const savedSpy = spyOn(component.saved, "emit");
     component.save();
@@ -154,6 +173,8 @@ describe("CustomRotationEditorComponent", () => {
     it("should navigate back to asset-manager on successful save", fakeAsync(() => {
       fixture.detectChanges();
       component.internalAssetName = "Test Rotation";
+      component.addRotation(); // Ensure at least 1 rotation exists
+      mockDataService.saveCustomRotation.calls.reset(); // Reset calls from autoSave inside addRotation
       mockRouter.navigate.calls.reset();
       component.save();
       tick();
@@ -200,6 +221,11 @@ describe("CustomRotationEditorComponent", () => {
   });
 
   describe("Validation", () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+      component.addRotation();
+    });
+
     it("should identify heat with duplicate drivers as error", () => {
       fixture.detectChanges();
       const rotation = component.internalRotations[0];
@@ -238,6 +264,7 @@ describe("CustomRotationEditorComponent", () => {
       rotation.heats = [
         { driverIndices: [1, 1, 2, 3] }, // Error
       ];
+      mockDataService.saveCustomRotation.calls.reset(); // Reset calls from autoSave in addRotation
 
       component.save();
       expect(mockDataService.saveCustomRotation).not.toHaveBeenCalled();
@@ -286,6 +313,11 @@ describe("CustomRotationEditorComponent", () => {
   });
 
   describe("Lane Equality Diagnostics", () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+      component.addRotation();
+    });
+
     it("should identify a perfectly equal rotation as equal", () => {
       fixture.detectChanges();
       const rotation = component.internalRotations[0];
@@ -805,6 +837,11 @@ describe("CustomRotationEditorComponent", () => {
   });
 
   describe("Heat Groups", () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+      component.addRotation();
+    });
+
     it("should initialize new heats with a default group index of 0", () => {
       fixture.detectChanges();
       const rotation = component.internalRotations[0];
@@ -825,6 +862,11 @@ describe("CustomRotationEditorComponent", () => {
   });
 
   describe("Drag and Drop Interactions", () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+      component.addRotation();
+    });
+
     it("should handle drop from driver-pool to a heat lane", () => {
       fixture.detectChanges();
       const rotation = component.internalRotations[0];
@@ -886,6 +928,7 @@ describe("CustomRotationEditorComponent", () => {
   describe("Auto-save & Undo/Redo & KeyEvents", () => {
     it("should trigger undoManager.captureState and autoSave on change handlers", fakeAsync(() => {
       fixture.detectChanges();
+      component.addRotation();
       component.internalAssetName = "Saved Rotation";
 
       const captureSpy = spyOn(
@@ -925,6 +968,7 @@ describe("CustomRotationEditorComponent", () => {
 
     it("should revert state if auto-save fails", fakeAsync(() => {
       fixture.detectChanges();
+      component.addRotation(); // Ensure at least 1 rotation exists
       component.internalAssetName = "Broken Rotation";
 
       const { throwError } = require("rxjs");
@@ -1034,6 +1078,199 @@ describe("CustomRotationEditorComponent", () => {
       component.onNumVirtualDriversChange();
       expect(component.virtualDrivers.length).toBe(15);
       expect(component.virtualDrivers[14].name).toBe("Driver 15");
+    });
+  });
+
+  describe("Custom Rotation Validation & Save & Auto-Save & Name Generation", () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+    });
+
+    it("should generate a sequential unique default name correctly", () => {
+      component.allAssets = [
+        {
+          type: "custom_rotation",
+          name: "New Custom Rotation 1",
+          model: { entityId: "1" },
+        },
+        {
+          type: "custom_rotation",
+          name: "New Custom Rotation 2",
+          model: { entityId: "2" },
+        },
+        {
+          type: "other_asset",
+          name: "New Custom Rotation 3",
+          model: { entityId: "3" },
+        }, // Different type
+      ];
+      component.internalAssetId = "new";
+
+      const uniqueName = component.generateUniqueName();
+      // Should find "New Custom Rotation 3" since the existing asset with that name is of a different type
+      expect(uniqueName).toBe("New Custom Rotation 3");
+
+      component.allAssets.push({
+        type: "custom_rotation",
+        name: "New Custom Rotation 3",
+        model: { entityId: "4" },
+      });
+      const nextUniqueName = component.generateUniqueName();
+      expect(nextUniqueName).toBe("New Custom Rotation 4");
+    });
+
+    it("should evaluate isConfigValid correctly based on name, rotations, and validation errors", () => {
+      // Empty/whitespace name is invalid
+      component.internalAssetName = "   ";
+      expect(component.isConfigValid()).toBeFalse();
+
+      // Duplicate name is invalid
+      component.internalAssetName = "Dupe";
+      component.allAssets = [
+        { type: "custom_rotation", name: "Dupe", model: { entityId: "1" } },
+      ];
+      component.internalAssetId = "2";
+      expect(component.isConfigValid()).toBeFalse();
+
+      // Valid name, but zero rotations is invalid
+      component.internalAssetName = "Valid Name";
+      component.internalRotations = [];
+      expect(component.isConfigValid()).toBeFalse();
+
+      // Valid name and 1 valid rotation is valid
+      component.addRotation();
+      expect(component.isConfigValid()).toBeTrue();
+
+      // Heat lane conflicts make config invalid
+      component.internalRotations[0].heats = [{ driverIndices: [1, 1, 2, 3] }];
+      expect(component.isConfigValid()).toBeFalse();
+    });
+
+    it("should abort save and auto-save if isConfigValid is false", () => {
+      mockDataService.saveCustomRotation.calls.reset();
+
+      // Invalid configuration (zero rotations)
+      component.internalAssetName = "Test";
+      component.internalRotations = [];
+      expect(component.isConfigValid()).toBeFalse();
+
+      component.save();
+      expect(mockDataService.saveCustomRotation).not.toHaveBeenCalled();
+
+      component.autoSave();
+      expect(mockDataService.saveCustomRotation).not.toHaveBeenCalled();
+    });
+
+    it("should reset tracking on successful save or autoSave", fakeAsync(() => {
+      component.internalAssetName = "Tracked Name";
+      component.addRotation();
+      mockDataService.saveCustomRotation.calls.reset();
+
+      const resetTrackingSpy = spyOn(
+        component.undoManager,
+        "resetTracking",
+      ).and.callThrough();
+
+      component.save();
+      tick();
+
+      expect(resetTrackingSpy).toHaveBeenCalled();
+    }));
+  });
+
+  describe("Save Serialization Queue", () => {
+    let saveSubjects: any[] = [];
+
+    beforeEach(() => {
+      fixture.detectChanges();
+      component.internalAssetName = "Serialization Test";
+      // Clear out default rotations and add one so it's a valid config
+      component.internalRotations = [];
+      component.addRotation();
+      mockDataService.saveCustomRotation.calls.reset();
+
+      // Return a new observable that we can manually trigger/complete on each call
+      const { Subject } = require("rxjs");
+      saveSubjects = [];
+      mockDataService.saveCustomRotation.and.callFake(() => {
+        const sub = new Subject();
+        saveSubjects.push(sub);
+        return sub;
+      });
+    });
+
+    it("should queue subsequent auto-save calls if one is already in-flight, and execute it upon completion", fakeAsync(() => {
+      // Trigger first autoSave
+      component.autoSave();
+      expect(component.isSaving).toBeTrue();
+      expect(mockDataService.saveCustomRotation).toHaveBeenCalledTimes(1);
+
+      // Trigger second autoSave while first is in-flight
+      component.autoSave();
+      // Should not call saveCustomRotation again yet (still 1 call)
+      expect(mockDataService.saveCustomRotation).toHaveBeenCalledTimes(1);
+
+      // Complete the first save
+      const mockAsset = { model: { entityId: "asset-123" } };
+      saveSubjects[0].next(mockAsset);
+      saveSubjects[0].complete();
+
+      tick();
+
+      // Now the second (queued) save should have been triggered (total 2 calls)
+      expect(mockDataService.saveCustomRotation).toHaveBeenCalledTimes(2);
+      expect(component.internalAssetId).toBe("asset-123");
+    }));
+
+    it("should queue save() call and navigate back after in-flight save completes", fakeAsync(() => {
+      const savedSpy = spyOn(component.saved, "emit");
+      mockRouter.navigate.calls.reset();
+
+      // Trigger first autoSave
+      component.autoSave();
+      expect(component.isSaving).toBeTrue();
+      expect(mockDataService.saveCustomRotation).toHaveBeenCalledTimes(1);
+
+      // Trigger manual save() while first is in-flight
+      component.save();
+      // Should not call saveCustomRotation again yet (still 1 call)
+      expect(mockDataService.saveCustomRotation).toHaveBeenCalledTimes(1);
+
+      // Complete the first save
+      const mockAsset = { model: { entityId: "asset-123" } };
+      saveSubjects[0].next(mockAsset);
+      saveSubjects[0].complete();
+
+      tick();
+
+      // The manual save should have been triggered (total 2 calls)
+      expect(mockDataService.saveCustomRotation).toHaveBeenCalledTimes(2);
+
+      // Now complete the manual save
+      saveSubjects[1].next(mockAsset);
+      saveSubjects[1].complete();
+
+      tick();
+
+      // It should have emitted the saved asset and navigated back
+      expect(savedSpy).toHaveBeenCalledWith(mockAsset);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(
+        ["/asset-manager"],
+        jasmine.any(Object),
+      );
+    }));
+
+    it("should only trigger a single autoSave call when addRotation is invoked", () => {
+      // Verify optimization: addRotation calls addHeat with triggerAutoSave = false
+      const autoSaveSpy = spyOn(component, "autoSave").and.callThrough();
+
+      // Let's reset the mock to return of({}) for standard behavior
+      mockDataService.saveCustomRotation.and.returnValue(of({}));
+
+      component.addRotation();
+
+      // Should only have called autoSave once
+      expect(autoSaveSpy).toHaveBeenCalledTimes(1);
     });
   });
 });

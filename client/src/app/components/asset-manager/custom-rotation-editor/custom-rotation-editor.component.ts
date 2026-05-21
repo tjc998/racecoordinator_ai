@@ -34,6 +34,8 @@ import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
 import { checkLaneEquality } from "@app/utils/lane-equality";
 
+import { parseAndValidateImportFile } from "./rotation-import.utils";
+
 interface LocalRotation extends ICustomRotation {
   isExpanded?: boolean;
 }
@@ -72,6 +74,7 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
   equalityReport: any[] | null = null;
   reportRotationIdx: number = -1;
   importSummary: any[] | null = null;
+  allAssets: IAssetMessage[] = [];
 
   tracks: ITrackModel[] = [];
   selectedTrackId: string = "";
@@ -81,6 +84,9 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
   readonly cancelled = output<void>();
 
   savingCount = 0;
+  private pendingSave = false;
+  private pendingNavigateBack = false;
+
   get isSaving(): boolean {
     return this.savingCount > 0;
   }
@@ -245,39 +251,38 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
   ngOnInit() {
     const idParam = this.route.snapshot.queryParamMap.get("id");
 
-    if (idParam && idParam !== "new") {
-      this.isLoading = true;
-      this.cdr.detectChanges();
-      this.dataService.listAssets().subscribe({
-        next: (assets) => {
-          const asset = assets.find((a) => a.model?.entityId === idParam);
-          if (asset) {
-            this.internalAssetId = asset.model?.entityId || undefined;
-            this.internalAssetName = asset.name || "";
-            this.internalNumLanes = asset.numLanes || 4;
-            this.internalRotations = deepCopy(asset.customRotations || []).map(
-              (r: any) => ({
-                ...r,
-                isExpanded: true,
-              }),
-            );
-          } else {
-            this.fallbackToInputs();
-          }
-          this.isLoading = false;
-          this.initEditorState();
-        },
-        error: (err) => {
-          this.logger.error("Failed to load custom rotation asset", err);
+    this.isLoading = true;
+    this.cdr.detectChanges();
+    this.dataService.listAssets().subscribe({
+      next: (assets) => {
+        this.allAssets = assets || [];
+        const asset = this.allAssets.find((a) => a.model?.entityId === idParam);
+        if (asset) {
+          this.internalAssetId = asset.model?.entityId || undefined;
+          this.internalAssetName = asset.name || "";
+          this.internalNumLanes = asset.numLanes || 4;
+          this.internalRotations = deepCopy(asset.customRotations || []).map(
+            (r: any) => ({
+              ...r,
+              isExpanded: true,
+            }),
+          );
+        } else {
           this.fallbackToInputs();
-          this.isLoading = false;
-          this.initEditorState();
-        },
-      });
-    } else {
-      this.fallbackToInputs();
-      this.initEditorState();
-    }
+          if (!idParam || idParam === "new") {
+            this.internalAssetName = this.generateUniqueName();
+          }
+        }
+        this.isLoading = false;
+        this.initEditorState();
+      },
+      error: (err) => {
+        this.logger.error("Failed to load custom rotation asset", err);
+        this.fallbackToInputs();
+        this.isLoading = false;
+        this.initEditorState();
+      },
+    });
   }
 
   private fallbackToInputs() {
@@ -289,6 +294,53 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
       ...r,
       isExpanded: true,
     }));
+  }
+
+  generateUniqueName(): string {
+    let index = 1;
+    let candidate = `New Custom Rotation ${index}`;
+    while (
+      this.allAssets.some(
+        (a) =>
+          a.type === "custom_rotation" &&
+          a.name?.trim().toLowerCase() === candidate.toLowerCase() &&
+          a.model?.entityId !== this.internalAssetId,
+      )
+    ) {
+      index++;
+      candidate = `New Custom Rotation ${index}`;
+    }
+    return candidate;
+  }
+
+  isNameUnique(): boolean {
+    const trimmed = (this.internalAssetName || "").trim();
+    if (!trimmed) {
+      return false;
+    }
+    return !this.allAssets.some(
+      (a) =>
+        a.type === "custom_rotation" &&
+        a.name?.trim().toLowerCase() === trimmed.toLowerCase() &&
+        a.model?.entityId !== this.internalAssetId,
+    );
+  }
+
+  get isNameInvalid(): boolean {
+    const trimmed = (this.internalAssetName || "").trim();
+    return !trimmed || !this.isNameUnique();
+  }
+
+  isConfigValid(): boolean {
+    return (
+      !this.isNameInvalid &&
+      this.internalRotations.length > 0 &&
+      !this.hasValidationErrors()
+    );
+  }
+
+  isDirtyState(): boolean {
+    return this.undoManager?.hasChanges() ?? false;
   }
 
   private initEditorState() {
@@ -310,21 +362,6 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
 
     this.updateScale();
     this.loadTracks();
-
-    if (this.internalRotations.length === 0) {
-      const newRot: any = {
-        numDrivers: this.internalNumLanes,
-        heats: [],
-        isExpanded: true,
-      };
-      this.internalRotations.push(newRot);
-
-      const driverIndices = new Array(this.internalNumLanes).fill(0);
-      newRot.heats.push({
-        driverIndices,
-        group: 0,
-      });
-    }
 
     this.subscriptions.push(
       this.undoManager.stateCommitted$.subscribe((event) => {
@@ -445,7 +482,7 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
       isExpanded: true,
     };
     this.internalRotations.push(newRot);
-    this.addHeat(newRot);
+    this.addHeat(newRot, false);
     this.updateDropListConnections();
     this.undoManager.captureState();
     this.autoSave();
@@ -458,7 +495,7 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
     this.autoSave();
   }
 
-  addHeat(rotation: ICustomRotation) {
+  addHeat(rotation: ICustomRotation, triggerAutoSave = true) {
     if (!rotation.heats) {
       rotation.heats = [];
     }
@@ -469,7 +506,9 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
     });
     this.updateDropListConnections();
     this.undoManager.captureState();
-    this.autoSave();
+    if (triggerAutoSave) {
+      this.autoSave();
+    }
   }
 
   removeHeat(rotation: ICustomRotation, index: number) {
@@ -568,8 +607,32 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
     }
   }
 
+  private handlePendingActions() {
+    if (this.pendingSave) {
+      this.pendingSave = false;
+      if (this.pendingNavigateBack) {
+        this.pendingNavigateBack = false;
+        this.save();
+      } else {
+        this.autoSave();
+      }
+    } else if (this.pendingNavigateBack) {
+      this.pendingNavigateBack = false;
+      if (this.lastSavedAsset) {
+        this.saved.emit(this.lastSavedAsset);
+      }
+      this.navigateBack();
+    }
+  }
+
   save() {
-    if (!this.internalAssetName || this.hasValidationErrors()) {
+    if (!this.isConfigValid()) {
+      return;
+    }
+
+    if (this.isSaving) {
+      this.pendingSave = true;
+      this.pendingNavigateBack = true;
       return;
     }
 
@@ -590,19 +653,36 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
           if (assetId) {
             this.internalAssetId = assetId;
           }
+          this.undoManager.resetTracking({
+            assetName: this.internalAssetName,
+            selectedTrackId: this.selectedTrackId,
+            numLanes: this.internalNumLanes,
+            rotations: this.internalRotations,
+          });
           this.saved.emit(asset);
-          this.navigateBack();
+
+          if (this.pendingSave || this.pendingNavigateBack) {
+            this.handlePendingActions();
+          } else {
+            this.navigateBack();
+          }
         },
         error: (err) => {
           this.logger.error("Failed to save custom rotation", err);
           this.savingCount--;
           this.cdr.detectChanges();
+          this.handlePendingActions();
         },
       });
   }
 
   autoSave(triggeredBy: UndoEventType = "push") {
-    if (!this.internalAssetName || this.hasValidationErrors()) {
+    if (!this.isConfigValid()) {
+      return;
+    }
+
+    if (this.isSaving) {
+      this.pendingSave = true;
       return;
     }
 
@@ -624,7 +704,14 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
           if (assetId) {
             this.internalAssetId = assetId;
           }
+          this.undoManager.resetTracking({
+            assetName: this.internalAssetName,
+            selectedTrackId: this.selectedTrackId,
+            numLanes: this.internalNumLanes,
+            rotations: this.internalRotations,
+          });
           this.cdr.detectChanges();
+          this.handlePendingActions();
         },
         error: (err) => {
           this.logger.error("Failed to auto-save custom rotation", err);
@@ -635,6 +722,7 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
             this.undoManager.undo();
             this.undoManager.clearRedo();
           }
+          this.handlePendingActions();
         },
       });
   }
@@ -766,192 +854,6 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
     this.reportRotationIdx = -1;
   }
 
-  private parseImportHeats(jsonHeats: any[], isRc1: boolean): ICustomHeat[] {
-    return jsonHeats.map((h: any) => {
-      const jsonDrivers = h.Drivers !== undefined ? h.Drivers : h.drivers;
-      let drivers = jsonDrivers || [];
-      drivers = drivers.map((d: any) => {
-        if (d === null || d === undefined) {
-          return 0;
-        }
-        const val = Number(d);
-        if (isNaN(val) || val < 0) {
-          return 0;
-        }
-        return isRc1 ? val + 1 : val;
-      });
-
-      let group = 0;
-      const jsonGroup = h.Group !== undefined ? h.Group : h.group;
-      if (jsonGroup !== undefined && jsonGroup !== null) {
-        const val = Number(jsonGroup);
-        if (!isNaN(val)) {
-          group = isRc1 ? val : val - 1;
-        }
-      }
-      if (group < 0) {
-        group = 0;
-      }
-
-      return {
-        driverIndices: drivers,
-        group: group,
-      };
-    });
-  }
-
-  private async parseAndValidateImportFile(
-    file: File,
-    isRc1: boolean,
-  ): Promise<any> {
-    try {
-      const text = await file.text();
-      let json: any;
-
-      try {
-        json = JSON.parse(text);
-      } catch (e) {
-        try {
-          const sanitized = text
-            .replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, '"$1"')
-            .replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":');
-          json = JSON.parse(sanitized);
-        } catch (_) {
-          throw e;
-        }
-      }
-
-      const isAsset = json.IsAsset !== undefined ? json.IsAsset : json.isAsset;
-      const assetName =
-        json.AssetName !== undefined ? json.AssetName : json.assetName;
-      const rotations =
-        json.Rotations !== undefined ? json.Rotations : json.rotations;
-
-      if (
-        isAsset === true ||
-        (assetName !== undefined && rotations !== undefined)
-      ) {
-        return this.importWholeAsset(file, json, isRc1);
-      }
-      return this.importSingleRotation(file, json, isRc1);
-    } catch (e) {
-      return {
-        success: false,
-        key: "AM_IMPORT_ERR_INVALID_JSON",
-        params: { file: file.name },
-      };
-    }
-  }
-
-  private importWholeAsset(file: File, json: any, isRc1: boolean): any {
-    const jsonNumLanes =
-      json.NumLanes !== undefined ? json.NumLanes : json.numLanes;
-    if (jsonNumLanes !== undefined && jsonNumLanes !== this.internalNumLanes) {
-      return {
-        success: false,
-        key: "AM_IMPORT_ERR_LANES",
-        params: {
-          file: file.name,
-          expected: this.internalNumLanes,
-          found: jsonNumLanes,
-        },
-      };
-    }
-
-    const rotations = json.Rotations || json.rotations || [];
-    let importedCount = 0;
-    let duplicateCount = 0;
-
-    for (const rot of rotations) {
-      const rotNumDrivers =
-        rot.NumDrivers !== undefined ? rot.NumDrivers : rot.numDrivers;
-      const rotHeats = rot.Heats !== undefined ? rot.Heats : rot.heats;
-
-      if (rotNumDrivers === undefined || rotHeats === undefined) {
-        continue;
-      }
-      if (this.internalRotations.some((r) => r.numDrivers === rotNumDrivers)) {
-        duplicateCount++;
-        continue;
-      }
-
-      const heats = this.parseImportHeats(rotHeats, isRc1);
-      this.internalRotations.push({
-        numDrivers: rotNumDrivers,
-        heats: heats,
-        isExpanded: true,
-      } as LocalRotation);
-      importedCount++;
-    }
-
-    if (importedCount === 0 && duplicateCount > 0) {
-      return {
-        success: false,
-        key: "AM_IMPORT_ERR_DUPLICATE",
-        params: { file: file.name, count: duplicateCount },
-      };
-    }
-
-    return {
-      success: true,
-      key: "AM_IMPORT_SUCCESS",
-      params: { file: file.name },
-    };
-  }
-
-  private importSingleRotation(file: File, json: any, isRc1: boolean): any {
-    const jsonNumDrivers =
-      json.NumDrivers !== undefined ? json.NumDrivers : json.numDrivers;
-    const jsonNumLanes =
-      json.NumLanes !== undefined ? json.NumLanes : json.numLanes;
-    const jsonHeats = json.Heats !== undefined ? json.Heats : json.heats;
-
-    if (
-      jsonNumDrivers === undefined ||
-      jsonNumLanes === undefined ||
-      jsonHeats === undefined
-    ) {
-      return {
-        success: false,
-        key: "AM_IMPORT_ERR_MISSING_FIELDS",
-        params: { file: file.name },
-      };
-    }
-
-    if (jsonNumLanes !== this.internalNumLanes) {
-      return {
-        success: false,
-        key: "AM_IMPORT_ERR_LANES",
-        params: {
-          file: file.name,
-          expected: this.internalNumLanes,
-          found: jsonNumLanes,
-        },
-      };
-    }
-
-    if (this.internalRotations.some((r) => r.numDrivers === jsonNumDrivers)) {
-      return {
-        success: false,
-        key: "AM_IMPORT_ERR_DUPLICATE",
-        params: { file: file.name, count: jsonNumDrivers },
-      };
-    }
-
-    const heats: ICustomHeat[] = this.parseImportHeats(jsonHeats, isRc1);
-    this.internalRotations.push({
-      numDrivers: jsonNumDrivers,
-      heats: heats,
-      isExpanded: true,
-    } as LocalRotation);
-
-    return {
-      success: true,
-      key: "AM_IMPORT_SUCCESS",
-      params: { file: file.name },
-    };
-  }
-
   async onImportFiles(event: Event, isRc1: boolean = false) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
@@ -960,8 +862,25 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
     const results: any[] = [];
 
     for (const file of files) {
-      const res = await this.parseAndValidateImportFile(file, isRc1);
-      results.push(res);
+      const existingDriverCounts = this.internalRotations
+        .map((r) => r.numDrivers)
+        .filter((d): d is number => d !== undefined && d !== null);
+
+      const res = await parseAndValidateImportFile(
+        file,
+        isRc1,
+        this.internalNumLanes,
+        existingDriverCounts,
+      );
+
+      if (res.success && res.newRotations) {
+        this.internalRotations.push(...res.newRotations);
+      }
+      results.push({
+        success: res.success,
+        key: res.key,
+        params: res.params,
+      });
     }
 
     this.importSummary = results;

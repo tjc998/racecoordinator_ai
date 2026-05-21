@@ -671,4 +671,46 @@ public class AssetServiceTest {
 
     assetService.saveCustomRotation(null, "Invalid Group Rotation", 4, Arrays.asList(rotation));
   }
+
+  private com.antigravity.proto.CustomRotation createValidRotation() {
+    com.antigravity.proto.CustomHeat heat =
+        com.antigravity.proto.CustomHeat.newBuilder()
+            .addAllDriverIndices(Arrays.asList(1, 2, 0, 0))
+            .setGroup(0)
+            .build();
+    return com.antigravity.proto.CustomRotation.newBuilder()
+        .setNumDrivers(4)
+        .addHeats(heat)
+        .build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSaveCustomRotation_EmptyName() {
+    assetService.saveCustomRotation(null, "", 4, Arrays.asList(createValidRotation()));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSaveCustomRotation_NullName() {
+    assetService.saveCustomRotation(null, null, 4, Arrays.asList(createValidRotation()));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSaveCustomRotation_EmptyRotations() {
+    assetService.saveCustomRotation(null, "Valid Name", 4, Arrays.asList());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSaveCustomRotation_NullRotations() {
+    assetService.saveCustomRotation(null, "Valid Name", 4, null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSaveCustomRotation_DuplicateName() {
+    FindIterable<Document> duplicateIterable = mock(FindIterable.class);
+    when(duplicateIterable.first()).thenReturn(new Document("name", "Duplicate Name"));
+    when(collection.find(any(Bson.class))).thenReturn(duplicateIterable);
+
+    assetService.saveCustomRotation(
+        null, "Duplicate Name", 4, Arrays.asList(createValidRotation()));
+  }
 }
