@@ -39,7 +39,8 @@
 /* Menu Bar */
 .menu-bar {
   position: relative;
-  width: 100%;
+  margin: 0 12px;
+  width: calc(100% - 24px);
   height: 30px;
   flex: 0 0 30px;
   background-color: #1a2332;
@@ -152,7 +153,8 @@
   grid-template-columns: 1fr 1fr 1fr;
   height: 42px;
   background: rgba(238, 102, 102, 0.7); /* #b2ee6666 with transparency */
-  width: 100%;
+  margin: 0 12px;
+  width: calc(100% - 24px);
   box-sizing: border-box;
   color: #fff;
   border-bottom: 1px solid #000;
@@ -440,9 +442,8 @@
 /* Bottom Table */
 .bottom-section {
   flex: 1;
-  width: 100%;
-  margin-top: 10px;
-  padding: 0 10px;
+  margin: 10px 12px 0 12px;
+  width: calc(100% - 24px);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;

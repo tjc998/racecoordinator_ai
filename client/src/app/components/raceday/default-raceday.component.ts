@@ -1906,9 +1906,12 @@ export class DefaultRacedayComponent
       totalFixedWithoutResizingColumn += fixedWidths[baseKey] || 275;
     });
 
+    const numColumns = selectedColumns.length;
+    const totalGapsWidth = numColumns > 1 ? (numColumns - 1) * 2 : 0;
+    const tableContainerWidth = 1896; // 1920 - 24 (margins)
     const remainingWidth = Math.max(
       300,
-      1920 - totalFixedWithoutResizingColumn,
+      tableContainerWidth - totalFixedWithoutResizingColumn - totalGapsWidth,
     );
 
     this.columns = selectedColumns.map((key) => {
