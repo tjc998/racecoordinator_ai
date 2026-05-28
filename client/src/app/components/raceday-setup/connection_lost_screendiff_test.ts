@@ -9,6 +9,10 @@ test.describe("Connection Loss Visuals", () => {
   }) => {
     await page.clock.install();
 
+    await page.addInitScript(() => {
+      (window as any).disableConnectionTimeout = true;
+    });
+
     let connectionSucceeds = true;
     await page.route("**/api/drivers", async (route) => {
       if (connectionSucceeds) {

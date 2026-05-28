@@ -273,6 +273,9 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
 
   checkRetryTimeout() {
     if (!this.isConnectionLost) return;
+    if ((window as any).disableConnectionTimeout) {
+      return;
+    }
 
     // If we are still lost after 5 seconds, reset UI
     this.retryTimeout = setTimeout(() => {

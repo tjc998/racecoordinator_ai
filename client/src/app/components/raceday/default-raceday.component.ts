@@ -2235,11 +2235,11 @@ export class DefaultRacedayComponent
     } else if (baseKey === "rankHeat") {
       if (this.isEmptyDriver(hd)) return "";
       const rank = this.driverRankings.get(hd.objectId);
-      return rank ? `(${rank})` : "--";
+      return rank ? `${rank}` : "--";
     } else if (baseKey === "rankOverall") {
       if (this.isEmptyDriver(hd)) return "";
       const rank = hd.participant?.rank ?? (hd.driver as any)?.rank;
-      return rank ? `(${rank})` : "--";
+      return rank ? `${rank}` : "--";
     } else if (baseKey === "flag") {
       const flag =
         value === RaceFlag.UNKNOWN_FLAG || value === 0

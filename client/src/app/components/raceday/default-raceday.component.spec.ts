@@ -696,17 +696,17 @@ describe("DefaultRacedayComponent", () => {
       expect(result).toBe("(5)");
     });
 
-    it("should format rankHeat in (#) format", () => {
+    it("should format rankHeat directly", () => {
       component["driverRankings"].set("driverId123", 2);
       mockHd.objectId = "driverId123";
       const result = component.formatValue("rankHeat", null, mockHd);
-      expect(result).toBe("(2)");
+      expect(result).toBe("2");
     });
 
-    it("should format rankOverall in (#) format", () => {
+    it("should format rankOverall directly", () => {
       mockHd.participant.rank = 10;
       const result = component.formatValue("rankOverall", 10, mockHd);
-      expect(result).toBe("(10)");
+      expect(result).toBe("10");
     });
 
     it("should format segmentTime based on hd.currentLapSegments when useIndex is true", () => {
