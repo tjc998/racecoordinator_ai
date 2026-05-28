@@ -1,5 +1,6 @@
 package com.antigravity.handlers;
 
+import com.antigravity.auth.Role;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.CustomHeat;
 import com.antigravity.models.CustomRotation;
@@ -57,46 +58,46 @@ public class DatabaseTaskHandler {
   public DatabaseTaskHandler(DatabaseContext databaseContext, Javalin app) {
     this.databaseContext = databaseContext;
 
-    app.get("/api/drivers", this::getDrivers);
-    app.post("/api/drivers", this::createDriver);
-    app.put("/api/drivers/{id}", this::updateDriver);
-    app.delete("/api/drivers/{id}", this::deleteDriver);
-    app.get("/api/tracks", this::getTracks);
-    app.get("/api/races", this::getRaces);
-    app.get("/api/teams", this::getTeams);
-    app.post("/api/teams", this::createTeam);
-    app.put("/api/teams/{id}", this::updateTeam);
-    app.delete("/api/teams/{id}", this::deleteTeam);
+    app.get("/api/drivers", this::getDrivers, Role.VIEWER);
+    app.post("/api/drivers", this::createDriver, Role.DIRECTOR);
+    app.put("/api/drivers/{id}", this::updateDriver, Role.DIRECTOR);
+    app.delete("/api/drivers/{id}", this::deleteDriver, Role.DIRECTOR);
+    app.get("/api/tracks", this::getTracks, Role.VIEWER);
+    app.get("/api/races", this::getRaces, Role.VIEWER);
+    app.get("/api/teams", this::getTeams, Role.VIEWER);
+    app.post("/api/teams", this::createTeam, Role.DIRECTOR);
+    app.put("/api/teams/{id}", this::updateTeam, Role.DIRECTOR);
+    app.delete("/api/teams/{id}", this::deleteTeam, Role.DIRECTOR);
 
-    app.get("/api/tracks/factory-settings", this::getFactoryTrack);
+    app.get("/api/tracks/factory-settings", this::getFactoryTrack, Role.VIEWER);
 
-    app.post("/api/tracks", this::createTrack);
-    app.put("/api/tracks/{id}", this::updateTrack);
-    app.delete("/api/tracks/{id}", this::deleteTrack);
+    app.post("/api/tracks", this::createTrack, Role.DIRECTOR);
+    app.put("/api/tracks/{id}", this::updateTrack, Role.DIRECTOR);
+    app.delete("/api/tracks/{id}", this::deleteTrack, Role.DIRECTOR);
 
-    app.post("/api/races", this::handleCreateRace);
-    app.put("/api/races/{id}", this::handleUpdateRace);
-    app.delete("/api/races/{id}", this::handleDeleteRace);
-    app.post("/api/races/{id}/generate-heats", this::generateHeats);
-    app.post("/api/heats/preview", this::previewHeats);
+    app.post("/api/races", this::handleCreateRace, Role.DIRECTOR);
+    app.put("/api/races/{id}", this::handleUpdateRace, Role.DIRECTOR);
+    app.delete("/api/races/{id}", this::handleDeleteRace, Role.DIRECTOR);
+    app.post("/api/races/{id}/generate-heats", this::generateHeats, Role.DIRECTOR);
+    app.post("/api/heats/preview", this::previewHeats, Role.DIRECTOR);
 
     // Database Management Endpoints
-    app.get("/api/databases", this::listDatabases);
-    app.post("/api/databases/switch", this::switchDatabase);
-    app.post("/api/databases/create", this::createDatabase);
-    app.post("/api/databases/copy", this::copyDatabase);
-    app.post("/api/databases/reset", this::resetDatabase);
-    app.post("/api/databases/delete", this::deleteDatabase);
-    app.get("/api/databases/current", this::getCurrentDatabase);
-    app.get("/api/databases/{name}/export", this::exportDatabase);
-    app.post("/api/databases/import", this::importDatabase);
+    app.get("/api/databases", this::listDatabases, Role.ADMIN);
+    app.post("/api/databases/switch", this::switchDatabase, Role.ADMIN);
+    app.post("/api/databases/create", this::createDatabase, Role.ADMIN);
+    app.post("/api/databases/copy", this::copyDatabase, Role.ADMIN);
+    app.post("/api/databases/reset", this::resetDatabase, Role.ADMIN);
+    app.post("/api/databases/delete", this::deleteDatabase, Role.ADMIN);
+    app.get("/api/databases/current", this::getCurrentDatabase, Role.ADMIN);
+    app.get("/api/databases/{name}/export", this::exportDatabase, Role.ADMIN);
+    app.post("/api/databases/import", this::importDatabase, Role.ADMIN);
 
     // History Data Endpoints
-    app.get("/api/history/races", this::getRaceHistoryList);
-    app.get("/api/history/races/{id}", this::getRaceHistoryById);
-    app.get("/api/history/races/{id}/export", this::exportRaceHistoryCsv);
-    app.get("/api/history/stats", this::getGlobalStatistics);
-    app.get("/api/history/drivers/{driverId}/stats", this::getDriverStatistics);
+    app.get("/api/history/races", this::getRaceHistoryList, Role.VIEWER);
+    app.get("/api/history/races/{id}", this::getRaceHistoryById, Role.VIEWER);
+    app.get("/api/history/races/{id}/export", this::exportRaceHistoryCsv, Role.VIEWER);
+    app.get("/api/history/stats", this::getGlobalStatistics, Role.VIEWER);
+    app.get("/api/history/drivers/{driverId}/stats", this::getDriverStatistics, Role.VIEWER);
   }
 
   private MongoCollection<Driver> getDriverCollection() {

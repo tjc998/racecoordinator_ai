@@ -4,6 +4,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 import com.antigravity.auth.AuthService;
+import com.antigravity.auth.AuthUtil;
 import com.antigravity.auth.Role;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.handlers.AssetTaskHandler;
@@ -421,6 +422,31 @@ public class App {
                     config.enableCorsForAllOrigins();
                     config.maxRequestSize = 250_000_000L; // 250MB
 
+                    config.accessManager(
+                        (handler, ctx, permittedRoles) -> {
+                          Role userRole = AuthUtil.getRole(ctx);
+                          if (permittedRoles.isEmpty()) {
+                            handler.handle(ctx);
+                            return;
+                          }
+                          boolean allowed = false;
+                          for (io.javalin.core.security.RouteRole role : permittedRoles) {
+                            if (userRole.isAtLeast((Role) role)) {
+                              allowed = true;
+                              break;
+                            }
+                          }
+                          if (allowed) {
+                            handler.handle(ctx);
+                          } else {
+                            if (userRole == Role.VIEWER) {
+                              ctx.status(401).result("Authentication required");
+                            } else {
+                              ctx.status(403).result("Insufficient permissions");
+                            }
+                          }
+                        });
+
                     ObjectMapper mapper = new ObjectMapper();
                     SimpleModule module = new SimpleModule();
                     module.addDeserializer(
@@ -544,7 +570,7 @@ public class App {
       new DatabaseTaskHandler(databaseContext, app);
       new AssetTaskHandler(databaseContext, app);
       new ThemeTaskHandler(databaseContext, app);
-      new SettingsTaskHandler(app);
+      new SettingsTaskHandler(app, configService);
 
       app.get("/api/version", ctx -> ctx.result(SERVER_VERSION));
       app.get("/api/server-ip", ctx -> ctx.result(getLocalIpAddress()));

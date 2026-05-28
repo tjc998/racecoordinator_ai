@@ -2,6 +2,9 @@ package com.antigravity.handlers;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
+import com.antigravity.auth.Role;
+import com.antigravity.service.ServerConfigService;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import org.slf4j.LoggerFactory;
@@ -12,8 +15,13 @@ import org.slf4j.LoggerFactory;
  */
 public class SettingsTaskHandler {
 
-  public SettingsTaskHandler(Javalin app) {
-    app.post("/api/settings/log-level", this::setLogLevel);
+  private final ServerConfigService configService;
+
+  public SettingsTaskHandler(Javalin app, ServerConfigService configService) {
+    this.configService = configService;
+    app.post("/api/settings/log-level", this::setLogLevel, Role.ADMIN);
+    app.post("/api/settings/director-password", this::setDirectorPassword, Role.ADMIN);
+    app.get("/api/settings/auth", this::getAuthSettings, Role.ADMIN);
   }
 
   /**
@@ -40,6 +48,33 @@ public class SettingsTaskHandler {
     } catch (Exception e) {
       setStatus(ctx, 500);
       setResult(ctx, "Error updating log level: " + e.getMessage());
+    }
+  }
+
+  private void setDirectorPassword(Context ctx) {
+    PasswordRequest req = ctx.bodyAsClass(PasswordRequest.class);
+    configService.setDirectorPassword(req.password);
+    setStatus(ctx, 200);
+    setResult(ctx, "Director password updated");
+  }
+
+  private void getAuthSettings(Context ctx) {
+    boolean hasDirectorPassword =
+        configService.getDirectorPassword() != null
+            && !configService.getDirectorPassword().isEmpty();
+    ctx.json(new AuthSettingsResponse(hasDirectorPassword));
+  }
+
+  private static class PasswordRequest {
+    @JsonProperty("password")
+    public String password;
+  }
+
+  private static class AuthSettingsResponse {
+    public boolean hasDirectorPassword;
+
+    public AuthSettingsResponse(boolean hasDirectorPassword) {
+      this.hasDirectorPassword = hasDirectorPassword;
     }
   }
 

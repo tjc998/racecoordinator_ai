@@ -319,6 +319,21 @@ public class ClientSubscriptionManager {
         });
   }
 
+  public void broadcastSystemState(String resourceLockState) {
+    com.antigravity.proto.SystemState state = // fqn-collision
+        com.antigravity.proto.SystemState.newBuilder() // fqn-collision
+            .setResourceLockState(resourceLockState)
+            .build();
+
+    // We can broadcast to all sessions, not just raceDataSubscribers, because system state is
+    // global
+    byte[] bytes = state.toByteArray();
+    sessions.forEach(
+        ctx -> {
+          ctx.send(ByteBuffer.wrap(bytes));
+        });
+  }
+
   public void broadcastInterfaceEvent(InterfaceEvent event) {
     if (interfaceSubscribers.isEmpty()) {
       return;

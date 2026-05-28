@@ -1,5 +1,6 @@
 package com.antigravity.handlers;
 
+import com.antigravity.auth.Role;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.converters.ArduinoConfigConverter;
 import com.antigravity.models.AnalyticsToggleRequest;
@@ -83,33 +84,40 @@ public class ClientCommandTaskHandler {
 
   public ClientCommandTaskHandler(DatabaseContext databaseContext, Javalin app) {
     this.databaseContext = databaseContext;
-    app.post("/api/initialize-race", this::initializeRace);
-    app.post("/api/start-race", this::startRace);
-    app.post("/api/pause-race", this::pauseRace);
-    app.post("/api/next-heat", this::nextHeat);
-    app.post("/api/restart-heat", this::restartHeat);
-    app.post("/api/skip-heat", this::skipHeat);
-    app.post("/api/defer-heat", this::deferHeat);
-    app.post("/api/abort-timers", this::abortTimers);
-    app.post("/api/update-interface-config", this::updateInterfaceConfig);
-    app.post("/api/initialize-interface", this::initializeInterface);
-    app.post("/api/set-interface-pin-state", this::setInterfacePinState);
-    app.post("/api/set-interface-rgb-led-state", this::setInterfaceRgbLedState);
-    app.post("/api/close-interface", this::closeInterface);
-    app.post("/api/races/current-heat/drivers/{lane}/actual-driver", this::changeActualDriver);
-    app.post("/api/races/current-heat/drivers/{lane}/user-laps", this::updateUserLaps);
-    app.post("/api/races/current-heat/drivers/{fromLane}/change-lane/{toLane}", this::changeLane);
-    app.get("/api/serial-ports", this::getSerialPorts);
-    app.get("/api/races/current/export-csv", this::exportRaceCsv);
-    app.post("/api/save-race", this::saveRace);
-    app.get("/api/saved-races", this::getSavedRaces);
-    app.delete("/api/saved-races/{filename}", this::deleteSavedRace);
-    app.post("/api/delete-saved-race/{filename}", this::deleteSavedRace);
-    app.post("/api/load-race", this::loadRace);
-    app.post("/api/analytics/toggle", this::toggleAnalytics);
-    app.get("/api/analytics/config", this::getAnalyticsConfig);
-    app.post("/api/modify-heats", this::modifyHeats);
-    app.post("/api/regenerate-heats", this::regenerateHeats);
+    app.post("/api/initialize-race", this::initializeRace, Role.DIRECTOR);
+    app.post("/api/start-race", this::startRace, Role.DIRECTOR);
+    app.post("/api/pause-race", this::pauseRace, Role.DIRECTOR);
+    app.post("/api/next-heat", this::nextHeat, Role.DIRECTOR);
+    app.post("/api/restart-heat", this::restartHeat, Role.DIRECTOR);
+    app.post("/api/skip-heat", this::skipHeat, Role.DIRECTOR);
+    app.post("/api/defer-heat", this::deferHeat, Role.DIRECTOR);
+    app.post("/api/abort-timers", this::abortTimers, Role.DIRECTOR);
+    app.post("/api/update-interface-config", this::updateInterfaceConfig, Role.DIRECTOR);
+    app.post("/api/initialize-interface", this::initializeInterface, Role.DIRECTOR);
+    app.post("/api/set-interface-pin-state", this::setInterfacePinState, Role.DIRECTOR);
+    app.post("/api/set-interface-rgb-led-state", this::setInterfaceRgbLedState, Role.DIRECTOR);
+    app.post("/api/close-interface", this::closeInterface, Role.DIRECTOR);
+    app.post(
+        "/api/races/current-heat/drivers/{lane}/actual-driver",
+        this::changeActualDriver,
+        Role.DIRECTOR);
+    app.post(
+        "/api/races/current-heat/drivers/{lane}/user-laps", this::updateUserLaps, Role.DIRECTOR);
+    app.post(
+        "/api/races/current-heat/drivers/{fromLane}/change-lane/{toLane}",
+        this::changeLane,
+        Role.DIRECTOR);
+    app.get("/api/serial-ports", this::getSerialPorts, Role.VIEWER);
+    app.get("/api/races/current/export-csv", this::exportRaceCsv, Role.VIEWER);
+    app.post("/api/save-race", this::saveRace, Role.DIRECTOR);
+    app.get("/api/saved-races", this::getSavedRaces, Role.VIEWER);
+    app.delete("/api/saved-races/{filename}", this::deleteSavedRace, Role.DIRECTOR);
+    app.post("/api/delete-saved-race/{filename}", this::deleteSavedRace, Role.DIRECTOR);
+    app.post("/api/load-race", this::loadRace, Role.DIRECTOR);
+    app.post("/api/analytics/toggle", this::toggleAnalytics, Role.ADMIN);
+    app.get("/api/analytics/config", this::getAnalyticsConfig, Role.VIEWER);
+    app.post("/api/modify-heats", this::modifyHeats, Role.DIRECTOR);
+    app.post("/api/regenerate-heats", this::regenerateHeats, Role.DIRECTOR);
   }
 
   private void initializeRace(Context ctx) {

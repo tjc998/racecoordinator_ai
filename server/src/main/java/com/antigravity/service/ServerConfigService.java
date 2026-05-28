@@ -62,6 +62,15 @@ public class ServerConfigService {
     saveConfig();
   }
 
+  public String getDirectorPassword() {
+    return config.directorPassword;
+  }
+
+  public void setDirectorPassword(String password) {
+    config.directorPassword = password;
+    saveConfig();
+  }
+
   public String getAnalyticsClientId() {
     if (config.analyticsClientId == null || config.analyticsClientId.isEmpty()) {
       config.analyticsClientId = "rc-desktop-" + UUID.randomUUID().toString();
@@ -115,5 +124,6 @@ public class ServerConfigService {
     public double restartTime = 5.0;
     public double startDelay = 0.0;
     public double restartDelay = 0.0;
+    public String directorPassword;
   }
 }

@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
+import com.antigravity.service.ServerConfigService;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import java.lang.reflect.Method;
@@ -22,13 +23,15 @@ public class SettingsTaskHandlerTest {
   private Javalin app;
   private SettingsTaskHandler handler;
   private Context ctx;
+  private ServerConfigService configService;
 
   @Before
   public void setUp() {
 
     app = mock(Javalin.class);
     ctx = mock(Context.class);
-    handler = org.mockito.Mockito.spy(new SettingsTaskHandler(app));
+    configService = mock(ServerConfigService.class);
+    handler = org.mockito.Mockito.spy(new SettingsTaskHandler(app, configService));
 
     // Use doNothing for our wrapper methods to avoid calling real ctx methods
     org.mockito.Mockito.doNothing().when(handler).setStatus(any(), anyInt());

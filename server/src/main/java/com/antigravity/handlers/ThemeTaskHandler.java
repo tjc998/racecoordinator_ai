@@ -1,5 +1,6 @@
 package com.antigravity.handlers;
 
+import com.antigravity.auth.Role;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Theme;
 import com.mongodb.client.MongoCollection;
@@ -22,13 +23,13 @@ public class ThemeTaskHandler {
   public ThemeTaskHandler(DatabaseContext databaseContext, Javalin app) {
     this.databaseContext = databaseContext;
 
-    app.get("/api/themes", this::listThemes);
-    app.get("/api/themes/default", this::getDefaultTheme);
-    app.get("/api/themes/{id}", this::getTheme);
-    app.post("/api/themes", this::createTheme);
-    app.put("/api/themes/{id}", this::updateTheme);
-    app.delete("/api/themes/{id}", this::deleteTheme);
-    app.post("/api/themes/{id}/duplicate", this::duplicateTheme);
+    app.get("/api/themes", this::listThemes, Role.VIEWER);
+    app.get("/api/themes/default", this::getDefaultTheme, Role.VIEWER);
+    app.get("/api/themes/{id}", this::getTheme, Role.VIEWER);
+    app.post("/api/themes", this::createTheme, Role.VIEWER);
+    app.put("/api/themes/{id}", this::updateTheme, Role.VIEWER);
+    app.delete("/api/themes/{id}", this::deleteTheme, Role.VIEWER);
+    app.post("/api/themes/{id}/duplicate", this::duplicateTheme, Role.VIEWER);
   }
 
   MongoCollection<Theme> getThemeCollection() {
