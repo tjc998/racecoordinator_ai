@@ -582,6 +582,7 @@
   "RDS_SEASON_SELECT": "Selezione Stagione",
   "RDS_SECTION_ALL_RACES": "Tutte le Gare",
   "RDS_SECTION_AVAILABLE": "Disponibile",
+  "RDS_CLICK_TO_TOGGLE": "Clicca per espandere/comprimere",
   "RDS_SECTION_RACING": "In Gara",
   "RDS_SELECTED_COUNT": "{{count}} Selezionati",
   "RDS_SELECT_RACE_TO_LOAD": "Seleziona una gara da caricare",

@@ -249,19 +249,17 @@
   gap: 10px;
 }
 
-.chevron-icon {
-  width: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 0.85rem;
-  color: rgba(56, 189, 248, 0.7);
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s;
+.expander-icon {
+  font-size: 0.8rem;
+  color: #38bdf8;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 14px;
+  text-align: center;
+  display: inline-block;
 }
 
-.section-header.clickable:hover .chevron-icon {
-  color: #38bdf8;
-  transform: scale(1.15);
+.expander-icon.collapsed {
+  transform: rotate(-90deg);
 }
 
 .section-header h3 {

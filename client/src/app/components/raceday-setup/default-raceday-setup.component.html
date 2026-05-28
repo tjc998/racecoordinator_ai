@@ -341,16 +341,15 @@
           <div
             class="section-header clickable"
             (click)="toggleAvailableDrivers()"
+            [title]="'RDS_CLICK_TO_TOGGLE' | translate"
           >
             <div class="header-title-container">
+              <span
+                class="expander-icon"
+                [class.collapsed]="isAvailableDriversCollapsed"
+                >▼</span
+              >
               <h3>{{ "RDS_SECTION_AVAILABLE" | translate }}</h3>
-              <span class="chevron-icon">
-                @if (isAvailableDriversCollapsed) {
-                  <i class="fas fa-chevron-right"></i>
-                } @else {
-                  <i class="fas fa-chevron-down"></i>
-                }
-              </span>
             </div>
             <div class="header-actions" (click)="$event.stopPropagation()">
               <button

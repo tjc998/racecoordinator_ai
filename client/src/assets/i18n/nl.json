@@ -582,6 +582,7 @@
   "RDS_SEASON_SELECT": "Seizoen Selectie",
   "RDS_SECTION_ALL_RACES": "Alle Races",
   "RDS_SECTION_AVAILABLE": "Beschikbaar",
+  "RDS_CLICK_TO_TOGGLE": "Klik om in of uit te klappen",
   "RDS_SECTION_RACING": "Racen",
   "RDS_SELECTED_COUNT": "{{count}} Geselecteerd",
   "RDS_SELECT_RACE_TO_LOAD": "Selecteer een race om te laden",

@@ -582,6 +582,7 @@
   "RDS_SEASON_SELECT": "Season Selection",
   "RDS_SECTION_ALL_RACES": "All Races",
   "RDS_SECTION_AVAILABLE": "Available",
+  "RDS_CLICK_TO_TOGGLE": "Click to expand/collapse",
   "RDS_SECTION_RACING": "Racing",
   "RDS_SELECTED_COUNT": "{{count}} Selected",
   "RDS_SELECT_RACE_TO_LOAD": "Select a race to load",
