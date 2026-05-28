@@ -3,8 +3,11 @@ package com.antigravity;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
+import com.antigravity.auth.AuthService;
+import com.antigravity.auth.Role;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.handlers.AssetTaskHandler;
+import com.antigravity.handlers.AuthTaskHandler;
 import com.antigravity.handlers.ClientCommandTaskHandler;
 import com.antigravity.handlers.DatabaseTaskHandler;
 import com.antigravity.handlers.SettingsTaskHandler;
@@ -14,6 +17,7 @@ import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.service.AssetService;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.service.ServerConfigService;
+import com.antigravity.util.NetworkUtils;
 import com.antigravity.util.RobustBooleanCodec;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -94,7 +98,7 @@ public class App {
 
   private static final Logger logger = LoggerFactory.getLogger(App.class);
 
-  public static final String SERVER_VERSION = "0.0.0.20";
+  public static final String SERVER_VERSION = "0.0.0.21";
 
   static boolean shouldUseEmbeddedMongo(String[] args) {
     boolean useEmbeddedMongo = true;
@@ -442,6 +446,40 @@ public class App {
               .start(7070);
       logger.info("Javalin started successfully.");
 
+      // --- Authentication & Access Control ---
+      app.before(
+          ctx -> {
+            String path = ctx.path();
+
+            // Skip auth for static files, websocket upgrades (handled separately if needed), and
+            // login
+            if (!path.startsWith("/api/")
+                || path.startsWith("/api/auth/")
+                || path.equals("/api/server-ip")
+                || path.equals("/api/version")) {
+              return;
+            }
+
+            // 1. Localhost Auto-Admin
+            if (NetworkUtils.isLocalAddress(ctx.ip())) {
+              ctx.attribute("role", Role.ADMIN);
+              return;
+            }
+
+            // 2. Token-based Director
+            String authHeader = ctx.header("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+              String token = authHeader.substring(7);
+              if (AuthService.getInstance().isValidToken(token)) {
+                ctx.attribute("role", Role.DIRECTOR);
+                return;
+              }
+            }
+
+            // 3. Default Viewer
+            ctx.attribute("role", Role.VIEWER);
+          });
+
       app.exception(
           Exception.class,
           (e, ctx) -> {
@@ -501,6 +539,7 @@ public class App {
                 });
           });
 
+      new AuthTaskHandler(app, configService);
       new ClientCommandTaskHandler(databaseContext, app);
       new DatabaseTaskHandler(databaseContext, app);
       new AssetTaskHandler(databaseContext, app);

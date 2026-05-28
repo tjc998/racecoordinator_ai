@@ -83,7 +83,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   tempServerPort = 7070;
   serverIp: string = "";
   serverVersion: string = "";
-  clientVersion: string = (window as any).CLIENT_VERSION_OVERRIDE || "0.0.0.20";
+  clientVersion: string = (window as any).CLIENT_VERSION_OVERRIDE || "0.0.0.21";
   showAboutDialog = false;
 
   scale: number = 1;
