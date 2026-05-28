@@ -18,28 +18,15 @@ public class Starting implements IRaceState {
 
   private static final Logger logger = LoggerFactory.getLogger(Starting.class);
 
-  private final boolean isHotStart;
   private ScheduledExecutorService scheduler;
   private ScheduledFuture<?> timerHandle;
 
-  public Starting() {
-    this(false);
-  }
-
-  public Starting(boolean isHotStart) {
-    this.isHotStart = isHotStart;
-  }
+  public Starting() {}
 
   @Override
   public void enter(Race race) {
     logger.info("Starting state entered. Countdown initiating.");
     race.broadcastFlag(getFlagType(race));
-
-    if ((race.getRaceModel().isHotStart() || isHotStart) && !race.hasRacedInCurrentHeat()) {
-      logger.info("Hot start detected. Transitioning to Racing immediately.");
-      race.changeState(new Racing());
-      return;
-    }
 
     // Set auto-start fired to prevent re-triggering from NotStarted
     race.setAutoStartFired(true);

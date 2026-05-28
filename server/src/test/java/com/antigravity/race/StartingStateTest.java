@@ -144,7 +144,56 @@ public class StartingStateTest {
     race.changeState(starting);
 
     assertTrue(
-        "Hot start should transition to Racing immediately", race.getState() instanceof Racing);
+        "Hot start should remain in Starting state during countdown",
+        race.getState() instanceof Starting);
+    assertTrue(
+        "Master power should be ON during starting countdown when hot start is enabled",
+        race.isMainPower());
+  }
+
+  @Test
+  public void testHotStartDoesNotBypassCountdown() throws InterruptedException {
+    com.antigravity.models.Race hotStartModel =
+        new com.antigravity.models.Race.Builder().withHotStart(true).withStartTime(1.0).build();
+
+    race =
+        new Race.Builder()
+            .model(hotStartModel)
+            .track(race.getTrack())
+            .drivers(race.getDrivers())
+            .databaseContext(mock(DatabaseContext.class))
+            .isDemoMode(true)
+            .build();
+    manager.setRace(race);
+
+    // Initial state is NotStarted
+    assertTrue(
+        "Initial state should be NotStarted",
+        race.getState() instanceof com.antigravity.race.states.NotStarted);
+    assertFalse("Master power should be OFF initially", race.isMainPower());
+
+    // Start the race
+    race.startRace();
+
+    // Verify it transitions to Starting (not directly to Racing) and power is turned ON during the
+    // countdown
+    assertTrue(
+        "Should transition to Starting state to run the countdown sequence",
+        race.getState() instanceof Starting);
+    assertTrue(
+        "Master power should be turned ON during the countdown sequence for hot start",
+        race.isMainPower());
+
+    // Wait for the countdown sequence to finish and transition to Racing
+    long deadline = System.currentTimeMillis() + 5000;
+    while (!(race.getState() instanceof Racing) && System.currentTimeMillis() < deadline) {
+      Thread.sleep(100);
+    }
+
+    assertTrue(
+        "Should transition to Racing state after countdown completes",
+        race.getState() instanceof Racing);
+    assertTrue("Master power should still be ON in Racing", race.isMainPower());
   }
 
   @Test

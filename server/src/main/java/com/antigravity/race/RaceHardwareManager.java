@@ -9,6 +9,7 @@ import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.arduino.ArduinoProtocol;
 import com.antigravity.protocols.demo.Demo;
+import com.antigravity.race.states.Starting;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -126,10 +127,15 @@ public class RaceHardwareManager {
         break;
       case YELLOW:
       case RED:
-      default:
-        powerOn = false;
         break;
     }
+
+    if (race.getState() instanceof Starting
+        && race.getRaceModel().isHotStart()
+        && !race.hasRacedInCurrentHeat()) {
+      powerOn = true;
+    }
+
     race.setMainPower(powerOn);
 
     if (protocols == null) return;
