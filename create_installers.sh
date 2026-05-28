@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Ensure PROTO_DEST_DIR is unset so protobuf files compile into target_dist correctly
+unset PROTO_DEST_DIR
+
 echo "Building Race Coordinator Release..."
 
 # 0. Check for Analytics Credentials

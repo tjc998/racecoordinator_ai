@@ -872,7 +872,8 @@ public class ClientCommandTaskHandler {
           race.updateScoreRecords();
           race.broadcast(race.createSnapshot());
 
-          ctx.status(200).json(Map.of("adjustedLapCount", dhd.getAdjustedLapCount()));
+          ctx.status(200)
+              .json(Collections.singletonMap("adjustedLapCount", dhd.getAdjustedLapCount()));
         } else {
           ctx.status(400).result("Missing userLaps in body");
         }
