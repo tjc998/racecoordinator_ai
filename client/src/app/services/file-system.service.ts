@@ -123,6 +123,8 @@ export class FileSystemService {
       const supported = [
         "raceday-setup.component.html",
         "raceday.component.html",
+        "race-results.component.html",
+        "driver-results.component.html",
       ];
       for (const file of supported) {
         try {

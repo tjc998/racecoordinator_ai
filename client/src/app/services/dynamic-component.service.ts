@@ -7,6 +7,7 @@ import {
 import { ScrollingModule } from "@angular/cdk/scrolling";
 import {
   CommonModule,
+  DatePipe,
   DecimalPipe,
   NgClass,
   NgFor,
@@ -15,11 +16,13 @@ import {
 } from "@angular/common";
 import { Component, Injectable, Type } from "@angular/core";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
+import { RouterLink, RouterModule } from "@angular/router";
 import { AboutDialogComponent } from "@app/components/shared/about-dialog/about-dialog.component";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { DemoConfigModalComponent } from "@app/components/shared/demo-config-modal/demo-config-modal.component";
 import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.component";
+import { AvatarUrlPipe } from "@app/pipes/avatar-url.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 
 @Injectable({
@@ -55,6 +58,7 @@ export class DynamicComponentService {
         NgClass,
         NgStyle,
         DecimalPipe,
+        DatePipe,
         DragDropModule,
         CdkDropList,
         CdkDrag,
@@ -68,6 +72,9 @@ export class DynamicComponentService {
         AboutDialogComponent,
         ToolbarComponent,
         DemoConfigModalComponent,
+        AvatarUrlPipe,
+        RouterModule,
+        RouterLink,
       ],
     })(DynamicComponent);
   }

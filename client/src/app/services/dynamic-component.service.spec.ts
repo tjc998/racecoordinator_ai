@@ -59,4 +59,24 @@ describe("DynamicComponentService", () => {
     // standalone: true is represented as a flag in the component definition
     expect((def as any).standalone).toBeTrue();
   });
+
+  it("should compile a template using DatePipe and routerLink successfully", () => {
+    const baseClass = class {
+      testDate = new Date();
+    };
+
+    // This template uses the date pipe and a routerLink binding.
+    // Before the fix, this would fail to compile or render without the proper imports in DynamicComponent.
+    const html = `
+      <div>{{ testDate | date:'yyyy-MM-dd' }}</div>
+      <a [routerLink]="['/driver-results', '123']">Driver Results</a>
+    `;
+
+    const component = service.createDynamicComponent(baseClass, html, "", "");
+
+    expect(component).toBeTruthy();
+    const def = getComponentDef(component);
+    expect(def).toBeTruthy();
+    expect((def as any).standalone).toBeTrue();
+  });
 });
