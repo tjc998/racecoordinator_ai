@@ -1,8 +1,7 @@
 $ErrorActionPreference = "Continue"
 
-# Resolve project root even when invoked via Start-Process (this script lives in scripts/, so go up one)
-$ScriptDir = if ($PSScriptRoot) { $PSScriptRoot } elseif ($MyInvocation.MyCommand.Definition) { Split-Path -Parent $MyInvocation.MyCommand.Definition } else { $PWD.Path }
-$ProjectRoot = Split-Path -Parent $ScriptDir
+# This script lives in scripts/, so the repo root is one level up.
+$ProjectRoot = Split-Path -Parent $PSScriptRoot
 $ClientDir = Join-Path $ProjectRoot "client"
 
 Write-Host "--- Running Client Unit Tests ---" -ForegroundColor Cyan

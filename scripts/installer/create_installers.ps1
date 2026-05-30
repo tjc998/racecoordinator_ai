@@ -11,10 +11,8 @@ function Exec {
 # 0. Setup Environment
 Write-Host "Setting up environment..." -ForegroundColor Cyan
 
-# This script lives at scripts\installer\. Resolve the repo root and run everything
-# from there so the existing relative paths (client\, server\, release\, build_cache\)
-# behave the same as when the script lived at the top level.
-$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
+# This script lives at scripts\installer\. The repo root is two levels up.
+$RepoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 Set-Location $RepoRoot
 
 # Check for Analytics Credentials

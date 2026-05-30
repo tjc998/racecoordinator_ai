@@ -243,14 +243,47 @@ un-tracking broke) to small typos. All were fixed in the same pass:
   and a note that the bare CLI commands skip the project's proto generation
   and isolated-test setup.
 
-## 9. What I did **not** do
+## 9. Follow-up quick wins
 
-- I did **not** delete the snapshot files from your working tree (only from
-  the index). See section 1 if you want to reclaim local disk space.
+A second pass over the cleanup applied five more housekeeping fixes:
+
+- **282 MB of orphan snapshot files deleted from the working tree.** §1 only
+  un-tracked them; the directories remained on disk. A `find … -type d -name
+  '*_screendiff_test.ts-snapshots' -exec rm -rf {} +` reclaimed the space.
+  Visual tests regenerate baselines on next run.
+- **`help_center/Introduction.md` deduplicated.** The file was 237 lines
+  because its content was duplicated (lines 1–97 ≈ 98–237). Truncated to a
+  single clean copy and fixed a garbled support-page URL on line 95.
+- **`.gitignore` consolidated** from 134 lines to 107. Replaced eight
+  individual `target_*/` entries with a single `server/target*/` glob,
+  collapsed log-file variants under `*.log`, grouped MongoDB / Maven /
+  Playwright / Karma blocks logically, and globbed lint/checkstyle reports
+  via `**/*lint_report*.txt` / `**/checkstyle_report*.txt`. Verified the
+  rewrite still catches every path the old file did.
+- **PowerShell `$PSScriptRoot` idiom unified** across seven scripts. The
+  three test scripts (`run_client_unit_tests.ps1`, `run_client_screendiff_tests.ps1`,
+  `run_server_tests.ps1`) had a defensive three-branch fallback chain whose
+  two non-`$PSScriptRoot` branches were dead in practice; replaced with the
+  same `Split-Path -Parent $PSScriptRoot` form already used by the run/server
+  scripts. `scripts/installer/create_installers.ps1` swapped `Resolve-Path +
+  Join-Path` for `Split-Path -Parent (Split-Path -Parent $PSScriptRoot)` —
+  same result, no filesystem call, consistent with siblings.
+
+### Still deferred
+
+- **`docs/images/splash-screen.png` is 1.3 MB**; the README hero would
+  benefit from re-encoding (target ~100–200 KB). Couldn't run `pngquant` /
+  `oxipng` / Pillow in the build sandbox. Locally:
+  `pngquant docs/images/splash-screen.png --output docs/images/splash-screen.png --force`
+  or `oxipng -o 4 docs/images/splash-screen.png` should bring it down with
+  no visible loss.
+
+## 10. What I did **not** do
+
 - I did **not** touch the Windows installer-build pipeline anywhere outside
   of the moved scripts. The path rewrites are unverified on Windows — please
   smoke-test the next installer build (`scripts/installer/create_installers.ps1`)
   before cutting a release.
-- I did **not** rewrite existing line endings. The new `.gitattributes`
+- I did **not** rewrite existing line endings. The `.gitattributes`
   governs future commits; renormalizing the historical CRLF on every `.sh`
   file is a separate operation best done on a clean working tree.
