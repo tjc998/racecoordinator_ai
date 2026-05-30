@@ -4,8 +4,6 @@ import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
 import { DataService } from "@app/data.service";
 import { RaceHistoryRecord } from "@app/models/race_history_record";
-import { SettingsService } from "@app/services/settings.service";
-import { ThemeService } from "@app/services/theme.service";
 
 interface DriverTotal {
   driverId: string;
@@ -64,8 +62,6 @@ export class CumulativeResultsComponent implements OnInit {
 
   constructor(
     private dataService: DataService,
-    private settingsService: SettingsService,
-    private themeService: ThemeService,
     private cdr: ChangeDetectorRef,
     private router: Router,
   ) {}
@@ -308,7 +304,7 @@ export class CumulativeResultsComponent implements OnInit {
   }
 
   exportDetailedReport() {
-    const selectedRaces = this.history.filter((r) =>
+    const selectedRaces = this.filteredHistory.filter((r) =>
       this.selectedRaces.has(r._id),
     );
     if (selectedRaces.length === 0) return;
@@ -490,7 +486,7 @@ export class CumulativeResultsComponent implements OnInit {
             const medLap = hd?.driver?.medianLapTime?.toFixed(3) || "-";
             const segLaps = hd?.driver?.totalLaps ?? "SITOUT";
             const segPlace = hd
-              ? currentHeatDrivers
+              ? [...currentHeatDrivers]
                   .sort(
                     (a: any, b: any) =>
                       (b.driver?.totalLaps || 0) - (a.driver?.totalLaps || 0),
@@ -589,7 +585,7 @@ export class CumulativeResultsComponent implements OnInit {
   }
 
   exportCsv() {
-    const selectedRaces = this.history.filter((r) =>
+    const selectedRaces = this.filteredHistory.filter((r) =>
       this.selectedRaces.has(r._id),
     );
     const raceNames = selectedRaces
@@ -668,7 +664,7 @@ export class CumulativeResultsComponent implements OnInit {
   }
 
   exportHtml() {
-    const selectedRaces = this.history.filter((r) =>
+    const selectedRaces = this.filteredHistory.filter((r) =>
       this.selectedRaces.has(r._id),
     );
     const raceNames = selectedRaces
@@ -753,22 +749,6 @@ export class CumulativeResultsComponent implements OnInit {
       </html>
     `;
     this.downloadFile(htmlContent, "analytics.html", "text/html");
-  }
-
-  exportPng() {
-    const tableEl = document.querySelector(".standings-panel") as HTMLElement;
-    if (tableEl) {
-      import("html2canvas").then((m) => {
-        const h2c = m.default || m;
-        (h2c as any)(tableEl).then((canvas: HTMLCanvasElement) => {
-          const imgData = canvas.toDataURL("image/png");
-          const link = document.createElement("a");
-          link.href = imgData;
-          link.download = "analytics.png";
-          link.click();
-        });
-      });
-    }
   }
 
   private downloadFile(content: string, filename: string, mimeType: string) {
@@ -910,16 +890,19 @@ export class CumulativeResultsComponent implements OnInit {
         medianLaps.push(driverPart.averageLapTime);
       }
 
-      // Check if driver had the absolute fastest lap in this race
-      let isFastest = true;
-      let myBest = driverPart.bestLapTime;
+      // Credit the fastest lap to exactly one driver per race. On a tie for
+      // the minimum best lap, award it to the first such driver in race order.
+      const myBest = driverPart.bestLapTime;
       if (myBest > 0 && myBest !== this.Infinity) {
-        race.drivers?.forEach((other) => {
-          if (other.bestLapTime > 0 && other.bestLapTime < myBest) {
-            isFastest = false;
-          }
-        });
-        if (isFastest) {
+        const validDrivers = (race.drivers || []).filter(
+          (d) => d.bestLapTime > 0 && d.bestLapTime !== this.Infinity,
+        );
+        const minBest = Math.min(...validDrivers.map((d) => d.bestLapTime));
+        const winner = validDrivers.find((d) => d.bestLapTime === minBest);
+        const winnerId = winner
+          ? winner.driver?.entity_id || winner.objectId
+          : null;
+        if (myBest === minBest && winnerId === driverId) {
           stats.fastestLapsCount++;
         }
       }

@@ -60,7 +60,7 @@ export class RaceDetailComponent implements OnInit {
       console.log(
         "RaceDetailComponent: ID looks complex or fallback, using Load All strategy directly.",
       );
-      this.loadAllFallback(id);
+      this.loadAllFallback(id, isDemo);
       return;
     }
 
@@ -108,16 +108,17 @@ export class RaceDetailComponent implements OnInit {
           this.cdr.detectChanges();
           console.log("RaceDetailComponent: Alternate mode lookup success");
         } else {
-          this.loadAllFallback(id);
+          this.loadAllFallback(id, wasDemo);
         }
       },
-      error: () => this.loadAllFallback(id),
+      error: () => this.loadAllFallback(id, wasDemo),
     });
   }
 
-  private loadAllFallback(id: string) {
+  private loadAllFallback(id: string, isDemo: boolean = false) {
     console.log("RaceDetailComponent: Ultimate fallback (Load All)");
-    this.dataService.getRaceHistory(false).subscribe({
+    // Query the database matching the known demo flag first, then the other.
+    this.dataService.getRaceHistory(isDemo).subscribe({
       next: (history) => {
         this.race = this.findInHistory(history, id);
         if (this.race) {
@@ -126,7 +127,7 @@ export class RaceDetailComponent implements OnInit {
           this.isLoading = false;
           this.cdr.detectChanges();
         } else {
-          this.dataService.getRaceHistory(true).subscribe({
+          this.dataService.getRaceHistory(!isDemo).subscribe({
             next: (demoHistory) => {
               this.race = this.findInHistory(demoHistory, id);
               if (this.race) {
@@ -371,10 +372,26 @@ export class RaceDetailComponent implements OnInit {
 
   formatTotalTime(totalTimeSeconds: number): string {
     if (!totalTimeSeconds || totalTimeSeconds === 0) return "0.000";
-    const minutes = Math.floor(totalTimeSeconds / 60);
+    const hours = Math.floor(totalTimeSeconds / 3600);
+    const minutes = Math.floor((totalTimeSeconds % 3600) / 60);
     const seconds = Math.floor(totalTimeSeconds % 60);
     const ms = Math.round((totalTimeSeconds % 1) * 1000);
-    return `${minutes}:${seconds.toString().padStart(2, "0")}.${ms.toString().padStart(3, "0")}`;
+
+    let timeStr = "";
+    if (hours > 0) {
+      timeStr =
+        hours +
+        ":" +
+        minutes.toString().padStart(2, "0") +
+        ":" +
+        seconds.toString().padStart(2, "0");
+    } else if (minutes > 0) {
+      timeStr = minutes + ":" + seconds.toString().padStart(2, "0");
+    } else {
+      timeStr = seconds.toString();
+    }
+
+    return timeStr + "." + ms.toString().padStart(3, "0");
   }
 
   getAvatarUrl(url: string | undefined): string {

@@ -1508,7 +1508,7 @@ export class DataService {
   ): Observable<any> {
     let url = `${this.baseUrl}/api/history/races/${id}?demo=${isDemo}`;
     if (database) {
-      url += `&database=${database}`;
+      url += `&database=${encodeURIComponent(database)}`;
     }
     return this.http.delete<any>(url);
   }

@@ -87,7 +87,7 @@ export class AnalyticsMaintenanceComponent implements OnInit {
         return this.dataService.deleteRaceHistory(
           id,
           this.isDemoMode,
-          race?.databaseName,
+          race?.database_name,
         );
       });
 

@@ -157,6 +157,7 @@ export const routes: Routes = [
   {
     path: "history/maintenance",
     component: AnalyticsMaintenanceComponent,
+    canActivate: [AuthGuard],
     data: { animation: "AnalyticsMaintenancePage" },
   },
   { path: "analytics", redirectTo: "history" },
