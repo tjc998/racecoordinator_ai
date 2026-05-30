@@ -1,4 +1,3 @@
-import { CommonModule } from "@angular/common";
 import { Component, OnInit } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
@@ -9,7 +8,7 @@ import { DataService } from "@app/data.service";
   templateUrl: "./analytics-maintenance.component.html",
   styleUrls: ["./analytics-maintenance.component.css"],
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
 })
 export class AnalyticsMaintenanceComponent implements OnInit {
   history: any[] = [];

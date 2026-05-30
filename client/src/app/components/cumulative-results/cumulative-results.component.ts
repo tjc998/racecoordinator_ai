@@ -303,6 +303,7 @@ export class CumulativeResultsComponent implements OnInit {
     this.calculateCumulativeStandings();
   }
 
+  // eslint-disable-next-line max-lines-per-function
   exportDetailedReport() {
     const selectedRaces = this.filteredHistory.filter((r) =>
       this.selectedRaces.has(r._id),
@@ -329,6 +330,7 @@ export class CumulativeResultsComponent implements OnInit {
       <body>
     `;
 
+    // eslint-disable-next-line max-lines-per-function
     selectedRaces.forEach((race) => {
       const trackName = race.track?.name || "Unknown Track";
       const d = new Date(race.statistics?.startMillis || 0);
@@ -846,6 +848,7 @@ export class CumulativeResultsComponent implements OnInit {
     return url;
   }
 
+  // eslint-disable-next-line max-lines-per-function
   openDriverCard(driverTotal: DriverTotal) {
     const driverId = driverTotal.driverId;
     const stats: DriverDetailedStats = {

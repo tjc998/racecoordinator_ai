@@ -1,12 +1,13 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from "@angular/core/testing";
-import { CumulativeResultsComponent } from "./cumulative-results.component";
+import { CommonModule, DecimalPipe } from "@angular/common";
+import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { FormsModule } from "@angular/forms";
+import { Router } from "@angular/router";
+import { of } from "rxjs";
 import { DataService } from "@app/data.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
-import { of } from "rxjs";
-import { Router } from "@angular/router";
-import { CommonModule, DecimalPipe } from "@angular/common";
-import { FormsModule } from "@angular/forms";
+
+import { CumulativeResultsComponent } from "./cumulative-results.component";
 
 describe("CumulativeResultsComponent (Race Insights)", () => {
   let component: CumulativeResultsComponent;
