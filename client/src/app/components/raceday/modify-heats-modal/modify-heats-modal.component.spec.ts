@@ -43,6 +43,7 @@ describe("ModifyHeatsModalComponent", () => {
       "regenerateHeats",
       "modifyHeats",
       "updateRaceSubscription",
+      "finalizeModifyHeats",
     ]);
     mockDataService.updateRaceSubscription.and.stub();
     mockDataService.getDrivers.and.returnValue(of([]));
@@ -51,6 +52,7 @@ describe("ModifyHeatsModalComponent", () => {
       of({ success: true, heats: [] }),
     );
     mockDataService.modifyHeats.and.returnValue(of({ success: true }));
+    mockDataService.finalizeModifyHeats.and.returnValue(of("OK"));
 
     mockTranslationService = jasmine.createSpyObj("TranslationService", [
       "translate",
@@ -411,6 +413,37 @@ describe("ModifyHeatsModalComponent", () => {
       expect(calledWith.length).toBe(2);
       expect(calledWith[0].driver.name).toBe("Real");
       expect(calledWith[1].driver.name).toBe("Empty");
+    });
+
+    it("should remove a participant from a heat lane when onRemoveFromHeat is called", () => {
+      const realDriver = new RaceParticipant(
+        "rp1",
+        new Driver("d1", "Real", "Real"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      component["localParticipants"] = [realDriver];
+      component["localHeats"] = [
+        new Heat(
+          "h1",
+          1,
+          [new DriverHeatData("dhd1", realDriver, 0)],
+          [],
+          false,
+        ),
+      ];
+
+      component["onRemoveFromHeat"](0, 0);
+
+      expect(component["localHeats"][0].heatDrivers.length).toBe(0);
+      expect(mockDataService.modifyHeats).toHaveBeenCalled();
     });
   });
 
