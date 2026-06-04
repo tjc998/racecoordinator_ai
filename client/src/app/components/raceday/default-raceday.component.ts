@@ -355,6 +355,20 @@ export class DefaultRacedayComponent
   skipHeatConfirmText = "GEN_YES";
   skipHeatCancelText = "GEN_NO";
 
+  // Restart Heat Confirmation Modal State
+  showRestartHeatConfirmation = false;
+  restartHeatModalTitle = "RD_CONFIRM_RESTART_HEAT_TITLE";
+  restartHeatModalMessage = "RD_CONFIRM_RESTART_HEAT_MESSAGE";
+  restartHeatConfirmText = "GEN_YES";
+  restartHeatCancelText = "GEN_NO";
+
+  // Defer Heat Confirmation Modal State
+  showDeferHeatConfirmation = false;
+  deferHeatModalTitle = "RD_CONFIRM_DEFER_HEAT_TITLE";
+  deferHeatModalMessage = "RD_CONFIRM_DEFER_HEAT_MESSAGE";
+  deferHeatConfirmText = "GEN_YES";
+  deferHeatCancelText = "GEN_NO";
+
   // Acknowledgement Modal State (kept for interface errors)
   activeMenu: string | null = null;
   ackModalMessageParams: Record<string, any> = {};
@@ -410,6 +424,8 @@ export class DefaultRacedayComponent
           this.raceHasEnded = true;
           this.showExitConfirmation = false;
           this.showSkipHeatConfirmation = false;
+          this.showRestartHeatConfirmation = false;
+          this.showDeferHeatConfirmation = false;
           this.ackModalTitle = "RD_RACE_ENDED_TITLE";
           this.ackModalMessage = "RD_RACE_ENDED_MESSAGE";
           this.ackModalButtonText = "RD_RACE_ENDED_BTN_OK";
@@ -884,6 +900,50 @@ export class DefaultRacedayComponent
     this.cdr.markForCheck();
   }
 
+  onRestartHeatConfirm() {
+    this.showRestartHeatConfirmation = false;
+    this.dataService.restartHeat().subscribe(
+      (success) => {
+        if (success) {
+          this.logger.debug("Restart heat command sent successfully");
+        } else {
+          this.logger.error("Failed to send restart heat command");
+        }
+      },
+      (error) => {
+        this.logger.error("Error restarting heat:", error);
+      },
+    );
+    this.cdr.markForCheck();
+  }
+
+  onRestartHeatCancel() {
+    this.showRestartHeatConfirmation = false;
+    this.cdr.markForCheck();
+  }
+
+  onDeferHeatConfirm() {
+    this.showDeferHeatConfirmation = false;
+    this.dataService.deferHeat().subscribe(
+      (success) => {
+        if (success) {
+          this.logger.debug("Defer heat command sent successfully");
+        } else {
+          this.logger.error("Failed to send defer heat command");
+        }
+      },
+      (error) => {
+        this.logger.error("Error deferring heat:", error);
+      },
+    );
+    this.cdr.markForCheck();
+  }
+
+  onDeferHeatCancel() {
+    this.showDeferHeatConfirmation = false;
+    this.cdr.markForCheck();
+  }
+
   canDeactivate(
     nextState?: RouterStateSnapshot,
   ): Observable<boolean> | Promise<boolean> | boolean {
@@ -893,6 +953,8 @@ export class DefaultRacedayComponent
     if (this.raceHasEnded) {
       this.showExitConfirmation = false;
       this.showSkipHeatConfirmation = false;
+      this.showRestartHeatConfirmation = false;
+      this.showDeferHeatConfirmation = false;
       this.ackModalTitle = "RD_RACE_ENDED_TITLE";
       this.ackModalMessage = "RD_RACE_ENDED_MESSAGE";
       this.ackModalButtonText = "RD_RACE_ENDED_BTN_OK";
@@ -1508,34 +1570,14 @@ export class DefaultRacedayComponent
         },
       );
     } else if (action === "RESTART_HEAT") {
-      this.dataService.restartHeat().subscribe(
-        (success) => {
-          if (success) {
-            this.logger.debug("Restart heat command sent successfully");
-          } else {
-            this.logger.error("Failed to send restart heat command");
-          }
-        },
-        (error) => {
-          this.logger.error("Error restarting heat:", error);
-        },
-      );
+      this.showRestartHeatConfirmation = true;
+      this.cdr.markForCheck();
     } else if (action === "SKIP_HEAT") {
       this.showSkipHeatConfirmation = true;
       this.cdr.markForCheck();
     } else if (action === "DEFER_HEAT") {
-      this.dataService.deferHeat().subscribe(
-        (success) => {
-          if (success) {
-            this.logger.debug("Defer heat command sent successfully");
-          } else {
-            this.logger.error("Failed to send defer heat command");
-          }
-        },
-        (error) => {
-          this.logger.error("Error deferring heat:", error);
-        },
-      );
+      this.showDeferHeatConfirmation = true;
+      this.cdr.markForCheck();
     } else if (action === "MODIFY") {
       const returnUrl = this.router.url.split("?")[0];
       this.router.navigate(["/modify-heats"], {
