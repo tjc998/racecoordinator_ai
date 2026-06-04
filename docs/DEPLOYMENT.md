@@ -1,36 +1,76 @@
 # Installing Race Coordinator AI on Windows
 
-Basic instructions for installing and running Race Coordinator AI on Windows.
+This fork (`tjc998/racecoordinator_ai`) does **not** publish prebuilt
+installers, so there is no `.exe` to download. You build it from source on a
+Windows machine and then install or run it. These are the basic steps.
 
-## 1. Download
+## Prerequisites
 
-Get the latest installer from the
-[Releases page](https://github.com/daufderheide/racecoordinator_ai/releases)
-and pick **one**:
+Install these first:
 
-- **`RaceCoordinatorAI_Online_Setup.exe`** — recommended. Downloads Java 17 and
-  MongoDB 6.0 during install (needs an internet connection).
-- **`RaceCoordinatorAI_Offline_Legacy_Setup.exe`** — for offline machines or
-  legacy Windows (XP / 7 / 8). Bundles Java 8 and MongoDB 3.2.
+- **JDK 17** (e.g. [Adoptium Temurin](https://adoptium.net/))
+- **Maven 3.x**
+- **Node.js 20.x**
+- **protoc** (Protocol Buffers compiler)
+- **[Inno Setup 6](https://jrsoftware.org/isdl.php)** — only if you want the
+  `.exe` installer (optional; see [Option B](#option-b-build-and-run-the-exe-installer))
 
-## 2. Install
+You also need `server\src\main\resources\analytics.properties` (from the secure
+vault) — the build aborts without it.
 
-1. Double-click the `.exe` you downloaded.
-2. Accept the prompts (the installer needs administrator rights).
-3. The app installs to `C:\Program Files\Race Coordinator AI`, and its data
-   (database, assets) goes to `C:\ProgramData\Race Coordinator AI`.
+## Build
 
-The installer creates two desktop shortcuts:
+From the repo root in PowerShell:
 
-- **Race Coordinator Server (Headless)** — starts the program.
-- **Race Coordinator Client** — opens the app in your browser.
+```powershell
+.\scripts\installer\create_installers.ps1
+```
 
-## 3. Run
+This builds the Angular client and the server JAR, downloads/bundles a Java
+runtime and MongoDB, and writes the distribution into the **`release\`**
+folder:
 
-1. Double-click **Race Coordinator Server (Headless)** and leave that window
-   open while you use the program.
-2. Double-click **Race Coordinator Client** (or open
-   [http://localhost:7070](http://localhost:7070) in your browser).
+```
+release\RaceCoordinator\            <- standard app folder
+release\RaceCoordinator_Offline\    <- offline/legacy app folder
+release\RaceCoordinator_Universal.zip
+release\RaceCoordinator_Windows_Offline.zip
+```
+
+> **Note:** there is **no `.exe` in `release\`.** The `.exe` is only produced
+> when Inno Setup is installed, and it is written to the **`Output\`** folder at
+> the repo root — not `release\` (see Option B).
+
+## Install & run
+
+### Option A — run the folder directly (no installer)
+
+1. Copy `release\RaceCoordinator` to wherever you want the app (e.g. your
+   Desktop).
+2. In that folder, double-click **`setup_windows.bat`** if you don't already
+   have Java (it installs a bundled/downloaded Java runtime).
+3. Double-click **`start_win.bat`** to start the server. Leave the window open.
+4. Open [http://localhost:7070](http://localhost:7070) in your browser.
+
+### Option B — build and run the `.exe` installer
+
+1. Install [Inno Setup 6](https://jrsoftware.org/isdl.php).
+2. Re-run `.\scripts\installer\create_installers.ps1` (it auto-builds the `.exe`
+   when Inno Setup is present), **or** build it manually from the repo root:
+   ```powershell
+   iscc scripts\installer\installer_online.iss
+   iscc scripts\installer\installer_offline_legacy.iss
+   ```
+3. The installers appear in the **`Output\`** folder:
+   - `Output\RaceCoordinatorAI_Online_Setup.exe` — downloads Java 17 +
+     MongoDB 6.0 during install (needs internet).
+   - `Output\RaceCoordinatorAI_Offline_Legacy_Setup.exe` — bundles Java 8 +
+     MongoDB 3.2 for offline/legacy Windows (XP/7/8).
+4. Double-click the `.exe`, accept the admin prompts. It installs to
+   `C:\Program Files\Race Coordinator AI` (data in
+   `C:\ProgramData\Race Coordinator AI`) and creates desktop shortcuts for the
+   **Server (Headless)** and the **Client** (which opens
+   `http://localhost:7070`).
 
 ## Requirements & notes
 
@@ -39,7 +79,5 @@ The installer creates two desktop shortcuts:
   [Microsoft Visual C++ 2013 Redistributable (x86)](https://www.microsoft.com/en-us/download/details.aspx?id=40784)
   so MongoDB 3.2 can start.
 - Ports **7070** (web) and **27017** (database) must be free.
-- The bundled Java means you don't need to install Java separately.
 
-For macOS and Linux/Raspberry Pi instructions, see the
-[README](../README.md#install).
+For macOS and Linux/Raspberry Pi, see the [README](../README.md#install).
